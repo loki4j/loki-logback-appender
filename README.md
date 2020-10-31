@@ -4,6 +4,43 @@ This project aims to be the fastest and the most lightweight implementation of
 [Logback](http://logback.qos.ch/) appender for [Loki](https://grafana.com/oss/loki/).
 This project is unofficial and community-driven.
 
+## Quick start
+
+For Maven project add the following dependency to your `pom.xml`:
+
+```xml
+<dependency>
+  <groupId>com.github.log4j</groupId>
+  <artifactId>loki-logback-appender</artifactId>
+  <version>0.0.1</version>
+</dependency>
+```
+
+For Gradle project add the following dependency to your `build.gradle`:
+
+```groovy
+implementation 'com.github.log4j:loki-logback-appender:0.0.1'
+```
+
+Then add Loki appender to your `logback.xml`:
+
+```xml
+<appender name="LOKI" class="com.github.loki4j.logback.LokiJavaHttpAppender">
+    <encoder class="com.github.loki4j.logback.JsonEncoder">
+        <label>
+            <pattern>app=my-app,host=${HOSTNAME},level=%level</pattern>
+        </label>
+        <message>
+            <pattern>l=%level h=${HOSTNAME} c=%logger{20} t=%thread | %msg %ex</pattern>
+        </message>
+    </encoder>
+</appender>
+
+<root level="debug">
+    <appender-ref ref="LOKI" />
+</root>
+```
+
 ## Key features:
 
 - **Optionally order log records before sending to Loki.**
@@ -17,9 +54,9 @@ both for labels and messages.
 Same patterns are used in Logback's standard `ConsoleAppender` or `FileAppender`,
 so you are probably familiar with the syntax.
 
-- **No Json library bundled.**
-Instead of bundling with any Json library (e.g. Jackson),
-Loki4j comes with a small part of Json rendering functionality it needs embedded.
+- **No JSON library bundled.**
+Instead of bundling with any JSON library (e.g. Jackson),
+Loki4j comes with a small part of JSON rendering functionality it needs embedded.
 
 - **Zero-dependency.**
 Loki4j does not bring any new transitive dependencies to your project,
