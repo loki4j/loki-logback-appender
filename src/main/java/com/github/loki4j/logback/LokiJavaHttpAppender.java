@@ -18,24 +18,56 @@ import ch.qos.logback.classic.spi.ILoggingEvent;
 import ch.qos.logback.core.UnsynchronizedAppenderBase;
 import ch.qos.logback.core.status.Status;
 
+/**
+ * Loki appender that is backed by Java standard {@link java.net.http.HttpClient HttpClient}
+ */
 public class LokiJavaHttpAppender extends UnsynchronizedAppenderBase<ILoggingEvent> {
 
     private static final LogRecord[] ZERO_EVENTS = new LogRecord[0];
 
+    /**
+     * Loki endpoint to be used for sending batches
+     */
     private String url = "http://localhost:3100/loki/api/v1/push";
 
+    /**
+     * Time in milliseconds to wait for HTTP connection to Loki to be established
+     * before reporting an error
+     */
     private long connectionTimeoutMs = 30_000;
+    /**
+     * Time in milliseconds to wait for HTTP request to Loki to be responded
+     * before reporting an error
+     */
     private long requestTimeoutMs = 5_000;
 
-    private int processingThreads = 1;
-    private int httpThreads = 1;
-
+    /**
+     * Max number of messages to put into single batch and send to Loki
+     */
     private int batchSize = 1000;
+    /**
+     * Max time in milliseconds to wait before sending a batch to Loki
+     */
     private long batchTimeoutMs = 60 * 1000;
 
+    /**
+     * Number of threads to use for log message processing and formatting
+     */
+    private int processingThreads = 1;
+    /**
+     * Number of threads to use for sending HTTP requests
+     */
+    private int httpThreads = 1;
+
+    /**
+     * If true, appender will pring its own debug logs to stderr
+     */
     private boolean verbose = false;
 
-    private JsonEncoder encoder;
+    /**
+     * An encoder to use for converting log record batches to format acceptable by Loki
+     */
+    private JsonEncoder encoder = new JsonEncoder();
 
     private HttpClient client;
     private HttpRequest.Builder requestBuilder;

@@ -12,6 +12,9 @@ import ch.qos.logback.classic.PatternLayout;
 import ch.qos.logback.classic.spi.ILoggingEvent;
 import ch.qos.logback.core.encoder.EncoderBase;
 
+/**
+ * Encoder that converts log batches into JSON format specified by Loki API
+ */
 public class JsonEncoder extends EncoderBase<LogRecord[]> {
 
     protected static final byte[] ZERO_BYTES = new byte[0];
@@ -26,9 +29,22 @@ public class JsonEncoder extends EncoderBase<LogRecord[]> {
     };
 
     public static final class LabelCfg {
+        /**
+         * Logback pattern to use for log record's label
+         */
         String pattern = "host=${HOSTNAME},level=%level";
-        char keyValueSeparator = '=';
+        /**
+         * Character to use as a separator between labels
+         */
         char pairSeparator = ',';
+        /**
+         * Character to use as a separator between label's name and its value
+         */
+        char keyValueSeparator = '=';
+        /**
+         * If true, exception info is not added to label.
+         * If false, you should take care of proper formatting
+         */
         boolean nopex = true;
         public void setPattern(String pattern) {
             this.pattern = pattern;
@@ -45,6 +61,9 @@ public class JsonEncoder extends EncoderBase<LogRecord[]> {
     }
 
     public static final class MessageCfg {
+        /**
+         * Logback pattern to use for log record's message
+         */
         String pattern = "l=%level c=%logger{20} t=%thread | %msg %ex";
         public void setPattern(String pattern) {
             this.pattern = pattern;
@@ -57,8 +76,17 @@ public class JsonEncoder extends EncoderBase<LogRecord[]> {
 
     private MessageCfg message = new MessageCfg();
 
+    /**
+     * If true, log records in batch are sorted by timestamp.
+     * If false, records will be sent to Loki in arrival order.
+     * Turn this on if you see 'entry out of order' error from Loki.
+     */
     private boolean sortByTime = false;
 
+    /**
+     * If you use only one label for all log records, you can
+     * set this flag to true and save some CPU time on grouping records by label.
+     */
     private boolean staticLabels = false;
 
     private PatternLayout labelPatternLayout;
