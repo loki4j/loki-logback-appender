@@ -10,22 +10,25 @@ For Maven project add the following dependency to your `pom.xml`:
 
 ```xml
 <dependency>
-  <groupId>com.github.log4j</groupId>
-  <artifactId>loki-logback-appender</artifactId>
-  <version>0.0.1</version>
+    <groupId>com.github.loki4j</groupId>
+    <artifactId>loki-logback-appender</artifactId>
+    <version>0.0.1</version>
 </dependency>
 ```
 
 For Gradle project add the following dependency to your `build.gradle`:
 
 ```groovy
-implementation 'com.github.log4j:loki-logback-appender:0.0.1'
+implementation 'com.github.loki4j:loki-logback-appender:0.0.1'
 ```
 
 Then add Loki appender to your `logback.xml`:
 
 ```xml
 <appender name="LOKI" class="com.github.loki4j.logback.LokiJavaHttpAppender">
+    <url>http://localhost:3100/loki/api/v1/push</url>
+    <batchSize>100</batchSize>
+    <batchTimeoutMs>10000</batchTimeoutMs>
     <encoder class="com.github.loki4j.logback.JsonEncoder">
         <label>
             <pattern>app=my-app,host=${HOSTNAME},level=%level</pattern>
@@ -33,6 +36,7 @@ Then add Loki appender to your `logback.xml`:
         <message>
             <pattern>l=%level h=${HOSTNAME} c=%logger{20} t=%thread | %msg %ex</pattern>
         </message>
+        <sortByTime>true</sortByTime>
     </encoder>
 </appender>
 
