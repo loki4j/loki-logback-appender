@@ -44,11 +44,18 @@ public class JsonEncoder extends EncoderBase<LogRecord[]> {
         }
     }
 
+    public static final class MessageCfg {
+        String pattern = "l=%level c=%logger{20} t=%thread | %msg %ex";
+        public void setPattern(String pattern) {
+            this.pattern = pattern;
+        }
+    }
+
     protected final Charset charset = Charset.forName("UTF-8");
 
     private LabelCfg label = new LabelCfg();
 
-    private String messagePattern = "l=%level h=${HOSTNAME} c=%logger{20} t=%thread | %msg %ex";
+    private MessageCfg message = new MessageCfg();
 
     private boolean sortByTime = false;
 
@@ -64,7 +71,7 @@ public class JsonEncoder extends EncoderBase<LogRecord[]> {
         labelPatternLayout = initPatternLayout(labelPattern);
         labelPatternLayout.start();
 
-        messagePatternLayout = initPatternLayout(messagePattern);
+        messagePatternLayout = initPatternLayout(message.pattern);
         messagePatternLayout.start();
     }
 
@@ -145,24 +152,12 @@ public class JsonEncoder extends EncoderBase<LogRecord[]> {
         this.label = label;
     }
 
-    public String getMessagePattern() {
-        return messagePattern;
-    }
-
-    public void setMessagePattern(String messagePattern) {
-        this.messagePattern = messagePattern;
-    }
-
-    public boolean isSortByTime() {
-        return sortByTime;
+    public void setMessage(MessageCfg message) {
+        this.message = message;
     }
 
     public void setSortByTime(boolean sortByTime) {
         this.sortByTime = sortByTime;
-    }
-
-    public boolean isStaticLabels() {
-        return staticLabels;
     }
 
     public void setStaticLabels(boolean staticLabels) {
