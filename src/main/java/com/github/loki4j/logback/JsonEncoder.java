@@ -1,0 +1,172 @@
+package com.github.loki4j.logback;
+
+import java.nio.charset.Charset;
+import java.util.Arrays;
+import java.util.Comparator;
+import java.util.concurrent.atomic.AtomicInteger;
+
+import com.github.loki4j.common.JsonWriter;
+import com.github.loki4j.common.LogRecord;
+
+import ch.qos.logback.classic.PatternLayout;
+import ch.qos.logback.classic.spi.ILoggingEvent;
+import ch.qos.logback.core.encoder.EncoderBase;
+
+public class JsonEncoder extends EncoderBase<LogRecord[]> {
+
+    protected static final byte[] ZERO_BYTES = new byte[0];
+
+    private static final Comparator<LogRecord> byTime = (e1, e2) -> {
+        var tsCmp = Long.compare(e1.timestampMs, e2.timestampMs);
+        return tsCmp == 0 ? Integer.compare(e1.nanos, e2.nanos) : tsCmp;
+    };
+
+    private static final Comparator<LogRecord> byStream = (e1, e2) -> {
+        return String.CASE_INSENSITIVE_ORDER.compare(e1.stream, e2.stream);
+    };
+
+    public static final class LabelCfg {
+        String pattern = "host=${HOSTNAME},level=%level";
+        char keyValueSeparator = '=';
+        char pairSeparator = ',';
+        boolean nopex = true;
+        public void setPattern(String pattern) {
+            this.pattern = pattern;
+        }
+        public void setKeyValueSeparator(String keyValueSeparator) {
+            this.keyValueSeparator = keyValueSeparator.trim().charAt(0);
+        }
+        public void setPairSeparator(String pairSeparator) {
+            this.pairSeparator = pairSeparator.trim().charAt(0);
+        }
+        public void setNopex(boolean nopex) {
+            this.nopex = nopex;
+        }
+    }
+
+    protected final Charset charset = Charset.forName("UTF-8");
+
+    private LabelCfg label = new LabelCfg();
+
+    private String messagePattern = "l=%level h=${HOSTNAME} c=%logger{20} t=%thread | %msg %ex";
+
+    private boolean sortByTime = false;
+
+    private boolean staticLabels = false;
+
+    private PatternLayout labelPatternLayout;
+    private PatternLayout messagePatternLayout;
+
+    private final AtomicInteger nanoCounter = new AtomicInteger(0);
+
+    public void start() {
+        var labelPattern = label.nopex ? label.pattern + "%nopex" : label.pattern;
+        labelPatternLayout = initPatternLayout(labelPattern);
+        labelPatternLayout.start();
+
+        messagePatternLayout = initPatternLayout(messagePattern);
+        messagePatternLayout.start();
+    }
+
+    public void stop() {
+        messagePatternLayout.stop();
+        labelPatternLayout.stop();
+    }
+
+    public LogRecord eventToRecord(ILoggingEvent e, LogRecord r) {
+        r.timestampMs = e.getTimeStamp();
+        r.nanos = nanoCounter.updateAndGet(i -> i < 999_999 ? i + 1 : 0);
+        r.stream = labelPatternLayout.doLayout(e).intern();
+        r.streamHashCode = r.stream.hashCode();
+        r.message = messagePatternLayout.doLayout(e);
+        return r;
+    }
+
+    @Override
+    public byte[] headerBytes() {
+        return ZERO_BYTES;
+    }
+
+    @Override
+    public byte[] footerBytes() {
+        return ZERO_BYTES;
+    }
+
+    @Override
+    public byte[] encode(LogRecord[] batch) {
+        if (batch.length < 1)
+            return ZERO_BYTES;
+
+        return staticLabels ? encodeStaticLabels(batch) : encodeDynamicLabels(batch);
+    }
+
+    private byte[] encodeStaticLabels(LogRecord[] batch) {
+        if (sortByTime) 
+            Arrays.sort(batch, byTime);
+
+        var writer = new JsonWriter(label.pairSeparator, label.keyValueSeparator);
+        writer.beginStreams(batch[0]);
+        for (int i = 1; i < batch.length; i++) {
+            writer.nextRecord(batch[i]);
+        }
+        writer.endStreams();
+        return writer.toByteArray();
+    }
+
+    private byte[] encodeDynamicLabels(LogRecord[] batch) {
+        var comp = sortByTime ? byStream.thenComparing(byTime) : byStream; 
+        Arrays.sort(batch, comp);
+
+        var writer = new JsonWriter(label.pairSeparator, label.keyValueSeparator);
+        var currentStream = batch[0].stream;
+        writer.beginStreams(batch[0]);
+        for (int i = 1; i < batch.length; i++) {
+            if (batch[i].stream != currentStream) {
+                writer.nextStream(batch[i]);
+                currentStream = batch[i].stream;
+            }
+            else {
+                writer.nextRecord(batch[i]);
+            }
+        }
+        writer.endStreams();
+        return writer.toByteArray();
+    }
+
+    private PatternLayout initPatternLayout(String pattern) {
+        var patternLayout = new PatternLayout();
+        patternLayout.setContext(context);
+        patternLayout.setPattern(pattern);
+        return patternLayout;
+    }
+
+
+    public void setLabel(LabelCfg label) {
+        this.label = label;
+    }
+
+    public String getMessagePattern() {
+        return messagePattern;
+    }
+
+    public void setMessagePattern(String messagePattern) {
+        this.messagePattern = messagePattern;
+    }
+
+    public boolean isSortByTime() {
+        return sortByTime;
+    }
+
+    public void setSortByTime(boolean sortByTime) {
+        this.sortByTime = sortByTime;
+    }
+
+    public boolean isStaticLabels() {
+        return staticLabels;
+    }
+
+    public void setStaticLabels(boolean staticLabels) {
+        this.staticLabels = staticLabels;
+    }
+
+}
