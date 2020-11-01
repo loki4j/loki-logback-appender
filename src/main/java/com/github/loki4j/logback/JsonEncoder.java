@@ -14,8 +14,8 @@ public class JsonEncoder extends AbstractLoki4jEncoder {
 
     @Override
     protected byte[] encodeStaticLabels(LogRecord[] batch) {
-        var writer = new JsonWriter(label.pairSeparator, label.keyValueSeparator);
-        writer.beginStreams(batch[0]);
+        var writer = new JsonWriter();
+        writer.beginStreams(batch[0], extractStreamKVPairs(batch[0].stream));
         for (int i = 1; i < batch.length; i++) {
             writer.nextRecord(batch[i]);
         }
@@ -25,13 +25,13 @@ public class JsonEncoder extends AbstractLoki4jEncoder {
 
     @Override
     protected byte[] encodeDynamicLabels(LogRecord[] batch) {
-        var writer = new JsonWriter(label.pairSeparator, label.keyValueSeparator);
+        var writer = new JsonWriter();
         var currentStream = batch[0].stream;
-        writer.beginStreams(batch[0]);
+        writer.beginStreams(batch[0], extractStreamKVPairs(currentStream));
         for (int i = 1; i < batch.length; i++) {
             if (batch[i].stream != currentStream) {
-                writer.nextStream(batch[i]);
                 currentStream = batch[i].stream;
+                writer.nextStream(batch[i], extractStreamKVPairs(currentStream));
             }
             else {
                 writer.nextRecord(batch[i]);

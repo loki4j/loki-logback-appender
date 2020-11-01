@@ -35,11 +35,11 @@ public abstract class AbstractLoki4jEncoder extends EncoderBase<LogRecord[]> imp
         /**
          * Character to use as a separator between labels
          */
-        char pairSeparator = ',';
+        String pairSeparator = ",";
         /**
          * Character to use as a separator between label's name and its value
          */
-        char keyValueSeparator = '=';
+        String keyValueSeparator = "=";
         /**
          * If true, exception info is not added to label.
          * If false, you should take care of proper formatting
@@ -49,10 +49,10 @@ public abstract class AbstractLoki4jEncoder extends EncoderBase<LogRecord[]> imp
             this.pattern = pattern;
         }
         public void setKeyValueSeparator(String keyValueSeparator) {
-            this.keyValueSeparator = keyValueSeparator.trim().charAt(0);
+            this.keyValueSeparator = keyValueSeparator;
         }
         public void setPairSeparator(String pairSeparator) {
-            this.pairSeparator = pairSeparator.trim().charAt(0);
+            this.pairSeparator = pairSeparator;
         }
         public void setNopex(boolean nopex) {
             this.nopex = nopex;
@@ -159,6 +159,22 @@ public abstract class AbstractLoki4jEncoder extends EncoderBase<LogRecord[]> imp
         return patternLayout;
     }
 
+    protected String[] extractStreamKVPairs(String stream) {
+        var pairs = stream.split(label.pairSeparator);
+        var result = new String[pairs.length * 2];
+        for (int i = 0; i < pairs.length; i++) {
+            var kv = pairs[i].split(label.keyValueSeparator);
+            if (kv.length == 2) {
+                result[i * 2] = kv[0];
+                result[i * 2 + 1] = kv[1];
+            } else {
+                throw new IllegalArgumentException(String.format(
+                    "Unable to split '%s' in '%s' to label key-value pairs, pairSeparator=%s, keyValueSeparator=%s",
+                    pairs[i], stream, label.pairSeparator, label.keyValueSeparator));
+            }
+        }
+        return result;
+    }
 
     public void setLabel(LabelCfg label) {
         this.label = label;

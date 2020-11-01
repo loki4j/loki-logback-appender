@@ -21,7 +21,9 @@ public class ProtobufEncoder extends AbstractLoki4jEncoder {
 	@Override
 	protected byte[] encodeStaticLabels(LogRecord[] batch) {
         var request = PushRequest.newBuilder();
-        var streamBuilder = request.addStreamsBuilder().setLabels(batch[0].stream);
+        var streamBuilder = request
+            .addStreamsBuilder()
+            .setLabels(labels(extractStreamKVPairs(batch[0].stream)));
         for (int i = 1; i < batch.length; i++) {
             streamBuilder.addEntries(entry(batch[i]));
         }
@@ -32,15 +34,37 @@ public class ProtobufEncoder extends AbstractLoki4jEncoder {
 	protected byte[] encodeDynamicLabels(LogRecord[] batch) {
         var request = PushRequest.newBuilder();
         var currentStream = batch[0].stream;
-        var streamBuilder = request.addStreamsBuilder().setLabels(currentStream);
+        var streamBuilder = request
+            .addStreamsBuilder()
+            .setLabels(labels(extractStreamKVPairs(currentStream)));
         for (int i = 1; i < batch.length; i++) {
             if (batch[i].stream != currentStream) {
                 currentStream = batch[i].stream;
-                streamBuilder = request.addStreamsBuilder().setLabels(currentStream);
+                streamBuilder = request
+                    .addStreamsBuilder()
+                    .setLabels(labels(extractStreamKVPairs(currentStream)));
             }
             streamBuilder.addEntries(entry(batch[i]));
         }
 		return compress(request.build().toByteArray());
+    }
+
+    private String labels(String[] labels) {
+        var s = new StringBuilder();
+        s.append('{');
+        if (labels.length > 0) {
+            for (int i = 0; i < labels.length; i+=2) {
+                s.append(labels[i]);
+                s.append('=');
+                s.append('"');
+                s.append(labels[i + 1].replace("\"", "\\\""));
+                s.append('"');
+                if (i < labels.length - 2)
+                    s.append(',');
+            }
+        }
+        s.append('}');
+        return s.toString();
     }
     
     private EntryAdapter entry(LogRecord record) {
