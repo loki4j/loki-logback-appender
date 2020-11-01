@@ -29,7 +29,6 @@
 package com.github.loki4j.common;
 
 import java.util.Arrays;
-import java.util.regex.Pattern;
 
 public final class JsonWriter {
 
