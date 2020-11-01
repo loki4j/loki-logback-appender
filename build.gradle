@@ -16,6 +16,7 @@ dependencies {
     api 'ch.qos.logback:logback-classic:1.2.3'
 
     implementation 'com.google.protobuf:protobuf-java:3.12.4'
+    implementation 'org.xerial.snappy:snappy-java:1.1.8'
 
     testImplementation 'junit:junit:4.13'
 }

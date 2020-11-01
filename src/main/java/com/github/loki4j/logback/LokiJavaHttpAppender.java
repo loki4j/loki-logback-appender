@@ -67,7 +67,7 @@ public class LokiJavaHttpAppender extends UnsynchronizedAppenderBase<ILoggingEve
     /**
      * An encoder to use for converting log record batches to format acceptable by Loki
      */
-    private Loki4jEncoder encoder = new JsonEncoder();
+    private Loki4jEncoder encoder;
 
     private HttpClient client;
     private HttpRequest.Builder requestBuilder;
@@ -90,6 +90,10 @@ public class LokiJavaHttpAppender extends UnsynchronizedAppenderBase<ILoggingEve
             "procThreads=%s , httpThreads=%s, batchSize=%s, batchTimeout=%s...",
             processingThreads, httpThreads, batchSize, batchTimeoutMs));
 
+        if (encoder == null) {
+            addWarn("No encoder specified. Switching to default encoder");
+            encoder = new JsonEncoder();
+        }
         encoder.setContext(context);
         encoder.start();
 
@@ -186,43 +190,23 @@ public class LokiJavaHttpAppender extends UnsynchronizedAppenderBase<ILoggingEve
             });
     }
 
-    public String getUrl() {
-        return url;
-    }
-
     public void setUrl(String url) {
         this.url = url;
-    }
-
-    public long getConnectionTimeoutMs() {
-        return connectionTimeoutMs;
     }
 
     public void setConnectionTimeoutMs(long connectionTimeoutMs) {
         this.connectionTimeoutMs = connectionTimeoutMs;
     }
 
-    public int getBatchSize() {
-        return batchSize;
-    }
-
     public void setBatchSize(int batchSize) {
         this.batchSize = batchSize;
-    }
-
-    public long getBatchTimeoutMs() {
-        return batchTimeoutMs;
     }
 
     public void setBatchTimeoutMs(long batchTimeoutMs) {
         this.batchTimeoutMs = batchTimeoutMs;
     }
 
-    public Loki4jEncoder getEncoder() {
-        return encoder;
-    }
-
-    public void setEncoder(JsonEncoder encoder) {
+    public void setEncoder(Loki4jEncoder encoder) {
         this.encoder = encoder;
     }
 
