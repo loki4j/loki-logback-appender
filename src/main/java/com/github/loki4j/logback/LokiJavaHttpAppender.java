@@ -67,7 +67,7 @@ public class LokiJavaHttpAppender extends UnsynchronizedAppenderBase<ILoggingEve
     /**
      * An encoder to use for converting log record batches to format acceptable by Loki
      */
-    private JsonEncoder encoder = new JsonEncoder();
+    private Loki4jEncoder encoder = new JsonEncoder();
 
     private HttpClient client;
     private HttpRequest.Builder requestBuilder;
@@ -108,7 +108,7 @@ public class LokiJavaHttpAppender extends UnsynchronizedAppenderBase<ILoggingEve
             .newBuilder()
             .timeout(Duration.ofMillis(requestTimeoutMs))
             .uri(URI.create(url))
-            .header("Content-Type", "application/json");
+            .header("Content-Type", encoder.getContentType());
 
         super.start();
 
@@ -218,7 +218,7 @@ public class LokiJavaHttpAppender extends UnsynchronizedAppenderBase<ILoggingEve
         this.batchTimeoutMs = batchTimeoutMs;
     }
 
-    public JsonEncoder getEncoder() {
+    public Loki4jEncoder getEncoder() {
         return encoder;
     }
 

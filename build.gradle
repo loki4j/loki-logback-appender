@@ -2,6 +2,7 @@ plugins {
     id 'java-library'
     id 'maven-publish'
     id 'signing'
+    id "com.google.protobuf" version "0.8.13"
 }
 
 group = "com.github.loki4j"
@@ -14,6 +15,8 @@ repositories {
 dependencies {
     api 'ch.qos.logback:logback-classic:1.2.3'
 
+    implementation 'com.google.protobuf:protobuf-java:3.12.4'
+
     testImplementation 'junit:junit:4.13'
 }
 
@@ -21,6 +24,14 @@ java {
     withJavadocJar()
     withSourcesJar()
 }
+
+protobuf {
+  protoc {
+    artifact = 'com.google.protobuf:protoc:3.12.4'
+  }
+}
+
+sourceSets.main.java.srcDirs += ['build/generated/source/proto/main/java']
 
 publishing {
     publications {
