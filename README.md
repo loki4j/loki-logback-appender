@@ -1,6 +1,6 @@
 # loki-logback-appender
 
-This project aims to be the fastest and the most lightweight implementation of
+Loki4j aims to be the fastest and the most lightweight implementation of
 [Logback](http://logback.qos.ch/) appender for [Loki](https://grafana.com/oss/loki/).
 This project is unofficial and community-driven.
 
