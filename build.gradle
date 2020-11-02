@@ -6,7 +6,7 @@ plugins {
 }
 
 group = "com.github.loki4j"
-version = "0.0.2-SNAPSHOT"
+version = "${file("VERSION").text.trim()}"
 
 repositories {
      mavenCentral()
