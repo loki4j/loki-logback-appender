@@ -49,6 +49,9 @@ For more details, please refer to [Configuration](#configuration) section.
 
 ## Key features:
 
+- **Support for both JSON and Protobuf formats.**
+With Loki4j you can try out both JSON and Protobuf API for sending log records to Loki.
+
 - **Optionally order log records before sending to Loki.**
 In order to prevent log records loss, Loki4j can sort log records by timestamp inside each batch,
 so they will not be rejected by Loki with 'entry out of order' error.
@@ -138,6 +141,55 @@ Below is the complete `JsonEncoder` configuration reference with default values:
     <staticLabels>false</staticLabels>
 </encoder>
 ```
+
+### ProtobufEncoder
+
+`ProtobufEncoder` converts log batches into Protobuf format specified by Loki API.
+This encoder requires you to add Protobuf-related dependencies to your project.
+
+Maven:
+
+```xml
+<dependency>
+    <groupId>com.google.protobuf</groupId>
+    <artifactId>protobuf-java</artifactId>
+    <version>3.12.4</version>
+</dependency>
+<dependency>
+    <groupId>org.xerial.snappy</groupId>
+    <artifactId>snappy-java</artifactId>
+    <version>1.1.8</version>
+</dependency>
+```
+
+Gradle:
+
+```groovy
+compile 'com.google.protobuf:protobuf-java:3.12.4'
+compile 'org.xerial.snappy:snappy-java:1.1.8'
+```
+
+Example configuration using `ProtobufEncoder`:
+
+```xml
+<appender name="LOKI" class="com.github.loki4j.logback.LokiJavaHttpAppender">
+    <url>http://localhost:3100/loki/api/v1/push</url>
+    <batchSize>100</batchSize>
+    <batchTimeoutMs>10000</batchTimeoutMs>
+    <encoder class="com.github.loki4j.logback.ProtobufEncoder">
+        <label>
+            <pattern>app=my-app,host=${HOSTNAME},level=%level</pattern>
+        </label>
+        <message>
+            <pattern>l=%level h=${HOSTNAME} c=%logger{20} t=%thread | %msg %ex</pattern>
+        </message>
+        <sortByTime>true</sortByTime>
+    </encoder>
+</appender>
+```
+
+For complete list of properties available, please refer to [JsonEncoder](#jsonencoder)
+as these two encoders have the same set of properties at the moment.
 
 ## Production readiness
 

@@ -29,15 +29,11 @@
 package com.github.loki4j.common;
 
 import java.util.Arrays;
-import java.util.regex.Pattern;
 
 public final class JsonWriter {
 
     private int position;
     private byte[] buffer = new byte[1024];
-
-    private String labelKvSep;
-    private String labelPairSep;
 
     /**
      * Helper for writing JSON object start: {
@@ -72,31 +68,26 @@ public final class JsonWriter {
      */
     public static final byte ESCAPE = '\\';
 
-    public JsonWriter(char labelPairSep, char labelKvSep) {
-        this.labelKvSep = Pattern.quote("" + labelKvSep);
-        this.labelPairSep = Pattern.quote("" + labelPairSep);
-    }
-
-    public void beginStreams(LogRecord firstRecord) {
+    public void beginStreams(LogRecord firstRecord, String[] firstLabels) {
         writeByte(OBJECT_START);
         writeAsciiString("streams");
         writeByte(SEMI);
         writeByte(ARRAY_START);
-        stream(firstRecord);
+        stream(firstRecord, firstLabels);
     }
 
-    public void nextStream(LogRecord firstRecord) {
+    public void nextStream(LogRecord firstRecord, String[] labels) {
         writeByte(ARRAY_END);
         writeByte(OBJECT_END);
         writeByte(COMMA);
-        stream(firstRecord);
+        stream(firstRecord, labels);
     }
 
-    private void stream(LogRecord firstRecord) {
+    private void stream(LogRecord firstRecord, String[] labels) {
         writeByte(OBJECT_START);
         writeAsciiString("stream");
         writeByte(SEMI);
-        labels(firstRecord.stream);
+        labels(labels);
         writeByte(COMMA);
         writeAsciiString("values");
         writeByte(SEMI);
@@ -104,23 +95,15 @@ public final class JsonWriter {
         record(firstRecord);
     }
 
-    private void labels(String stream) {
+    private void labels(String[] labels) {
         writeByte(OBJECT_START);
-        if (!stream.isEmpty()) {
-            var pairs = stream.split(labelPairSep);
-            for (int i = 0; i < pairs.length; i++) {
-                var kv = pairs[i].split(labelKvSep);
-                if (kv.length == 2) {
-                    writeString(kv[0]);
-                    writeByte(SEMI);
-                    writeString(kv[1]);
-                    if (i < pairs.length -1)
-                        writeByte(COMMA);
-                } else {
-                    throw new IllegalArgumentException(String.format(
-                        "Unable to split '%s' to label key-value pairs, pairSeparator=%s, keyValueSeparator=%s",
-                        stream, labelPairSep, labelKvSep));
-                }
+        if (labels.length > 0) {
+            for (int i = 0; i < labels.length; i+=2) {
+                writeString(labels[i]);
+                writeByte(SEMI);
+                writeString(labels[i + 1]);
+                if (i < labels.length - 2)
+                    writeByte(COMMA);
             }
         }
         writeByte(OBJECT_END);
