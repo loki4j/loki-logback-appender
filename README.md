@@ -12,14 +12,14 @@ For Maven project add the following dependency to your `pom.xml`:
 <dependency>
     <groupId>com.github.loki4j</groupId>
     <artifactId>loki-logback-appender</artifactId>
-    <version>0.1.0</version>
+    <version>0.2.0</version>
 </dependency>
 ```
 
 For Gradle project add the following dependency to your `build.gradle`:
 
 ```groovy
-implementation 'com.github.loki4j:loki-logback-appender:0.1.0'
+implementation 'com.github.loki4j:loki-logback-appender:0.2.0'
 ```
 
 Then add Loki appender to your `logback.xml`:
