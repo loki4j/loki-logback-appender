@@ -112,7 +112,7 @@ Below is the complete `LokiJavaHttpAppender` configuration reference with defaul
 
 `LokiApacheHttpAppender` is backed by `org.apache.http.client.HttpClient`.
 You can use this appender for Java 8+ projects.
-You have to add the following dependency to ypur project in order to use this appender:
+You have to add the following dependency to your project in order to use this appender:
 
 Maven:
 
@@ -127,7 +127,7 @@ Maven:
 Gradle:
 
 ```groovy
-'org.apache.httpcomponents:httpclient:4.5.13'
+compile 'org.apache.httpcomponents:httpclient:4.5.13'
 ```
 
 `LokiApacheHttpAppender` shares most of the settings with `LokiJavaHttpAppender`,
