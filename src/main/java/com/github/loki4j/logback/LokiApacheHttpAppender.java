@@ -60,10 +60,10 @@ public class LokiApacheHttpAppender extends AbstractLoki4jAppender {
     @Override
     protected void stopHttp() {
         try {
-			client.close();
-		} catch (IOException e) {
-			addWarn("Error while closing Apache HttpClient", e);
-		}
+            client.close();
+        } catch (IOException e) {
+            addWarn("Error while closing Apache HttpClient", e);
+        }
     }
 
     @Override
@@ -72,9 +72,10 @@ public class LokiApacheHttpAppender extends AbstractLoki4jAppender {
             .supplyAsync(() -> {
                 try {
                     var r = client.execute(requestBuilder.apply(batch));
+                    var entity = r.getEntity();
                     return new LokiResponse(
                         r.getStatusLine().getStatusCode(),
-                        EntityUtils.toString(r.getEntity()));
+                        entity != null ? EntityUtils.toString(entity) : "");
                 } catch (Exception e) {
                     throw new RuntimeException("Error while sending batch to Loki", e);
                 }
