@@ -108,6 +108,42 @@ Below is the complete `LokiJavaHttpAppender` configuration reference with defaul
 </appender>
 ```
 
+### LokiApacheHttpAppender
+
+`LokiApacheHttpAppender` is backed by `org.apache.http.client.HttpClient`.
+You can use this appender for Java 8+ projects.
+You have to add the following dependency to your project in order to use this appender:
+
+Maven:
+
+```xml
+<dependency>
+    <groupId>org.apache.httpcomponents</groupId>
+    <artifactId>httpclient</artifactId>
+    <version>4.5.13</version>
+</dependency>
+```
+
+Gradle:
+
+```groovy
+compile 'org.apache.httpcomponents:httpclient:4.5.13'
+```
+
+`LokiApacheHttpAppender` shares most of the settings with `LokiJavaHttpAppender`,
+please refer [here](#lokijavahttpappender) for details.
+However, there are some client-specific settings with their default values:
+
+```xml
+<appender name="LOKI" class="com.github.loki4j.logback.LokiApacheHttpAppender">
+    ...
+    <!-- Max number of HTTP connections setting for HttpClient -->
+    <maxConnections>100</maxConnections>
+    <!-- Keep-alive setting for HttpClient -->
+    <keepAlive>true</keepAlive>
+</appender>
+```
+
 ### JsonEncoder
 
 `JsonEncoder` converts log batches into JSON format specified by Loki API.
