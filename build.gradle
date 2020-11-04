@@ -12,6 +12,21 @@ repositories {
      mavenCentral()
 }
 
+sourceSets {
+    main {
+        java {
+            srcDirs += ["$buildDir/generated/source/proto/main/java"]
+        }
+    }
+    java8 {
+        compileClasspath = sourceSets.main.compileClasspath
+        java {
+            srcDirs = sourceSets.main.java.srcDirs
+            exclude '**/LokiJavaHttpAppender.java'
+        }
+    }
+}
+
 dependencies {
     api 'ch.qos.logback:logback-classic:1.2.3'
 
@@ -19,12 +34,42 @@ dependencies {
     compileOnly 'org.xerial.snappy:snappy-java:1.1.8'
     compileOnly 'org.apache.httpcomponents:httpclient:4.5.13'
 
+    java8AnnotationProcessor 'com.github.bsideup.jabel:jabel-javac-plugin:0.3.0'
+
     testImplementation 'junit:junit:4.13'
+}
+
+sourceCompatibility = 11
+
+compileJava {
+    sourceCompatibility = 11
+    targetCompatibility = 11
+}
+
+compileJava8Java {
+    options.compilerArgs = [
+            "--release", "8", // Avoid using Java 9+ APIs
+            '--enable-preview',
+    ]
+    // The following line can be omitted on Java 14 and higher
+    options.compilerArgs << '-Xplugin:jabel'
+
+    doFirst {
+        options.compilerArgs = options.compilerArgs.findAll {
+            it != '--enable-preview'
+        }
+    }
 }
 
 java {
     withJavadocJar()
     withSourcesJar()
+
+    registerFeature('jdk8') {
+        usingSourceSet(sourceSets.java8)
+        withJavadocJar()
+        withSourcesJar()
+    }
 }
 
 jar {
@@ -36,8 +81,6 @@ protobuf {
     artifact = 'com.google.protobuf:protoc:3.12.4'
   }
 }
-
-sourceSets.main.java.srcDirs += ["$buildDir/generated/source/proto/main/java"]
 
 publishing {
     publications {
@@ -91,4 +134,24 @@ publishing {
 
 signing {
     sign publishing.publications.mavenJava
+}
+
+task copyDependencies(type: Copy) {
+    from configurations.compileOnly
+    into "$buildDir/deps"
+}
+
+task printSourceSetInformation(){
+    doLast{
+        sourceSets.each { srcSet ->
+            println "["+srcSet.name+"]"
+            print "-->Source directories: "+srcSet.allJava.srcDirs+"\n"
+            print "-->Output directories: "+srcSet.output.classesDirs.files+"\n"
+            print "-->Compile classpath:\n"
+            srcSet.compileClasspath.files.each {
+                print "  "+it.path+"\n"
+            }
+            println ""
+        }
+    }
 }
