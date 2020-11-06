@@ -47,6 +47,9 @@ compileJava {
 }
 
 compileJava8Java {
+    sourceCompatibility = 8
+    targetCompatibility = 8
+
     options.compilerArgs = [
             "--release", "8", // Avoid using Java 9+ APIs
             '--enable-preview',
@@ -130,6 +133,10 @@ publishing {
             }
         }
     }
+}
+
+tasks.withType(GenerateModuleMetadata) {
+    enabled = false
 }
 
 signing {
