@@ -5,7 +5,7 @@ First off, thanks for taking the time to contribute!
 1. Fork the project to you GitHub account using fork button in right upper
 corner of GitHub UI.
 
-1. Make sure the project compiles and tests pass (see ).
+1. Make sure the project compiles and tests pass (see [Build section](#build-and-test-the-project)).
 
 1. Create a new git branch with brief and meaningfull name that describes the changes
 you want to make.
@@ -16,7 +16,7 @@ you want to make.
 
 1. Create a pull request to the main project using GitHub UI.
 
-Please the following guidelines for your PRs:
+Please follow the guideline below for your PRs:
 
 - Use a clear and descriptive title
 
