@@ -16,7 +16,7 @@ import ch.qos.logback.core.encoder.EncoderBase;
  */
 public abstract class AbstractLoki4jEncoder extends EncoderBase<LogRecord[]> implements Loki4jEncoder {
     
-    protected static final byte[] ZERO_BYTES = new byte[0];
+    private static final byte[] ZERO_BYTES = new byte[0];
 
     protected static final Comparator<LogRecord> byTime = (e1, e2) -> {
         var tsCmp = Long.compare(e1.timestampMs, e2.timestampMs);
@@ -71,22 +71,22 @@ public abstract class AbstractLoki4jEncoder extends EncoderBase<LogRecord[]> imp
 
     protected final Charset charset = Charset.forName("UTF-8");
 
-    protected LabelCfg label = new LabelCfg();
+    private LabelCfg label = new LabelCfg();
 
-    protected MessageCfg message = new MessageCfg();
+    private MessageCfg message = new MessageCfg();
 
     /**
      * If true, log records in batch are sorted by timestamp.
      * If false, records will be sent to Loki in arrival order.
      * Turn this on if you see 'entry out of order' error from Loki.
      */
-    protected boolean sortByTime = false;
+    private boolean sortByTime = false;
 
     /**
      * If you use only one label for all log records, you can
      * set this flag to true and save some CPU time on grouping records by label.
      */
-    protected boolean staticLabels = false;
+    private boolean staticLabels = false;
 
     private PatternLayout labelPatternLayout;
     private PatternLayout messagePatternLayout;
