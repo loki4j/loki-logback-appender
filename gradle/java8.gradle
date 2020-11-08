@@ -2,10 +2,10 @@ apply plugin: Java8ComponentPlugin
 
 sourceSets {
     java8 {
+        // we count on this to be applied after main source set is defined
         compileClasspath = sourceSets.main.compileClasspath
         java {
             srcDirs = sourceSets.main.java.srcDirs
-            srcDirs += ["$buildDir/generated/source/proto/main/java"]
             exclude '**/LokiJavaHttpAppender.java'
         }
     }
@@ -37,12 +37,9 @@ compileJava8Java {
     }
 }
 
-java {
-    registerFeature('jdk8') {
-        usingSourceSet(sourceSets.java8)
-        withJavadocJar()
-        withSourcesJar()
-    }
+task java8Jar(type: Jar) {
+    from sourceSets.java8.output
+    archiveAppendix = 'jdk8'
 }
 
 publishing {
@@ -50,8 +47,30 @@ publishing {
         mavenJava8(MavenPublication) {
             artifactId = 'loki-logback-appender-jdk8'
             from components.java8
+            artifact java8Jar
+            artifact javadocJar
+            artifact sourcesJar
             pom {
                 name = 'Java8-compatible version of Logback Appender for Loki'
+                url = 'https://github.com/loki4j/loki-logback-appender'
+                licenses {
+                    license {
+                        name = 'BSD Software License, 2-clause version'
+                        url = 'https://github.com/loki4j/loki-logback-appender/blob/master/LICENSE.md'
+                    }
+                }
+                developers {
+                    developer {
+                        id = 'nehaev'
+                        name = 'Anton Nehaev'
+                        email = "nehaev@gmail.com"
+                    }
+                }
+                scm {
+                    connection = 'scm:git:git@github.com/loki4j/loki-logback-appender.git'
+                    developerConnection = 'scm:git:git@github.com/loki4j/loki-logback-appender.git'
+                    url = 'https://github.com/loki4j/loki-logback-appender'
+                }
             }
         }
     }

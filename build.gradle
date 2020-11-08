@@ -5,8 +5,6 @@ plugins {
     id "com.google.protobuf" version "0.8.13"
 }
 
-apply from: 'gradle/java8.gradle'
-
 group = "com.github.loki4j"
 version = "${file("VERSION").text.trim()}"
 description = 'Loki4j aims to be the fastest and the most lightweight implementation of Logback Appender for Loki'
@@ -104,10 +102,12 @@ publishing {
     }
 }
 
-tasks.withType(GenerateModuleMetadata) {
-    enabled = false
-}
-
 signing {
     sign publishing.publications.mavenJava
+}
+
+apply from: 'gradle/java8.gradle'
+
+tasks.withType(GenerateModuleMetadata) {
+    enabled = false
 }
