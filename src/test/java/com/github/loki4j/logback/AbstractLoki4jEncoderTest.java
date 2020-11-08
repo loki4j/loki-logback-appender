@@ -73,6 +73,16 @@ public class AbstractLoki4jEncoderTest {
         var kvs2 = encoder2.extractStreamKVPairs("level:INFO;app:\"my\"app;test:test");
         assertArrayEquals("Split by ;:", kvse1, kvs2);
         encoder2.stop();
+
+        var encoder3 = toStringEncoder(
+                labelCfg("level.%level|app.\"my\"app", "|", ".", true),
+                messageCfg("l=%level c=%logger{20} t=%thread | %msg %ex{1}"),
+                false,
+                false);
+        encoder3.start();
+        var kvs3 = encoder3.extractStreamKVPairs("level.INFO|app.\"my\"app|test.test");
+        assertArrayEquals("Split by |.", kvse1, kvs3);
+        encoder3.stop();
     }
 
 
