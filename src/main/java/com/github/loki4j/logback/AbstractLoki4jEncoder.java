@@ -4,6 +4,7 @@ import java.nio.charset.Charset;
 import java.util.Arrays;
 import java.util.Comparator;
 import java.util.concurrent.atomic.AtomicInteger;
+import java.util.regex.Pattern;
 
 import com.github.loki4j.common.LogRecord;
 
@@ -160,10 +161,10 @@ public abstract class AbstractLoki4jEncoder extends EncoderBase<LogRecord[]> imp
     }
 
     protected String[] extractStreamKVPairs(String stream) {
-        var pairs = stream.split(label.pairSeparator);
+        var pairs = stream.split(Pattern.quote(label.pairSeparator));
         var result = new String[pairs.length * 2];
         for (int i = 0; i < pairs.length; i++) {
-            var kv = pairs[i].split(label.keyValueSeparator);
+            var kv = pairs[i].split(Pattern.quote(label.keyValueSeparator));
             if (kv.length == 2) {
                 result[i * 2] = kv[0];
                 result[i * 2 + 1] = kv[1];
