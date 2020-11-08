@@ -227,6 +227,10 @@ Example configuration using `ProtobufEncoder`:
 For complete list of properties available, please refer to [JsonEncoder](#jsonencoder)
 as these two encoders have the same set of properties at the moment.
 
+## Contributing
+
+Please start with the [Contribution guidelines](CONTRIBUTING.md).
+
 ## Production readiness
 
 This project is in its early development stage.

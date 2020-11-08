@@ -4,6 +4,7 @@
 docker/
 
 .classpath
+.idea
 .project
 .settings
 .vscode/

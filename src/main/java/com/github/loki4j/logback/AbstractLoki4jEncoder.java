@@ -4,6 +4,7 @@ import java.nio.charset.Charset;
 import java.util.Arrays;
 import java.util.Comparator;
 import java.util.concurrent.atomic.AtomicInteger;
+import java.util.regex.Pattern;
 
 import com.github.loki4j.common.LogRecord;
 
@@ -16,7 +17,7 @@ import ch.qos.logback.core.encoder.EncoderBase;
  */
 public abstract class AbstractLoki4jEncoder extends EncoderBase<LogRecord[]> implements Loki4jEncoder {
     
-    protected static final byte[] ZERO_BYTES = new byte[0];
+    private static final byte[] ZERO_BYTES = new byte[0];
 
     protected static final Comparator<LogRecord> byTime = (e1, e2) -> {
         var tsCmp = Long.compare(e1.timestampMs, e2.timestampMs);
@@ -71,22 +72,22 @@ public abstract class AbstractLoki4jEncoder extends EncoderBase<LogRecord[]> imp
 
     protected final Charset charset = Charset.forName("UTF-8");
 
-    protected LabelCfg label = new LabelCfg();
+    private LabelCfg label = new LabelCfg();
 
-    protected MessageCfg message = new MessageCfg();
+    private MessageCfg message = new MessageCfg();
 
     /**
      * If true, log records in batch are sorted by timestamp.
      * If false, records will be sent to Loki in arrival order.
      * Turn this on if you see 'entry out of order' error from Loki.
      */
-    protected boolean sortByTime = false;
+    private boolean sortByTime = false;
 
     /**
      * If you use only one label for all log records, you can
      * set this flag to true and save some CPU time on grouping records by label.
      */
-    protected boolean staticLabels = false;
+    private boolean staticLabels = false;
 
     private PatternLayout labelPatternLayout;
     private PatternLayout messagePatternLayout;
@@ -160,10 +161,10 @@ public abstract class AbstractLoki4jEncoder extends EncoderBase<LogRecord[]> imp
     }
 
     protected String[] extractStreamKVPairs(String stream) {
-        var pairs = stream.split(label.pairSeparator);
+        var pairs = stream.split(Pattern.quote(label.pairSeparator));
         var result = new String[pairs.length * 2];
         for (int i = 0; i < pairs.length; i++) {
-            var kv = pairs[i].split(label.keyValueSeparator);
+            var kv = pairs[i].split(Pattern.quote(label.keyValueSeparator));
             if (kv.length == 2) {
                 result[i * 2] = kv[0];
                 result[i * 2 + 1] = kv[1];
