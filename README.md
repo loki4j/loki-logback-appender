@@ -16,14 +16,14 @@ For Maven project add the following dependency to your `pom.xml`:
 <dependency>
     <groupId>com.github.loki4j</groupId>
     <artifactId>loki-logback-appender</artifactId>
-    <version>0.2.0</version>
+    <version>0.3.0</version>
 </dependency>
 ```
 
 For Gradle project add the following dependency to your `build.gradle`:
 
 ```groovy
-implementation 'com.github.loki4j:loki-logback-appender:0.2.0'
+implementation 'com.github.loki4j:loki-logback-appender:0.3.0'
 ```
 
 Then add Loki appender to your `logback.xml`:
@@ -242,14 +242,14 @@ For Maven project add the following dependency to your `pom.xml`:
 <dependency>
     <groupId>com.github.loki4j</groupId>
     <artifactId>loki-logback-appender-jdk8</artifactId>
-    <version>0.2.0</version>
+    <version>0.3.0</version>
 </dependency>
 ```
 
 For Gradle project add the following dependency to your `build.gradle`:
 
 ```groovy
-implementation 'com.github.loki4j:loki-logback-appender-jdk8:0.2.0'
+implementation 'com.github.loki4j:loki-logback-appender-jdk8:0.3.0'
 ```
 
 Please note that only Apache HttpClient-based appender is currently available in Java 8 version.
