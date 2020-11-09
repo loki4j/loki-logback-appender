@@ -7,9 +7,18 @@ plugins {
 
 group = "com.github.loki4j"
 version = "${file("VERSION").text.trim()}"
+description = 'Loki4j aims to be the fastest and the most lightweight implementation of Logback Appender for Loki'
 
 repositories {
      mavenCentral()
+}
+
+sourceSets {
+    main {
+        java {
+            srcDirs += ["$buildDir/generated/source/proto/main/java"]
+        }
+    }
 }
 
 dependencies {
@@ -20,6 +29,13 @@ dependencies {
     compileOnly 'org.apache.httpcomponents:httpclient:4.5.13'
 
     testImplementation 'junit:junit:4.13'
+}
+
+sourceCompatibility = 11
+
+compileJava {
+    sourceCompatibility = 11
+    targetCompatibility = 11
 }
 
 java {
@@ -37,8 +53,6 @@ protobuf {
   }
 }
 
-sourceSets.main.java.srcDirs += ["$buildDir/generated/source/proto/main/java"]
-
 publishing {
     publications {
         mavenJava(MavenPublication) {
@@ -46,7 +60,6 @@ publishing {
             from components.java
             pom {
                 name = 'Logback Appender for Loki'
-                description = 'This project aims to be the fastest and the most lightweight implementation of Logback Appender for Loki'
                 url = 'https://github.com/loki4j/loki-logback-appender'
                 licenses {
                     license {
@@ -91,4 +104,10 @@ publishing {
 
 signing {
     sign publishing.publications.mavenJava
+}
+
+apply from: 'gradle/java8.gradle'
+
+tasks.withType(GenerateModuleMetadata) {
+    enabled = false
 }
