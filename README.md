@@ -252,13 +252,8 @@ For Gradle project add the following dependency to your `build.gradle`:
 implementation 'com.github.loki4j:loki-logback-appender-jdk8:0.2.0'
 ```
 
-Please note that only `LokiApacheHttpAppender` is currently available in Java 8 version:
-
-```xml
-<appender name="LOKI" class="com.github.loki4j.logback.LokiJavaHttpAppender">
-    ...
-</appender>
-```
+Please note that only Apache HttpClient-based appender is currently available in Java 8 version.
+Check the corresponding [Configuration section](#lokiapachehttpappender) for details.
 
 ## Contributing
 
