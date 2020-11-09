@@ -233,7 +233,7 @@ as these two encoders have the same set of properties at the moment.
 
 ## Java 8 support
 
-Loki4 provides an experimental support for Java 8.
+Loki4j provides an experimental support for Java 8.
 Check the Quick Start instruction below.
 
 For Maven project add the following dependency to your `pom.xml`:
