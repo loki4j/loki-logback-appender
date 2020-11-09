@@ -53,6 +53,7 @@ publishing {
             artifact sourcesJar
             pom {
                 name = 'Java8-compatible version of Logback Appender for Loki'
+                description = 'Loki4j aims to be the fastest and the most lightweight implementation of Logback Appender for Loki'
                 url = 'https://github.com/loki4j/loki-logback-appender'
                 licenses {
                     license {

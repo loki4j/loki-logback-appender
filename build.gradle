@@ -7,7 +7,6 @@ plugins {
 
 group = "com.github.loki4j"
 version = "${file("VERSION").text.trim()}"
-description = 'Loki4j aims to be the fastest and the most lightweight implementation of Logback Appender for Loki'
 
 repositories {
      mavenCentral()
@@ -60,6 +59,7 @@ publishing {
             from components.java
             pom {
                 name = 'Logback Appender for Loki'
+                description = 'Loki4j aims to be the fastest and the most lightweight implementation of Logback Appender for Loki'
                 url = 'https://github.com/loki4j/loki-logback-appender'
                 licenses {
                     license {
