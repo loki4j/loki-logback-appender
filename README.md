@@ -6,6 +6,9 @@ This project is unofficial and community-driven.
 
 ## Quick start
 
+If your project is on Java 8, please check [Java 8 support](#java-8-support) section.
+If your project is on Java 11 or later, please follow the instructions below.
+
 For Maven project add the following dependency to your `pom.xml`:
 
 ```xml
@@ -226,6 +229,35 @@ Example configuration using `ProtobufEncoder`:
 
 For complete list of properties available, please refer to [JsonEncoder](#jsonencoder)
 as these two encoders have the same set of properties at the moment.
+
+## Java 8 support
+
+Loki4 provides experimental support for Java 8.
+Check the Quick Start instruction below.
+
+For Maven project add the following dependency to your `pom.xml`:
+
+```xml
+<dependency>
+    <groupId>com.github.loki4j</groupId>
+    <artifactId>loki-logback-appender-jdk8</artifactId>
+    <version>0.2.0</version>
+</dependency>
+```
+
+For Gradle project add the following dependency to your `build.gradle`:
+
+```groovy
+implementation 'com.github.loki4j:loki-logback-appender-jdk8:0.2.0'
+```
+
+Please note that only `LokiApacheHttpAppender` is currently available in Java 8 version:
+
+```xml
+<appender name="LOKI" class="com.github.loki4j.logback.LokiJavaHttpAppender">
+    ...
+</appender>
+```
 
 ## Contributing
 

@@ -38,6 +38,7 @@ compileJava8Java {
 }
 
 task java8Jar(type: Jar) {
+    dependsOn ':generateProto'
     from sourceSets.java8.output
     archiveAppendix = 'jdk8'
 }
