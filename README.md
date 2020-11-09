@@ -7,6 +7,7 @@ This project is unofficial and community-driven.
 ## Quick start
 
 If your project is on Java 8, please check [Java 8 support](#java-8-support) section.
+
 If your project is on Java 11 or later, please follow the instructions below.
 
 For Maven project add the following dependency to your `pom.xml`:
@@ -232,7 +233,7 @@ as these two encoders have the same set of properties at the moment.
 
 ## Java 8 support
 
-Loki4 provides experimental support for Java 8.
+Loki4 provides an experimental support for Java 8.
 Check the Quick Start instruction below.
 
 For Maven project add the following dependency to your `pom.xml`:
