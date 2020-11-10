@@ -107,7 +107,11 @@ public abstract class AbstractLoki4jAppender extends UnsynchronizedAppenderBase<
 
         super.start();
 
-        scheduler.scheduleAtFixedRate(this::drainAsync, 100, batchTimeoutMs, TimeUnit.MILLISECONDS);
+        scheduler.scheduleAtFixedRate(
+            () -> drainAsync(batchTimeoutMs - 20), // decreasing timeout, so it's slightly less than elapsed time
+            100,
+            batchTimeoutMs,
+            TimeUnit.MILLISECONDS);
         addInfo("Successfully started");
     }
 
@@ -121,7 +125,8 @@ public abstract class AbstractLoki4jAppender extends UnsynchronizedAppenderBase<
         super.stop();
 
         try {
-            drainAsync().get(500, TimeUnit.MILLISECONDS);
+            // drain no matter how much time passed since last batch
+            drainAsync(0L).get(500, TimeUnit.MILLISECONDS);
         } catch (Exception e) {
             addWarn("Error during buffer drain on stop", e);
         }
@@ -155,8 +160,8 @@ public abstract class AbstractLoki4jAppender extends UnsynchronizedAppenderBase<
     protected abstract CompletableFuture<LokiResponse> sendAsync(byte[] batch);
     
 
-    private CompletableFuture<Void> drainAsync() {
-        var batch = buffer.drain(batchTimeoutMs, ZERO_EVENTS);
+    private CompletableFuture<Void> drainAsync(long timeoutMs) {
+        var batch = buffer.drain(timeoutMs, ZERO_EVENTS);
         if (batch.length > 0)
             return handleBatchAsync(batch).thenApply(r -> null);
         else
