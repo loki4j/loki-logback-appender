@@ -2,12 +2,12 @@ First off, thanks for taking the time to contribute!
 
 ## Prepare a pull request
 
-1. Fork the project to you GitHub account using fork button in right upper
+1. Fork the project to your GitHub account using fork button in right upper
 corner of GitHub UI.
 1. Make sure the project compiles and tests pass (see [Build section](#build-and-test-the-project)).
-1. Create a new git branch with brief and meaningfull name that describes the changes
+1. Create a new git branch with brief and meaningful name that describes the changes
 you want to make.
-1. Check you changes are covered by unit tests, add new unit tests if necessary.
+1. Check if your changes are covered by unit tests, add new unit tests if necessary.
 1. When finished, again make sure the project compiles with your changes and tests pass.
 1. Create a pull request to the main project using GitHub UI.
 
