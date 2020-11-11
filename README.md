@@ -1,5 +1,8 @@
 # loki-logback-appender
 
+![Build](https://img.shields.io/github/workflow/status/loki4j/loki-logback-appender/build/build-workflow)
+![Maven Central](https://img.shields.io/maven-central/v/com.github.loki4j/loki-logback-appender?color=blue)
+
 Loki4j aims to be the fastest and the most lightweight implementation of
 [Logback](http://logback.qos.ch/) appender for [Loki](https://grafana.com/oss/loki/).
 This project is unofficial and community-driven.
