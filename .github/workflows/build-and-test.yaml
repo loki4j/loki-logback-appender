@@ -18,4 +18,4 @@ jobs:
         uses: actions/upload-artifact@v2
         with:
           name: jacoco-report
-          path: reports/jacoco/test/jacocoTestReport.xml
+          path: build/reports/jacoco/test/jacocoTestReport.xml
