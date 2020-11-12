@@ -89,5 +89,4 @@ public class AbstractLoki4jAppenderTest {
         appender.stop();
         assertEquals("batchTimeout", expected, new String(appender.lastBatch, encoder.charset));
     }
-
 }

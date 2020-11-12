@@ -13,9 +13,4 @@ jobs:
         with:
           java-version: 11
       - name: Build with Gradle
-        run: ./gradlew check jacocoTestReport
-      - name: Archive code coverage results
-        uses: actions/upload-artifact@v2
-        with:
-          name: jacoco-report
-          path: build/reports/jacoco/test/jacocoTestReport.xml
+        run: ./gradlew check

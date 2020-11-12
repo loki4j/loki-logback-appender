@@ -3,7 +3,6 @@ package com.github.loki4j.logback;
 import org.junit.Test;
 
 import ch.qos.logback.classic.Level;
-import ch.qos.logback.classic.LoggerContext;
 
 import static org.junit.Assert.*;
 
