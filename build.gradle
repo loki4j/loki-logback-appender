@@ -2,6 +2,7 @@ plugins {
     id 'java-library'
     id 'maven-publish'
     id 'signing'
+    id 'jacoco'
     id "com.google.protobuf" version "0.8.13"
 }
 
@@ -28,6 +29,8 @@ dependencies {
     compileOnly 'org.apache.httpcomponents:httpclient:4.5.13'
 
     testImplementation 'junit:junit:4.13'
+    testImplementation 'com.google.protobuf:protobuf-java:3.12.4'
+    testImplementation 'org.xerial.snappy:snappy-java:1.1.8'
 }
 
 sourceCompatibility = 11
@@ -50,6 +53,17 @@ protobuf {
   protoc {
     artifact = 'com.google.protobuf:protoc:3.12.4'
   }
+}
+
+jacocoTestReport {
+    reports {
+        xml.enabled = true
+    }
+    afterEvaluate {
+        classDirectories.setFrom(files(classDirectories.files.collect {
+            fileTree(dir: it, exclude: '**/protobuf/**')
+        }))
+    }
 }
 
 publishing {

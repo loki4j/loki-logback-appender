@@ -1,5 +1,11 @@
 package com.github.loki4j.logback;
 
+import java.util.ArrayList;
+import java.util.List;
+import java.util.concurrent.CompletableFuture;
+import java.util.concurrent.locks.ReentrantLock;
+import java.util.function.Consumer;
+
 import com.github.loki4j.common.LogRecord;
 
 import ch.qos.logback.classic.Level;
@@ -23,6 +29,34 @@ public class Generators {
         return s.toString();
     }
 
+    public static DummyLoki4jAppender dummyAppender(
+        int batchSize,
+        long batchTimeoutMs,
+        Loki4jEncoder encoder) {
+        var appender = new DummyLoki4jAppender();
+        appender.setContext(new LoggerContext());
+        appender.setBatchSize(batchSize);
+        appender.setBatchTimeoutMs(batchTimeoutMs);
+        appender.setEncoder(encoder);
+        appender.setVerbose(true);
+        return appender;
+    }
+
+    public static AbstractLoki4jEncoder defaultToStringEncoder() {
+        return toStringEncoder(
+            labelCfg("level=%level,app=my-app", ",", "=", true),
+            messageCfg("l=%level c=%logger{20} t=%thread | %msg %ex{1}"),
+            true,
+            false);
+    }
+
+    public static void withEncoder(AbstractLoki4jEncoder encoder, Consumer<AbstractLoki4jEncoder> body) {
+        encoder.setContext(new LoggerContext());
+        encoder.start();
+        body.accept(encoder);
+        encoder.stop();
+    }
+
     public static AbstractLoki4jEncoder toStringEncoder(
         AbstractLoki4jEncoder.LabelCfg label,
         AbstractLoki4jEncoder.MessageCfg message,
@@ -42,7 +76,6 @@ public class Generators {
                 return batchToString(batch).getBytes(charset);
             }
         };
-        encoder.setContext(new LoggerContext());
         encoder.setLabel(label);
         encoder.setMessage(message);
         encoder.setSortByTime(sortByTime);
@@ -101,5 +134,24 @@ public class Generators {
         r.message = message;
         return r;
     }
-    
+
+
+    public static class DummyLoki4jAppender extends AbstractLoki4jAppender {
+        public List<byte[]> batches = new ArrayList<>();
+        public byte[] lastBatch;
+        private final ReentrantLock lock = new ReentrantLock(false);
+
+        @Override
+        protected void startHttp(String contentType) {}
+        @Override
+        protected void stopHttp() {}
+        @Override
+        protected CompletableFuture<LokiResponse> sendAsync(byte[] batch) {
+            lock.lock();
+            batches.add(batch);
+            lastBatch = batch;
+            lock.unlock();
+            return CompletableFuture.completedFuture(new LokiResponse(204, ""));
+        }
+    }
 }
