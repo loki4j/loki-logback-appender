@@ -24,7 +24,7 @@ public class ProtobufEncoder extends AbstractLoki4jEncoder {
         var streamBuilder = request
             .addStreamsBuilder()
             .setLabels(labels(extractStreamKVPairs(batch[0].stream)));
-        for (int i = 1; i < batch.length; i++) {
+        for (int i = 0; i < batch.length; i++) {
             streamBuilder.addEntries(entry(batch[i]));
         }
         return compress(request.build().toByteArray());
@@ -37,7 +37,7 @@ public class ProtobufEncoder extends AbstractLoki4jEncoder {
         var streamBuilder = request
             .addStreamsBuilder()
             .setLabels(labels(extractStreamKVPairs(currentStream)));
-        for (int i = 1; i < batch.length; i++) {
+        for (int i = 0; i < batch.length; i++) {
             if (batch[i].stream != currentStream) {
                 currentStream = batch[i].stream;
                 streamBuilder = request
