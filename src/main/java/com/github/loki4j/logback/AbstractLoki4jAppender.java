@@ -184,8 +184,8 @@ public abstract class AbstractLoki4jAppender extends UnsynchronizedAppenderBase<
             .whenComplete((r, e) -> {
                 if (e != null) {
                     addError(String.format(
-                        "Error while sending Batch #%x (%s records) to Loki",
-                        batchId, batch.length), e);
+                        "Error while sending Batch #%x (%s records) to Loki (%s)",
+                        batchId, batch.length, url), e);
                 }
                 else {
                     if (r.status < 200 || r.status > 299)

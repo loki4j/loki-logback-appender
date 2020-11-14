@@ -11,7 +11,7 @@ import static com.github.loki4j.logback.Generators.*;
 
 public class AbstractLoki4jAppenderTest {
 
-    private ILoggingEvent[] events = new ILoggingEvent[] {
+    static ILoggingEvent[] events = new ILoggingEvent[] {
         loggingEvent(
             100L,
             Level.INFO,
@@ -35,7 +35,7 @@ public class AbstractLoki4jAppenderTest {
             null)
     };
 
-    private String expected = 
+    static String expected =
             "LogRecord [ts=100, nanos=1, stream=level=INFO,app=my-app, message=l=INFO c=test.TestApp t=thread-1 | Test message 1 ]\n" +
             "LogRecord [ts=107, nanos=3, stream=level=INFO,app=my-app, message=l=INFO c=test.TestApp t=thread-1 | Test message 3 ]\n" +
             "LogRecord [ts=104, nanos=2, stream=level=WARN,app=my-app, message=l=WARN c=test.TestApp t=thread-2 | Test message 2 ]\n";

@@ -146,22 +146,6 @@ public final class JsonWriter {
     }
 
     /**
-     * Optimized method for writing 'null' into the JSON.
-     */
-    public final void writeNull() {
-        if ((position + 4)>= buffer.length) {
-            enlargeOrFlush(position, 0);
-        }
-        final int s = position;
-        final byte[] _result = buffer;
-        _result[s] = 'n';
-        _result[s + 1] = 'u';
-        _result[s + 2] = 'l';
-        _result[s + 3] = 'l';
-        position += 4;
-    }
-
-    /**
      * Write a single byte into the JSON.
      *
      * @param value byte to write into the JSON
@@ -373,6 +357,7 @@ public final class JsonWriter {
         position = cur + 1;
     }
 
+
     /**
      * Write a quoted string consisting of only ascii characters.
      * String will not be escaped according to JSON escaping rules.
@@ -389,58 +374,6 @@ public final class JsonWriter {
         _result[position] = QUOTE;
         value.getBytes(0, len - 2, _result, position + 1);
         _result[position + len - 1] = QUOTE;
-        position += len;
-    }
-
-    /**
-     * Write string consisting of only ascii characters.
-     * String will not be escaped according to JSON escaping rules.
-     *
-     * @param value ascii string
-     */
-    @SuppressWarnings("deprecation")
-    public final void writeAscii(final String value) {
-        final int len = value.length();
-        if (position + len >= buffer.length) {
-            enlargeOrFlush(position, len);
-        }
-        value.getBytes(0, len, buffer, position);
-        position += len;
-    }
-
-    /**
-     * Copy bytes into JSON as is.
-     * Provided buffer can't be null.
-     *
-     * @param buf byte buffer to copy
-     */
-    public final void writeRaw(final byte[] buf) {
-        final int len = buf.length;
-        if (position + len >= buffer.length) {
-            enlargeOrFlush(position, len);
-        }
-        final int p = position;
-        final byte[] _result = buffer;
-        for (int i = 0; i < buf.length; i++) {
-            _result[p + i] = buf[i];
-        }
-        position += len;
-    }
-
-
-    /**
-     * Copy part of byte buffer into JSON as is.
-     * Provided buffer can't be null.
-     *
-     * @param buf byte buffer to copy
-     * @param offset in buffer to start from
-     * @param len part of buffer to copy
-     */
-    public final void writeRaw(final byte[] buf, final int offset, final int len) {
-        if (position + len >= buffer.length) {
-            enlargeOrFlush(position, len);
-        }
-        System.arraycopy(buf, offset, buffer, position, len);
         position += len;
     }
 
