@@ -1,5 +1,7 @@
 package com.github.loki4j.logback;
 
+import java.io.IOException;
+import java.net.InetSocketAddress;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.concurrent.CompletableFuture;
@@ -7,6 +9,7 @@ import java.util.concurrent.locks.ReentrantLock;
 import java.util.function.Consumer;
 
 import com.github.loki4j.common.LogRecord;
+import com.sun.net.httpserver.HttpServer;
 
 import ch.qos.logback.classic.Level;
 import ch.qos.logback.classic.LoggerContext;
@@ -27,6 +30,23 @@ public class Generators {
             s.append('\n');
         }
         return s.toString();
+    }
+
+    public static LokiHttpServerMock lokiMock(int port) {
+        try {
+			return new LokiHttpServerMock(port);
+		} catch (IOException e) {
+			throw new RuntimeException("Error while creating Loki mock", e);
+		}
+    }
+
+    public static void withAppender(AbstractLoki4jAppender appender, Consumer<AbstractLoki4jAppender> body) {
+        appender.start();
+        try {
+            body.accept(appender);
+        } finally {
+            appender.stop();
+        }
     }
 
     public static DummyLoki4jAppender dummyAppender(
@@ -53,8 +73,11 @@ public class Generators {
     public static void withEncoder(AbstractLoki4jEncoder encoder, Consumer<AbstractLoki4jEncoder> body) {
         encoder.setContext(new LoggerContext());
         encoder.start();
-        body.accept(encoder);
-        encoder.stop();
+        try {
+            body.accept(encoder);
+        } finally {
+            encoder.stop();
+        }
     }
 
     public static AbstractLoki4jEncoder toStringEncoder(
@@ -152,6 +175,38 @@ public class Generators {
             lastBatch = batch;
             lock.unlock();
             return CompletableFuture.completedFuture(new LokiResponse(204, ""));
+        }
+    }
+
+
+    public static class LokiHttpServerMock {
+        public List<byte[]> batches = new ArrayList<>();
+        public volatile byte[] lastBatch;
+
+        private final HttpServer server;
+
+        public LokiHttpServerMock(int port) throws IOException {
+            server = HttpServer.create(new InetSocketAddress(port), 0);
+            server.createContext("/loki/api/v1/push", httpExchange -> {
+                try (var is = httpExchange.getRequestBody()) {
+                    lastBatch = is.readAllBytes();
+                    batches.add(lastBatch);
+                }
+                httpExchange.sendResponseHeaders(204, 0);
+            });
+        }
+
+        public void start() {
+            new Thread(server::start).start();
+        }
+
+        public void stop() {
+            server.stop(0);
+        }
+
+        public void reset() {
+            batches.clear();
+            lastBatch = null;
         }
     }
 }
