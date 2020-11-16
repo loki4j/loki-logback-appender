@@ -19,14 +19,14 @@ For Maven project add the following dependency to your `pom.xml`:
 <dependency>
     <groupId>com.github.loki4j</groupId>
     <artifactId>loki-logback-appender</artifactId>
-    <version>0.3.0</version>
+    <version>0.3.1</version>
 </dependency>
 ```
 
 For Gradle project add the following dependency to your `build.gradle`:
 
 ```groovy
-implementation 'com.github.loki4j:loki-logback-appender:0.3.0'
+implementation 'com.github.loki4j:loki-logback-appender:0.3.1'
 ```
 
 Then add Loki appender to your `logback.xml`:
@@ -245,14 +245,14 @@ For Maven project add the following dependency to your `pom.xml`:
 <dependency>
     <groupId>com.github.loki4j</groupId>
     <artifactId>loki-logback-appender-jdk8</artifactId>
-    <version>0.3.0</version>
+    <version>0.3.1</version>
 </dependency>
 ```
 
 For Gradle project add the following dependency to your `build.gradle`:
 
 ```groovy
-implementation 'com.github.loki4j:loki-logback-appender-jdk8:0.3.0'
+implementation 'com.github.loki4j:loki-logback-appender-jdk8:0.3.1'
 ```
 
 Please note that only Apache HttpClient-based appender is currently available in Java 8 version.
@@ -264,8 +264,7 @@ Please start with the [Contribution guidelines](CONTRIBUTING.md).
 
 ## Production readiness
 
-This project is in its early development stage.
-Breaking changes (config format, class locations etc.) might be introduced even in minor versions.
-
-That said, we still encourage you to give it a try and provide your feedback to us.
-This will help Loki4j evolve and get to a production-ready state eventually.
+This project is in active development stage.
+In rare cases breaking changes (config format, class locations, etc.) might be introduced in minor versions.
+Such cases will be explicitly documented for each release.
+Please check [Releases](releases) page before the upgrade.
