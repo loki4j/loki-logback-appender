@@ -267,4 +267,4 @@ Please start with the [Contribution guidelines](CONTRIBUTING.md).
 This project is in active development stage.
 In rare cases breaking changes (config format, class locations, etc.) might be introduced in minor versions.
 Such cases will be explicitly documented for each release.
-Please check [Releases](releases) page before the upgrade.
+Please check [Releases](https://github.com/loki4j/loki-logback-appender/releases) page before you upgrade.
