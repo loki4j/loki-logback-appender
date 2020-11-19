@@ -18,10 +18,8 @@ jobs:
         uses: actions/setup-node@v1
         with:
           node-version: '12.x'
-      - name: Install dependencies and build
+      - name: Install and publish
         run: |
           cd docs/docus/website
           npm install build
-      - name: Publish
-        run: |
           GIT_USER="${GITHUB_ACTOR}" npm run publish-gh-pages
