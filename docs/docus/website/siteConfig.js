@@ -27,8 +27,8 @@ const siteConfig = {
   title: 'Loki4j Logback', // Title for your website.
   tagline: 'Pure Java Logback appender for Grafana Loki',
   url: 'https://loki4j.github.io', // Your website URL
-  baseUrl: '/',
-  //baseUrl: '/loki-logback-appender/', // Base URL for your project */
+  //baseUrl: '/',
+  baseUrl: '/loki-logback-appender/', // Base URL for your project */
 
   // Used for publishing and more
   projectName: 'loki-logback-appender',
@@ -109,9 +109,6 @@ const siteConfig = {
   // template. For example, if you need your repo's URL...
   repoUrl: ghUrl,
   startDoc: defaultDoc,
-  artifactGroup: 'com.github.loki4j',
-  artifactId: 'loki-logback-appender',
-  artifactVersion: '0.3.1',
 };
 
 module.exports = siteConfig;
