@@ -95,6 +95,7 @@ const siteConfig = {
 
   twitterUsername: 'arnehaev',
   gaTrackingId: 'G-0Z4FEXM003',
+  gaGtag: true,
 
   // For sites with a sizable amount of content, set collapsible to true.
   // Expand/collapse the links and subcategories under categories.
