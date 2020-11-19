@@ -20,7 +20,8 @@ jobs:
           node-version: '12.x'
       - name: Install and publish
         run: |
-          echo "Actor: ${GITHUB_ACTOR}"
+          git config --global user.name "Docs Publisher"
+          git config --global user.email "docs-publisher@loki4j"
           echo "machine github.com login ${GITHUB_ACTOR} password ${{ secrets.GITHUB_TOKEN }}" > ~/.netrc
           cd docs/docus/website
           npm install && GIT_USER="${GITHUB_ACTOR}" CURRENT_BRANCH= npm run publish-gh-pages
