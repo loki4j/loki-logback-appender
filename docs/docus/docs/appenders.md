@@ -10,7 +10,7 @@ Loki4j provides two HTTP appenders for Loki:
 
 - `LokiJavaHttpAppender`, backed by `java.net.http.HttpClient` available in Java 11 and later
 - `LokiApacheHttpAppender`, backed by `org.apache.http.client.HttpClient`
-(check the details in [dedicated setion](#lokiapachehttpappender))
+(check the details in [dedicated section](#lokiapachehttpappender))
 
 There are some use-case specific recommendation for choosing one or another appender:
 

@@ -10,7 +10,7 @@ Loki4j provides two message encoders for Loki:
 
 - `JsonEncoder`, converts log batches into JSON format specified by Loki API
 - `ProtobufEncoder`, converts log batches into Protobuf format specified by Loki API
-(check the details in [dedicated setion](#protobufencoder))
+(check the details in [dedicated section](#protobufencoder))
 
 There are some use-case specific recommendation for choosing one or another appender:
 
