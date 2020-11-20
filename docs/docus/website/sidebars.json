@@ -1,0 +1,8 @@
+{
+  "docs": {
+    "Configuration": ["appenders", "encoders", "examples"]
+  },
+  "docs-other": {
+    "First Category": ["doc4", "doc5"]
+  }
+}

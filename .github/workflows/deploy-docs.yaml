@@ -1,0 +1,28 @@
+name: docs
+
+on:
+  push:
+    branches:
+      # Push events on main branch
+      - main
+    paths:
+      # Trigger only if docs changed
+      - 'docs/**'
+
+jobs:
+  build:
+    runs-on: ubuntu-latest
+
+    steps:
+      - uses: actions/checkout@v2
+      - name: Use Node.js
+        uses: actions/setup-node@v1
+        with:
+          node-version: '12.x'
+      - name: Install and publish
+        run: |
+          git config --global user.name "Docs Publisher"
+          git config --global user.email "docs-publisher@loki4j"
+          echo "machine github.com login ${GITHUB_ACTOR} password ${{ secrets.GITHUB_TOKEN }}" > ~/.netrc
+          cd docs/docus/website
+          npm install && GIT_USER="${GITHUB_ACTOR}" CURRENT_BRANCH=main npm run publish-gh-pages
