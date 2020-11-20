@@ -4,12 +4,55 @@ title: Appenders
 sidebar_label: Appenders
 ---
 
-## LokiJavaHttpAppender
+## Choosing the right appender
 
-`LokiJavaHttpAppender` is backed by `java.net.http.HttpClient` available in Java 11 and later.
-Thus, `LokiJavaHttpAppender` does not require you to add any additional dependencies to you project.
+Loki4j provides two HTTP appenders for Loki:
 
-Below is the complete `LokiJavaHttpAppender` configuration reference with default values:
+- `LokiJavaHttpAppender`, backed by `java.net.http.HttpClient` available in Java 11 and later
+- `LokiApacheHttpAppender`, backed by `org.apache.http.client.HttpClient`
+(check the details in [dedicated setion](#lokiapachehttpappender))
+
+There are some use-case specific recommendation for choosing one or another appender:
+
+1. If your project is on Java 8, you can only use `LokiApacheHttpAppender`
+2. If your project doesn't depend on Apache HttpClient and you don't want to introduce
+new dependencies, use `LokiJavaHttpAppender`
+
+In other cases you can use whatever appender works for you.
+If you are still not sure, use `LokiJavaHttpAppender`.
+
+Register the appender of your choice in your `logback.xml` configuration:
+
+<!--DOCUSAURUS_CODE_TABS-->
+<!--LokiJavaHttpAppender-->
+
+```xml
+<appender name="LOKI" class="com.github.loki4j.logback.LokiJavaHttpAppender">
+    <!-- define appender settings here -->
+</appender>
+
+<root level="DEBUG">
+    <appender-ref ref="LOKI" />
+</root>
+```
+
+<!--LokiApacheHttpAppender-->
+
+```xml
+<appender name="LOKI" class="com.github.loki4j.logback.LokiApacheHttpAppender">
+    <!-- define appender settings here -->
+</appender>
+
+<root level="DEBUG">
+    <appender-ref ref="LOKI" />
+</root>
+```
+
+<!--END_DOCUSAURUS_CODE_TABS-->
+
+We are going to describe available appender settings in the next sections.
+
+## Connection settings
 
 ```xml
 <appender name="LOKI" class="com.github.loki4j.logback.LokiJavaHttpAppender">
@@ -21,6 +64,13 @@ Below is the complete `LokiJavaHttpAppender` configuration reference with defaul
     <!-- Time in milliseconds to wait for HTTP request to Loki to be responded -->
     <!-- before reporting an error -->
     <requestTimeoutMs>5000</requestTimeoutMs>
+</appender>
+```
+
+## Message batching settings
+
+```xml
+<appender name="LOKI" class="com.github.loki4j.logback.LokiJavaHttpAppender">
     <!-- Max number of messages to put into single batch and send to Loki -->
     <batchSize>1000</batchSize>
     <!-- Max time in milliseconds to wait before sending a batch to Loki -->
@@ -29,12 +79,15 @@ Below is the complete `LokiJavaHttpAppender` configuration reference with defaul
     <processingThreads>1</processingThreads>
     <!-- Number of threads to use for sending HTTP requests -->
     <httpThreads>1</httpThreads>
-    <!-- If true, appender will pring its own debug logs to stderr -->
+</appender>
+```
+
+## Tracing settings
+
+```xml
+<appender name="LOKI" class="com.github.loki4j.logback.LokiJavaHttpAppender">
+    <!-- If true, appender will print its own debug logs to stderr -->
     <verbose>false</verbose>
-    <!-- An encoder to use for converting log record batches to format acceptable by Loki -->
-    <encoder class="com.github.loki4j.logback.JsonEncoder">
-        <!-- See encoder-specific settings reference in the section dedicated to the particular encoder -->
-    </encoder>
 </appender>
 ```
 
@@ -60,8 +113,7 @@ Gradle:
 compile 'org.apache.httpcomponents:httpclient:4.5.13'
 ```
 
-`LokiApacheHttpAppender` shares most of the settings with `LokiJavaHttpAppender`,
-please refer [here](#lokijavahttpappender) for details.
+`LokiApacheHttpAppender` shares most of the settings with `LokiJavaHttpAppender`.
 However, there are some client-specific settings with their default values:
 
 ```xml

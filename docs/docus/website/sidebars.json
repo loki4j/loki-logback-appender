@@ -1,6 +1,6 @@
 {
   "docs": {
-    "Docs": ["appenders", "encoders"]
+    "Docs": ["appenders", "encoders", "examples"]
   },
   "docs-other": {
     "First Category": ["doc4", "doc5"]

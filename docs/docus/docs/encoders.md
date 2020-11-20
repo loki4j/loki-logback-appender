@@ -4,12 +4,60 @@ title: Encoders
 sidebar_label: Encoders
 ---
 
-## JsonEncoder
+## Choosing the right encoder
 
-`JsonEncoder` converts log batches into JSON format specified by Loki API.
-This encoder does not require you to add any additional dependencies to you project.
+Loki4j provides two message encoders for Loki:
 
-Below is the complete `JsonEncoder` configuration reference with default values:
+- `JsonEncoder`, converts log batches into JSON format specified by Loki API
+- `ProtobufEncoder`, converts log batches into Protobuf format specified by Loki API
+(check the details in [dedicated setion](#protobufencoder))
+
+There are some use-case specific recommendation for choosing one or another appender:
+
+1. If your project generates large amount of logs, prefer `ProtobufEncoder`
+2. If your project already depends Google Protobuf, prefer `ProtobufEncoder`
+
+In other cases you can use whatever appender works for you.
+If you are still not sure, use `JsonEncoder`.
+
+Set the encoder of your choice for Loki appender in your `logback.xml` configuration:
+
+<!--DOCUSAURUS_CODE_TABS-->
+<!--JsonEncoder-->
+
+```xml
+<appender name="LOKI" class="com.github.loki4j.logback.LokiJavaHttpAppender">
+    <!-- define appender settings here -->
+    <encoder class="com.github.loki4j.logback.JsonEncoder">
+        <!-- define encoder settings here -->
+    </encoder>
+</appender>
+
+<root level="DEBUG">
+    <appender-ref ref="LOKI" />
+</root>
+```
+
+<!--ProtobufEncoder-->
+
+```xml
+<appender name="LOKI" class="com.github.loki4j.logback.LokiJavaHttpAppender">
+    <!-- define appender settings here -->
+    <encoder class="com.github.loki4j.logback.ProtobufEncoder">
+        <!-- define encoder settings here -->
+    </encoder>
+</appender>
+
+<root level="DEBUG">
+    <appender-ref ref="LOKI" />
+</root>
+```
+
+<!--END_DOCUSAURUS_CODE_TABS-->
+
+We are going to describe available encoder settings in the next sections.
+
+## Label settings
 
 ```xml
 <encoder class="com.github.loki4j.logback.JsonEncoder">
@@ -24,6 +72,16 @@ Below is the complete `JsonEncoder` configuration reference with default values:
         <!-- If false, you should take care of proper formatting -->
         <nopex>true</nopex>
     </label>
+    <!-- If you use only one label for all log records, you can -->
+    <!-- set this flag to true and save some CPU time on grouping records by label -->
+    <staticLabels>false</staticLabels>
+</encoder>
+```
+
+## Message settings
+
+```xml
+<encoder class="com.github.loki4j.logback.JsonEncoder">
     <message>
         <!-- Logback pattern to use for log record's message -->
         <pattern>l=%level h=${HOSTNAME} c=%logger{20} t=%thread | %msg %ex</pattern>
@@ -32,16 +90,12 @@ Below is the complete `JsonEncoder` configuration reference with default values:
     <!-- If false, records will be sent to Loki in arrival order -->
     <!-- Enable this if you see 'entry out of order' error from Loki -->
     <sortByTime>false</sortByTime>
-    <!-- If you use only one label for all log records, you can -->
-    <!-- set this flag to true and save some CPU time on grouping records by label -->
-    <staticLabels>false</staticLabels>
 </encoder>
 ```
 
 ## ProtobufEncoder
 
-`ProtobufEncoder` converts log batches into Protobuf format specified by Loki API.
-This encoder requires you to add Protobuf-related dependencies to your project.
+`ProtobufEncoder` requires you to add Protobuf-related dependencies to your project.
 
 Maven:
 
@@ -64,25 +118,3 @@ Gradle:
 compile 'com.google.protobuf:protobuf-java:3.12.4'
 compile 'org.xerial.snappy:snappy-java:1.1.8'
 ```
-
-Example configuration using `ProtobufEncoder`:
-
-```xml
-<appender name="LOKI" class="com.github.loki4j.logback.LokiJavaHttpAppender">
-    <url>http://localhost:3100/loki/api/v1/push</url>
-    <batchSize>100</batchSize>
-    <batchTimeoutMs>10000</batchTimeoutMs>
-    <encoder class="com.github.loki4j.logback.ProtobufEncoder">
-        <label>
-            <pattern>app=my-app,host=${HOSTNAME},level=%level</pattern>
-        </label>
-        <message>
-            <pattern>l=%level h=${HOSTNAME} c=%logger{20} t=%thread | %msg %ex</pattern>
-        </message>
-        <sortByTime>true</sortByTime>
-    </encoder>
-</appender>
-```
-
-For complete list of properties available, please refer to [JsonEncoder](#jsonencoder)
-as these two encoders have the same set of properties at the moment.
