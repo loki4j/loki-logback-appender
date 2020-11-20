@@ -2,11 +2,13 @@ name: docs
 
 on:
   push:
-    # Sequence of patterns matched against refs/heads
-    branches:    
+    branches:
       # Push events on main branch
       - main
       - microsite
+    paths:
+      # Trigger only if docs changed
+      - 'docs/**'
 
 jobs:
   build:
