@@ -4,7 +4,7 @@ First off, thanks for taking the time to contribute!
 
 1. Fork the project to your GitHub account using fork button in right upper
 corner of GitHub UI.
-1. Make sure the project compiles and tests pass (see [Build section](#build-and-test-the-project)).
+1. Make sure the project compiles and tests pass.
 1. Create a new git branch with brief and meaningful name that describes the changes
 you want to make.
 1. Check if your changes are covered by unit tests, add new unit tests if necessary.
@@ -18,18 +18,3 @@ Please follow the guideline below for your PRs:
 - Use the imperative mood ("Move cursor to..." not "Moves cursor to...")
 - Limit the title to 72 characters or less
 - Reference issues and pull requests liberally in the description
-
-
-## Build and test the project
-
-Please make sure the following software is installed on you machine
-so you can build and test the project:
-
-- Java 11 or later
-- Gradle 6.7 or later
-
-Check out the project to the directory on you local machine and run:
-
-```sh
-gradle check
-```

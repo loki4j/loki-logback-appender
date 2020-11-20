@@ -18,6 +18,20 @@ If you are interested in this project, please drop a :star:!
 
 Please start with the [Contribution guidelines](CONTRIBUTING.md).
 
+## Building and testing the project
+
+Please make sure the following software is installed on you machine
+so you can build and test the project:
+
+- Java 11 or later
+- Gradle 6.7 or later
+
+Check out the project to the directory on you local machine and run:
+
+```sh
+gradle check
+```
+
 ## Production readiness
 
 This project is in active development stage.
