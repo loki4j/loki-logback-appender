@@ -5,7 +5,6 @@ on:
     branches:
       # Push events on main branch
       - main
-      - microsite
     paths:
       # Trigger only if docs changed
       - 'docs/**'
@@ -26,4 +25,4 @@ jobs:
           git config --global user.email "docs-publisher@loki4j"
           echo "machine github.com login ${GITHUB_ACTOR} password ${{ secrets.GITHUB_TOKEN }}" > ~/.netrc
           cd docs/docus/website
-          npm install && GIT_USER="${GITHUB_ACTOR}" CURRENT_BRANCH=microsite npm run publish-gh-pages
+          npm install && GIT_USER="${GITHUB_ACTOR}" CURRENT_BRANCH=main npm run publish-gh-pages
