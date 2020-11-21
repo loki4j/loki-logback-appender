@@ -1,6 +1,8 @@
-Loki4j aims to be the fastest and the most lightweight implementation of 
-[Logback](http://logback.qos.ch/) appender for [Loki](https://grafana.com/oss/loki/).
-This project is unofficial and community-driven.
+Loki4j is the simplest way to store logs from your Java application
+to [Loki](https://grafana.com/oss/loki/) and to connect them with all other metrics
+using [Garafana](https://grafana.com/oss/grafana/) dashboards.
+No extra tools needed, just add Loki4j appender to your [Logback](http://logback.qos.ch/)
+configuration and enjoy.
 
 ### Quick Start
 
