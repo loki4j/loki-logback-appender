@@ -32,6 +32,7 @@ dependencies {
     testImplementation 'com.google.protobuf:protobuf-java:3.12.4'
     testImplementation 'org.xerial.snappy:snappy-java:1.1.8'
     testImplementation 'org.apache.httpcomponents:httpclient:4.5.13'
+    testImplementation 'com.fasterxml.jackson.core:jackson-databind:2.10.0'
 }
 
 sourceCompatibility = 11
@@ -39,6 +40,12 @@ sourceCompatibility = 11
 compileJava {
     sourceCompatibility = 11
     targetCompatibility = 11
+}
+
+test {
+    useJUnit {
+        excludeCategories 'com.github.loki4j.SlowTests'
+    }
 }
 
 java {

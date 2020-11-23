@@ -2,9 +2,11 @@ package com.github.loki4j.logback;
 
 import java.io.IOException;
 import java.net.InetSocketAddress;
+import java.time.Instant;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.concurrent.CompletableFuture;
+import java.util.concurrent.ThreadLocalRandom;
 import java.util.concurrent.locks.ReentrantLock;
 import java.util.function.Consumer;
 
@@ -124,6 +126,70 @@ public class Generators {
         var message = new AbstractLoki4jEncoder.MessageCfg();
         message.setPattern(pattern);
         return message;
+    }
+
+    public static ILoggingEvent[] generateEvents(int maxMessages, int maxWords) {
+         var events = new ArrayList<ILoggingEvent>(maxMessages);
+         var time = Instant.now().minusMillis(maxMessages).toEpochMilli();
+
+        for (int i = 0; i < maxMessages; i++) {
+            ThreadLocalRandom rnd = ThreadLocalRandom.current();
+            double lev = rnd.nextDouble();
+            String msg = genMessage(maxWords);
+            if (lev < 0.7)
+                events.add(loggingEvent(
+                    time + i,
+                    Level.INFO,
+                    "test.TestApp",
+                    "thread-" + (i % 8),
+                    String.format("#%s - %s", i, msg),
+                    null));
+            else if (lev < 0.8)
+            events.add(loggingEvent(
+                time + i,
+                Level.DEBUG,
+                "test.TestApp",
+                "thread-" + (i % 8),
+                String.format("#%s - %s", i, msg),
+                null));
+            else if (lev < 0.9)
+            events.add(loggingEvent(
+                time + i,
+                Level.WARN,
+                "test.TestApp",
+                "thread-" + (i % 8),
+                String.format("#%s - %s", i, msg),
+                null));
+            else
+            events.add(loggingEvent(
+                time + i,
+                Level.ERROR,
+                "test.TestApp",
+                "thread-" + (i % 8),
+                String.format("#%s - %s", i, "Error occured"),
+                exception(msg)));
+        }
+
+        return events.toArray(new ILoggingEvent[0]);
+    }
+
+    private static String genMessage(int maxWords) {
+        ThreadLocalRandom rnd = ThreadLocalRandom.current();
+
+        StringBuilder msg = new StringBuilder();
+        int words = rnd.nextInt(1, maxWords);
+        for (int i = 0; i < words; i++) {
+            int letters = rnd.nextInt(1, 20);
+            for (int j = 0; j < letters; j++) {
+                msg.append(rnd.nextFloat() < 0.1
+                    ? (char)('A' + rnd.nextInt('Z' - 'A'))
+                    : (char)('a' + rnd.nextInt('z' - 'a')));
+            }
+            msg.append(rnd.nextFloat() < 0.05
+                ? '\n'
+                : ' ');
+        }
+        return msg.toString();
     }
 
     public static ILoggingEvent loggingEvent(
