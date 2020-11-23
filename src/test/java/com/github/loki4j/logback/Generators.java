@@ -42,6 +42,45 @@ public class Generators {
 		}
     }
 
+    public static LokiJavaHttpAppender javaHttpAppender(String url) {
+        var appender = new LokiJavaHttpAppender();
+
+        appender.setUrl(url);
+        appender.setConnectionTimeoutMs(1000L);
+        appender.setRequestTimeoutMs(500L);
+        appender.setContext(new LoggerContext());
+        appender.setVerbose(true);
+
+        return appender;
+    }
+
+    public static LokiApacheHttpAppender apacheHttpAppender(String url) {
+        var appender = new LokiApacheHttpAppender();
+
+        appender.setUrl(url);
+        appender.setConnectionTimeoutMs(1000L);
+        appender.setRequestTimeoutMs(500L);
+        appender.setContext(new LoggerContext());
+        appender.setVerbose(true);
+
+        return appender;
+    }
+
+    public static JsonEncoder jsonEncoder(boolean staticLabels, String testLabel) {
+        var encoder = new JsonEncoder();
+        encoder.setStaticLabels(staticLabels);
+        encoder.setLabel(labelCfg("test=" + testLabel + ",level=%level,app=my-app", ",", "=", true));
+        encoder.setSortByTime(true);
+        return encoder;
+    }
+
+    public static ProtobufEncoder protobufEncoder(boolean staticLabels, String testLabel) {
+        var encoder = new ProtobufEncoder();
+        encoder.setStaticLabels(staticLabels);
+        encoder.setLabel(labelCfg("test=" + testLabel + ",level=%level,app=my-app", ",", "=", true));
+        return encoder;
+    }
+
     public static void withAppender(AbstractLoki4jAppender appender, Consumer<AbstractLoki4jAppender> body) {
         appender.start();
         try {

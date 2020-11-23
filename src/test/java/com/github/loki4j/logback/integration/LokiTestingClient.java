@@ -1,5 +1,8 @@
 package com.github.loki4j.logback.integration;
 
+import static com.github.loki4j.logback.Generators.*;
+import static org.junit.Assert.*;
+
 import java.io.IOException;
 import java.net.URI;
 import java.net.URLEncoder;
@@ -9,14 +12,20 @@ import java.net.http.HttpResponse;
 import java.time.Duration;
 import java.util.List;
 import java.util.Map;
+import java.util.concurrent.atomic.AtomicReference;
 import java.util.stream.Collectors;
 
 import com.fasterxml.jackson.annotation.JsonIgnoreProperties;
 import com.fasterxml.jackson.core.JsonProcessingException;
 import com.fasterxml.jackson.databind.JsonMappingException;
 import com.fasterxml.jackson.databind.ObjectMapper;
+import com.github.loki4j.common.LogRecord;
+import com.github.loki4j.logback.AbstractLoki4jAppender;
+import com.github.loki4j.logback.AbstractLoki4jEncoder;
 
-public class LokiClient {
+import ch.qos.logback.classic.spi.ILoggingEvent;
+
+public class LokiTestingClient {
 
     private String urlQuery;
 
@@ -25,7 +34,7 @@ public class LokiClient {
 
     private ObjectMapper json = new ObjectMapper();
 
-    public LokiClient(String urlBase) {
+    public LokiTestingClient(String urlBase) {
         urlQuery = urlBase + "/query";
 
         client = HttpClient
@@ -69,6 +78,39 @@ public class LokiClient {
 
     public LokiResponse parseResponse(String res) throws JsonMappingException, JsonProcessingException {
         return json.readValue(res, LokiResponse.class);
+    }
+
+    public void testHttpSend(
+            String lbl,
+            ILoggingEvent[] events,
+            AbstractLoki4jAppender actualAppender,
+            AbstractLoki4jEncoder expectedEncoder) throws Exception {
+        var records = new LogRecord[events.length];
+        var reqStr = new AtomicReference<String>();
+
+        withAppender(actualAppender, appender -> {
+            for (int i = 0; i < events.length; i++) {
+                appender.doAppend(events[i]);
+                //try { Thread.sleep(5L); } catch (InterruptedException e1) { }
+            }
+            try { Thread.sleep(500L); } catch (InterruptedException e1) { }
+        });
+        withEncoder(expectedEncoder, encoder -> {
+            for (int i = 0; i < events.length; i++) {
+                records[i] = new LogRecord();
+                encoder.eventToRecord(events[i], records[i]);
+            }
+            reqStr.set(new String(encoder.encode(records)));
+        });
+
+        var req = parseRequest(reqStr.get());
+        var resp = parseResponse(queryRecords(lbl, events.length));
+        //System.out.println(req + "\n\n");
+        //System.out.println(resp);
+        assertEquals(lbl + " status", "success", resp.status);
+        assertEquals(lbl + " result type", "streams", resp.data.resultType);
+        assertEquals(lbl + " event count", req.streams.size(), resp.data.result.size());
+        assertEquals(lbl + " content", req.streams, resp.data.result);
     }
 
     public static class Stream {
