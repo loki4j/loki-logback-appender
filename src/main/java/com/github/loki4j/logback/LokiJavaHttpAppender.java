@@ -6,6 +6,10 @@ import java.net.http.HttpRequest;
 import java.net.http.HttpResponse;
 import java.time.Duration;
 import java.util.concurrent.CompletableFuture;
+import java.util.concurrent.ExecutorService;
+import java.util.concurrent.SynchronousQueue;
+import java.util.concurrent.ThreadPoolExecutor;
+import java.util.concurrent.TimeUnit;
 
 /**
  * Loki appender that is backed by Java standard {@link java.net.http.HttpClient HttpClient}
@@ -15,12 +19,20 @@ public class LokiJavaHttpAppender extends AbstractLoki4jAppender {
     private HttpClient client;
     private HttpRequest.Builder requestBuilder;
 
+    private ExecutorService internalHttpThreadPool;
+
     @Override
     protected void startHttp(String contentType) {
+        internalHttpThreadPool = new ThreadPoolExecutor(
+            0, Integer.MAX_VALUE,
+            getBatchTimeoutMs() * 5, TimeUnit.MILLISECONDS, // expire unused threads after 5 batch intervals
+            new SynchronousQueue<Runnable>(),
+            new LokiThreadFactory("loki-java-http-internal"));
+
         client = HttpClient
             .newBuilder()
             .connectTimeout(Duration.ofMillis(connectionTimeoutMs))
-            .executor(httpThreadPool)
+            .executor(internalHttpThreadPool)
             .build();
 
         requestBuilder = HttpRequest
@@ -32,19 +44,27 @@ public class LokiJavaHttpAppender extends AbstractLoki4jAppender {
 
     @Override
     protected void stopHttp() {
-        httpThreadPool.shutdown();
+        internalHttpThreadPool.shutdown();
     }
 
     @Override
     protected CompletableFuture<LokiResponse> sendAsync(byte[] batch) {
-        var request = requestBuilder
-            .copy()
-            .POST(HttpRequest.BodyPublishers.ofByteArray(batch))
-            .build();
+        // Java HttpClient natively supports async API
+        // But we have to use its sync API to preserve the ordering of batches
+        return CompletableFuture
+            .supplyAsync(() -> {
+                try {
+                    var request = requestBuilder
+                        .copy()
+                        .POST(HttpRequest.BodyPublishers.ofByteArray(batch))
+                        .build();
 
-        return client
-            .sendAsync(request, HttpResponse.BodyHandlers.ofString())
-            .thenApply(r -> new LokiResponse(r.statusCode(), r.body()));
+                    var response = client.send(request, HttpResponse.BodyHandlers.ofString());
+                    return new LokiResponse(response.statusCode(), response.body());
+                } catch (Exception e) {
+                    throw new RuntimeException("Error while sending batch to Loki", e);
+                }
+            }, httpThreadPool);
     }
 
 }
