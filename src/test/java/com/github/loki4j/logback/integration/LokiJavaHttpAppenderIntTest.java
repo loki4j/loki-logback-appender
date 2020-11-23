@@ -1,33 +1,21 @@
 package com.github.loki4j.logback.integration;
 
-import java.io.IOException;
-import java.net.URI;
-import java.net.URLEncoder;
-import java.net.http.HttpClient;
-import java.net.http.HttpRequest;
-import java.net.http.HttpResponse;
-import java.time.Duration;
+import static com.github.loki4j.logback.Generators.*;
+import static org.junit.Assert.*;
+
 import java.util.concurrent.atomic.AtomicReference;
 
-import com.fasterxml.jackson.databind.ObjectMapper;
 import com.github.loki4j.common.LogRecord;
 import com.github.loki4j.logback.AbstractLoki4jAppender;
+import com.github.loki4j.logback.AbstractLoki4jEncoder;
 import com.github.loki4j.logback.JsonEncoder;
-import com.github.loki4j.logback.Loki4jEncoder;
 import com.github.loki4j.logback.LokiApacheHttpAppender;
 import com.github.loki4j.logback.LokiJavaHttpAppender;
-import com.github.loki4j.logback.integration.LokiStructures.LokiRequest;
-import com.github.loki4j.logback.integration.LokiStructures.LokiResponse;
-
-import static com.github.loki4j.logback.Generators.*;
 
 import org.junit.AfterClass;
-import org.junit.Before;
 import org.junit.BeforeClass;
 import org.junit.Test;
 import org.junit.experimental.categories.Category;
-
-import static org.junit.Assert.*;
 
 import ch.qos.logback.classic.LoggerContext;
 
@@ -35,67 +23,39 @@ public class LokiJavaHttpAppenderIntTest {
 
     private static String urlBase = "http://localhost:3100/loki/api/v1";
     private static String urlPush = urlBase + "/push";
-    private static String urlQuery = urlBase + "/query";
-    private static HttpClient client;
-    private static HttpRequest.Builder requestBuilder;
+
+    private static LokiClient client;
 
     @BeforeClass
     public static void startMockLoki() {
-        client = HttpClient
-            .newBuilder()
-            .connectTimeout(Duration.ofMillis(5_000))
-            .build();
-
-        requestBuilder = HttpRequest
-            .newBuilder()
-            .timeout(Duration.ofMillis(1_000))
-            .uri(URI.create(urlQuery));
+        client = new LokiClient(urlBase);
     }
 
     @AfterClass
     public static void stopMockLoki() {
-        //mockLoki.stop();
+        client.close();
     }
 
-    @Before
-    public void resetMockLoki() {
-        //mockLoki.reset();
-    }
-
-    public static String queryRecords(String testLabel, int limit) {
-        try {
-            var query = URLEncoder.encode("{test=\"" + testLabel + "\"}", "utf-8");
-            var url = URI.create(String.format(
-                "%s?query=%s&limit=%s&direction=forward", urlQuery, query, limit));
-            //System.out.println(url);
-            var req = requestBuilder.copy()
-                .uri(url)
-                .GET()
-                .build();
-        
-            return 
-                client
-                    .send(req, HttpResponse.BodyHandlers.ofString())
-                    .body();
-        } catch (IOException | InterruptedException e) {
-            throw new RuntimeException(e);
-        }
-    }
-
-    private static AbstractLoki4jAppender javaHttpAppender(int batchSize, long batchTimeoutMs, Loki4jEncoder encoder) {
-        var appender = new LokiApacheHttpAppender(); //LokiJavaHttpAppender();
+    private static LokiJavaHttpAppender javaHttpAppender() {
+        var appender = new LokiJavaHttpAppender();
 
         appender.setUrl(urlPush);
         appender.setConnectionTimeoutMs(1000L);
         appender.setRequestTimeoutMs(500L);
-
         appender.setContext(new LoggerContext());
-        appender.setBatchSize(batchSize);
-        appender.setBatchTimeoutMs(batchTimeoutMs);
-        appender.setEncoder(encoder);
         appender.setVerbose(true);
-        appender.setProcessingThreads(1);
-        appender.setHttpThreads(1);
+
+        return appender;
+    }
+
+    private static LokiApacheHttpAppender apacheHttpAppender() {
+        var appender = new LokiApacheHttpAppender();
+
+        appender.setUrl(urlPush);
+        appender.setConnectionTimeoutMs(1000L);
+        appender.setRequestTimeoutMs(500L);
+        appender.setContext(new LoggerContext());
+        appender.setVerbose(true);
 
         return appender;
     }
@@ -111,22 +71,45 @@ public class LokiJavaHttpAppenderIntTest {
 
     @Test
     @Category({IntegrationTests.class})
-    public void testHttpSend() throws Exception {
-        var lbl = "httpSend";
-        var eventCount = 1000;
+    public void testApacheJsonFastSend() throws Exception {
+        var label = "testApacheJsonFastSend";
+        var appender = apacheHttpAppender();
+        appender.setBatchSize(10);
+        appender.setBatchTimeoutMs(1000);
+        appender.setEncoder(jsonEncoder(false, label));
+
+        testHttpSend(label, 1000, appender, jsonEncoder(false, label));
+    }
+
+    @Test
+    @Category({IntegrationTests.class})
+    public void testJavaJsonFastSend() throws Exception {
+        var label = "testJavaJsonFastSend";
+        var appender = javaHttpAppender();
+        appender.setBatchSize(10);
+        appender.setBatchTimeoutMs(1000);
+        appender.setEncoder(jsonEncoder(false, label));
+
+        testHttpSend(label, 1000, appender, jsonEncoder(false, label));
+    }
+
+    private void testHttpSend(
+            String lbl,
+            int eventCount,
+            AbstractLoki4jAppender actualAppender,
+            AbstractLoki4jEncoder expectedEncoder) throws Exception {
         var events = generateEvents(eventCount, 10);
         var records = new LogRecord[events.length];
         var reqStr = new AtomicReference<String>();
 
-        var mapper = new ObjectMapper();
-        withAppender(javaHttpAppender(10, 1000L, jsonEncoder(false, lbl)), appender -> {
+        withAppender(actualAppender, appender -> {
             for (int i = 0; i < events.length; i++) {
                 appender.doAppend(events[i]);
                 //try { Thread.sleep(5L); } catch (InterruptedException e1) { }
             }
             try { Thread.sleep(500L); } catch (InterruptedException e1) { }
         });
-        withEncoder(jsonEncoder(false, lbl), encoder -> {
+        withEncoder(expectedEncoder, encoder -> {
             for (int i = 0; i < events.length; i++) {
                 records[i] = new LogRecord();
                 encoder.eventToRecord(events[i], records[i]);
@@ -134,14 +117,14 @@ public class LokiJavaHttpAppenderIntTest {
             reqStr.set(new String(encoder.encode(records)));
         });
 
-        var req = mapper.readValue(reqStr.get(), LokiRequest.class);
-        var resp = mapper.readValue(queryRecords(lbl, eventCount), LokiResponse.class);
+        var req = client.parseRequest(reqStr.get());
+        var resp = client.parseResponse(client.queryRecords(lbl, eventCount));
         //System.out.println(req + "\n\n");
         //System.out.println(resp);
-        assertEquals("http send", "success", resp.status);
-        assertEquals("http send", "streams", resp.data.resultType);
-        assertEquals("http send size", req.streams.size(), resp.data.result.size());
-        assertEquals("http send content", req.streams, resp.data.result);
+        assertEquals(lbl + " status", "success", resp.status);
+        assertEquals(lbl + " result type", "streams", resp.data.resultType);
+        assertEquals(lbl + " event count", req.streams.size(), resp.data.result.size());
+        assertEquals(lbl + " content", req.streams, resp.data.result);
     }
-    
+
 }
