@@ -111,6 +111,8 @@ const siteConfig = {
   // template. For example, if you need your repo's URL...
   repoUrl: ghUrl,
   startDoc: defaultDoc,
+
+  artifactVersion: '0.3.1',
 };
 
 module.exports = siteConfig;
