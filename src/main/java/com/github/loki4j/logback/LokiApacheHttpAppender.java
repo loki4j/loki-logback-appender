@@ -2,11 +2,11 @@ package com.github.loki4j.logback;
 
 import java.io.IOException;
 import java.util.concurrent.CompletableFuture;
+import java.util.concurrent.TimeUnit;
 import java.util.function.Function;
 
 import org.apache.http.client.config.RequestConfig;
 import org.apache.http.client.methods.HttpPost;
-import org.apache.http.config.SocketConfig;
 import org.apache.http.entity.ByteArrayEntity;
 import org.apache.http.impl.client.CloseableHttpClient;
 import org.apache.http.impl.client.HttpClients;
@@ -19,31 +19,30 @@ import org.apache.http.util.EntityUtils;
 public class LokiApacheHttpAppender extends AbstractLoki4jAppender {
 
     /**
-     * Max number of HTTP connections setting for HttpClient
+     * Maximum number of HTTP connections setting for HttpClient
      */
-    private int maxConnections = 100;
+    private int maxConnections = 1;
 
     /**
-     * Keep-alive setting for HttpClient
+     * Maximum life span of persistent connections for HttpClient
      */
-    private boolean keepAlive = true;
+    private long connectionTtlMs = 30_000;
 
     private CloseableHttpClient client;
     private Function<byte[], HttpPost> requestBuilder;
 
     @Override
     protected void startHttp(String contentType) {
+        var cm = new PoolingHttpClientConnectionManager(connectionTtlMs, TimeUnit.MILLISECONDS);
+        cm.setMaxTotal(maxConnections);
+        cm.setDefaultMaxPerRoute(maxConnections);
+
         client = HttpClients
             .custom()
-            .setConnectionManager(new PoolingHttpClientConnectionManager())
-            .setMaxConnTotal(maxConnections)
-            .setDefaultSocketConfig(SocketConfig
-                .custom()
-                .setSoKeepAlive(keepAlive)
-                .setSoTimeout((int)connectionTimeoutMs)
-                .build())
+            .setConnectionManager(cm)
             .setDefaultRequestConfig(RequestConfig
                 .custom()
+                .setSocketTimeout((int)connectionTimeoutMs)
                 .setConnectTimeout((int)connectionTimeoutMs)
                 .setConnectionRequestTimeout((int)requestTimeoutMs)
                 .build())
@@ -81,5 +80,13 @@ public class LokiApacheHttpAppender extends AbstractLoki4jAppender {
                 }
             }, httpThreadPool);
     }
-    
+
+    public void setMaxConnections(int maxConnections) {
+        this.maxConnections = maxConnections;
+    }
+
+    public void setConnectionTtlMs(long connectionTtlMs) {
+        this.connectionTtlMs = connectionTtlMs;
+    }
+
 }
