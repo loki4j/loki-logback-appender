@@ -36,7 +36,7 @@ public class FastSendTest {
         appender.setEncoder(jsonEncoder(false, label));
 
         var events = generateEvents(1000, 10);
-        client.testHttpSend(label, events, appender, jsonEncoder(false, label));
+        client.testHttpSend(label, events, appender, jsonEncoder(false, label), 0L);
 
         assertTrue(true);
     }
@@ -51,7 +51,7 @@ public class FastSendTest {
         appender.setEncoder(protobufEncoder(false, label));
 
         var events = generateEvents(1000, 10);
-        client.testHttpSend(label, events, appender, jsonEncoder(false, label));
+        client.testHttpSend(label, events, appender, jsonEncoder(false, label), 0L);
     }
 
     @Test
@@ -64,7 +64,7 @@ public class FastSendTest {
         appender.setEncoder(protobufEncoder(false, label));
 
         var events = generateEvents(1000, 10);
-        client.testHttpSend(label, events, appender, jsonEncoder(false, label));
+        client.testHttpSend(label, events, appender, jsonEncoder(false, label), 0L);
     }
 
     @Test
@@ -77,7 +77,7 @@ public class FastSendTest {
         appender.setEncoder(jsonEncoder(false, label));
 
         var events = generateEvents(1000, 10);
-        client.testHttpSend(label, events, appender, jsonEncoder(false, label));
+        client.testHttpSend(label, events, appender, jsonEncoder(false, label), 0L);
     }
 
 }
