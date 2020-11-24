@@ -120,8 +120,8 @@ However, there are some client-specific settings with their default values:
 <appender name="LOKI" class="com.github.loki4j.logback.LokiApacheHttpAppender">
     ...
     <!-- Max number of HTTP connections setting for HttpClient -->
-    <maxConnections>100</maxConnections>
-    <!-- Keep-alive setting for HttpClient -->
-    <keepAlive>true</keepAlive>
+    <maxConnections>1</maxConnections>
+    <!-- Maximum life span of persistent connections for HttpClient -->
+    <connectionTtlMs>30000</connectionTtlMs>
 </appender>
 ```
