@@ -26,6 +26,16 @@ public class ConcurrentBatchBufferTest {
     }
 
     @Test
+    public void testAddBatch1Int() {
+        var cbb = new ConcurrentBatchBuffer<Integer, Integer>(1, () -> 0, (i, e) -> i);
+        var emptyArray = new Integer[0];
+
+        var buf = cbb.add(1, emptyArray);
+        assertEquals("Batch is ready", 1, buf.length);
+        assertArrayEquals("Correct elements in batch", new Integer[] {1}, buf);
+    }
+
+    @Test
     public void testDrainForce() {
         var cbb = new ConcurrentBatchBuffer<Integer, Integer>(10, () -> 0, (i, e) -> i);
         var emptyArray = new Integer[0];
