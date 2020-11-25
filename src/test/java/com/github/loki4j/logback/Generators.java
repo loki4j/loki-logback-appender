@@ -282,7 +282,7 @@ public class Generators {
                 fs[i] = appender.appendAsync(events[i]);
             }
             try {
-                CompletableFuture.allOf(fs).get(5, TimeUnit.SECONDS);
+                CompletableFuture.allOf(fs).get(120, TimeUnit.SECONDS);
             } catch (Exception e) {
                 throw new RuntimeException("Error while waiting for futures", e);
             }
