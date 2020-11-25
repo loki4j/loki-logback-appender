@@ -88,13 +88,7 @@ public class LokiTestingClient {
         var records = new LogRecord[events.length];
         var reqStr = new AtomicReference<String>();
 
-        withAppender(actualAppender, appender -> {
-            for (int i = 0; i < events.length; i++) {
-                appender.doAppend(events[i]);
-                //try { Thread.sleep(5L); } catch (InterruptedException e1) { }
-            }
-            try { Thread.sleep(500L); } catch (InterruptedException e1) { }
-        });
+        withAppender(actualAppender, a -> a.appendAndWait(events));
         withEncoder(expectedEncoder, encoder -> {
             for (int i = 0; i < events.length; i++) {
                 records[i] = new LogRecord();

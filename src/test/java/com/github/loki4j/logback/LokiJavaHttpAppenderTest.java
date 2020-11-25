@@ -57,15 +57,13 @@ public class LokiJavaHttpAppenderTest {
 
     @Test
     public void testHttpSend() {
-        withAppender(javaHttpAppender(testPort, 3, 1000L), appender -> {
-            appender.append(events[0]);
-            appender.append(events[1]);
+        withAppender(javaHttpAppender(testPort, 3, 1000L), a -> {
+            a.appendAndWait(events[0], events[1]);
             assertTrue("no batches before batchSize reached", mockLoki.lastBatch == null);
 
-            appender.append(events[2]);
-            try { Thread.sleep(500L); } catch (InterruptedException e1) { }
+            a.appendAndWait(events[2]);
             assertEquals("http send", expected, new String(mockLoki.lastBatch));
         });
     }
-    
+
 }
