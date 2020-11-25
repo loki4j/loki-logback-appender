@@ -1,0 +1,23 @@
+name: integration
+
+on:
+  pull_request:
+    paths-ignore:
+      # Do not trigger if docs changed
+      - 'docs/**'
+
+jobs:
+  unit-tests:
+    runs-on: ubuntu-latest
+    strategy:
+      matrix:
+        jdk: [11, 15]
+
+    steps:
+      - uses: actions/checkout@v2
+      - name: Set up JDK
+        uses: actions/setup-java@v1
+        with:
+          java-version: ${{ matrix.jdk }}
+      - name: Build with Gradle
+        run: ./gradlew check
