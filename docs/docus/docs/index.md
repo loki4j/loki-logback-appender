@@ -15,7 +15,7 @@ For Maven project add the following dependency to your `pom.xml`:
 <dependency>
     <groupId>com.github.loki4j</groupId>
     <artifactId>loki-logback-appender</artifactId>
-    <version>0.3.1</version>
+    <version>%version%</version>
 </dependency>
 ```
 <!--Java 8-->
@@ -24,7 +24,7 @@ For Maven project add the following dependency to your `pom.xml`:
 <dependency>
     <groupId>com.github.loki4j</groupId>
     <artifactId>loki-logback-appender-jdk8</artifactId>
-    <version>0.3.1</version>
+    <version>%version%</version>
 </dependency>
 ```
 <!--END_DOCUSAURUS_CODE_TABS-->
@@ -35,12 +35,12 @@ For Gradle project add the following dependency to your `build.gradle`:
 <!--Java 11+-->
 
 ```groovy
-implementation 'com.github.loki4j:loki-logback-appender:0.3.1'
+implementation 'com.github.loki4j:loki-logback-appender:%version%'
 ```
 <!--Java 8-->
 
 ```groovy
-implementation 'com.github.loki4j:loki-logback-appender-jdk8:0.3.1'
+implementation 'com.github.loki4j:loki-logback-appender-jdk8:%version%'
 ```
 <!--END_DOCUSAURUS_CODE_TABS-->
 

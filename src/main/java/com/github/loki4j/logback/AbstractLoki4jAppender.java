@@ -222,6 +222,9 @@ public abstract class AbstractLoki4jAppender extends UnsynchronizedAppenderBase<
         this.batchSize = batchSize;
     }
 
+    public long getBatchTimeoutMs() {
+        return batchTimeoutMs;
+    }
     public void setBatchTimeoutMs(long batchTimeoutMs) {
         this.batchTimeoutMs = batchTimeoutMs;
     }
@@ -234,6 +237,9 @@ public abstract class AbstractLoki4jAppender extends UnsynchronizedAppenderBase<
         this.processingThreads = processingThreads;
     }
 
+    public int getHttpThreads() {
+        return httpThreads;
+    }
     public void setHttpThreads(int httpThreads) {
         this.httpThreads = httpThreads;
     }
