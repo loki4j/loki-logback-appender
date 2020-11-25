@@ -20,7 +20,7 @@ public class ConcurrentBatchBuffer<I, E> {
     private BiFunction<I, E, E> transformer;
 
     public ConcurrentBatchBuffer(int capacity, Supplier<E> factory, BiFunction<I, E, E> transformer) {
-        if (capacity <= 1)
+        if (capacity < 1)
             throw new IllegalArgumentException("The capacity of the buffer should be at least 1 element");
 
         this.index = 0;

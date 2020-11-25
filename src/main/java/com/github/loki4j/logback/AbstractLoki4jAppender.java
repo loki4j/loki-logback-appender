@@ -142,6 +142,10 @@ public abstract class AbstractLoki4jAppender extends UnsynchronizedAppenderBase<
 
     @Override
     protected void append(ILoggingEvent event) {
+        appendAsync(event);
+    }
+
+    protected final CompletableFuture<Void> appendAsync(ILoggingEvent event) {
         try {
             event.prepareForDeferredProcessing();
         } catch (RuntimeException e) {
@@ -150,7 +154,9 @@ public abstract class AbstractLoki4jAppender extends UnsynchronizedAppenderBase<
 
         var batch = buffer.add(event, ZERO_EVENTS);
         if (batch.length > 0)
-            handleBatchAsync(batch);
+            return handleBatchAsync(batch).thenApply(r -> null);
+        else
+            return CompletableFuture.completedFuture(null);
     }
 
     protected abstract void startHttp(String contentType);
@@ -216,6 +222,9 @@ public abstract class AbstractLoki4jAppender extends UnsynchronizedAppenderBase<
         this.batchSize = batchSize;
     }
 
+    public long getBatchTimeoutMs() {
+        return batchTimeoutMs;
+    }
     public void setBatchTimeoutMs(long batchTimeoutMs) {
         this.batchTimeoutMs = batchTimeoutMs;
     }
@@ -228,6 +237,9 @@ public abstract class AbstractLoki4jAppender extends UnsynchronizedAppenderBase<
         this.processingThreads = processingThreads;
     }
 
+    public int getHttpThreads() {
+        return httpThreads;
+    }
     public void setHttpThreads(int httpThreads) {
         this.httpThreads = httpThreads;
     }

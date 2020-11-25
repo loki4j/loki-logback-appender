@@ -35,7 +35,7 @@ public class LargeBatchSendTest {
         appender.setEncoder(jsonEncoder(false, label));
 
         var events = generateEvents(1000, 2000);
-        client.testHttpSend(label, events, appender, jsonEncoder(false, label), 0L);
+        client.testHttpSend(label, events, appender, jsonEncoder(false, label));
 
         assertTrue(true);
     }

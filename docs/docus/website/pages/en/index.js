@@ -95,7 +95,9 @@ class Index extends React.Component {
       </Container>
     );
 
-    const indexMd = fs.readFileSync('../docs/index.md', 'utf-8');
+    const indexMd = fs
+        .readFileSync('../docs/index.md', 'utf-8')
+        .replace(/%version%/g, siteConfig.artifactVersion);
     const IndexContent = () => (
       <div
         className="productShowcaseSection paddingBottom"

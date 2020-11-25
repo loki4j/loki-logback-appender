@@ -74,6 +74,12 @@ jacocoTestReport {
     }
 }
 
+task integTests(type: Test) {
+    useJUnit {
+        includeCategories 'com.github.loki4j.logback.integration.IntegrationTests'
+    }
+}
+
 publishing {
     publications {
         mavenJava(MavenPublication) {

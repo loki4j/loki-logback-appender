@@ -7,6 +7,7 @@ import java.util.ArrayList;
 import java.util.List;
 import java.util.concurrent.CompletableFuture;
 import java.util.concurrent.ThreadLocalRandom;
+import java.util.concurrent.TimeUnit;
 import java.util.concurrent.locks.ReentrantLock;
 import java.util.function.Consumer;
 
@@ -66,6 +67,19 @@ public class Generators {
         return appender;
     }
 
+    public static DummyLoki4jAppender dummyAppender(
+        int batchSize,
+        long batchTimeoutMs,
+        Loki4jEncoder encoder) {
+        var appender = new DummyLoki4jAppender();
+        appender.setContext(new LoggerContext());
+        appender.setBatchSize(batchSize);
+        appender.setBatchTimeoutMs(batchTimeoutMs);
+        appender.setEncoder(encoder);
+        appender.setVerbose(true);
+        return appender;
+    }
+
     public static JsonEncoder jsonEncoder(boolean staticLabels, String testLabel) {
         var encoder = new JsonEncoder();
         encoder.setStaticLabels(staticLabels);
@@ -81,26 +95,16 @@ public class Generators {
         return encoder;
     }
 
-    public static void withAppender(AbstractLoki4jAppender appender, Consumer<AbstractLoki4jAppender> body) {
+    public static <T extends AbstractLoki4jAppender> void withAppender(
+            T appender,
+            Consumer<AppenderWrapper<T>> body) {
         appender.start();
+        var wrapper = new AppenderWrapper<>(appender);
         try {
-            body.accept(appender);
+            body.accept(wrapper);
         } finally {
             appender.stop();
         }
-    }
-
-    public static DummyLoki4jAppender dummyAppender(
-        int batchSize,
-        long batchTimeoutMs,
-        Loki4jEncoder encoder) {
-        var appender = new DummyLoki4jAppender();
-        appender.setContext(new LoggerContext());
-        appender.setBatchSize(batchSize);
-        appender.setBatchTimeoutMs(batchTimeoutMs);
-        appender.setEncoder(encoder);
-        appender.setVerbose(true);
-        return appender;
     }
 
     public static AbstractLoki4jEncoder defaultToStringEncoder() {
@@ -263,6 +267,27 @@ public class Generators {
         return r;
     }
 
+    public static class AppenderWrapper<T extends AbstractLoki4jAppender> {
+        private T appender;
+        public AppenderWrapper(T appender) {
+            this.appender = appender;
+        }
+        public void append(ILoggingEvent event) {
+            appender.append(event);
+        }
+        @SuppressWarnings("unchecked")
+        public void appendAndWait(ILoggingEvent... events) {
+            var fs = (CompletableFuture<Void>[]) new CompletableFuture[events.length];
+            for (int i = 0; i < events.length; i++) {
+                fs[i] = appender.appendAsync(events[i]);
+            }
+            try {
+                CompletableFuture.allOf(fs).get(120, TimeUnit.SECONDS);
+            } catch (Exception e) {
+                throw new RuntimeException("Error while waiting for futures", e);
+            }
+        }
+    }
 
     public static class DummyLoki4jAppender extends AbstractLoki4jAppender {
         public List<byte[]> batches = new ArrayList<>();
@@ -297,7 +322,7 @@ public class Generators {
                     lastBatch = is.readAllBytes();
                     batches.add(lastBatch);
                 }
-                httpExchange.sendResponseHeaders(204, 0);
+                httpExchange.sendResponseHeaders(204, -1);
             });
         }
 

@@ -27,7 +27,7 @@ public class SlowSendTest {
         client.close();
     }
 
-    @Test
+    //@Test
     @Category({IntegrationTests.class})
     public void testApacheJsonSlowSend() throws Exception {
         var events = generateEvents(10_000, 500);
@@ -44,7 +44,7 @@ public class SlowSendTest {
 
             
             try {
-                client.testHttpSend(label, events, appender, jsonEncoder(false, label), 100L);
+                //client.testHttpSend(label, events, appender, jsonEncoder(false, label), 100L);
             } catch (Exception e) {
                 new RuntimeException(e);
             }
@@ -64,7 +64,7 @@ public class SlowSendTest {
         appender.setBatchTimeoutMs(150_000);
         appender.setEncoder(jsonEncoder(false, label));
         
-        client.testHttpSend(label, events, appender, jsonEncoder(false, label), 1000L);
+        client.testHttpSend(label, events, appender, jsonEncoder(false, label));
     }
 
 }

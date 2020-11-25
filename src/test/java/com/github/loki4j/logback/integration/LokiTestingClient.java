@@ -12,7 +12,6 @@ import java.net.http.HttpResponse;
 import java.time.Duration;
 import java.util.List;
 import java.util.Map;
-import java.util.concurrent.ThreadLocalRandom;
 import java.util.concurrent.atomic.AtomicReference;
 import java.util.stream.Collectors;
 
@@ -85,20 +84,11 @@ public class LokiTestingClient {
             String lbl,
             ILoggingEvent[] events,
             AbstractLoki4jAppender actualAppender,
-            AbstractLoki4jEncoder expectedEncoder,
-            long betweenEventsTimeoutMs) throws Exception {
-        ThreadLocalRandom rnd = ThreadLocalRandom.current();
+            AbstractLoki4jEncoder expectedEncoder) throws Exception {
         var records = new LogRecord[events.length];
         var reqStr = new AtomicReference<String>();
 
-        withAppender(actualAppender, appender -> {
-            for (int i = 0; i < events.length; i++) {
-                appender.doAppend(events[i]);
-                if (betweenEventsTimeoutMs != 0L)
-                    try { Thread.sleep(rnd.nextLong(betweenEventsTimeoutMs)); } catch (InterruptedException e1) { }
-            }
-            try { Thread.sleep(1000_000L); } catch (InterruptedException e1) { }
-        });
+        withAppender(actualAppender, a -> a.appendAndWait(events));
         withEncoder(expectedEncoder, encoder -> {
             for (int i = 0; i < events.length; i++) {
                 records[i] = new LogRecord();
