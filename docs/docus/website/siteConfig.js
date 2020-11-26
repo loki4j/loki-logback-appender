@@ -26,9 +26,9 @@ const defaultDoc = 'appenders';
 const siteConfig = {
   title: 'Loki4j Logback', // Title for your website.
   tagline: 'Pure Java Logback appender for Grafana Loki',
-  url: 'https://loki4j.github.io/loki-logback-appender', // Your website URL
-  baseUrl: '/',
-  //baseUrl: '/loki-logback-appender/', // Base URL for your project */
+  url: 'https://loki4j.github.io', // Your website URL
+  //baseUrl: '/',
+  baseUrl: '/loki-logback-appender/', // Base URL for your project */
 
   // Used for publishing and more
   projectName: 'loki-logback-appender',
