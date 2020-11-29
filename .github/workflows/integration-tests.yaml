@@ -17,6 +17,8 @@ jobs:
         image: grafana/loki:1.6.1
         ports:
           - 3100:3100
+        options: >-
+          --entrypoint /usr/bin/loki -distributor.ingestion-rate-limit-mb=16 -distributor.ingestion-burst-size-mb=24 
 
     steps:
       - uses: actions/checkout@v2
