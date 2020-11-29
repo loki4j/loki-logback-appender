@@ -25,7 +25,13 @@ jobs:
         with:
           java-version: ${{ matrix.jdk }}
       - name: Build and Run Integration Tests
-        run: | 
+        run: |
           docker run --name loki -d -p 3100:3100 grafana/loki:1.6.1 -config.file=/etc/loki/local-config.yaml -distributor.ingestion-rate-limit-mb=16 -distributor.ingestion-burst-size-mb=24
+          sleep 5s
           ./gradlew check integTests
+          docker stop loki
+      - name: Pring Log
+        if: ${{ failure() }}
+        run: |
+          docker logs loki
           docker stop loki
