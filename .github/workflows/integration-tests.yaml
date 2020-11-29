@@ -12,6 +12,11 @@ jobs:
     strategy:
       matrix:
         jdk: [11, 15]
+    services:
+      loki:
+        image: grafana/loki:1.6.1
+        ports:
+          - 3100:3100
 
     steps:
       - uses: actions/checkout@v2
@@ -19,5 +24,5 @@ jobs:
         uses: actions/setup-java@v1
         with:
           java-version: ${{ matrix.jdk }}
-      - name: Build with Gradle
-        run: ./gradlew check
+      - name: Build and Run Integration Tests
+        run: ./gradlew check integTests
