@@ -45,6 +45,9 @@ compileJava {
 test {
     testLogging {
         events "failed"
+        showExceptions true
+        showCauses true
+        showStackTraces true
         exceptionFormat "full"
     }
     useJUnit {
