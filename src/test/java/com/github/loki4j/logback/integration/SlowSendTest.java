@@ -3,7 +3,9 @@ package com.github.loki4j.logback.integration;
 import static com.github.loki4j.logback.Generators.*;
 import static org.junit.Assert.*;
 
-import java.util.stream.Stream;
+import java.util.concurrent.CompletableFuture;
+import java.util.concurrent.ExecutorService;
+import java.util.concurrent.Executors;
 
 import org.junit.AfterClass;
 import org.junit.BeforeClass;
@@ -30,27 +32,38 @@ public class SlowSendTest {
     //@Test
     @Category({IntegrationTests.class})
     public void testApacheJsonSlowSend() throws Exception {
-        var events = generateEvents(10_000, 500);
+        var events = generateEvents(1000, 500);
 
-        var str = Stream.of(1, 2, 3, 4, 5, 6, 7, 8);
-        str.parallel().forEach(idx -> {
+        var parFactor = 8;
+        ExecutorService tp = Executors.newFixedThreadPool(parFactor);
+        var fs = new CompletableFuture[parFactor];
+        for (int i = 0; i < parFactor; i++) {
+            var idx = i;
             var label = "testApacheJsonSlowSend" + idx;
-            var appender = apacheHttpAppender(urlPush);
-            appender.setBatchSize(1000);
+            var appender = apacheHttpAppender(urlPush); //javaHttpAppender(urlPush); //
+            appender.setBatchSize(10);
             appender.setBatchTimeoutMs(150_000);
             appender.setEncoder(jsonEncoder(false, label));
-            //appender.setMaxConnections(100);
-            //appender.setHttpThreads(1);
 
-            
-            try {
-                //client.testHttpSend(label, events, appender, jsonEncoder(false, label), 100L);
-            } catch (Exception e) {
-                new RuntimeException(e);
-            }
-        });
-
-        assertTrue(true);
+            fs[i] = CompletableFuture
+                .supplyAsync(() -> {
+                    try {
+                        client.testHttpSend(
+                            label,
+                            events,
+                            appender,
+                            jsonEncoder(false, label),
+                            (idx + 1),
+                            (parFactor - idx) + 500L);
+                    } catch (Exception e) {
+                        throw new RuntimeException(e);
+                    }
+                    return "label";
+                }, tp);
+        }
+        for (int i = 0; i < fs.length; i++) {
+            assertEquals("label", fs[i].get());
+        }
     }
 
     @Test

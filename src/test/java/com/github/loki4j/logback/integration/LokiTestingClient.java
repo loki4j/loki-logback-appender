@@ -10,6 +10,7 @@ import java.net.http.HttpClient;
 import java.net.http.HttpRequest;
 import java.net.http.HttpResponse;
 import java.time.Duration;
+import java.util.Arrays;
 import java.util.List;
 import java.util.Map;
 import java.util.concurrent.atomic.AtomicReference;
@@ -85,10 +86,28 @@ public class LokiTestingClient {
             ILoggingEvent[] events,
             AbstractLoki4jAppender actualAppender,
             AbstractLoki4jEncoder expectedEncoder) throws Exception {
+        testHttpSend(lbl, events, actualAppender, expectedEncoder, events.length, 500L);
+    }
+
+    public void testHttpSend(
+            String lbl,
+            ILoggingEvent[] events,
+            AbstractLoki4jAppender actualAppender,
+            AbstractLoki4jEncoder expectedEncoder,
+            int chunkSize,
+            long chunkDelayMs) throws Exception {
         var records = new LogRecord[events.length];
         var reqStr = new AtomicReference<String>();
 
-        withAppender(actualAppender, a -> a.appendAndWait(events));
+        withAppender(actualAppender, a -> {
+            for (int i = 0; i < events.length; i += chunkSize) {
+                var chunk = Arrays.copyOfRange(events, i, Math.min(events.length, i + chunkSize));
+                //System.out.println(String.format("%s: %s + %s", Thread.currentThread().getName(), i, chunk.length));
+                a.appendAndWait(chunk);
+                if (chunkDelayMs > 0L)
+                    try { Thread.sleep(chunkDelayMs); } catch (InterruptedException e) { }
+            }
+        });
         withEncoder(expectedEncoder, encoder -> {
             for (int i = 0; i < events.length; i++) {
                 records[i] = new LogRecord();
