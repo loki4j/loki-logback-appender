@@ -43,6 +43,10 @@ compileJava {
 }
 
 test {
+    testLogging {
+        events "failed"
+        exceptionFormat "full"
+    }
     useJUnit {
         excludeCategories 'com.github.loki4j.SlowTests'
     }
