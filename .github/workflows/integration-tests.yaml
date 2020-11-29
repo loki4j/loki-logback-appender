@@ -12,11 +12,11 @@ jobs:
     strategy:
       matrix:
         jdk: [11, 15]
-    services:
-      loki:
-        image: grafana/loki:1.6.1 -distributor.ingestion-rate-limit-mb=16 -distributor.ingestion-burst-size-mb=24
-        ports:
-          - 3100:3100
+#    services:
+#      loki:
+#        image: grafana/loki:1.6.1 
+#        ports:
+#          - 3100:3100
 
     steps:
       - uses: actions/checkout@v2
@@ -25,4 +25,6 @@ jobs:
         with:
           java-version: ${{ matrix.jdk }}
       - name: Build and Run Integration Tests
-        run: ./gradlew check integTests
+        run: | 
+          docker run --name loki -p 3100:3100 grafana/loki:1.6.1 -config.file=/etc/loki/local-config.yaml -distributor.ingestion-rate-limit-mb=16 -distributor.ingestion-burst-size-mb=24
+          ./gradlew check integTests
