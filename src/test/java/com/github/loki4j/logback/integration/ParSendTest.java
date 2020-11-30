@@ -6,7 +6,7 @@ import static org.junit.Assert.*;
 import java.io.BufferedReader;
 import java.io.IOException;
 import java.io.InputStreamReader;
-import java.io.PrintWriter;
+import java.io.OutputStream;
 import java.net.Socket;
 import java.util.concurrent.CompletableFuture;
 import java.util.concurrent.ExecutorService;
@@ -160,11 +160,10 @@ public class ParSendTest {
                                 .append("Keep-Alive: timeout=5, max=1000\n")
                                 .append("Content-type: application/json\n")
                                 .append("Content-Length: " + body.get().length + "\n")
-                                .append("\n")
-                                .append(new String(body.get())).append('\n');
+                                .append('\n');
 
                             //System.out.println(batch.toString());
-                            var response = client.sendMessage(batch.toString());
+                            var response = client.sendMessage(batch.toString(), body.get());
                             //System.out.println(">>> " + idx + ": " + response);
                             assertTrue("Raw HTTP", response.startsWith("HTTP/1.1 204"));
                             //Thread.sleep((idx + 1) * 10);
@@ -184,19 +183,20 @@ public class ParSendTest {
 
     public static class DummyClient {
 	    private Socket clientSocket;
-	    private PrintWriter out;
+	    private OutputStream out;
 	    private BufferedReader in;
 	 
 	    public void startConnection(String ip, int port) throws Exception {
             clientSocket = new Socket(ip, port);
             clientSocket.setTcpNoDelay(true);
             clientSocket.setSoTimeout(30_000);
-	        out = new PrintWriter(clientSocket.getOutputStream(), true);
+	        out = clientSocket.getOutputStream(); //new PrintWriter(clientSocket.getOutputStream(), true);
 	        in = new BufferedReader(new InputStreamReader(clientSocket.getInputStream()));
 	    }
 	 
-	    public String sendMessage(String msg) throws IOException {
-            out.println(msg);
+	    public String sendMessage(String headers, byte[] body) throws IOException {
+            out.write(headers.getBytes("utf-8"));
+            out.write(body);
             var sb = new StringBuilder();
             String line;
             while ((line = in.readLine()) != null) {
