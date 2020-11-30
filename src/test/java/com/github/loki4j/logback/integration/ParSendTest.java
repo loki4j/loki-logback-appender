@@ -190,8 +190,7 @@ public class ParSendTest {
 	    public void startConnection(String ip, int port) throws Exception {
             clientSocket = new Socket(ip, port);
             clientSocket.setTcpNoDelay(true);
-            clientSocket.setSoTimeout(5000);
-            clientSocket.setKeepAlive(true);
+            clientSocket.setSoTimeout(30_000);
 	        out = new PrintWriter(clientSocket.getOutputStream(), true);
 	        in = new BufferedReader(new InputStreamReader(clientSocket.getInputStream()));
 	    }
