@@ -52,12 +52,12 @@ public class LokiTestingClient {
 
     }
 
-    public String queryRecords(String testLabel, int limit) {
+    public String queryRecords(String testLabel, int limit, String time) {
 
         try {
             var query = URLEncoder.encode("{test=\"" + testLabel + "\"}", "utf-8");
             var url = URI.create(String.format(
-                "%s?query=%s&limit=%s&direction=forward", urlQuery, query, limit));
+                "%s?query=%s&limit=%s&time=%s&direction=forward", urlQuery, query, limit, time));
             //System.out.println(url);
             var req = requestBuilder.copy()
                 .uri(url)
@@ -117,7 +117,9 @@ public class LokiTestingClient {
         });
 
         var req = parseRequest(reqStr.get());
-        var resp = parseResponse(queryRecords(lbl, events.length));
+        var lastIdx = records.length - 1;
+        var time = String.format("%s%06d", records[lastIdx].timestampMs + 100, records[lastIdx].nanos);
+        var resp = parseResponse(queryRecords(lbl, events.length, time));
         //System.out.println(req + "\n\n");
         //System.out.println(resp);
         assertEquals(lbl + " status", "success", resp.status);
