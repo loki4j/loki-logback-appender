@@ -188,9 +188,9 @@ public class ParSendTest {
 	 
 	    public void startConnection(String host, int port) throws Exception {
             clientSocket = new Socket(host, port);
-            clientSocket.setTcpNoDelay(true);
-            clientSocket.setSoTimeout(30_000);
-	        out = clientSocket.getOutputStream(); //new PrintWriter(clientSocket.getOutputStream(), true);
+            //clientSocket.setTcpNoDelay(true);
+            //clientSocket.setSoTimeout(30_000);
+	        out = clientSocket.getOutputStream();
 	        in = new BufferedReader(new InputStreamReader(clientSocket.getInputStream()));
 	    }
 	 
