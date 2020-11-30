@@ -40,7 +40,7 @@ public class ParSendTest {
     @Test
     @Category({IntegrationTests.class})
     public void testJavaJsonParSend() throws Exception {
-        var events = generateEvents(200, 500);
+        var events = generateEvents(500, 500);
 
         var parFactor = 8;
         ExecutorService tp = Executors.newFixedThreadPool(parFactor);
@@ -77,7 +77,7 @@ public class ParSendTest {
     @Test
     @Category({IntegrationTests.class})
     public void testApacheJsonParSend() throws Exception {
-        var events = generateEvents(200, 500);
+        var events = generateEvents(500, 500);
 
         var parFactor = 8;
         ExecutorService tp = Executors.newFixedThreadPool(parFactor);
@@ -140,7 +140,7 @@ public class ParSendTest {
                 .supplyAsync(() -> {
                     try {
                         var client = new DummyClient();
-                        client.startConnection("127.0.0.1", 3100);
+                        client.startConnection("localhost", 3100);
 
                         for (int j = 0; j < numBatches; j++) {
                             var events = generateEvents(3, 20);
@@ -186,8 +186,8 @@ public class ParSendTest {
 	    private OutputStream out;
 	    private BufferedReader in;
 	 
-	    public void startConnection(String ip, int port) throws Exception {
-            clientSocket = new Socket(ip, port);
+	    public void startConnection(String host, int port) throws Exception {
+            clientSocket = new Socket(host, port);
             clientSocket.setTcpNoDelay(true);
             clientSocket.setSoTimeout(30_000);
 	        out = clientSocket.getOutputStream(); //new PrintWriter(clientSocket.getOutputStream(), true);
