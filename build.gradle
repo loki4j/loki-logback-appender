@@ -32,6 +32,7 @@ dependencies {
     testImplementation 'com.google.protobuf:protobuf-java:3.12.4'
     testImplementation 'org.xerial.snappy:snappy-java:1.1.8'
     testImplementation 'org.apache.httpcomponents:httpclient:4.5.13'
+    testImplementation 'com.fasterxml.jackson.core:jackson-databind:2.10.0'
 }
 
 sourceCompatibility = 11
@@ -39,6 +40,19 @@ sourceCompatibility = 11
 compileJava {
     sourceCompatibility = 11
     targetCompatibility = 11
+}
+
+test {
+    testLogging {
+        events "failed"
+        showExceptions true
+        showCauses true
+        showStackTraces true
+        exceptionFormat "full"
+    }
+    useJUnit {
+        excludeCategories 'com.github.loki4j.SlowTests'
+    }
 }
 
 java {
@@ -56,6 +70,10 @@ protobuf {
   }
 }
 
+jacoco {
+    toolVersion = "0.8.6"
+}
+
 jacocoTestReport {
     reports {
         xml.enabled = true
@@ -64,6 +82,12 @@ jacocoTestReport {
         classDirectories.setFrom(files(classDirectories.files.collect {
             fileTree(dir: it, exclude: '**/protobuf/**')
         }))
+    }
+}
+
+task integTests(type: Test) {
+    useJUnit {
+        includeCategories 'com.github.loki4j.logback.integration.IntegrationTests'
     }
 }
 

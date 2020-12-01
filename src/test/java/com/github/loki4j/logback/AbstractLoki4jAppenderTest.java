@@ -11,7 +11,7 @@ import static com.github.loki4j.logback.Generators.*;
 
 public class AbstractLoki4jAppenderTest {
 
-    static ILoggingEvent[] events = new ILoggingEvent[] {
+    public static ILoggingEvent[] events = new ILoggingEvent[] {
         loggingEvent(
             100L,
             Level.INFO,

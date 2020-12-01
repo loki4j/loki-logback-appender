@@ -10,7 +10,7 @@ on:
       - 'docs/**'
 
 jobs:
-  build:
+  gen-docs:
     runs-on: ubuntu-latest
 
     steps:

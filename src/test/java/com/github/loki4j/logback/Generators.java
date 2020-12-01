@@ -2,9 +2,12 @@ package com.github.loki4j.logback;
 
 import java.io.IOException;
 import java.net.InetSocketAddress;
+import java.time.Instant;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.concurrent.CompletableFuture;
+import java.util.concurrent.ThreadLocalRandom;
+import java.util.concurrent.TimeUnit;
 import java.util.concurrent.locks.ReentrantLock;
 import java.util.function.Consumer;
 
@@ -40,13 +43,28 @@ public class Generators {
 		}
     }
 
-    public static void withAppender(AbstractLoki4jAppender appender, Consumer<AbstractLoki4jAppender> body) {
-        appender.start();
-        try {
-            body.accept(appender);
-        } finally {
-            appender.stop();
-        }
+    public static LokiJavaHttpAppender javaHttpAppender(String url) {
+        var appender = new LokiJavaHttpAppender();
+
+        appender.setUrl(url);
+        appender.setConnectionTimeoutMs(1000L);
+        appender.setRequestTimeoutMs(500L);
+        appender.setContext(new LoggerContext());
+        appender.setVerbose(true);
+
+        return appender;
+    }
+
+    public static LokiApacheHttpAppender apacheHttpAppender(String url) {
+        var appender = new LokiApacheHttpAppender();
+
+        appender.setUrl(url);
+        appender.setConnectionTimeoutMs(1000L);
+        appender.setRequestTimeoutMs(500L);
+        appender.setContext(new LoggerContext());
+        appender.setVerbose(true);
+
+        return appender;
     }
 
     public static DummyLoki4jAppender dummyAppender(
@@ -60,6 +78,33 @@ public class Generators {
         appender.setEncoder(encoder);
         appender.setVerbose(true);
         return appender;
+    }
+
+    public static JsonEncoder jsonEncoder(boolean staticLabels, String testLabel) {
+        var encoder = new JsonEncoder();
+        encoder.setStaticLabels(staticLabels);
+        encoder.setLabel(labelCfg("test=" + testLabel + ",level=%level,app=my-app", ",", "=", true));
+        encoder.setSortByTime(true);
+        return encoder;
+    }
+
+    public static ProtobufEncoder protobufEncoder(boolean staticLabels, String testLabel) {
+        var encoder = new ProtobufEncoder();
+        encoder.setStaticLabels(staticLabels);
+        encoder.setLabel(labelCfg("test=" + testLabel + ",level=%level,app=my-app", ",", "=", true));
+        return encoder;
+    }
+
+    public static <T extends AbstractLoki4jAppender> void withAppender(
+            T appender,
+            Consumer<AppenderWrapper<T>> body) {
+        appender.start();
+        var wrapper = new AppenderWrapper<>(appender);
+        try {
+            body.accept(wrapper);
+        } finally {
+            appender.stop();
+        }
     }
 
     public static AbstractLoki4jEncoder defaultToStringEncoder() {
@@ -126,6 +171,70 @@ public class Generators {
         return message;
     }
 
+    public static ILoggingEvent[] generateEvents(int maxMessages, int maxWords) {
+         var events = new ArrayList<ILoggingEvent>(maxMessages);
+         var time = Instant.now().minusMillis(maxMessages).toEpochMilli();
+
+        for (int i = 0; i < maxMessages; i++) {
+            ThreadLocalRandom rnd = ThreadLocalRandom.current();
+            double lev = rnd.nextDouble();
+            String msg = genMessage(maxWords);
+            if (lev < 0.7)
+                events.add(loggingEvent(
+                    time + i,
+                    Level.INFO,
+                    "test.TestApp",
+                    "thread-" + (i % 8),
+                    String.format("#%s - %s", i, msg),
+                    null));
+            else if (lev < 0.8)
+            events.add(loggingEvent(
+                time + i,
+                Level.DEBUG,
+                "test.TestApp",
+                "thread-" + (i % 8),
+                String.format("#%s - %s", i, msg),
+                null));
+            else if (lev < 0.9)
+            events.add(loggingEvent(
+                time + i,
+                Level.WARN,
+                "test.TestApp",
+                "thread-" + (i % 8),
+                String.format("#%s - %s", i, msg),
+                null));
+            else
+            events.add(loggingEvent(
+                time + i,
+                Level.ERROR,
+                "test.TestApp",
+                "thread-" + (i % 8),
+                String.format("#%s - %s", i, "Error occured"),
+                exception(msg)));
+        }
+
+        return events.toArray(new ILoggingEvent[0]);
+    }
+
+    private static String genMessage(int maxWords) {
+        ThreadLocalRandom rnd = ThreadLocalRandom.current();
+
+        StringBuilder msg = new StringBuilder();
+        int words = rnd.nextInt(1, maxWords);
+        for (int i = 0; i < words; i++) {
+            int letters = rnd.nextInt(1, 20);
+            for (int j = 0; j < letters; j++) {
+                msg.append(rnd.nextFloat() < 0.1
+                    ? (char)('A' + rnd.nextInt('Z' - 'A'))
+                    : (char)('a' + rnd.nextInt('z' - 'a')));
+            }
+            msg.append(rnd.nextFloat() < 0.05
+                ? '\n'
+                : ' ');
+        }
+        return msg.toString();
+    }
+
     public static ILoggingEvent loggingEvent(
             long timestamp,
             Level level,
@@ -158,6 +267,27 @@ public class Generators {
         return r;
     }
 
+    public static class AppenderWrapper<T extends AbstractLoki4jAppender> {
+        private T appender;
+        public AppenderWrapper(T appender) {
+            this.appender = appender;
+        }
+        public void append(ILoggingEvent event) {
+            appender.append(event);
+        }
+        @SuppressWarnings("unchecked")
+        public void appendAndWait(ILoggingEvent... events) {
+            var fs = (CompletableFuture<Void>[]) new CompletableFuture[events.length];
+            for (int i = 0; i < events.length; i++) {
+                fs[i] = appender.appendAsync(events[i]);
+            }
+            try {
+                CompletableFuture.allOf(fs).get(120, TimeUnit.SECONDS);
+            } catch (Exception e) {
+                throw new RuntimeException("Error while waiting for futures", e);
+            }
+        }
+    }
 
     public static class DummyLoki4jAppender extends AbstractLoki4jAppender {
         public List<byte[]> batches = new ArrayList<>();
@@ -192,7 +322,7 @@ public class Generators {
                     lastBatch = is.readAllBytes();
                     batches.add(lastBatch);
                 }
-                httpExchange.sendResponseHeaders(204, 0);
+                httpExchange.sendResponseHeaders(204, -1);
             });
         }
 
