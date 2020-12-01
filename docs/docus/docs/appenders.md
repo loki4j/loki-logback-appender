@@ -121,7 +121,8 @@ However, there are some client-specific settings with their default values:
     ...
     <!-- Maximum number of HTTP connections setting for HttpClient -->
     <maxConnections>1</maxConnections>
-    <!-- Maximum life span of persistent connections for HttpClient -->
-    <connectionTtlMs>30000</connectionTtlMs>
+    <!-- A duration of time which the connection can be safely kept idle for later reuse. -->
+    <!-- This value can not be greater than `server.http-idle-timeout` in your Loki config -->
+    <connectionKeepAliveMs>120000</connectionKeepAliveMs>
 </appender>
 ```
