@@ -1,16 +1,15 @@
 package com.github.loki4j.logback.performance;
 
-import static com.github.loki4j.logback.Generators.*;
-
 import java.util.ArrayList;
 import java.util.List;
+import java.util.concurrent.CompletableFuture;
+import java.util.concurrent.Executors;
 import java.util.function.Consumer;
-
-import ch.qos.logback.classic.spi.ILoggingEvent;
+import java.util.function.Supplier;
 
 public class Benchmarker {
 
-    private static long runBenchmark(ILoggingEvent[] events, Consumer<ILoggingEvent> func) {
+    private static <T> long runBenchmark(T[] events, Consumer<T> func) {
         var started = System.nanoTime();
         for (int i = 0; i < events.length; i++) {
             func.accept(events[i]);
@@ -19,29 +18,36 @@ public class Benchmarker {
     }
 
 
-    public static List<RunStat> run(Config config) {
-        var events = generateEvents(config.events, 10);
+    public static <T> List<RunStat> run(Config<T> config) throws Exception {
+        var tp = Executors.newFixedThreadPool(config.parFactor);
+        var events = config.generator.get();
 
         var warmUpRuns = Math.max((int)(config.runs * 0.25), 1);
-        for (int b = 0; b < config.benchmarks.length; b++) {
+        for (Benchmark<T> b : config.benchmarks) {
             for (int run = 0; run < warmUpRuns; run++) {
-                runBenchmark(events, config.benchmarks[b].func);
+                CompletableFuture
+                    .supplyAsync(() -> runBenchmark(events, b.func), tp)
+                    .get();
             }
         }
 
         var runStats = new ArrayList<RunStat>();
-        for (int b = 0; b < config.benchmarks.length; b++) {
-            var benchmarkName = config.benchmarks[b].name;
+        for (Benchmark<T> b : config.benchmarks) {
             var benchmarkStats = new ArrayList<RunStat>();
+            var fs = new CompletableFuture[config.runs];
             for (int run = 0; run < config.runs; run++) {
-                var durationNs = runBenchmark(events, config.benchmarks[b].func);
-                var stat = new RunStat(benchmarkName, run, events.length, durationNs);
+                fs[run] = CompletableFuture
+                    .supplyAsync(() -> runBenchmark(events, b.func), tp);
+            }
+            for (int i = 0; i < fs.length; i++) {
+                var durationNs = (Long)fs[i].get();
+                var stat = new RunStat(b.name, i, events.length, durationNs);
                 benchmarkStats.add(stat);
-                //System.out.println(stat);
+                System.out.println(stat);
             }
             runStats.add(benchmarkStats.stream().reduce((a, i) -> {
                 a.count += i.count;
-                a.durationNs += a.durationNs;
+                a.durationNs += i.durationNs;
                 return a;
             }).get());
         }
@@ -71,19 +77,19 @@ public class Benchmarker {
 
     }
 
-    public static class Config {
+    public static class Config<T> {
         public int runs;
-        public int events;
-        public boolean parallel;
-        public Benchmark[] benchmarks;
+        public int parFactor;
+        public Supplier<T[]> generator;
+        public List<Benchmark<T>> benchmarks;
     }
 
-    public static class Benchmark {
+    public static class Benchmark<T> {
         public String name;
-        public Consumer<ILoggingEvent> func;
+        public Consumer<T> func;
 
-        public static Benchmark of(String name, Consumer<ILoggingEvent> func) {
-            var b = new Benchmark();
+        public static <T> Benchmark<T> of(String name, Consumer<T> func) {
+            var b = new Benchmark<T>();
             b.name = name;
             b.func = func;
             return b;
