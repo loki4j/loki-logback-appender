@@ -10,6 +10,7 @@ import java.util.concurrent.ThreadLocalRandom;
 import java.util.concurrent.TimeUnit;
 import java.util.concurrent.locks.ReentrantLock;
 import java.util.function.Consumer;
+import java.util.function.Function;
 
 import com.github.loki4j.common.LogRecord;
 import com.sun.net.httpserver.HttpServer;
@@ -95,13 +96,13 @@ public class Generators {
         return encoder;
     }
 
-    public static <T extends AbstractLoki4jAppender> void withAppender(
+    public static <U, T extends AbstractLoki4jAppender> U withAppender(
             T appender,
-            Consumer<AppenderWrapper<T>> body) {
+            Function<AppenderWrapper<T>, U> body) {
         appender.start();
         var wrapper = new AppenderWrapper<>(appender);
         try {
-            body.accept(wrapper);
+            return body.apply(wrapper);
         } finally {
             appender.stop();
         }
@@ -290,7 +291,7 @@ public class Generators {
     }
 
     public static class DummyLoki4jAppender extends AbstractLoki4jAppender {
-        public List<byte[]> batches = new ArrayList<>();
+        //public List<byte[]> batches = new ArrayList<>();
         public byte[] lastBatch;
         private final ReentrantLock lock = new ReentrantLock(false);
 
@@ -301,7 +302,7 @@ public class Generators {
         @Override
         protected CompletableFuture<LokiResponse> sendAsync(byte[] batch) {
             lock.lock();
-            batches.add(batch);
+            //batches.add(batch);
             lastBatch = batch;
             lock.unlock();
             return CompletableFuture.completedFuture(new LokiResponse(204, ""));

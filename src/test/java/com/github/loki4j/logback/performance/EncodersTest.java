@@ -20,13 +20,15 @@ public class EncodersTest {
     public void singleThreadPerformance() throws Exception {
         var batchSize = 1000;
 
+        var defaultEnc = defaultToStringEncoder();
+
         var jsonEncSta = jsonEncoder(true, "testLabel");
         var jsonEncDyn = jsonEncoder(false, "testLabel");
 
         var protEncSta = protobufEncoder(true, "testLabel");
         var protEncDyn = protobufEncoder(false, "testLabel");
 
-        var encoders = List.of(jsonEncSta, jsonEncDyn, protEncSta, protEncDyn);
+        var encoders = List.of(defaultEnc, jsonEncSta, jsonEncDyn, protEncSta, protEncDyn);
         encoders.forEach(e -> {
             e.setContext(new LoggerContext());
             e.start();
@@ -46,6 +48,7 @@ public class EncodersTest {
                 return batches;
             };
             this.benchmarks = List.of(
+                Benchmark.of("defaultEnc", batch -> defaultEnc.encode(batch)),
                 Benchmark.of("jsonEncSta", batch -> jsonEncSta.encode(batch)),
                 Benchmark.of("jsonEncDyn", batch -> jsonEncDyn.encode(batch)),
                 Benchmark.of("protEncSta", batch -> protEncSta.encode(batch)),

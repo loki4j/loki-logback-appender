@@ -63,6 +63,8 @@ public class LokiApacheHttpAppenderTest {
 
             a.appendAndWait(events[2]);
             assertEquals("http send", expected, new String(mockLoki.lastBatch));
+
+            return null;
         });
     }
 

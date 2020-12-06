@@ -107,6 +107,7 @@ public class LokiTestingClient {
                 if (chunkDelayMs > 0L)
                     try { Thread.sleep(chunkDelayMs); } catch (InterruptedException e) { }
             }
+            return null;
         });
         withEncoder(expectedEncoder, encoder -> {
             for (int i = 0; i < events.length; i++) {
