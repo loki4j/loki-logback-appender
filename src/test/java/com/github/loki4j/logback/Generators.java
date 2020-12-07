@@ -288,6 +288,9 @@ public class Generators {
                 throw new RuntimeException("Error while waiting for futures", e);
             }
         }
+        public void stop() {
+            appender.stop();
+        }
     }
 
     public static class DummyLoki4jAppender extends AbstractLoki4jAppender {

@@ -31,30 +31,29 @@ public class BatchBuilderTest {
     @Category({PerformanceTests.class})
     public void singleThreadPerformance() throws Exception {
         var capacity = 1000;
-
-        var cbb = new ConcurrentBatchBuffer<ILoggingEvent, LogRecord>(capacity, LogRecord::create, (e, r) -> eventToRecord(e, r));
         var emptyArray = new LogRecord[0];
-
-        var abq = new ArrayBlockingQueue<LogRecord>(capacity);
-
-        var sal = new ArrayList<LogRecord>(capacity);
 
         var stats = Benchmarker.run(new Benchmarker.Config<ILoggingEvent>() {{
             this.runs = 100;
             this.parFactor = 1;
             this.generator = () -> generateEvents(1_000_000, 10);
             this.benchmarks = List.of(
-                Benchmark.of("cbb", e -> cbb.add(e, emptyArray)),
-                Benchmark.of("abq", e -> {
-                    abq.add(eventToRecord(e, LogRecord.create()));
-                    if (abq.size() == capacity)
-                        abq.clear();
-                }),
-                Benchmark.of("sal", e -> {
-                    sal.add(eventToRecord(e, LogRecord.create()));
-                    if (sal.size() == capacity)
-                        sal.clear();
-                })
+                Benchmark.of("cbb",
+                    () -> new ConcurrentBatchBuffer<ILoggingEvent, LogRecord>(capacity, LogRecord::create, (e, r) -> eventToRecord(e, r)),
+                    (r, e) -> r.add(e, emptyArray)),
+                Benchmark.of("abq",
+                    () -> new ArrayBlockingQueue<LogRecord>(capacity),
+                    (r, e) -> {
+                        if (!r.offer(eventToRecord(e, LogRecord.create())))
+                            r.clear();
+                    }),
+                Benchmark.of("sal",
+                    () -> new ArrayList<LogRecord>(capacity),
+                    (r, e) -> {
+                        r.add(eventToRecord(e, LogRecord.create()));
+                        if (r.size() > capacity)
+                            r.clear();
+                    })
             );
         }});
 
@@ -65,29 +64,29 @@ public class BatchBuilderTest {
     @Category({PerformanceTests.class})
     public void multiThreadPerformance() throws Exception {
         var capacity = 1000;
-
-        var cbb = new ConcurrentBatchBuffer<ILoggingEvent, LogRecord>(capacity, LogRecord::create, (e, r) -> eventToRecord(e, r));
         var emptyArray = new LogRecord[0];
-
-        var abq = new ArrayBlockingQueue<LogRecord>(capacity);
-
-        var sal = Collections.synchronizedList(new ArrayList<LogRecord>(capacity));
 
         var stats = Benchmarker.run(new Benchmarker.Config<ILoggingEvent>() {{
             this.runs = 100;
             this.parFactor = 4;
             this.generator = () -> generateEvents(1_000_000, 10);
             this.benchmarks = List.of(
-                Benchmark.of("cbb", e -> cbb.add(e, emptyArray)),
-                Benchmark.of("abq", e -> {
-                    if (!abq.offer(eventToRecord(e, LogRecord.create())))
-                        abq.clear();
-                }),
-                Benchmark.of("sal", e -> {
-                    sal.add(eventToRecord(e, LogRecord.create()));
-                    if (sal.size() > capacity)
-                        sal.clear();
-                })
+                Benchmark.of("cbb",
+                    () -> new ConcurrentBatchBuffer<ILoggingEvent, LogRecord>(capacity, LogRecord::create, (e, r) -> eventToRecord(e, r)),
+                    (r, e) -> r.add(e, emptyArray)),
+                Benchmark.of("abq",
+                    () -> new ArrayBlockingQueue<LogRecord>(capacity),
+                    (r, e) -> {
+                        if (!r.offer(eventToRecord(e, LogRecord.create())))
+                            r.clear();
+                    }),
+                Benchmark.of("sal",
+                    () -> Collections.synchronizedList(new ArrayList<LogRecord>(capacity)),
+                    (r, e) -> {
+                        r.add(eventToRecord(e, LogRecord.create()));
+                        if (r.size() > capacity)
+                            r.clear();
+                    })
             );
         }});
 
