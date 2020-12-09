@@ -91,6 +91,16 @@ task integTests(type: Test) {
     }
 }
 
+task perfTests(type: Test) {
+    useJUnit {
+        includeCategories 'com.github.loki4j.logback.performance.PerformanceTests'
+    }
+    forkEvery = 1
+    minHeapSize = "2G"
+    maxHeapSize = "3G"
+    testLogging.showStandardStreams = true
+}
+
 publishing {
     publications {
         mavenJava(MavenPublication) {
