@@ -14,6 +14,14 @@ Please proceed to the microsite for more information:
 
 If you are interested in this project, please drop a :star:!
 
+## Key features
+
+- Support for both JSON and Protobuf formats
+- Optionally order log records before sending to Loki
+- Use Logback patterns for labels and messages formatting
+- No JSON library bundled
+- Zero-dependency (for for Java 11+)
+
 ## Contributing
 
 Please start with the [Contribution guidelines](CONTRIBUTING.md).
