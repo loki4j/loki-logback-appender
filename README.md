@@ -20,7 +20,7 @@ If you are interested in this project, please drop a :star:!
 - Optionally order log records before sending to Loki
 - Use Logback patterns for labels and messages formatting
 - No JSON library bundled
-- Zero-dependency (for for Java 11+)
+- Zero-dependency (for Java 11+)
 
 ## Contributing
 
