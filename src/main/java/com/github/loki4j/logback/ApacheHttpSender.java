@@ -4,6 +4,8 @@ import java.io.IOException;
 import java.util.concurrent.CompletableFuture;
 import java.util.function.Function;
 
+import com.github.loki4j.common.LokiResponse;
+
 import org.apache.http.HttpResponse;
 import org.apache.http.client.config.RequestConfig;
 import org.apache.http.client.methods.HttpPost;
@@ -16,9 +18,9 @@ import org.apache.http.protocol.HttpContext;
 import org.apache.http.util.EntityUtils;
 
 /**
- * Loki appender that is backed by Apache {@link org.apache.http.client.HttpClient HttpClient}
+ * Loki sender that is backed by Apache {@link org.apache.http.client.HttpClient HttpClient}
  */
-public class LokiApacheHttpAppender extends AbstractLoki4jAppender {
+public class ApacheHttpSender extends AbstractHttpSender {
 
     /**
      * Maximum number of HTTP connections setting for HttpClient
@@ -36,7 +38,7 @@ public class LokiApacheHttpAppender extends AbstractLoki4jAppender {
     private Function<byte[], HttpPost> requestBuilder;
 
     @Override
-    protected void startHttp(String contentType) {
+    public void start(String contentType) {
         var cm = new PoolingHttpClientConnectionManager();
         cm.setMaxTotal(maxConnections);
         cm.setDefaultMaxPerRoute(maxConnections);
@@ -67,7 +69,7 @@ public class LokiApacheHttpAppender extends AbstractLoki4jAppender {
     }
 
     @Override
-    protected void stopHttp() {
+    public void stop() {
         try {
             client.close();
         } catch (IOException e) {
@@ -76,7 +78,7 @@ public class LokiApacheHttpAppender extends AbstractLoki4jAppender {
     }
 
     @Override
-    protected CompletableFuture<LokiResponse> sendAsync(byte[] batch) {
+    public CompletableFuture<LokiResponse> sendAsync(byte[] batch) {
         return CompletableFuture
             .supplyAsync(() -> {
                 try {

@@ -8,6 +8,7 @@ import java.util.concurrent.TimeUnit;
 
 import com.github.loki4j.common.ConcurrentBatchBuffer;
 import com.github.loki4j.common.LogRecord;
+import com.github.loki4j.common.LokiResponse;
 
 import ch.qos.logback.classic.spi.ILoggingEvent;
 import ch.qos.logback.core.UnsynchronizedAppenderBase;
@@ -20,30 +21,10 @@ public abstract class AbstractLoki4jAppender extends UnsynchronizedAppenderBase<
 
     private static final LogRecord[] ZERO_EVENTS = new LogRecord[0];
 
-    static final class LokiResponse {
-        public int status;
-        public String body;
-        public LokiResponse(int status, String body) {
-            this.status = status;
-            this.body = body;
-        }
-    }
-
     /**
      * Loki endpoint to be used for sending batches
      */
     protected String url = "http://localhost:3100/loki/api/v1/push";
-
-    /**
-     * Time in milliseconds to wait for HTTP connection to Loki to be established
-     * before reporting an error
-     */
-    protected long connectionTimeoutMs = 30_000;
-    /**
-     * Time in milliseconds to wait for HTTP request to Loki to be responded
-     * before reporting an error
-     */
-    protected long requestTimeoutMs = 5_000;
 
     /**
      * Max number of messages to put into single batch and send to Loki
@@ -58,10 +39,6 @@ public abstract class AbstractLoki4jAppender extends UnsynchronizedAppenderBase<
      * Number of threads to use for log message processing and formatting
      */
     private int processingThreads = 1;
-    /**
-     * Number of threads to use for sending HTTP requests
-     */
-    private int httpThreads = 1;
 
     /**
      * If true, appender will pring its own debug logs to stderr
@@ -76,7 +53,7 @@ public abstract class AbstractLoki4jAppender extends UnsynchronizedAppenderBase<
     private ConcurrentBatchBuffer<ILoggingEvent, LogRecord> buffer;
 
     private ScheduledExecutorService scheduler;
-    protected ExecutorService httpThreadPool;
+
 
     @Override
     public final void start() {
@@ -101,7 +78,6 @@ public abstract class AbstractLoki4jAppender extends UnsynchronizedAppenderBase<
         buffer = new ConcurrentBatchBuffer<>(batchSize, LogRecord::create, (e, r) -> encoder.eventToRecord(e, r));
 
         scheduler = Executors.newScheduledThreadPool(processingThreads, new LokiThreadFactory("loki-scheduler"));
-        httpThreadPool = Executors.newFixedThreadPool(httpThreads, new LokiThreadFactory("loki-http-sender"));
 
         startHttp(encoder.getContentType());
 
@@ -134,7 +110,7 @@ public abstract class AbstractLoki4jAppender extends UnsynchronizedAppenderBase<
         encoder.stop();
 
         scheduler.shutdown();
-        httpThreadPool.shutdown();
+        
 
         stopHttp();
         addInfo("Successfully stopped");
@@ -208,14 +184,6 @@ public abstract class AbstractLoki4jAppender extends UnsynchronizedAppenderBase<
 
     public void setUrl(String url) {
         this.url = url;
-    }
-
-    public void setConnectionTimeoutMs(long connectionTimeoutMs) {
-        this.connectionTimeoutMs = connectionTimeoutMs;
-    }
-
-    public void setRequestTimeoutMs(long requestTimeoutMs) {
-        this.requestTimeoutMs = requestTimeoutMs;
     }
 
     public void setBatchSize(int batchSize) {
