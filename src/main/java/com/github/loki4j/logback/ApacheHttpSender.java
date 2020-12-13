@@ -2,6 +2,8 @@ package com.github.loki4j.logback;
 
 import java.io.IOException;
 import java.util.concurrent.CompletableFuture;
+import java.util.concurrent.ExecutorService;
+import java.util.concurrent.Executors;
 import java.util.function.Function;
 
 import com.github.loki4j.common.LokiResponse;
@@ -34,11 +36,20 @@ public class ApacheHttpSender extends AbstractHttpSender {
      */
     private long connectionKeepAliveMs = 120_000;
 
+    /**
+     * Number of threads to use for sending HTTP requests
+     */
+    private int httpThreads = 1;
+
+    private ExecutorService httpThreadPool;
+
     private CloseableHttpClient client;
     private Function<byte[], HttpPost> requestBuilder;
 
     @Override
-    public void start(String contentType) {
+    public void start() {
+        httpThreadPool = Executors.newFixedThreadPool(httpThreads, new LokiThreadFactory("loki-http-sender"));
+
         var cm = new PoolingHttpClientConnectionManager();
         cm.setMaxTotal(maxConnections);
         cm.setDefaultMaxPerRoute(maxConnections);
@@ -75,6 +86,7 @@ public class ApacheHttpSender extends AbstractHttpSender {
         } catch (IOException e) {
             addWarn("Error while closing Apache HttpClient", e);
         }
+        httpThreadPool.shutdown();
     }
 
     @Override
@@ -99,6 +111,10 @@ public class ApacheHttpSender extends AbstractHttpSender {
 
     public void setConnectionKeepAliveMs(long connectionKeepAliveMs) {
         this.connectionKeepAliveMs = connectionKeepAliveMs;
+    }
+
+    public void setHttpThreads(int httpThreads) {
+        this.httpThreads = httpThreads;
     }
 
 }

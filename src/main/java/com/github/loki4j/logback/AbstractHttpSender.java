@@ -1,17 +1,22 @@
 package com.github.loki4j.logback;
 
 import java.util.concurrent.CompletableFuture;
-import java.util.concurrent.ExecutorService;
-import java.util.concurrent.Executors;
 
 import com.github.loki4j.common.LokiResponse;
 
-public abstract class AbstractHttpSender {
+import ch.qos.logback.core.spi.ContextAwareBase;
+
+public abstract class AbstractHttpSender extends ContextAwareBase {
 
     /**
      * Loki endpoint to be used for sending batches
      */
-    protected String url = "http://localhost:3100/loki/api/v1/push";
+    protected String url;
+
+    /**
+     * Content-type header to send to Loki
+     */
+    protected String contentType;
 
     /**
      * Time in milliseconds to wait for HTTP connection to Loki to be established
@@ -24,21 +29,9 @@ public abstract class AbstractHttpSender {
      */
     protected long requestTimeoutMs = 5_000;
 
-    /**
-     * Number of threads to use for sending HTTP requests
-     */
-    private int httpThreads = 1;
+    public void start() {}
 
-    protected ExecutorService httpThreadPool;
-
-    
-    public void start(String contentType) {
-        httpThreadPool = Executors.newFixedThreadPool(httpThreads, new LokiThreadFactory("loki-http-sender"));
-    }
-
-    public void stop() {
-        httpThreadPool.shutdown();
-    }
+    public void stop() {}
 
     public abstract CompletableFuture<LokiResponse> sendAsync(byte[] batch);
 
@@ -48,6 +41,14 @@ public abstract class AbstractHttpSender {
 
     public void setRequestTimeoutMs(long requestTimeoutMs) {
         this.requestTimeoutMs = requestTimeoutMs;
+    }
+
+    void setContentType(String contentType) {
+        this.contentType = contentType;
+    }
+
+    void setUrl(String url) {
+        this.url = url;
     }
 
 }

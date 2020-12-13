@@ -7,6 +7,7 @@ import java.net.http.HttpResponse;
 import java.time.Duration;
 import java.util.concurrent.CompletableFuture;
 import java.util.concurrent.ExecutorService;
+import java.util.concurrent.Executors;
 import java.util.concurrent.SynchronousQueue;
 import java.util.concurrent.ThreadPoolExecutor;
 import java.util.concurrent.TimeUnit;
@@ -18,18 +19,30 @@ import com.github.loki4j.common.LokiResponse;
  */
 public class JavaHttpSender extends AbstractHttpSender {
 
+    /**
+     * Number of threads to use for sending HTTP requests
+     */
+    private int httpThreads = 1;
+
+    /**
+     * Maximum time that excess idle threads will wait for new
+     * tasks before terminating inner HTTP threads
+     */
+    private long innerThreadsExpirationMs = 5 * 60_000;
+
     private HttpClient client;
     private HttpRequest.Builder requestBuilder;
 
+    private ExecutorService httpThreadPool;
     private ExecutorService internalHttpThreadPool;
 
     @Override
-    public void start(String contentType) {
-        super.start(contentType);
+    public void start() {
+        httpThreadPool = Executors.newFixedThreadPool(httpThreads, new LokiThreadFactory("loki-http-sender"));
 
         internalHttpThreadPool = new ThreadPoolExecutor(
             0, Integer.MAX_VALUE,
-            getBatchTimeoutMs() * 5, TimeUnit.MILLISECONDS, // expire unused threads after 5 batch intervals
+            innerThreadsExpirationMs, TimeUnit.MILLISECONDS, // expire unused threads after 5 batch intervals
             new SynchronousQueue<Runnable>(),
             new LokiThreadFactory("loki-java-http-internal"));
 
@@ -49,8 +62,7 @@ public class JavaHttpSender extends AbstractHttpSender {
     @Override
     public void stop() {
         internalHttpThreadPool.shutdown();
-
-        super.stop();
+        httpThreadPool.shutdown();
     }
 
     @Override
@@ -73,4 +85,11 @@ public class JavaHttpSender extends AbstractHttpSender {
             }, httpThreadPool);
     }
 
+    public void setHttpThreads(int httpThreads) {
+        this.httpThreads = httpThreads;
+    }
+
+    public void setInnerThreadsExpirationMs(long innerThreadsExpirationMs) {
+        this.innerThreadsExpirationMs = innerThreadsExpirationMs;
+    }
 }
