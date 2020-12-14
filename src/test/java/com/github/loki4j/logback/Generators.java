@@ -12,6 +12,7 @@ import java.util.concurrent.locks.ReentrantLock;
 import java.util.function.Consumer;
 
 import com.github.loki4j.common.LogRecord;
+import com.github.loki4j.common.LokiResponse;
 import com.sun.net.httpserver.HttpServer;
 
 import ch.qos.logback.classic.Level;
@@ -43,41 +44,47 @@ public class Generators {
 		}
     }
 
-    public static LokiJavaHttpAppender javaHttpAppender(String url) {
-        var appender = new LokiJavaHttpAppender();
-
-        appender.setUrl(url);
-        appender.setConnectionTimeoutMs(1000L);
-        appender.setRequestTimeoutMs(500L);
-        appender.setContext(new LoggerContext());
-        appender.setVerbose(true);
-
-        return appender;
-    }
-
-    public static LokiApacheHttpAppender apacheHttpAppender(String url) {
-        var appender = new LokiApacheHttpAppender();
-
-        appender.setUrl(url);
-        appender.setConnectionTimeoutMs(1000L);
-        appender.setRequestTimeoutMs(500L);
-        appender.setContext(new LoggerContext());
-        appender.setVerbose(true);
-
-        return appender;
-    }
-
-    public static DummyLoki4jAppender dummyAppender(
-        int batchSize,
-        long batchTimeoutMs,
-        Loki4jEncoder encoder) {
-        var appender = new DummyLoki4jAppender();
+    public static Loki4jAppender appender(
+            int batchSize,
+            long batchTimeoutMs,
+            Loki4jEncoder encoder,
+            AbstractHttpSender sender) {
+        var appender = new Loki4jAppender();
         appender.setContext(new LoggerContext());
         appender.setBatchSize(batchSize);
         appender.setBatchTimeoutMs(batchTimeoutMs);
         appender.setEncoder(encoder);
+        appender.setSender(sender);
         appender.setVerbose(true);
         return appender;
+    }
+
+    public static JavaHttpSender javaHttpSender(String url) {
+        var sender = new JavaHttpSender();
+
+        sender.setUrl(url);
+        sender.setConnectionTimeoutMs(1000L);
+        sender.setRequestTimeoutMs(500L);
+        sender.setContext(new LoggerContext());
+
+        return sender;
+    }
+
+    public static ApacheHttpSender apacheHttpSender(String url) {
+        var sender = new ApacheHttpSender();
+
+        sender.setUrl(url);
+        sender.setConnectionTimeoutMs(1000L);
+        sender.setRequestTimeoutMs(500L);
+        sender.setContext(new LoggerContext());
+
+        return sender;
+    }
+
+    public static DummyHttpSender dummySender() {
+        var sender = new DummyHttpSender();
+        sender.setContext(new LoggerContext());
+        return sender;
     }
 
     public static JsonEncoder jsonEncoder(boolean staticLabels, String testLabel) {
@@ -95,11 +102,11 @@ public class Generators {
         return encoder;
     }
 
-    public static <T extends AbstractLoki4jAppender> void withAppender(
-            T appender,
-            Consumer<AppenderWrapper<T>> body) {
+    public static void withAppender(
+            Loki4jAppender appender,
+            Consumer<AppenderWrapper> body) {
         appender.start();
-        var wrapper = new AppenderWrapper<>(appender);
+        var wrapper = new AppenderWrapper(appender);
         try {
             body.accept(wrapper);
         } finally {
@@ -267,9 +274,9 @@ public class Generators {
         return r;
     }
 
-    public static class AppenderWrapper<T extends AbstractLoki4jAppender> {
-        private T appender;
-        public AppenderWrapper(T appender) {
+    public static class AppenderWrapper {
+        private Loki4jAppender appender;
+        public AppenderWrapper(Loki4jAppender appender) {
             this.appender = appender;
         }
         public void append(ILoggingEvent event) {
@@ -289,19 +296,15 @@ public class Generators {
         }
     }
 
-    public static class DummyLoki4jAppender extends AbstractLoki4jAppender {
-        public List<byte[]> batches = new ArrayList<>();
+    public static class DummyHttpSender extends AbstractHttpSender {
+        //public List<byte[]> batches = new ArrayList<>();
         public byte[] lastBatch;
         private final ReentrantLock lock = new ReentrantLock(false);
 
         @Override
-        protected void startHttp(String contentType) {}
-        @Override
-        protected void stopHttp() {}
-        @Override
-        protected CompletableFuture<LokiResponse> sendAsync(byte[] batch) {
+        public CompletableFuture<LokiResponse> sendAsync(byte[] batch) {
             lock.lock();
-            batches.add(batch);
+            //batches.add(batch);
             lastBatch = batch;
             lock.unlock();
             return CompletableFuture.completedFuture(new LokiResponse(204, ""));

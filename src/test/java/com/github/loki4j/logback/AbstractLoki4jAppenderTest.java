@@ -43,50 +43,53 @@ public class AbstractLoki4jAppenderTest {
     @Test
     public void testBatchSize() {
         var encoder = defaultToStringEncoder();
-        var appender = dummyAppender(3, 1000L, encoder);
+        var sender = dummySender();
+        var appender = appender(3, 1000L, encoder, sender);
         appender.start();
         appender.append(events[0]);
         appender.append(events[1]);
-        assertTrue("no batches before batchSize reached", appender.lastBatch == null);
+        assertTrue("no batches before batchSize reached", sender.lastBatch == null);
 
         appender.append(events[2]);
         try { Thread.sleep(100L); } catch (InterruptedException e1) { }
-        assertEquals("batchSize", expected, new String(appender.lastBatch, encoder.charset));
+        assertEquals("batchSize", expected, new String(sender.lastBatch, encoder.charset));
         appender.stop();
     }
 
     @Test
     public void testBatchTimeout() {
         var encoder = defaultToStringEncoder();
-        var appender = dummyAppender(30, 400L, encoder);
+        var sender = dummySender();
+        var appender = appender(30, 400L, encoder, sender);
         appender.start();
         appender.append(events[0]);
         appender.append(events[1]);
         appender.append(events[2]);
-        assertTrue("no batches before batchTimeout reached", appender.lastBatch == null);
+        assertTrue("no batches before batchTimeout reached", sender.lastBatch == null);
 
         try { Thread.sleep(300L); } catch (InterruptedException e1) { }
-        assertTrue("no batches before batchTimeout reached", appender.lastBatch == null);
+        assertTrue("no batches before batchTimeout reached", sender.lastBatch == null);
         
         try { Thread.sleep(300L); } catch (InterruptedException e1) { }
-        assertEquals("batchTimeout", expected, new String(appender.lastBatch, encoder.charset));
+        assertEquals("batchTimeout", expected, new String(sender.lastBatch, encoder.charset));
         appender.stop();
     }
 
     @Test
     public void testDrainOnStop() {
         var encoder = defaultToStringEncoder();
-        var appender = dummyAppender(30, 4000L, encoder);
+        var sender = dummySender();
+        var appender = appender(30, 4000L, encoder, sender);
         appender.start();
         appender.append(events[0]);
         appender.append(events[1]);
         appender.append(events[2]);
-        assertTrue("no batches before stop", appender.lastBatch == null);
+        assertTrue("no batches before stop", sender.lastBatch == null);
 
         try { Thread.sleep(300L); } catch (InterruptedException e1) { }
-        assertTrue("no batches before stop", appender.lastBatch == null);
+        assertTrue("no batches before stop", sender.lastBatch == null);
         
         appender.stop();
-        assertEquals("batchTimeout", expected, new String(appender.lastBatch, encoder.charset));
+        assertEquals("batchTimeout", expected, new String(sender.lastBatch, encoder.charset));
     }
 }

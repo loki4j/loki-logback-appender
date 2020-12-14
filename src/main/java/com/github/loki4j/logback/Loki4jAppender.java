@@ -14,9 +14,9 @@ import ch.qos.logback.core.UnsynchronizedAppenderBase;
 import ch.qos.logback.core.status.Status;
 
 /**
- * Abstract class that provides basic Loki4j functionality for sending log record batches
+ * Class that provides basic Loki4j functionality for sending log record batches
  */
-public abstract class Loki4jAppender extends UnsynchronizedAppenderBase<ILoggingEvent> {
+public class Loki4jAppender extends UnsynchronizedAppenderBase<ILoggingEvent> {
 
     private static final LogRecord[] ZERO_EVENTS = new LogRecord[0];
 
