@@ -15,6 +15,7 @@ import ch.qos.logback.classic.spi.ILoggingEvent;
 public class AbstractAppenderTest {
 
     private static AppenderWrapper<AbstractLoki4jAppender> initApp(AbstractLoki4jAppender a) {
+        a.setVerbose(false);
         a.start();
         return new AppenderWrapper<>(a);
     }
@@ -27,7 +28,7 @@ public class AbstractAppenderTest {
         var stats = Benchmarker.run(new Benchmarker.Config<ILoggingEvent>() {{
             this.runs = 100;
             this.parFactor = 1;
-            this.generator = () -> generateEvents(1_000_000, 10);
+            this.generator = () -> InfiniteEventIterator.from(generateEvents(10_000, 10)).limited(100_000);
             this.benchmarks = List.of(
                 Benchmark.of("dummyAppender",
                     () -> initApp(dummyAppender(capacity, 60_000L, defaultToStringEncoder())),
@@ -50,8 +51,8 @@ public class AbstractAppenderTest {
 
         var stats = Benchmarker.run(new Benchmarker.Config<ILoggingEvent>() {{
             this.runs = 100;
-            this.parFactor = 4;
-            this.generator = () -> generateEvents(1_000_000, 10);
+            this.parFactor = 2;
+            this.generator = () -> InfiniteEventIterator.from(generateEvents(10_000, 10)).limited(100_000);
             this.benchmarks = List.of(
                 Benchmark.of("dummyAppender",
                     () -> initApp(dummyAppender(capacity, 60_000L, defaultToStringEncoder())),

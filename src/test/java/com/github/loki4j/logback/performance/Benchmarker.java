@@ -1,7 +1,9 @@
 package com.github.loki4j.logback.performance;
 
 import java.util.ArrayList;
+import java.util.Iterator;
 import java.util.List;
+import java.util.Map;
 import java.util.concurrent.CompletableFuture;
 import java.util.concurrent.Executors;
 import java.util.function.BiConsumer;
@@ -10,18 +12,20 @@ import java.util.function.Supplier;
 
 public class Benchmarker {
 
-    private static <E> long runBenchmark(E[] events, Consumer<E> func) {
+    private static <E> Map.Entry<Long, Integer> runBenchmark(Iterator<E> events, Consumer<E> func) {
         var started = System.nanoTime();
-        for (int i = 0; i < events.length; i++) {
-            func.accept(events[i]);
+        var count = 0;
+        while(events.hasNext()) {
+            func.accept(events.next());
+            count++;
         }
-        return System.nanoTime() - started;
+        return Map.entry(System.nanoTime() - started, count);
     }
 
-
+    @SuppressWarnings("unchecked")
     public static <E> List<RunStat> run(Config<E> config) throws Exception {
         var tp = Executors.newFixedThreadPool(config.parFactor);
-        var events = config.generator.get();
+        var events = config.generator;
 
         var warmUpRuns = Math.max((int)(config.runs * 0.25), 1);
 
@@ -30,7 +34,7 @@ public class Benchmarker {
             // warm up
             for (int run = 0; run < warmUpRuns; run++) {
                 CompletableFuture
-                    .supplyAsync(() -> runBenchmark(events, b.func), tp)
+                    .supplyAsync(() -> runBenchmark(events.get(), b.func), tp)
                     .get();
             }
 
@@ -39,13 +43,15 @@ public class Benchmarker {
             var started = System.nanoTime();
             for (int run = 0; run < config.runs; run++) {
                 fs[run] = CompletableFuture
-                    .supplyAsync(() -> runBenchmark(events, b.func), tp);
+                    .supplyAsync(() -> runBenchmark(events.get(), b.func), tp);
             }
             for (int i = 0; i < fs.length; i++) {
-                var durationNs = (Long)fs[i].get();
-                var stat = new RunStat(b.name, i, events.length, durationNs);
+                var result =(Map.Entry<Long, Integer>)fs[i].get();
+                var durationNs = result.getKey();
+                var count = result.getValue();
+                var stat = new RunStat(b.name, i, count, durationNs);
                 benchmarkStats.add(stat);
-                //System.out.println(stat);
+                System.out.println(stat);
             }
             var effectiveDuration = System.nanoTime() - started;
             var totalStat = benchmarkStats.stream().reduce((a, i) -> {
@@ -78,9 +84,10 @@ public class Benchmarker {
 
         @Override
         public String toString() {
-            return String.format(
-                "Run: %s #%s, duration = %.2f ms, throughput = %.3f rps, eff duration = %.2f ms, eff throughput = %.3f rps",
-                    benchmarkName, runNo, durationNs / 1e+6, 1.0 * count / (durationNs / 1e+9), effectiveDurationNs / 1e+6, 1.0 * count / (effectiveDurationNs / 1e+9));
+            return String.format("Run: %s #%s, duration = %.2f ms, throughput = %,.3f rps%s",
+                benchmarkName, runNo, durationNs / 1e+6, 1.0 * count / (durationNs / 1e+9), effectiveDurationNs == 0L ? "" :
+                    String.format(", eff duration = %.2f ms, eff throughput = %,.3f rps",
+                        effectiveDurationNs / 1e+6, 1.0 * count / (effectiveDurationNs / 1e+9)));
         }
 
     }
@@ -88,7 +95,7 @@ public class Benchmarker {
     public static class Config<E> {
         public int runs;
         public int parFactor;
-        public Supplier<E[]> generator;
+        public Supplier<Iterator<E>> generator;
         public List<Benchmark<?, E>> benchmarks;
     }
 
@@ -116,5 +123,5 @@ public class Benchmarker {
             return of(name, initializer, func, t -> {});
         }
     }
-    
+
 }

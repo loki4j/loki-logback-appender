@@ -4,6 +4,7 @@ import java.io.IOException;
 import java.net.InetSocketAddress;
 import java.time.Instant;
 import java.util.ArrayList;
+import java.util.Iterator;
 import java.util.List;
 import java.util.concurrent.CompletableFuture;
 import java.util.concurrent.ThreadLocalRandom;
@@ -11,6 +12,7 @@ import java.util.concurrent.TimeUnit;
 import java.util.concurrent.locks.ReentrantLock;
 import java.util.function.Consumer;
 import java.util.function.Function;
+import java.util.stream.StreamSupport;
 
 import com.github.loki4j.common.LogRecord;
 import com.sun.net.httpserver.HttpServer;
@@ -172,7 +174,40 @@ public class Generators {
         return message;
     }
 
-    public static ILoggingEvent[] generateEvents(int maxMessages, int maxWords) {
+    public static class InfiniteEventIterator implements Iterator<ILoggingEvent> {
+        private LoggingEvent[] es;
+        private int idx = -1;
+        private long timestampMs = 0L;
+        public InfiniteEventIterator(LoggingEvent[] events) {
+            this.es = events;
+            timestampMs = events[0].getTimeStamp();
+        }
+        @Override
+        public boolean hasNext() {
+            return true;
+        }
+        @Override
+        public ILoggingEvent next() {
+            idx++;
+            if (idx >= es.length) {
+                timestampMs++;
+                idx = 0;
+            }
+            es[idx].setTimeStamp(timestampMs);
+            return es[idx];
+        }
+        public Iterator<ILoggingEvent> limited(long limit) {
+            Iterable<ILoggingEvent> iterable = () -> this;
+            return StreamSupport.stream(iterable.spliterator(), false)
+                .limit(limit)
+                .iterator();
+        }
+        public static InfiniteEventIterator from(LoggingEvent[] sampleEvents) {
+            return new InfiniteEventIterator(sampleEvents);
+        }
+    }
+
+    public static LoggingEvent[] generateEvents(int maxMessages, int maxWords) {
          var events = new ArrayList<ILoggingEvent>(maxMessages);
          var time = Instant.now().minusMillis(maxMessages).toEpochMilli();
 
@@ -214,7 +249,7 @@ public class Generators {
                 exception(msg)));
         }
 
-        return events.toArray(new ILoggingEvent[0]);
+        return events.toArray(new LoggingEvent[0]);
     }
 
     private static String genMessage(int maxWords) {
@@ -236,7 +271,7 @@ public class Generators {
         return msg.toString();
     }
 
-    public static ILoggingEvent loggingEvent(
+    public static LoggingEvent loggingEvent(
             long timestamp,
             Level level,
             String className,
@@ -294,7 +329,6 @@ public class Generators {
     }
 
     public static class DummyLoki4jAppender extends AbstractLoki4jAppender {
-        //public List<byte[]> batches = new ArrayList<>();
         public byte[] lastBatch;
         private final ReentrantLock lock = new ReentrantLock(false);
 
@@ -305,7 +339,6 @@ public class Generators {
         @Override
         protected CompletableFuture<LokiResponse> sendAsync(byte[] batch) {
             lock.lock();
-            //batches.add(batch);
             lastBatch = batch;
             lock.unlock();
             return CompletableFuture.completedFuture(new LokiResponse(204, ""));

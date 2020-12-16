@@ -96,8 +96,7 @@ task perfTests(type: Test) {
         includeCategories 'com.github.loki4j.logback.performance.PerformanceTests'
     }
     forkEvery = 1
-    minHeapSize = "2G"
-    maxHeapSize = "3G"
+    maxHeapSize = "1G"
     testLogging.showStandardStreams = true
 }
 

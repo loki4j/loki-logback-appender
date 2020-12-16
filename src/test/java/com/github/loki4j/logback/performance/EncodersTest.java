@@ -4,6 +4,8 @@ import static com.github.loki4j.logback.Generators.*;
 
 import java.util.Arrays;
 import java.util.List;
+import java.util.function.UnaryOperator;
+import java.util.stream.Stream;
 
 import com.github.loki4j.common.LogRecord;
 import com.github.loki4j.logback.AbstractLoki4jEncoder;
@@ -31,15 +33,14 @@ public class EncodersTest {
             this.runs = 50;
             this.parFactor = 1;
             this.generator = () -> {
-                var batches = new LogRecord[batchSize][];
                 var jsonEncSta = initEnc(jsonEncoder(true, "testLabel"));
-                for (int i = 0; i < batches.length; i++) {
-                    batches[i] = Arrays
-                        .stream(generateEvents(1_000, 10))
-                        .map(e -> jsonEncSta.eventToRecord(e, new LogRecord()))
-                        .toArray(LogRecord[]::new);
-                }
-                return batches;
+                return Stream.iterate(
+                        Arrays.stream(generateEvents(batchSize, 10))
+                            .map(e -> jsonEncSta.eventToRecord(e, new LogRecord()))
+                            .toArray(LogRecord[]::new),
+                        UnaryOperator.identity())
+                    .limit(1000)
+                    .iterator();
             };
             this.benchmarks = List.of(
                 Benchmark.of("defaultEnc",
@@ -62,5 +63,5 @@ public class EncodersTest {
 
         stats.forEach(System.out::println);
     }
-    
+
 }

@@ -36,7 +36,7 @@ public class BatchBuilderTest {
         var stats = Benchmarker.run(new Benchmarker.Config<ILoggingEvent>() {{
             this.runs = 100;
             this.parFactor = 1;
-            this.generator = () -> generateEvents(1_000_000, 10);
+            this.generator = () -> InfiniteEventIterator.from(generateEvents(10_000, 10)).limited(1_000_000);
             this.benchmarks = List.of(
                 Benchmark.of("cbb",
                     () -> new ConcurrentBatchBuffer<ILoggingEvent, LogRecord>(capacity, LogRecord::create, (e, r) -> eventToRecord(e, r)),
@@ -68,8 +68,8 @@ public class BatchBuilderTest {
 
         var stats = Benchmarker.run(new Benchmarker.Config<ILoggingEvent>() {{
             this.runs = 100;
-            this.parFactor = 4;
-            this.generator = () -> generateEvents(1_000_000, 10);
+            this.parFactor = 2;
+            this.generator = () -> InfiniteEventIterator.from(generateEvents(10_000, 10)).limited(1_000_000);
             this.benchmarks = List.of(
                 Benchmark.of("cbb",
                     () -> new ConcurrentBatchBuffer<ILoggingEvent, LogRecord>(capacity, LogRecord::create, (e, r) -> eventToRecord(e, r)),
@@ -92,4 +92,5 @@ public class BatchBuilderTest {
 
         stats.forEach(System.out::println);
     }
+
 }
