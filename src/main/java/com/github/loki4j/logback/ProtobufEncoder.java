@@ -3,8 +3,8 @@ package com.github.loki4j.logback;
 import java.io.IOException;
 
 import com.github.loki4j.common.LogRecord;
-import com.github.loki4j.protobuf.Logproto.EntryAdapter;
-import com.github.loki4j.protobuf.Logproto.PushRequest;
+import com.grafana.loki.protobuf.Logproto.EntryAdapter;
+import com.grafana.loki.protobuf.Logproto.PushRequest;
 import com.google.protobuf.Timestamp;
 
 import org.xerial.snappy.Snappy;
