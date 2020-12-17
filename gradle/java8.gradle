@@ -9,17 +9,30 @@ sourceSets {
             exclude '**/LokiJavaHttpAppender.java'
         }
     }
+    java8Test {
+        compileClasspath = sourceSets.test.compileClasspath
+        runtimeClasspath += sourceSets.java8.runtimeClasspath + project.configurations.testRuntimeClasspath
+        java {
+            srcDirs = sourceSets.test.java.srcDirs
+            exclude '**/LokiJavaHttpAppenderTest.java'
+            exclude '**/integration/**'
+        }
+    }
 }
 
 dependencies {
     java8AnnotationProcessor 'com.github.bsideup.jabel:jabel-javac-plugin:0.3.0'
+    java8TestAnnotationProcessor 'com.github.bsideup.jabel:jabel-javac-plugin:0.3.0'
 }
 
 configurations {
     java8.extendsFrom(api)
+    java8Test.extendsFrom(testImplementation)
 }
 
 compileJava8Java {
+    dependsOn ':generateProto'
+
     sourceCompatibility = 8
     targetCompatibility = 8
 
@@ -35,6 +48,42 @@ compileJava8Java {
             it != '--enable-preview'
         }
     }
+}
+
+compileJava8TestJava {
+    dependsOn ':compileJava8Java'
+
+    sourceCompatibility = 8
+    targetCompatibility = 8
+
+    options.compilerArgs = [
+            "--release", "8", // Avoid using Java 9+ APIs
+            '--enable-preview',
+    ]
+    // The following line can be omitted on Java 14 and higher
+    options.compilerArgs << '-Xplugin:jabel'
+
+    doFirst {
+        options.compilerArgs = options.compilerArgs.findAll {
+            it != '--enable-preview'
+        }
+    }
+}
+
+task java8Test (type: Test) {
+    description = 'Run Java 8 tests'
+
+    testClassesDirs = sourceSets.java8Test.output.classesDirs
+    classpath = sourceSets.java8Test.runtimeClasspath
+
+    //classpath.forEach { println "$it"};
+    //sourceSets.java8Test.output.classesDirs.forEach { println "$it"};
+
+    useJUnit {
+        excludeCategories 'com.github.loki4j.SlowTests'
+    }
+
+    //shouldRunAfter compileJava8TestJava
 }
 
 task java8Jar(type: Jar) {

@@ -38,7 +38,7 @@ public class AbstractLoki4jEncoderTest {
                 new LogRecord());
             var re2 = logRecord(102L, 2, "level=DEBUG,app=my-app",
                     "l=DEBUG c=c.e.t.s.TestApp t=thread-2 | Message with error java.lang.RuntimeException: Test exception\n" +
-                    "	at com.github.loki4j.logback.Generators.exception(Generators.java:26)\n");
+                    "	at com.github.loki4j.logback.Generators.exception(Generators.java:28)\n");
             assertEquals("A bit more complex event", re2, r2);
         });
     }

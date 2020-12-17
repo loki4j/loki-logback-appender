@@ -35,8 +35,6 @@ dependencies {
     testImplementation 'com.fasterxml.jackson.core:jackson-databind:2.10.0'
 }
 
-sourceCompatibility = 11
-
 compileJava {
     sourceCompatibility = 11
     targetCompatibility = 11
