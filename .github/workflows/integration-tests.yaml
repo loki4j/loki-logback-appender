@@ -34,3 +34,43 @@ jobs:
         run: |
           docker logs loki
           docker stop loki
+  java8-ubuntu-tests:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v2
+      - name: Set up Adopt JDK 8
+        uses: AdoptOpenJDK/install-jdk@v1
+        with:
+          version: '8'
+          architecture: x64
+          targets: 'JDK_8'
+      - name: Set up Adopt JDK 11
+        uses: AdoptOpenJDK/install-jdk@v1
+        with:
+          version: '11'
+          architecture: x64
+          targets: 'JDK_11'
+      - name: Compile on Java 11
+        run: JAVA_HOME="${JDK_11}" ./gradlew check compileJava8TestJava
+      - name: Test on Java 8
+        run: JAVA_HOME="${JDK_8}" ./gradlew --info java8Test -x compileJava8TestJava -x compileJava8Java
+  java8-windows-tests:
+    runs-on: windows-latest
+    steps:
+      - uses: actions/checkout@v2
+      - name: Set up Adopt JDK 8
+        uses: AdoptOpenJDK/install-jdk@v1
+        with:
+          version: '8'
+          architecture: x64
+          targets: 'JDK_8'
+      - name: Set up Adopt JDK 11
+        uses: AdoptOpenJDK/install-jdk@v1
+        with:
+          version: '11'
+          architecture: x64
+          targets: 'JDK_11'
+      - name: Compile on Java 11
+        run: ./gradlew.bat "-Dorg.gradle.java.home=$env:JDK_11" check compileJava8TestJava
+      - name: Test on Java 8
+        run: ./gradlew.bat "-Dorg.gradle.java.home=$env:JDK_8" --info java8Test -x compileJava8TestJava -x compileJava8Java

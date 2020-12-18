@@ -36,9 +36,12 @@ public class AbstractLoki4jEncoderTest {
                     "Message with error",
                     exception("Test exception")),
                 new LogRecord());
+            // make the message a bit easier to check
+            r2.message = r2.message.replaceAll("\r\n", "\n").replaceAll(":\\d+", "");
+
             var re2 = logRecord(102L, 2, "level=DEBUG,app=my-app",
                     "l=DEBUG c=c.e.t.s.TestApp t=thread-2 | Message with error java.lang.RuntimeException: Test exception\n" +
-                    "	at com.github.loki4j.logback.Generators.exception(Generators.java:26)\n");
+                    "	at com.github.loki4j.logback.Generators.exception(Generators.java)\n");
             assertEquals("A bit more complex event", re2, r2);
         });
     }
