@@ -51,6 +51,6 @@ jobs:
           architecture: x64
           targets: 'JDK_11'
       - name: Compile on Java 11
-        run: JAVA_HOME="${JDK_11}" ./gradlew check
+        run: JAVA_HOME="${JDK_11}" ./gradlew check compileJava8TestJava
       - name: Test on Java 8
         run: JAVA_HOME="${JDK_8}" ./gradlew --info java8Test -x compileJava8TestJava -x compileJava8Java
