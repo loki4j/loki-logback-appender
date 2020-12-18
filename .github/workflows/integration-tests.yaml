@@ -71,6 +71,10 @@ jobs:
           architecture: x64
           targets: 'JDK_11'
       - name: Compile on Java 11
-        run: ./gradlew.bat -Dorg.gradle.java.home="%JDK_11%" check compileJava8TestJava
+        run: |
+          SET JAVA_HOME=%JDK_11%
+          ./gradlew.bat check compileJava8TestJava
       - name: Test on Java 8
-        run: ./gradlew.bat -Dorg.gradle.java.home="%JDK_8%" --info java8Test -x compileJava8TestJava -x compileJava8Java
+        run: |
+          SET JAVA_HOME=%JDK_8%
+          ./gradlew.bat --info java8Test -x compileJava8TestJava -x compileJava8Java
