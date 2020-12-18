@@ -73,8 +73,10 @@ jobs:
       - name: Compile on Java 11
         run: |
           SET JAVA_HOME=%JDK_11%
+          echo %JAVA_HOME%
           ./gradlew.bat check compileJava8TestJava
       - name: Test on Java 8
         run: |
           SET JAVA_HOME=%JDK_8%
+          echo %JAVA_HOME%
           ./gradlew.bat --info java8Test -x compileJava8TestJava -x compileJava8Java
