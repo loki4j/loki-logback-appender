@@ -51,7 +51,7 @@ public class Benchmarker {
                 var count = result.getValue();
                 var stat = new RunStat(b.name, i, count, durationNs);
                 benchmarkStats.add(stat);
-                System.out.println(stat);
+                //System.out.println(stat);
             }
             var effectiveDuration = System.nanoTime() - started;
             var totalStat = benchmarkStats.stream().reduce((a, i) -> {

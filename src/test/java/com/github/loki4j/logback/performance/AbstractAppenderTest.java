@@ -37,6 +37,14 @@ public class AbstractAppenderTest {
                 Benchmark.of("dummyAppenderWait",
                     () -> initApp(dummyAppender(capacity, 60_000L, defaultToStringEncoder())),
                     (a, e) -> a.appendAndWait(e),
+                    a -> a.stop()),
+                Benchmark.of("dummyJsonAppenderWait",
+                    () -> initApp(dummyAppender(capacity, 60_000L, jsonEncoder(false, "singleThreadPerformance"))),
+                    (a, e) -> a.appendAndWait(e),
+                    a -> a.stop()),
+                Benchmark.of("dummyProtobufAppenderWait",
+                    () -> initApp(dummyAppender(capacity, 60_000L, protobufEncoder(false, "singleThreadPerformance"))),
+                    (a, e) -> a.appendAndWait(e),
                     a -> a.stop())
             );
         }});
@@ -60,6 +68,14 @@ public class AbstractAppenderTest {
                     a -> a.stop()),
                 Benchmark.of("dummyAppenderWait",
                     () -> initApp(dummyAppender(capacity, 60_000L, defaultToStringEncoder())),
+                    (a, e) -> a.appendAndWait(e),
+                    a -> a.stop()),
+                Benchmark.of("dummyJsonAppenderWait",
+                    () -> initApp(dummyAppender(capacity, 60_000L, jsonEncoder(false, "singleThreadPerformance"))),
+                    (a, e) -> a.appendAndWait(e),
+                    a -> a.stop()),
+                Benchmark.of("dummyProtobufAppenderWait",
+                    () -> initApp(dummyAppender(capacity, 60_000L, protobufEncoder(false, "singleThreadPerformance"))),
                     (a, e) -> a.appendAndWait(e),
                     a -> a.stop())
             );
