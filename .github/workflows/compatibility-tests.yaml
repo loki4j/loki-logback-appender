@@ -19,7 +19,7 @@ jobs:
         with:
           java-version: ${{ matrix.jdk }}
       - name: Build and Run Integration Tests
-        run: ./gradlew check integTests
+        run: ./gradlew check
 
   java8-ubuntu-tests:
     runs-on: ubuntu-latest
