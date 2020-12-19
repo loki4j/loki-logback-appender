@@ -35,8 +35,6 @@ dependencies {
     testImplementation 'com.fasterxml.jackson.core:jackson-databind:2.10.0'
 }
 
-sourceCompatibility = 11
-
 compileJava {
     sourceCompatibility = 11
     targetCompatibility = 11
@@ -158,4 +156,12 @@ apply from: 'gradle/java8.gradle'
 
 tasks.withType(GenerateModuleMetadata) {
     enabled = false
+}
+
+tasks.withType(JavaCompile) {
+    options.encoding = "UTF-8"
+}
+
+tasks.withType(Test) {
+    systemProperty "file.encoding", "UTF-8"
 }
