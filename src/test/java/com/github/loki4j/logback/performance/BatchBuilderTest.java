@@ -5,7 +5,6 @@ import static com.github.loki4j.logback.Generators.*;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Collections;
-import java.util.List;
 import java.util.concurrent.ArrayBlockingQueue;
 
 import com.github.loki4j.common.ConcurrentBatchBuffer;

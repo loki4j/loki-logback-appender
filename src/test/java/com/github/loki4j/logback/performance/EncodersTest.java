@@ -3,7 +3,6 @@ package com.github.loki4j.logback.performance;
 import static com.github.loki4j.logback.Generators.*;
 
 import java.util.Arrays;
-import java.util.List;
 import java.util.function.UnaryOperator;
 import java.util.stream.Stream;
 

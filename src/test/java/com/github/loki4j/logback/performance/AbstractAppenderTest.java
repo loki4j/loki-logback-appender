@@ -3,7 +3,6 @@ package com.github.loki4j.logback.performance;
 import static com.github.loki4j.logback.Generators.*;
 
 import java.util.Arrays;
-import java.util.List;
 
 import com.github.loki4j.logback.AbstractLoki4jAppender;
 import com.github.loki4j.logback.performance.Benchmarker.Benchmark;
