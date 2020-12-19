@@ -2,6 +2,7 @@ package com.github.loki4j.logback.performance;
 
 import static com.github.loki4j.logback.Generators.*;
 
+import java.util.Arrays;
 import java.util.List;
 
 import com.github.loki4j.logback.AbstractLoki4jAppender;
@@ -29,7 +30,7 @@ public class AbstractAppenderTest {
             this.runs = 100;
             this.parFactor = 1;
             this.generator = () -> InfiniteEventIterator.from(generateEvents(10_000, 10)).limited(100_000);
-            this.benchmarks = List.of(
+            this.benchmarks = Arrays.asList(
                 Benchmark.of("dummyAppender",
                     () -> initApp(dummyAppender(capacity, 60_000L, defaultToStringEncoder())),
                     (a, e) -> a.append(e),
@@ -61,7 +62,7 @@ public class AbstractAppenderTest {
             this.runs = 100;
             this.parFactor = 2;
             this.generator = () -> InfiniteEventIterator.from(generateEvents(10_000, 10)).limited(100_000);
-            this.benchmarks = List.of(
+            this.benchmarks = Arrays.asList(
                 Benchmark.of("dummyAppender",
                     () -> initApp(dummyAppender(capacity, 60_000L, defaultToStringEncoder())),
                     (a, e) -> a.append(e),

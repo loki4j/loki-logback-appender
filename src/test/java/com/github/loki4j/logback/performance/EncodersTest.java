@@ -42,7 +42,7 @@ public class EncodersTest {
                     .limit(1000)
                     .iterator();
             };
-            this.benchmarks = List.of(
+            this.benchmarks = Arrays.asList(
                 Benchmark.of("defaultEnc",
                     () -> initEnc(defaultToStringEncoder()),
                     (e, batch) -> e.encode(batch)),

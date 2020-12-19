@@ -40,12 +40,12 @@ public class LokiTestingClient {
 
         client = HttpClient
             .newBuilder()
-            .connectTimeout(Duration.ofSeconds(30))
+            .connectTimeout(Duration.ofSeconds(120))
             .build();
 
         requestBuilder = HttpRequest
             .newBuilder()
-            .timeout(Duration.ofSeconds(5));
+            .timeout(Duration.ofSeconds(30));
     }
 
     public void close() {

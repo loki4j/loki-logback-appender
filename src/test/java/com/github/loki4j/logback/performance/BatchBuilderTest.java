@@ -3,6 +3,7 @@ package com.github.loki4j.logback.performance;
 import static com.github.loki4j.logback.Generators.*;
 
 import java.util.ArrayList;
+import java.util.Arrays;
 import java.util.Collections;
 import java.util.List;
 import java.util.concurrent.ArrayBlockingQueue;
@@ -37,7 +38,7 @@ public class BatchBuilderTest {
             this.runs = 100;
             this.parFactor = 1;
             this.generator = () -> InfiniteEventIterator.from(generateEvents(10_000, 10)).limited(1_000_000);
-            this.benchmarks = List.of(
+            this.benchmarks = Arrays.asList(
                 Benchmark.of("cbb",
                     () -> new ConcurrentBatchBuffer<ILoggingEvent, LogRecord>(capacity, LogRecord::create, (e, r) -> eventToRecord(e, r)),
                     (r, e) -> r.add(e, emptyArray)),
@@ -70,7 +71,7 @@ public class BatchBuilderTest {
             this.runs = 100;
             this.parFactor = 2;
             this.generator = () -> InfiniteEventIterator.from(generateEvents(10_000, 10)).limited(1_000_000);
-            this.benchmarks = List.of(
+            this.benchmarks = Arrays.asList(
                 Benchmark.of("cbb",
                     () -> new ConcurrentBatchBuffer<ILoggingEvent, LogRecord>(capacity, LogRecord::create, (e, r) -> eventToRecord(e, r)),
                     (r, e) -> r.add(e, emptyArray)),
