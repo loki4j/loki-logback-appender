@@ -57,5 +57,22 @@ public class JsonEncoderTest {
             assertEquals("dynamic labels", expected, new String(encoder.encode(records), encoder.charset));
         });
     }
+
+    @Test
+    public void testEncodeEscapes() {
+        LogRecord[] escRecords = new LogRecord[] {
+            logRecord(100L, 1, "level=INFO,\napp=my-app\r", "l=INFO c=test.TestApp t=thread-1 | Test message 1\nNew line"),
+            logRecord(103L, 2, "level=DEBUG,\r\napp=my-app", "l=DEBUG c=test.TestApp t=thread-2\t|\tTest message 2\r\nNew Line")
+        };
+        withEncoder(jsonEncoder(false), encoder -> {
+            var expected = (
+                "{'streams':[{'stream':{'level':'DEBUG','\\r\\napp':'my-app'},'values':" +
+                "[['103000002','l=DEBUG c=test.TestApp t=thread-2\\t|\\tTest message 2\\r\\nNew Line']]}," +
+                "{'stream':{'level':'INFO','\\napp':'my-app\\r'},'values':" +
+                "[['100000001','l=INFO c=test.TestApp t=thread-1 | Test message 1\\nNew line']]}]}"
+                ).replace('\'', '"');
+            assertEquals("dynamic labels", expected, new String(encoder.encode(escRecords), encoder.charset));
+        });
+    }
     
 }

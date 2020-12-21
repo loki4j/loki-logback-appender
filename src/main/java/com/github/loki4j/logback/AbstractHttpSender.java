@@ -9,9 +9,9 @@ import ch.qos.logback.core.spi.ContextAwareBase;
 public abstract class AbstractHttpSender extends ContextAwareBase {
 
     /**
-     * Loki endpoint to be used for sending batches
-     */
-    protected String url;
+    * Loki endpoint to be used for sending batches
+    */
+    protected String url = "http://localhost:3100/loki/api/v1/push";
 
     /**
      * Content-type header to send to Loki
@@ -43,12 +43,12 @@ public abstract class AbstractHttpSender extends ContextAwareBase {
         this.requestTimeoutMs = requestTimeoutMs;
     }
 
-    void setContentType(String contentType) {
-        this.contentType = contentType;
+    public void setUrl(String url) {
+        this.url = url;
     }
 
-    void setUrl(String url) {
-        this.url = url;
+    void setContentType(String contentType) {
+        this.contentType = contentType;
     }
 
 }

@@ -21,11 +21,6 @@ public class Loki4jAppender extends UnsynchronizedAppenderBase<ILoggingEvent> {
     private static final LogRecord[] ZERO_EVENTS = new LogRecord[0];
 
     /**
-     * Loki endpoint to be used for sending batches
-     */
-    protected String url = "http://localhost:3100/loki/api/v1/push";
-
-    /**
      * Max number of messages to put into single batch and send to Loki
      */
     private int batchSize = 1000;
@@ -88,8 +83,8 @@ public class Loki4jAppender extends UnsynchronizedAppenderBase<ILoggingEvent> {
             sender = new JavaHttpSender();
         }
         sender.setContext(context);
-        sender.setUrl(url);
         sender.setContentType(encoder.getContentType());
+        sender.start();
 
         super.start();
 
@@ -171,7 +166,7 @@ public class Loki4jAppender extends UnsynchronizedAppenderBase<ILoggingEvent> {
                 if (e != null) {
                     addError(String.format(
                         "Error while sending Batch #%x (%s records) to Loki (%s)",
-                        batchId, batch.length, url), e);
+                        batchId, batch.length, sender.url), e);
                 }
                 else {
                     if (r.status < 200 || r.status > 299)
@@ -184,10 +179,6 @@ public class Loki4jAppender extends UnsynchronizedAppenderBase<ILoggingEvent> {
                             batchId, r.status));
                 }
             });
-    }
-
-    public void setUrl(String url) {
-        this.url = url;
     }
 
     public void setBatchSize(int batchSize) {

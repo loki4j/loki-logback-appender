@@ -34,7 +34,7 @@ public class JsonWriterTest {
         writer.endStreams();
 
         var actual = new String(writer.toByteArray());
-        System.out.println(actual);
+        //System.out.println(actual);
         var expected = (
             "{'streams':[{'stream':{'level':'INFO','app':'my-app'},'values':" +
             "[['100000001','спец !@#$%^&*()\\' \\n\\tсимволы <>?/\\\\№ё:{}[]🏁']]}]}"

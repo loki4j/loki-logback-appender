@@ -46,6 +46,9 @@ implementation 'com.github.loki4j:loki-logback-appender-jdk8:%version%'
 
 Then add Loki appender to your `logback.xml`:
 
+<!--DOCUSAURUS_CODE_TABS-->
+<!--Java 11+-->
+
 ```xml
 <appender name="LOKI" class="com.github.loki4j.logback.LokiJavaHttpAppender">
     <url>http://localhost:3100/loki/api/v1/push</url>
@@ -66,6 +69,30 @@ Then add Loki appender to your `logback.xml`:
     <appender-ref ref="LOKI" />
 </root>
 ```
+
+<!--Java 8-->
+
+```xml
+<appender name="LOKI" class="com.github.loki4j.logback.LokiApacheHttpAppender">
+    <url>http://localhost:3100/loki/api/v1/push</url>
+    <batchSize>100</batchSize>
+    <batchTimeoutMs>10000</batchTimeoutMs>
+    <encoder class="com.github.loki4j.logback.JsonEncoder">
+        <label>
+            <pattern>app=my-app,host=${HOSTNAME},level=%level</pattern>
+        </label>
+        <message>
+            <pattern>l=%level h=${HOSTNAME} c=%logger{20} t=%thread | %msg %ex</pattern>
+        </message>
+        <sortByTime>true</sortByTime>
+    </encoder>
+</appender>
+
+<root level="DEBUG">
+    <appender-ref ref="LOKI" />
+</root>
+```
+<!--END_DOCUSAURUS_CODE_TABS-->
 
 For more details, please refer to [Docs](docs/appenders).
 

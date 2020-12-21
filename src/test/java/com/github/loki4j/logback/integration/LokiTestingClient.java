@@ -40,12 +40,12 @@ public class LokiTestingClient {
 
         client = HttpClient
             .newBuilder()
-            .connectTimeout(Duration.ofSeconds(30))
+            .connectTimeout(Duration.ofSeconds(120))
             .build();
 
         requestBuilder = HttpRequest
             .newBuilder()
-            .timeout(Duration.ofSeconds(5));
+            .timeout(Duration.ofSeconds(30));
     }
 
     public void close() {
@@ -107,6 +107,7 @@ public class LokiTestingClient {
                 if (chunkDelayMs > 0L)
                     try { Thread.sleep(chunkDelayMs); } catch (InterruptedException e) { }
             }
+            return null;
         });
         withEncoder(expectedEncoder, encoder -> {
             for (int i = 0; i < events.length; i++) {

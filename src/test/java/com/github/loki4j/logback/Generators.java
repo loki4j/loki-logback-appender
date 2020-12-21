@@ -1,15 +1,20 @@
 package com.github.loki4j.logback;
 
+import java.io.ByteArrayOutputStream;
 import java.io.IOException;
+import java.io.InputStream;
 import java.net.InetSocketAddress;
 import java.time.Instant;
 import java.util.ArrayList;
+import java.util.Iterator;
 import java.util.List;
 import java.util.concurrent.CompletableFuture;
 import java.util.concurrent.ThreadLocalRandom;
 import java.util.concurrent.TimeUnit;
 import java.util.concurrent.locks.ReentrantLock;
 import java.util.function.Consumer;
+import java.util.function.Function;
+import java.util.stream.StreamSupport;
 
 import com.github.loki4j.common.LogRecord;
 import com.github.loki4j.common.LokiResponse;
@@ -65,7 +70,6 @@ public class Generators {
         sender.setUrl(url);
         sender.setConnectionTimeoutMs(1000L);
         sender.setRequestTimeoutMs(500L);
-        sender.setContext(new LoggerContext());
 
         return sender;
     }
@@ -76,14 +80,12 @@ public class Generators {
         sender.setUrl(url);
         sender.setConnectionTimeoutMs(1000L);
         sender.setRequestTimeoutMs(500L);
-        sender.setContext(new LoggerContext());
 
         return sender;
     }
 
     public static DummyHttpSender dummySender() {
         var sender = new DummyHttpSender();
-        sender.setContext(new LoggerContext());
         return sender;
     }
 
@@ -102,13 +104,13 @@ public class Generators {
         return encoder;
     }
 
-    public static void withAppender(
+    public static <U> U withAppender(
             Loki4jAppender appender,
-            Consumer<AppenderWrapper> body) {
+            Function<AppenderWrapper, U> body) {
         appender.start();
         var wrapper = new AppenderWrapper(appender);
         try {
-            body.accept(wrapper);
+            return body.apply(wrapper);
         } finally {
             appender.stop();
         }
@@ -178,7 +180,40 @@ public class Generators {
         return message;
     }
 
-    public static ILoggingEvent[] generateEvents(int maxMessages, int maxWords) {
+    public static class InfiniteEventIterator implements Iterator<ILoggingEvent> {
+        private LoggingEvent[] es;
+        private int idx = -1;
+        private long timestampMs = 0L;
+        public InfiniteEventIterator(LoggingEvent[] events) {
+            this.es = events;
+            timestampMs = events[0].getTimeStamp();
+        }
+        @Override
+        public boolean hasNext() {
+            return true;
+        }
+        @Override
+        public ILoggingEvent next() {
+            idx++;
+            if (idx >= es.length) {
+                timestampMs++;
+                idx = 0;
+            }
+            es[idx].setTimeStamp(timestampMs);
+            return es[idx];
+        }
+        public Iterator<ILoggingEvent> limited(long limit) {
+            Iterable<ILoggingEvent> iterable = () -> this;
+            return StreamSupport.stream(iterable.spliterator(), false)
+                .limit(limit)
+                .iterator();
+        }
+        public static InfiniteEventIterator from(LoggingEvent[] sampleEvents) {
+            return new InfiniteEventIterator(sampleEvents);
+        }
+    }
+
+    public static LoggingEvent[] generateEvents(int maxMessages, int maxWords) {
          var events = new ArrayList<ILoggingEvent>(maxMessages);
          var time = Instant.now().minusMillis(maxMessages).toEpochMilli();
 
@@ -220,7 +255,7 @@ public class Generators {
                 exception(msg)));
         }
 
-        return events.toArray(new ILoggingEvent[0]);
+        return events.toArray(new LoggingEvent[0]);
     }
 
     private static String genMessage(int maxWords) {
@@ -242,7 +277,7 @@ public class Generators {
         return msg.toString();
     }
 
-    public static ILoggingEvent loggingEvent(
+    public static LoggingEvent loggingEvent(
             long timestamp,
             Level level,
             String className,
@@ -294,17 +329,18 @@ public class Generators {
                 throw new RuntimeException("Error while waiting for futures", e);
             }
         }
+        public void stop() {
+            appender.stop();
+        }
     }
 
     public static class DummyHttpSender extends AbstractHttpSender {
-        //public List<byte[]> batches = new ArrayList<>();
         public byte[] lastBatch;
         private final ReentrantLock lock = new ReentrantLock(false);
 
         @Override
         public CompletableFuture<LokiResponse> sendAsync(byte[] batch) {
             lock.lock();
-            //batches.add(batch);
             lastBatch = batch;
             lock.unlock();
             return CompletableFuture.completedFuture(new LokiResponse(204, ""));
@@ -322,11 +358,20 @@ public class Generators {
             server = HttpServer.create(new InetSocketAddress(port), 0);
             server.createContext("/loki/api/v1/push", httpExchange -> {
                 try (var is = httpExchange.getRequestBody()) {
-                    lastBatch = is.readAllBytes();
+                    lastBatch = getBytesFromInputStream(is); //is.readAllBytes();
                     batches.add(lastBatch);
                 }
                 httpExchange.sendResponseHeaders(204, -1);
             });
+        }
+
+        public static byte[] getBytesFromInputStream(InputStream is) throws IOException {
+            ByteArrayOutputStream os = new ByteArrayOutputStream();
+            byte[] buffer = new byte[0xFFFF];
+            for (int len = is.read(buffer); len != -1; len = is.read(buffer)) {
+                os.write(buffer, 0, len);
+            }
+            return os.toByteArray();
         }
 
         public void start() {
