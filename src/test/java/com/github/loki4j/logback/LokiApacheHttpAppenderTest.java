@@ -3,8 +3,8 @@ package com.github.loki4j.logback;
 import java.util.Random;
 
 import com.github.loki4j.logback.Generators.LokiHttpServerMock;
-import static com.github.loki4j.logback.Loki4jAppenderTest.*;
 import static com.github.loki4j.logback.Generators.*;
+import static com.github.loki4j.logback.Loki4jAppenderTest.*;
 
 import org.junit.AfterClass;
 import org.junit.Before;
@@ -13,7 +13,7 @@ import org.junit.Test;
 
 import static org.junit.Assert.*;
 
-public class HttpSenderAppenderTest {
+public class LokiApacheHttpAppenderTest {
 
     private static int testPort = -1;
     private static LokiHttpServerMock mockLoki;
@@ -39,19 +39,6 @@ public class HttpSenderAppenderTest {
     }
 
     @Test
-    public void testJavaHttpSend() {
-        withAppender(appender(3, 1000L, defaultToStringEncoder(), javaHttpSender(url)), a -> {
-            a.appendAndWait(events[0], events[1]);
-            assertTrue("no batches before batchSize reached", mockLoki.lastBatch == null);
-
-            a.appendAndWait(events[2]);
-            assertEquals("http send", expected, new String(mockLoki.lastBatch));
-
-            return null;
-        });
-    }
-
-    @Test
     public void testApacheHttpSend() {
         withAppender(appender(3, 1000L, defaultToStringEncoder(), apacheHttpSender(url)), a -> {
             a.appendAndWait(events[0], events[1]);
@@ -63,4 +50,5 @@ public class HttpSenderAppenderTest {
             return null;
         });
     }
+
 }
