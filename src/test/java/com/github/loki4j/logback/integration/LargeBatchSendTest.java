@@ -29,10 +29,9 @@ public class LargeBatchSendTest {
     @Category({IntegrationTests.class})
     public void testApacheJsonBatchSend() throws Exception {
         var label = "testApacheJsonBatchSend";
-        var appender = apacheHttpAppender(urlPush);
-        appender.setBatchSize(500);
-        appender.setBatchTimeoutMs(1000);
-        appender.setEncoder(jsonEncoder(false, label));
+        var encoder = jsonEncoder(false, label);
+        var sender = apacheHttpSender(urlPush);
+        var appender = appender(500, 1000, encoder, sender);
 
         var events = generateEvents(1000, 2000);
         client.testHttpSend(label, events, appender, jsonEncoder(false, label));
@@ -44,10 +43,9 @@ public class LargeBatchSendTest {
     @Category({IntegrationTests.class})
     public void testJavaJsonBatchSend() throws Exception {
         var label = "testJavaJsonBatchSend";
-        var appender = javaHttpAppender(urlPush);
-        appender.setBatchSize(500);
-        appender.setBatchTimeoutMs(1000);
-        appender.setEncoder(jsonEncoder(false, label));
+        var encoder = jsonEncoder(false, label);
+        var sender = javaHttpSender(urlPush);
+        var appender = appender(500, 1000, encoder, sender);
 
         var events = generateEvents(1000, 2000);
         client.testHttpSend(label, events, appender, jsonEncoder(false, label));

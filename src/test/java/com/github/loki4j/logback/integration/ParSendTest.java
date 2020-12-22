@@ -40,10 +40,9 @@ public class ParSendTest {
         for (int i = 0; i < parFactor; i++) {
             var idx = i;
             var label = "testJavaJsonParSend" + idx;
-            var appender = javaHttpAppender(urlPush);
-            appender.setBatchSize(10);
-            appender.setBatchTimeoutMs(150_000);
-            appender.setEncoder(jsonEncoder(false, label));
+            var encoder = jsonEncoder(false, label);
+            var sender = javaHttpSender(urlPush);
+            var appender = appender(10, 150_000, encoder, sender);
 
             fs[i] = CompletableFuture
                 .supplyAsync(() -> {
@@ -77,10 +76,9 @@ public class ParSendTest {
         for (int i = 0; i < parFactor; i++) {
             var idx = i;
             var label = "testApacheJsonParSend" + idx;
-            var appender = apacheHttpAppender(urlPush);
-            appender.setBatchSize(10);
-            appender.setBatchTimeoutMs(150_000);
-            appender.setEncoder(jsonEncoder(false, label));
+            var encoder = jsonEncoder(false, label);
+            var sender = apacheHttpSender(urlPush);
+            var appender = appender(10, 150_000, encoder, sender);
 
             fs[i] = CompletableFuture
                 .supplyAsync(() -> {
@@ -109,10 +107,9 @@ public class ParSendTest {
         var events = generateEvents(3, 20);
 
         var label = "testApacheJsonSend";
-        var appender = apacheHttpAppender(urlPush);
-        appender.setBatchSize(2);
-        appender.setBatchTimeoutMs(150_000);
-        appender.setEncoder(jsonEncoder(false, label));
+        var encoder = jsonEncoder(false, label);
+        var sender = apacheHttpSender(urlPush);
+        var appender = appender(2, 150_000, encoder, sender);
         
         client.testHttpSend(label, events, appender, jsonEncoder(false, label));
     }
