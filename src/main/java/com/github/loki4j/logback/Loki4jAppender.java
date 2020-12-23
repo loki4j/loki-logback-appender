@@ -8,6 +8,7 @@ import java.util.concurrent.TimeUnit;
 import com.github.loki4j.common.ConcurrentBatchBuffer;
 import com.github.loki4j.common.LogRecord;
 import com.github.loki4j.common.LokiResponse;
+import com.github.loki4j.common.LokiThreadFactory;
 import com.github.loki4j.common.ReflectionUtils;
 
 import ch.qos.logback.classic.spi.ILoggingEvent;
@@ -48,8 +49,8 @@ public class Loki4jAppender extends UnsynchronizedAppenderBase<ILoggingEvent> {
     /**
      * A HTTPS sender to use for pushing logs to Loki
      */
-    private AbstractHttpSender sender = ReflectionUtils
-        .<AbstractHttpSender>tryCreateInstance("com.github.loki4j.logback.JavaHttpSender")
+    private HttpSender sender = ReflectionUtils
+        .<HttpSender>tryCreateInstance("com.github.loki4j.logback.JavaHttpSender")
         .orElse(null);
 
     private ConcurrentBatchBuffer<ILoggingEvent, LogRecord> buffer;
@@ -165,7 +166,7 @@ public class Loki4jAppender extends UnsynchronizedAppenderBase<ILoggingEvent> {
                 if (e != null) {
                     addError(String.format(
                         "Error while sending Batch #%x (%s records) to Loki (%s)",
-                        batchId, batch.length, sender.url), e);
+                        batchId, batch.length, sender.getUrl()), e);
                 }
                 else {
                     if (r.status < 200 || r.status > 299)
@@ -195,11 +196,11 @@ public class Loki4jAppender extends UnsynchronizedAppenderBase<ILoggingEvent> {
         this.encoder = encoder;
     }
 
-    AbstractHttpSender getSender() {
+    HttpSender getSender() {
         return sender;
     }
 
-    public void setSender(AbstractHttpSender sender) {
+    public void setSender(HttpSender sender) {
         this.sender = sender;
     }
 

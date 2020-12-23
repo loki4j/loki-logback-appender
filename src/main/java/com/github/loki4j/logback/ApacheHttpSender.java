@@ -7,6 +7,7 @@ import java.util.concurrent.Executors;
 import java.util.function.Function;
 
 import com.github.loki4j.common.LokiResponse;
+import com.github.loki4j.common.LokiThreadFactory;
 
 import org.apache.http.HttpResponse;
 import org.apache.http.client.config.RequestConfig;
@@ -77,10 +78,13 @@ public class ApacheHttpSender extends AbstractHttpSender {
             request.setEntity(new ByteArrayEntity(body));
             return request;
         };
+
+        super.start();
     }
 
     @Override
     public void stop() {
+        super.stop();
         try {
             client.close();
         } catch (IOException e) {

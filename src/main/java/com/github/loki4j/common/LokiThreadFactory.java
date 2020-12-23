@@ -1,4 +1,4 @@
-package com.github.loki4j.logback;
+package com.github.loki4j.common;
 
 import java.util.concurrent.ThreadFactory;
 import java.util.concurrent.atomic.AtomicInteger;

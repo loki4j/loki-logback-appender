@@ -1,12 +1,12 @@
 package com.github.loki4j.logback;
 
-import java.util.concurrent.CompletableFuture;
-
-import com.github.loki4j.common.LokiResponse;
-
 import ch.qos.logback.core.spi.ContextAwareBase;
 
-public abstract class AbstractHttpSender extends ContextAwareBase {
+/**
+ * Abstract class that implements a common logic shared between standard
+ * HTTP sender implementations
+ */
+public abstract class AbstractHttpSender extends ContextAwareBase implements HttpSender {
 
     /**
     * Loki endpoint to be used for sending batches
@@ -23,17 +23,26 @@ public abstract class AbstractHttpSender extends ContextAwareBase {
      * before reporting an error
      */
     protected long connectionTimeoutMs = 30_000;
+
     /**
      * Time in milliseconds to wait for HTTP request to Loki to be responded
      * before reporting an error
      */
     protected long requestTimeoutMs = 5_000;
 
-    public void start() {}
+    private boolean started = false;
 
-    public void stop() {}
+    public void start() {
+        this.started = true;
+    }
 
-    public abstract CompletableFuture<LokiResponse> sendAsync(byte[] batch);
+    public void stop() {
+        this.started = false;
+    }
+
+    public boolean isStarted() {
+        return started;
+    }
 
     public void setConnectionTimeoutMs(long connectionTimeoutMs) {
         this.connectionTimeoutMs = connectionTimeoutMs;
@@ -43,11 +52,15 @@ public abstract class AbstractHttpSender extends ContextAwareBase {
         this.requestTimeoutMs = requestTimeoutMs;
     }
 
+    public String getUrl() {
+        return url;
+    }
+
     public void setUrl(String url) {
         this.url = url;
     }
 
-    void setContentType(String contentType) {
+    public void setContentType(String contentType) {
         this.contentType = contentType;
     }
 

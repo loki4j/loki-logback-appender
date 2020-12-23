@@ -13,6 +13,7 @@ import java.util.concurrent.ThreadPoolExecutor;
 import java.util.concurrent.TimeUnit;
 
 import com.github.loki4j.common.LokiResponse;
+import com.github.loki4j.common.LokiThreadFactory;
 
 /**
  * Loki sender that is backed by Java standard {@link java.net.http.HttpClient HttpClient}
@@ -57,10 +58,13 @@ public class JavaHttpSender extends AbstractHttpSender {
             .timeout(Duration.ofMillis(requestTimeoutMs))
             .uri(URI.create(url))
             .header("Content-Type", contentType);
+
+        super.start();
     }
 
     @Override
     public void stop() {
+        super.stop();
         internalHttpThreadPool.shutdown();
         httpThreadPool.shutdown();
     }

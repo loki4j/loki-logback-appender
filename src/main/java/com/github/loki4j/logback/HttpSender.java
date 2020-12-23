@@ -1,0 +1,34 @@
+package com.github.loki4j.logback;
+
+import java.util.concurrent.CompletableFuture;
+
+import com.github.loki4j.common.LokiResponse;
+
+import ch.qos.logback.core.spi.ContextAware;
+import ch.qos.logback.core.spi.LifeCycle;
+
+/**
+ * Basic interface that all Loki4j HTTP senders must implement
+ */
+public interface HttpSender extends ContextAware, LifeCycle {
+
+    /**
+     * Send a batch to Loki.
+     * Send operation should be performed asynchronously (in separate thread)
+     * 
+     * @return Future containing a response from Loki
+     */
+    public CompletableFuture<LokiResponse> sendAsync(byte[] batch);
+
+    /**
+     * Loki target URL
+     */
+    public String getUrl();
+
+    /**
+     * Content type of the requests to send to Loki.
+     * It depends on the encoder selected in config (JSON vs Protobuf)
+     */
+    public void setContentType(String contentType);
+    
+}
