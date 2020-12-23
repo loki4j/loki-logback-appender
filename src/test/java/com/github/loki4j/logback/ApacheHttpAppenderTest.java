@@ -13,7 +13,7 @@ import org.junit.Test;
 
 import static org.junit.Assert.*;
 
-public class LokiApacheHttpAppenderTest {
+public class ApacheHttpAppenderTest {
 
     private static int testPort = -1;
     private static LokiHttpServerMock mockLoki;

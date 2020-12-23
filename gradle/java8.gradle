@@ -14,7 +14,7 @@ sourceSets {
         runtimeClasspath += sourceSets.java8.runtimeClasspath + project.configurations.testRuntimeClasspath
         java {
             srcDirs = sourceSets.test.java.srcDirs
-            exclude '**/LokiJavaHttpAppenderTest.java'
+            exclude '**/JavaHttpAppenderTest.java'
             exclude '**/integration/**'
         }
     }

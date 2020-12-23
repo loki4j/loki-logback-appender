@@ -8,6 +8,7 @@ import java.util.concurrent.TimeUnit;
 import com.github.loki4j.common.ConcurrentBatchBuffer;
 import com.github.loki4j.common.LogRecord;
 import com.github.loki4j.common.LokiResponse;
+import com.github.loki4j.common.ReflectionUtils;
 
 import ch.qos.logback.classic.spi.ILoggingEvent;
 import ch.qos.logback.core.UnsynchronizedAppenderBase;
@@ -42,12 +43,14 @@ public class Loki4jAppender extends UnsynchronizedAppenderBase<ILoggingEvent> {
     /**
      * An encoder to use for converting log record batches to format acceptable by Loki
      */
-    private Loki4jEncoder encoder;
+    private Loki4jEncoder encoder = new JsonEncoder();
 
     /**
      * A HTTPS sender to use for pushing logs to Loki
      */
-    private AbstractHttpSender sender;
+    private AbstractHttpSender sender = ReflectionUtils
+        .<AbstractHttpSender>tryCreateInstance("com.github.loki4j.logback.JavaHttpSender")
+        .orElse(null);
 
     private ConcurrentBatchBuffer<ILoggingEvent, LogRecord> buffer;
 
@@ -67,10 +70,6 @@ public class Loki4jAppender extends UnsynchronizedAppenderBase<ILoggingEvent> {
             "procThreads=%s, batchSize=%s, batchTimeout=%s...",
             processingThreads, batchSize, batchTimeoutMs));
 
-        if (encoder == null) {
-            addWarn("No encoder specified. Using the default encoder");
-            encoder = new JsonEncoder();
-        }
         encoder.setContext(context);
         encoder.start();
 
@@ -79,8 +78,8 @@ public class Loki4jAppender extends UnsynchronizedAppenderBase<ILoggingEvent> {
         scheduler = Executors.newScheduledThreadPool(processingThreads, new LokiThreadFactory("loki-scheduler"));
 
         if (sender == null) {
-            addInfo("No sender specified. Using the default sender");
-            sender = new JavaHttpSender();
+            // only possible on Java 8
+            new RuntimeException("No sender specified. Please specify a sender explicitly in logback config");
         }
         sender.setContext(context);
         sender.setContentType(encoder.getContentType());
@@ -194,6 +193,10 @@ public class Loki4jAppender extends UnsynchronizedAppenderBase<ILoggingEvent> {
 
     public void setEncoder(Loki4jEncoder encoder) {
         this.encoder = encoder;
+    }
+
+    AbstractHttpSender getSender() {
+        return sender;
     }
 
     public void setSender(AbstractHttpSender sender) {
