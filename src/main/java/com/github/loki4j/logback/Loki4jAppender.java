@@ -44,14 +44,12 @@ public class Loki4jAppender extends UnsynchronizedAppenderBase<ILoggingEvent> {
     /**
      * An encoder to use for converting log record batches to format acceptable by Loki
      */
-    private Loki4jEncoder encoder = new JsonEncoder();
+    private Loki4jEncoder encoder;
 
     /**
      * A HTTPS sender to use for pushing logs to Loki
      */
-    private HttpSender sender = ReflectionUtils
-        .<HttpSender>tryCreateInstance("com.github.loki4j.logback.JavaHttpSender")
-        .orElse(null);
+    private HttpSender sender;
 
     private ConcurrentBatchBuffer<ILoggingEvent, LogRecord> buffer;
 
@@ -71,6 +69,10 @@ public class Loki4jAppender extends UnsynchronizedAppenderBase<ILoggingEvent> {
             "procThreads=%s, batchSize=%s, batchTimeout=%s...",
             processingThreads, batchSize, batchTimeoutMs));
 
+        if (encoder == null) {
+            addWarn("No encoder specified in the config. Using JsonEncoder with default settings");
+            encoder = new JsonEncoder();
+        }
         encoder.setContext(context);
         encoder.start();
 
@@ -79,8 +81,11 @@ public class Loki4jAppender extends UnsynchronizedAppenderBase<ILoggingEvent> {
         scheduler = Executors.newScheduledThreadPool(processingThreads, new LokiThreadFactory("loki-scheduler"));
 
         if (sender == null) {
-            // only possible on Java 8
-            new RuntimeException("No sender specified. Please specify a sender explicitly in logback config");
+            sender = ReflectionUtils
+                .<HttpSender>tryCreateInstance("com.github.loki4j.logback.JavaHttpSender")
+                .orElseThrow(() ->  // only possible on Java 8
+                    new RuntimeException("No sender specified. Please specify a sender explicitly in logback config"));
+            addWarn("No sender specified in the config. Using JavaHttpSender with default settings");
         }
         sender.setContext(context);
         sender.setContentType(encoder.getContentType());

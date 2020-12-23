@@ -11,8 +11,6 @@ import org.junit.Before;
 import org.junit.BeforeClass;
 import org.junit.Test;
 
-import ch.qos.logback.classic.LoggerContext;
-
 import static org.junit.Assert.*;
 
 public class JavaHttpAppenderTest {
@@ -49,29 +47,6 @@ public class JavaHttpAppenderTest {
             a.appendAndWait(events[2]);
             assertEquals("http send", expected, new String(mockLoki.lastBatch));
 
-            return null;
-        });
-    }
-
-    @Test
-    public void testDefaults() {
-        var appender = new Loki4jAppender();
-        appender.setBatchSize(3);
-        appender.getSender().setUrl(url);
-        appender.setVerbose(true);
-        appender.setContext(new LoggerContext());
-
-        var expected = (
-            "{'streams':[{'stream':{'host':'${HOSTNAME}','level':'INFO'}," +
-            "'values':[['100000001','l=INFO c=test.TestApp t=thread-1 | Test message 1 ']," +
-            "['107000003','l=INFO c=test.TestApp t=thread-1 | Test message 3 ']]}," +
-            "{'stream':{'host':'${HOSTNAME}','level':'WARN'}," +
-            "'values':[['104000002','l=WARN c=test.TestApp t=thread-2 | Test message 2 ']]}]}"
-            ).replace('\'', '"');
-        
-        withAppender(appender, a -> {
-            a.appendAndWait(events);
-            assertEquals("http send", expected, new String(mockLoki.lastBatch));
             return null;
         });
     }
