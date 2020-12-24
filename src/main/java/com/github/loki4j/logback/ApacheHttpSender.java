@@ -20,9 +20,12 @@ import org.apache.http.impl.conn.PoolingHttpClientConnectionManager;
 import org.apache.http.protocol.HttpContext;
 import org.apache.http.util.EntityUtils;
 
+import ch.qos.logback.core.joran.spi.NoAutoStart;
+
 /**
  * Loki sender that is backed by Apache {@link org.apache.http.client.HttpClient HttpClient}
  */
+@NoAutoStart
 public class ApacheHttpSender extends AbstractHttpSender {
 
     /**

@@ -15,9 +15,12 @@ import java.util.concurrent.TimeUnit;
 import com.github.loki4j.common.LokiResponse;
 import com.github.loki4j.common.LokiThreadFactory;
 
+import ch.qos.logback.core.joran.spi.NoAutoStart;
+
 /**
  * Loki sender that is backed by Java standard {@link java.net.http.HttpClient HttpClient}
  */
+@NoAutoStart
 public class JavaHttpSender extends AbstractHttpSender {
 
     /**

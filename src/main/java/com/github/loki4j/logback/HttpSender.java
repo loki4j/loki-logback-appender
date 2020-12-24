@@ -8,7 +8,9 @@ import ch.qos.logback.core.spi.ContextAware;
 import ch.qos.logback.core.spi.LifeCycle;
 
 /**
- * Basic interface that all Loki4j HTTP senders must implement
+ * Basic interface that all Loki4j HTTP senders must implement.
+ *
+ * Each implementation must be annotated with {@link ch.qos.logback.core.joran.spi.NoAutoStart}
  */
 public interface HttpSender extends ContextAware, LifeCycle {
 
