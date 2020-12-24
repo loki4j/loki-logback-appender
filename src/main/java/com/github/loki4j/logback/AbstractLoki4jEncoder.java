@@ -10,6 +10,7 @@ import com.github.loki4j.common.LogRecord;
 
 import ch.qos.logback.classic.PatternLayout;
 import ch.qos.logback.classic.spi.ILoggingEvent;
+import ch.qos.logback.core.CoreConstants;
 import ch.qos.logback.core.encoder.EncoderBase;
 
 /**
@@ -32,7 +33,7 @@ public abstract class AbstractLoki4jEncoder extends EncoderBase<LogRecord[]> imp
         /**
          * Logback pattern to use for log record's label
          */
-        String pattern = "host=${HOSTNAME},level=%level";
+        String pattern;
         /**
          * Character to use as a separator between labels
          */
@@ -95,7 +96,15 @@ public abstract class AbstractLoki4jEncoder extends EncoderBase<LogRecord[]> imp
     private final AtomicInteger nanoCounter = new AtomicInteger(0);
 
     public void start() {
-        var labelPattern = label.nopex ? label.pattern + "%nopex" : label.pattern;
+        // init with default label pattern if not set in config
+        var resolvedLblPat = label.pattern == null
+            ? "level=%level,host=" + context.getProperty(CoreConstants.HOSTNAME_KEY)
+            : label.pattern;
+        // check nopex flag
+        var labelPattern = label.nopex
+            ? resolvedLblPat + "%nopex"
+            : resolvedLblPat;
+
         labelPatternLayout = initPatternLayout(labelPattern);
         labelPatternLayout.start();
 
