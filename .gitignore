@@ -1,6 +1,6 @@
 .gradle
-/build/
-/bin/
+*/build/
+*/bin/
 docker/
 
 .classpath

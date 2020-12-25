@@ -1,1 +1,4 @@
-rootProject.name = 'loki-logback-appender'
+rootProject.name = 'loki4j'
+
+include 'common'
+include 'loki-logback-appender'
