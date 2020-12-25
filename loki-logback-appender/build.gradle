@@ -15,6 +15,7 @@ repositories {
 
 dependencies {
     api 'ch.qos.logback:logback-classic:1.2.3'
+    implementation project(':common')
 
     compileOnly 'com.google.protobuf:protobuf-java:3.12.4'
     compileOnly 'org.xerial.snappy:snappy-java:1.1.8'
