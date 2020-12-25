@@ -4,7 +4,7 @@ import static com.github.loki4j.logback.Generators.*;
 
 import java.util.Arrays;
 
-import com.github.loki4j.logback.AbstractLoki4jAppender;
+import com.github.loki4j.logback.Loki4jEncoder;
 import com.github.loki4j.logback.performance.Benchmarker.Benchmark;
 
 import org.junit.Test;
@@ -12,12 +12,13 @@ import org.junit.experimental.categories.Category;
 
 import ch.qos.logback.classic.spi.ILoggingEvent;
 
-public class AbstractAppenderTest {
+public class AppenderTest {
 
-    private static AppenderWrapper<AbstractLoki4jAppender> initApp(AbstractLoki4jAppender a) {
+    private static AppenderWrapper initApp(int capacity, Loki4jEncoder e) {
+        var a = appender(capacity, 60_000L, e, dummySender());
         a.setVerbose(false);
         a.start();
-        return new AppenderWrapper<>(a);
+        return new AppenderWrapper(a);
     }
 
     @Test
@@ -31,19 +32,19 @@ public class AbstractAppenderTest {
             this.generator = () -> InfiniteEventIterator.from(generateEvents(10_000, 10)).limited(100_000);
             this.benchmarks = Arrays.asList(
                 Benchmark.of("dummyAppender",
-                    () -> initApp(dummyAppender(capacity, 60_000L, defaultToStringEncoder())),
+                    () -> initApp(capacity, defaultToStringEncoder()),
                     (a, e) -> a.append(e),
                     a -> a.stop()),
                 Benchmark.of("dummyAppenderWait",
-                    () -> initApp(dummyAppender(capacity, 60_000L, defaultToStringEncoder())),
+                    () -> initApp(capacity, defaultToStringEncoder()),
                     (a, e) -> a.appendAndWait(e),
                     a -> a.stop()),
                 Benchmark.of("dummyJsonAppenderWait",
-                    () -> initApp(dummyAppender(capacity, 60_000L, jsonEncoder(false, "singleThreadPerformance"))),
+                    () -> initApp(capacity, jsonEncoder(false, "singleThreadPerformance")),
                     (a, e) -> a.appendAndWait(e),
                     a -> a.stop()),
                 Benchmark.of("dummyProtobufAppenderWait",
-                    () -> initApp(dummyAppender(capacity, 60_000L, protobufEncoder(false, "singleThreadPerformance"))),
+                    () -> initApp(capacity, protobufEncoder(false, "singleThreadPerformance")),
                     (a, e) -> a.appendAndWait(e),
                     a -> a.stop())
             );
@@ -63,19 +64,19 @@ public class AbstractAppenderTest {
             this.generator = () -> InfiniteEventIterator.from(generateEvents(10_000, 10)).limited(100_000);
             this.benchmarks = Arrays.asList(
                 Benchmark.of("dummyAppender",
-                    () -> initApp(dummyAppender(capacity, 60_000L, defaultToStringEncoder())),
+                    () -> initApp(capacity, defaultToStringEncoder()),
                     (a, e) -> a.append(e),
                     a -> a.stop()),
                 Benchmark.of("dummyAppenderWait",
-                    () -> initApp(dummyAppender(capacity, 60_000L, defaultToStringEncoder())),
+                    () -> initApp(capacity, defaultToStringEncoder()),
                     (a, e) -> a.appendAndWait(e),
                     a -> a.stop()),
                 Benchmark.of("dummyJsonAppenderWait",
-                    () -> initApp(dummyAppender(capacity, 60_000L, jsonEncoder(false, "singleThreadPerformance"))),
+                    () -> initApp(capacity, jsonEncoder(false, "singleThreadPerformance")),
                     (a, e) -> a.appendAndWait(e),
                     a -> a.stop()),
                 Benchmark.of("dummyProtobufAppenderWait",
-                    () -> initApp(dummyAppender(capacity, 60_000L, protobufEncoder(false, "singleThreadPerformance"))),
+                    () -> initApp(capacity, protobufEncoder(false, "singleThreadPerformance")),
                     (a, e) -> a.appendAndWait(e),
                     a -> a.stop())
             );

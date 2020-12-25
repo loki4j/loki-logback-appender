@@ -30,10 +30,9 @@ public class FastSendTest {
     @Category({IntegrationTests.class})
     public void testApacheJsonFastSend() throws Exception {
         var label = "testApacheJsonFastSend";
-        var appender = apacheHttpAppender(urlPush);
-        appender.setBatchSize(10);
-        appender.setBatchTimeoutMs(1000);
-        appender.setEncoder(jsonEncoder(false, label));
+        var encoder = jsonEncoder(false, label);
+        var sender = apacheHttpSender(urlPush);
+        var appender = appender(10, 1000, encoder, sender);
 
         var events = generateEvents(1000, 10);
         client.testHttpSend(label, events, appender, jsonEncoder(false, label));
@@ -45,10 +44,9 @@ public class FastSendTest {
     @Category({IntegrationTests.class})
     public void testJavaJsonFastSend() throws Exception {
         var label = "testJavaJsonFastSend";
-        var appender = javaHttpAppender(urlPush);
-        appender.setBatchSize(10);
-        appender.setBatchTimeoutMs(1000);
-        appender.setEncoder(protobufEncoder(false, label));
+        var encoder = protobufEncoder(false, label);
+        var sender = javaHttpSender(urlPush);
+        var appender = appender(10, 1000, encoder, sender);
 
         var events = generateEvents(1000, 10);
         client.testHttpSend(label, events, appender, jsonEncoder(false, label));
@@ -58,10 +56,9 @@ public class FastSendTest {
     @Category({IntegrationTests.class})
     public void testApacheProtobufFastSend() throws Exception {
         var label = "testApacheProtobufFastSend";
-        var appender = apacheHttpAppender(urlPush);
-        appender.setBatchSize(10);
-        appender.setBatchTimeoutMs(1000);
-        appender.setEncoder(protobufEncoder(false, label));
+        var encoder = protobufEncoder(false, label);
+        var sender = apacheHttpSender(urlPush);
+        var appender = appender(10, 1000, encoder, sender);
 
         var events = generateEvents(1000, 10);
         client.testHttpSend(label, events, appender, jsonEncoder(false, label));
@@ -71,10 +68,9 @@ public class FastSendTest {
     @Category({IntegrationTests.class})
     public void testJavaProtobufFastSend() throws Exception {
         var label = "testJavaProtobufFastSend";
-        var appender = javaHttpAppender(urlPush);
-        appender.setBatchSize(10);
-        appender.setBatchTimeoutMs(1000);
-        appender.setEncoder(jsonEncoder(false, label));
+        var encoder = jsonEncoder(false, label);
+        var sender = javaHttpSender(urlPush);
+        var appender = appender(10, 1000, encoder, sender);
 
         var events = generateEvents(1000, 10);
         client.testHttpSend(label, events, appender, jsonEncoder(false, label));

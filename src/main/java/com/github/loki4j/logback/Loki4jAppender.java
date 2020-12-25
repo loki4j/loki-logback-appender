@@ -1,49 +1,26 @@
 package com.github.loki4j.logback;
 
 import java.util.concurrent.CompletableFuture;
-import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
 import java.util.concurrent.ScheduledExecutorService;
 import java.util.concurrent.TimeUnit;
 
 import com.github.loki4j.common.ConcurrentBatchBuffer;
 import com.github.loki4j.common.LogRecord;
+import com.github.loki4j.common.LokiResponse;
+import com.github.loki4j.common.LokiThreadFactory;
+import com.github.loki4j.common.ReflectionUtils;
 
 import ch.qos.logback.classic.spi.ILoggingEvent;
 import ch.qos.logback.core.UnsynchronizedAppenderBase;
 import ch.qos.logback.core.status.Status;
 
 /**
- * Abstract class that provides basic Loki4j functionality for sending log record batches
+ * Main appender that provides functionality for sending log record batches to Loki
  */
-public abstract class AbstractLoki4jAppender extends UnsynchronizedAppenderBase<ILoggingEvent> {
+public class Loki4jAppender extends UnsynchronizedAppenderBase<ILoggingEvent> {
 
     private static final LogRecord[] ZERO_EVENTS = new LogRecord[0];
-
-    static final class LokiResponse {
-        public int status;
-        public String body;
-        public LokiResponse(int status, String body) {
-            this.status = status;
-            this.body = body;
-        }
-    }
-
-    /**
-     * Loki endpoint to be used for sending batches
-     */
-    protected String url = "http://localhost:3100/loki/api/v1/push";
-
-    /**
-     * Time in milliseconds to wait for HTTP connection to Loki to be established
-     * before reporting an error
-     */
-    protected long connectionTimeoutMs = 30_000;
-    /**
-     * Time in milliseconds to wait for HTTP request to Loki to be responded
-     * before reporting an error
-     */
-    protected long requestTimeoutMs = 5_000;
 
     /**
      * Max number of messages to put into single batch and send to Loki
@@ -58,10 +35,6 @@ public abstract class AbstractLoki4jAppender extends UnsynchronizedAppenderBase<
      * Number of threads to use for log message processing and formatting
      */
     private int processingThreads = 1;
-    /**
-     * Number of threads to use for sending HTTP requests
-     */
-    private int httpThreads = 1;
 
     /**
      * If true, appender will pring its own debug logs to stderr
@@ -73,10 +46,15 @@ public abstract class AbstractLoki4jAppender extends UnsynchronizedAppenderBase<
      */
     private Loki4jEncoder encoder;
 
+    /**
+     * A HTTPS sender to use for pushing logs to Loki
+     */
+    private HttpSender sender;
+
     private ConcurrentBatchBuffer<ILoggingEvent, LogRecord> buffer;
 
     private ScheduledExecutorService scheduler;
-    protected ExecutorService httpThreadPool;
+
 
     @Override
     public final void start() {
@@ -92,7 +70,7 @@ public abstract class AbstractLoki4jAppender extends UnsynchronizedAppenderBase<
             processingThreads, batchSize, batchTimeoutMs));
 
         if (encoder == null) {
-            addWarn("No encoder specified. Switching to default encoder");
+            addWarn("No encoder specified in the config. Using JsonEncoder with default settings");
             encoder = new JsonEncoder();
         }
         encoder.setContext(context);
@@ -101,9 +79,17 @@ public abstract class AbstractLoki4jAppender extends UnsynchronizedAppenderBase<
         buffer = new ConcurrentBatchBuffer<>(batchSize, LogRecord::create, (e, r) -> encoder.eventToRecord(e, r));
 
         scheduler = Executors.newScheduledThreadPool(processingThreads, new LokiThreadFactory("loki-scheduler"));
-        httpThreadPool = Executors.newFixedThreadPool(httpThreads, new LokiThreadFactory("loki-http-sender"));
 
-        startHttp(encoder.getContentType());
+        if (sender == null) {
+            sender = ReflectionUtils
+                .<HttpSender>tryCreateInstance("com.github.loki4j.logback.JavaHttpSender")
+                .orElseThrow(() ->  // only possible on Java 8
+                    new RuntimeException("No sender specified. Please specify a sender explicitly in logback config"));
+            addWarn("No sender specified in the config. Using JavaHttpSender with default settings");
+        }
+        sender.setContext(context);
+        sender.setContentType(encoder.getContentType());
+        sender.start();
 
         super.start();
 
@@ -134,9 +120,9 @@ public abstract class AbstractLoki4jAppender extends UnsynchronizedAppenderBase<
         encoder.stop();
 
         scheduler.shutdown();
-        httpThreadPool.shutdown();
+        
 
-        stopHttp();
+        sender.stop();
         addInfo("Successfully stopped");
     }
 
@@ -159,12 +145,6 @@ public abstract class AbstractLoki4jAppender extends UnsynchronizedAppenderBase<
             return CompletableFuture.completedFuture(null);
     }
 
-    protected abstract void startHttp(String contentType);
-
-    protected abstract void stopHttp();
-
-    protected abstract CompletableFuture<LokiResponse> sendAsync(byte[] batch);
-    
 
     private CompletableFuture<Void> drainAsync(long timeoutMs) {
         var batch = buffer.drain(timeoutMs, ZERO_EVENTS);
@@ -186,12 +166,12 @@ public abstract class AbstractLoki4jAppender extends UnsynchronizedAppenderBase<
                 //System.out.println("\n");
                 return body;
             }, scheduler)
-            .thenCompose(this::sendAsync)
+            .thenCompose(sender::sendAsync)
             .whenComplete((r, e) -> {
                 if (e != null) {
                     addError(String.format(
                         "Error while sending Batch #%x (%s records) to Loki (%s)",
-                        batchId, batch.length, url), e);
+                        batchId, batch.length, sender.getUrl()), e);
                 }
                 else {
                     if (r.status < 200 || r.status > 299)
@@ -204,18 +184,6 @@ public abstract class AbstractLoki4jAppender extends UnsynchronizedAppenderBase<
                             batchId, r.status));
                 }
             });
-    }
-
-    public void setUrl(String url) {
-        this.url = url;
-    }
-
-    public void setConnectionTimeoutMs(long connectionTimeoutMs) {
-        this.connectionTimeoutMs = connectionTimeoutMs;
-    }
-
-    public void setRequestTimeoutMs(long requestTimeoutMs) {
-        this.requestTimeoutMs = requestTimeoutMs;
     }
 
     public void setBatchSize(int batchSize) {
@@ -233,19 +201,20 @@ public abstract class AbstractLoki4jAppender extends UnsynchronizedAppenderBase<
         this.encoder = encoder;
     }
 
-    public void setProcessingThreads(int processingThreads) {
-        this.processingThreads = processingThreads;
+    HttpSender getSender() {
+        return sender;
     }
 
-    public int getHttpThreads() {
-        return httpThreads;
+    public void setSender(HttpSender sender) {
+        this.sender = sender;
     }
-    public void setHttpThreads(int httpThreads) {
-        this.httpThreads = httpThreads;
+
+    public void setProcessingThreads(int processingThreads) {
+        this.processingThreads = processingThreads;
     }
 
     public void setVerbose(boolean verbose) {
         this.verbose = verbose;
     }
-    
+
 }

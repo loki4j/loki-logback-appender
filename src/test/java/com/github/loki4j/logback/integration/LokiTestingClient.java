@@ -21,7 +21,7 @@ import com.fasterxml.jackson.core.JsonProcessingException;
 import com.fasterxml.jackson.databind.JsonMappingException;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.github.loki4j.common.LogRecord;
-import com.github.loki4j.logback.AbstractLoki4jAppender;
+import com.github.loki4j.logback.Loki4jAppender;
 import com.github.loki4j.logback.AbstractLoki4jEncoder;
 
 import ch.qos.logback.classic.spi.ILoggingEvent;
@@ -84,7 +84,7 @@ public class LokiTestingClient {
     public void testHttpSend(
             String lbl,
             ILoggingEvent[] events,
-            AbstractLoki4jAppender actualAppender,
+            Loki4jAppender actualAppender,
             AbstractLoki4jEncoder expectedEncoder) throws Exception {
         testHttpSend(lbl, events, actualAppender, expectedEncoder, events.length, 500L);
     }
@@ -92,7 +92,7 @@ public class LokiTestingClient {
     public void testHttpSend(
             String lbl,
             ILoggingEvent[] events,
-            AbstractLoki4jAppender actualAppender,
+            Loki4jAppender actualAppender,
             AbstractLoki4jEncoder expectedEncoder,
             int chunkSize,
             long chunkDelayMs) throws Exception {

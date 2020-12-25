@@ -7,25 +7,46 @@ import java.net.http.HttpResponse;
 import java.time.Duration;
 import java.util.concurrent.CompletableFuture;
 import java.util.concurrent.ExecutorService;
+import java.util.concurrent.Executors;
 import java.util.concurrent.SynchronousQueue;
 import java.util.concurrent.ThreadPoolExecutor;
 import java.util.concurrent.TimeUnit;
 
+import com.github.loki4j.common.LokiResponse;
+import com.github.loki4j.common.LokiThreadFactory;
+
+import ch.qos.logback.core.joran.spi.NoAutoStart;
+
 /**
- * Loki appender that is backed by Java standard {@link java.net.http.HttpClient HttpClient}
+ * Loki sender that is backed by Java standard {@link java.net.http.HttpClient HttpClient}
  */
-public class LokiJavaHttpAppender extends AbstractLoki4jAppender {
+@NoAutoStart
+public class JavaHttpSender extends AbstractHttpSender {
+
+    /**
+     * Number of threads to use for sending HTTP requests
+     */
+    private int httpThreads = 1;
+
+    /**
+     * Maximum time that excess idle threads will wait for new
+     * tasks before terminating inner HTTP threads
+     */
+    private long innerThreadsExpirationMs = 5 * 60_000;
 
     private HttpClient client;
     private HttpRequest.Builder requestBuilder;
 
+    private ExecutorService httpThreadPool;
     private ExecutorService internalHttpThreadPool;
 
     @Override
-    protected void startHttp(String contentType) {
+    public void start() {
+        httpThreadPool = Executors.newFixedThreadPool(httpThreads, new LokiThreadFactory("loki-http-sender"));
+
         internalHttpThreadPool = new ThreadPoolExecutor(
             0, Integer.MAX_VALUE,
-            getBatchTimeoutMs() * 5, TimeUnit.MILLISECONDS, // expire unused threads after 5 batch intervals
+            innerThreadsExpirationMs, TimeUnit.MILLISECONDS, // expire unused threads after 5 batch intervals
             new SynchronousQueue<Runnable>(),
             new LokiThreadFactory("loki-java-http-internal"));
 
@@ -40,15 +61,19 @@ public class LokiJavaHttpAppender extends AbstractLoki4jAppender {
             .timeout(Duration.ofMillis(requestTimeoutMs))
             .uri(URI.create(url))
             .header("Content-Type", contentType);
+
+        super.start();
     }
 
     @Override
-    protected void stopHttp() {
+    public void stop() {
+        super.stop();
         internalHttpThreadPool.shutdown();
+        httpThreadPool.shutdown();
     }
 
     @Override
-    protected CompletableFuture<LokiResponse> sendAsync(byte[] batch) {
+    public CompletableFuture<LokiResponse> sendAsync(byte[] batch) {
         // Java HttpClient natively supports async API
         // But we have to use its sync API to preserve the ordering of batches
         return CompletableFuture
@@ -67,4 +92,11 @@ public class LokiJavaHttpAppender extends AbstractLoki4jAppender {
             }, httpThreadPool);
     }
 
+    public void setHttpThreads(int httpThreads) {
+        this.httpThreads = httpThreads;
+    }
+
+    public void setInnerThreadsExpirationMs(long innerThreadsExpirationMs) {
+        this.innerThreadsExpirationMs = innerThreadsExpirationMs;
+    }
 }

@@ -2,7 +2,12 @@ package com.github.loki4j.logback;
 
 import java.io.IOException;
 import java.util.concurrent.CompletableFuture;
+import java.util.concurrent.ExecutorService;
+import java.util.concurrent.Executors;
 import java.util.function.Function;
+
+import com.github.loki4j.common.LokiResponse;
+import com.github.loki4j.common.LokiThreadFactory;
 
 import org.apache.http.HttpResponse;
 import org.apache.http.client.config.RequestConfig;
@@ -15,10 +20,13 @@ import org.apache.http.impl.conn.PoolingHttpClientConnectionManager;
 import org.apache.http.protocol.HttpContext;
 import org.apache.http.util.EntityUtils;
 
+import ch.qos.logback.core.joran.spi.NoAutoStart;
+
 /**
- * Loki appender that is backed by Apache {@link org.apache.http.client.HttpClient HttpClient}
+ * Loki sender that is backed by Apache {@link org.apache.http.client.HttpClient HttpClient}
  */
-public class LokiApacheHttpAppender extends AbstractLoki4jAppender {
+@NoAutoStart
+public class ApacheHttpSender extends AbstractHttpSender {
 
     /**
      * Maximum number of HTTP connections setting for HttpClient
@@ -32,11 +40,20 @@ public class LokiApacheHttpAppender extends AbstractLoki4jAppender {
      */
     private long connectionKeepAliveMs = 120_000;
 
+    /**
+     * Number of threads to use for sending HTTP requests
+     */
+    private int httpThreads = 1;
+
+    private ExecutorService httpThreadPool;
+
     private CloseableHttpClient client;
     private Function<byte[], HttpPost> requestBuilder;
 
     @Override
-    protected void startHttp(String contentType) {
+    public void start() {
+        httpThreadPool = Executors.newFixedThreadPool(httpThreads, new LokiThreadFactory("loki-http-sender"));
+
         var cm = new PoolingHttpClientConnectionManager();
         cm.setMaxTotal(maxConnections);
         cm.setDefaultMaxPerRoute(maxConnections);
@@ -64,19 +81,23 @@ public class LokiApacheHttpAppender extends AbstractLoki4jAppender {
             request.setEntity(new ByteArrayEntity(body));
             return request;
         };
+
+        super.start();
     }
 
     @Override
-    protected void stopHttp() {
+    public void stop() {
+        super.stop();
         try {
             client.close();
         } catch (IOException e) {
             addWarn("Error while closing Apache HttpClient", e);
         }
+        httpThreadPool.shutdown();
     }
 
     @Override
-    protected CompletableFuture<LokiResponse> sendAsync(byte[] batch) {
+    public CompletableFuture<LokiResponse> sendAsync(byte[] batch) {
         return CompletableFuture
             .supplyAsync(() -> {
                 try {
@@ -97,6 +118,10 @@ public class LokiApacheHttpAppender extends AbstractLoki4jAppender {
 
     public void setConnectionKeepAliveMs(long connectionKeepAliveMs) {
         this.connectionKeepAliveMs = connectionKeepAliveMs;
+    }
+
+    public void setHttpThreads(int httpThreads) {
+        this.httpThreads = httpThreads;
     }
 
 }
