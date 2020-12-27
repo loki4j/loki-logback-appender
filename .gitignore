@@ -1,7 +1,9 @@
 .gradle
 */build/
 */bin/
+
 docker/
+temp/
 
 .classpath
 .idea
