@@ -72,12 +72,14 @@ jacocoTestReport {
 }
 
 task integTests(type: Test) {
+    description = 'Run integration tests'
     useJUnit {
         includeCategories 'com.github.loki4j.logback.integration.IntegrationTests'
     }
 }
 
 task perfTests(type: Test) {
+    description = 'Run performance tests'
     useJUnit {
         includeCategories 'com.github.loki4j.logback.performance.PerformanceTests'
     }
