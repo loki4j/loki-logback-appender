@@ -16,6 +16,20 @@ public class LogRecord {
         return new LogRecord();
     }
 
+    public static LogRecord create(
+            long timestamp,
+            int nanos,
+            String stream,
+            String message) {
+        var r = new LogRecord();
+        r.timestampMs = timestamp;
+        r.nanos = nanos;
+        r.stream = stream;
+        r.streamHashCode = stream.hashCode();
+        r.message = message;
+        return r;
+    }
+
     @Override
     public String toString() {
         return "LogRecord [ts=" + timestampMs +

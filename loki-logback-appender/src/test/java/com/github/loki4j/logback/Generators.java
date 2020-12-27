@@ -295,20 +295,6 @@ public class Generators {
         return e;
     }
 
-    public static LogRecord logRecord(
-            long timestamp,
-            int nanos,
-            String stream,
-            String message) {
-        var r = new LogRecord();
-        r.timestampMs = timestamp;
-        r.nanos = nanos;
-        r.stream = stream;
-        r.streamHashCode = stream.hashCode();
-        r.message = message;
-        return r;
-    }
-
     public static class AppenderWrapper {
         private Loki4jAppender appender;
         public AppenderWrapper(Loki4jAppender appender) {

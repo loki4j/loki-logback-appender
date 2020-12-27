@@ -31,7 +31,7 @@ configurations {
 }
 
 compileJava8Java {
-    dependsOn ':generateProto'
+    dependsOn ':common:generateProto'
 
     sourceCompatibility = 8
     targetCompatibility = 8
@@ -51,7 +51,7 @@ compileJava8Java {
 }
 
 compileJava8TestJava {
-    dependsOn ':compileJava8Java'
+    dependsOn ':loki-logback-appender:compileJava8Java'
 
     sourceCompatibility = 8
     targetCompatibility = 8
@@ -87,7 +87,7 @@ task java8Test (type: Test) {
 }
 
 task java8Jar(type: Jar) {
-    dependsOn ':generateProto'
+    //dependsOn ':generateProto'
     from sourceSets.java8.output
     archiveAppendix = 'jdk8'
 }

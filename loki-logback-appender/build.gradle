@@ -3,7 +3,6 @@ plugins {
     id 'maven-publish'
     id 'signing'
     id 'jacoco'
-    id "com.google.protobuf" version "0.8.13"
 }
 
 group = "com.github.loki4j"
@@ -16,7 +15,7 @@ repositories {
 sourceSets {
     main {
         java {
-            srcDirs += ["$buildDir/generated/source/proto/main/java"]
+            srcDirs += [files(project(":common").sourceSets.main.java.srcDirs)]
         }
     }
 }
@@ -62,12 +61,6 @@ jar {
     exclude '*.proto'
 }
 
-protobuf {
-  protoc {
-    artifact = 'com.google.protobuf:protoc:3.12.4'
-  }
-}
-
 jacoco {
     toolVersion = "0.8.6"
 }
@@ -76,20 +69,17 @@ jacocoTestReport {
     reports {
         xml.enabled = true
     }
-    afterEvaluate {
-        classDirectories.setFrom(files(classDirectories.files.collect {
-            fileTree(dir: it, exclude: '**/protobuf/**')
-        }))
-    }
 }
 
 task integTests(type: Test) {
+    description = 'Run integration tests'
     useJUnit {
         includeCategories 'com.github.loki4j.logback.integration.IntegrationTests'
     }
 }
 
 task perfTests(type: Test) {
+    description = 'Run performance tests'
     useJUnit {
         includeCategories 'com.github.loki4j.logback.performance.PerformanceTests'
     }
@@ -152,7 +142,7 @@ signing {
     sign publishing.publications.mavenJava
 }
 
-apply from: 'gradle/java8.gradle'
+apply from: '../gradle/java8.gradle'
 
 tasks.withType(GenerateModuleMetadata) {
     enabled = false
