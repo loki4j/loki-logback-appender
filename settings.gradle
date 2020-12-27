@@ -6,7 +6,10 @@ rootProject.name = 'loki4j'
 include 'common'
 include 'loki-logback-appender'
 
-new File(rootDir, 'temp').traverse(type: DIRECTORIES, maxDepth: 0) { dir ->
-    if (new File(dir, 'build.gradle').exists())
-        include 'temp:' + dir.getName()
+def tempProjects = new File(rootDir, 'temp')
+if (tempProjects.exists()) {
+    tempProjects.traverse(type: DIRECTORIES, maxDepth: 0) { dir ->
+        if (new File(dir, 'build.gradle').exists())
+            include 'temp:' + dir.getName()
+    }
 }
