@@ -31,7 +31,7 @@ configurations {
 }
 
 compileJava8Java {
-    dependsOn ':generateProto'
+    //dependsOn ':generateProto'
 
     sourceCompatibility = 8
     targetCompatibility = 8
@@ -87,7 +87,7 @@ task java8Test (type: Test) {
 }
 
 task java8Jar(type: Jar) {
-    dependsOn ':generateProto'
+    //dependsOn ':generateProto'
     from sourceSets.java8.output
     archiveAppendix = 'jdk8'
 }
