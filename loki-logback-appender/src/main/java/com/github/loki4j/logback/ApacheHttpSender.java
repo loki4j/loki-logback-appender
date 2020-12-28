@@ -78,6 +78,8 @@ public class ApacheHttpSender extends AbstractHttpSender {
         requestBuilder = (body) -> {
             var request = new HttpPost(url);
             request.addHeader("Content-Type", contentType);
+            basicAuthToken.ifPresent(token -> request.setHeader("Authorization", "Basic " + token));
+
             request.setEntity(new ByteArrayEntity(body));
             return request;
         };
