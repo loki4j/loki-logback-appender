@@ -7,19 +7,24 @@ import com.github.loki4j.logback.AbstractHttpSender;
 
 import org.junit.AfterClass;
 import org.junit.BeforeClass;
+import org.junit.Ignore;
 import org.junit.Test;
 import org.junit.experimental.categories.Category;
 
+@Ignore
 public class GrafanaCloudTest {
 
-    private static String urlBase = "https://logs-prod-us-central1.grafana.net/api/prom";
+    private static String urlBase = "https://logs-prod-us-central1.grafana.net/loki/api/v1";
     private static String urlPush = urlBase + "/push";
+
+    private static String username = System.getenv("GRAFANA_CLOUD_USERNAME");
+    private static String password = System.getenv("GRAFANA_CLOUD_PASSWORD");
 
     private static LokiTestingClient client;
 
     @BeforeClass
     public static void startMockLoki() {
-        client = new LokiTestingClient(urlBase);
+        client = new LokiTestingClient(urlBase, username, password);
     }
 
     @AfterClass
@@ -29,9 +34,10 @@ public class GrafanaCloudTest {
 
     public static AbstractHttpSender authorize(AbstractHttpSender sender) {
         var auth = new AbstractHttpSender.BasicAuth();
-        auth.setUsername(System.getenv("GRAFANA_CLOUD_USERNAME"));
-        auth.setPassword(System.getenv("GRAFANA_CLOUD_PASSWORD"));
+        auth.setUsername(username);
+        auth.setPassword(password);
         sender.setAuth(auth);
+        sender.setRequestTimeoutMs(30_000L);
         return sender;
     }
 

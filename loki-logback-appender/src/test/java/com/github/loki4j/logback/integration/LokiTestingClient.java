@@ -11,6 +11,7 @@ import java.net.http.HttpRequest;
 import java.net.http.HttpResponse;
 import java.time.Duration;
 import java.util.Arrays;
+import java.util.Base64;
 import java.util.List;
 import java.util.Map;
 import java.util.concurrent.atomic.AtomicReference;
@@ -46,6 +47,16 @@ public class LokiTestingClient {
         requestBuilder = HttpRequest
             .newBuilder()
             .timeout(Duration.ofSeconds(30));
+    }
+
+    public LokiTestingClient(String urlBase, String username, String password) {
+        this(urlBase);
+
+        requestBuilder.setHeader("Authorization", "Basic " +
+            Base64
+                .getEncoder()
+                .encodeToString((username + ":" + password).getBytes())
+        );
     }
 
     public void close() {
