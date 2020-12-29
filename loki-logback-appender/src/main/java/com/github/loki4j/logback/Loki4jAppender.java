@@ -57,7 +57,7 @@ public class Loki4jAppender extends UnsynchronizedAppenderBase<ILoggingEvent> {
 
 
     @Override
-    public final void start() {
+    public void start() {
         if (getStatusManager() != null && getStatusManager().getCopyOfStatusListenerList().isEmpty()) {
             var statusListener = new StatusPrinter(verbose ? Status.INFO : Status.WARN);
             statusListener.setContext(getContext());
@@ -102,7 +102,7 @@ public class Loki4jAppender extends UnsynchronizedAppenderBase<ILoggingEvent> {
     }
 
     @Override
-    public final void stop() {
+    public void stop() {
         if (!super.isStarted()) {
             return;
         }
@@ -145,6 +145,13 @@ public class Loki4jAppender extends UnsynchronizedAppenderBase<ILoggingEvent> {
             return CompletableFuture.completedFuture(null);
     }
 
+    protected byte[] encode(LogRecord[] batch) {
+        return encoder.encode(batch);
+    }
+
+    protected CompletableFuture<LokiResponse> sendAsync(byte[] batch) {
+        return sender.sendAsync(batch);
+    }
 
     private CompletableFuture<Void> drainAsync(long timeoutMs) {
         var batch = buffer.drain(timeoutMs, ZERO_EVENTS);
@@ -158,7 +165,7 @@ public class Loki4jAppender extends UnsynchronizedAppenderBase<ILoggingEvent> {
         var batchId = System.nanoTime();
         return CompletableFuture
             .supplyAsync(() -> {
-                var body = encoder.encode(batch);
+                var body = encode(batch);
                 addInfo(String.format(
                     ">>> Batch #%x: Sending %,d items converted to %,d bytes",
                     batchId, batch.length, body.length));
@@ -166,7 +173,7 @@ public class Loki4jAppender extends UnsynchronizedAppenderBase<ILoggingEvent> {
                 //System.out.println("\n");
                 return body;
             }, scheduler)
-            .thenCompose(sender::sendAsync)
+            .thenCompose(this::sendAsync)
             .whenComplete((r, e) -> {
                 if (e != null) {
                     addError(String.format(

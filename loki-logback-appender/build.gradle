@@ -26,6 +26,7 @@ dependencies {
     compileOnly 'com.google.protobuf:protobuf-java:3.12.4'
     compileOnly 'org.xerial.snappy:snappy-java:1.1.8'
     compileOnly 'org.apache.httpcomponents:httpclient:4.5.13'
+    compileOnly 'io.micrometer:micrometer-core:1.6.2'
 
     testImplementation 'junit:junit:4.13'
     testImplementation 'com.google.protobuf:protobuf-java:3.12.4'
