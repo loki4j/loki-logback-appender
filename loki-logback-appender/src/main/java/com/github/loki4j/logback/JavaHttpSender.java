@@ -63,6 +63,8 @@ public class JavaHttpSender extends AbstractHttpSender {
             .header("Content-Type", contentType);
 
         super.start();
+
+        basicAuthToken.ifPresent(token -> requestBuilder.setHeader("Authorization", "Basic " + token));
     }
 
     @Override

@@ -1,5 +1,8 @@
 package com.github.loki4j.logback;
 
+import java.util.Base64;
+import java.util.Optional;
+
 import ch.qos.logback.core.spi.ContextAwareBase;
 
 /**
@@ -7,6 +10,23 @@ import ch.qos.logback.core.spi.ContextAwareBase;
  * HTTP sender implementations
  */
 public abstract class AbstractHttpSender extends ContextAwareBase implements HttpSender {
+
+    public static final class BasicAuth {
+        /**
+         * Username to use for basic auth
+         */
+        String username;
+        /**
+         * Password to use for basic auth
+         */
+        String password;
+        public void setUsername(String username) {
+            this.username = username;
+        }
+        public void setPassword(String password) {
+            this.password = password;
+        }
+    }
 
     /**
     * Loki endpoint to be used for sending batches
@@ -30,9 +50,28 @@ public abstract class AbstractHttpSender extends ContextAwareBase implements Htt
      */
     protected long requestTimeoutMs = 5_000;
 
+    /**
+     * Optional creds for basic HTTP auth
+     */
+    private BasicAuth auth;
+
+    /**
+     * Token to pass to HTTP server if basic auth is enabled
+     */
+    protected Optional<String> basicAuthToken = Optional.empty();
+
     private boolean started = false;
 
     public void start() {
+        if (auth != null) {
+            // calculate auth token
+            basicAuthToken = Optional.of(
+                Base64
+                    .getEncoder()
+                    .encodeToString((auth.username + ":" + auth.password).getBytes())
+            );
+        }
+
         this.started = true;
     }
 
@@ -58,6 +97,10 @@ public abstract class AbstractHttpSender extends ContextAwareBase implements Htt
 
     public void setUrl(String url) {
         this.url = url;
+    }
+
+    public void setAuth(BasicAuth auth) {
+        this.auth = auth;
     }
 
     public void setContentType(String contentType) {

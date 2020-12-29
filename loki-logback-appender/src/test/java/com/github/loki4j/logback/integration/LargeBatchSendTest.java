@@ -31,6 +31,7 @@ public class LargeBatchSendTest {
         var label = "testApacheJsonBatchSend";
         var encoder = jsonEncoder(false, label);
         var sender = apacheHttpSender(urlPush);
+        sender.setRequestTimeoutMs(30_000L);
         var appender = appender(500, 1000, encoder, sender);
 
         var events = generateEvents(1000, 2000);
@@ -45,6 +46,7 @@ public class LargeBatchSendTest {
         var label = "testJavaJsonBatchSend";
         var encoder = jsonEncoder(false, label);
         var sender = javaHttpSender(urlPush);
+        sender.setRequestTimeoutMs(30_000L);
         var appender = appender(500, 1000, encoder, sender);
 
         var events = generateEvents(1000, 2000);
