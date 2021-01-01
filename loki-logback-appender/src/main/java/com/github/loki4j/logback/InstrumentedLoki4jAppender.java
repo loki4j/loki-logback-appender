@@ -35,9 +35,10 @@ public class InstrumentedLoki4jAppender extends Loki4jAppender {
     public void start() {
         super.start();
 
+        var host = context.getProperty(CoreConstants.HOSTNAME_KEY);
         var tags = Arrays.asList(
-            Tag.of("appender", this.getName()),
-            Tag.of("host", context.getProperty(CoreConstants.HOSTNAME_KEY)));
+            Tag.of("appender", this.getName() == null ? "none" : this.getName()),
+            Tag.of("host", host == null ? "unknown" : host));
 
         appendTimer = Timer
             .builder("loki4j.append.time")
@@ -107,11 +108,13 @@ public class InstrumentedLoki4jAppender extends Loki4jAppender {
     @Override
     protected CompletableFuture<LokiResponse> sendAsync(byte[] batch) {
         var startedNs = System.nanoTime();
-        bytesSentSummary.record(batch.length);
-        batchesSentCounter.increment();
         return super
             .sendAsync(batch)
-            .whenComplete((r, e) -> recordTimer(sendTimer, startedNs));
+            .whenComplete((r, e) -> {
+                recordTimer(sendTimer, startedNs);
+                bytesSentSummary.record(batch.length);
+                batchesSentCounter.increment();
+            });
     }
     
 }
