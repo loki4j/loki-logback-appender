@@ -52,13 +52,13 @@ public class Generators {
     public static Loki4jAppender appender(
             int batchSize,
             long batchTimeoutMs,
-            Loki4jEncoder encoder,
+            Loki4jLayout layout,
             AbstractHttpSender sender) {
         var appender = new Loki4jAppender();
         appender.setContext(new LoggerContext());
         appender.setBatchSize(batchSize);
         appender.setBatchTimeoutMs(batchTimeoutMs);
-        appender.setEncoder(encoder);
+        appender.setLayout(layout);
         appender.setSender(sender);
         appender.setVerbose(true);
         return appender;
@@ -89,19 +89,19 @@ public class Generators {
         return sender;
     }
 
-    public static JsonEncoder jsonEncoder(boolean staticLabels, String testLabel) {
-        var encoder = new JsonEncoder();
-        encoder.setStaticLabels(staticLabels);
-        encoder.setLabel(labelCfg("test=" + testLabel + ",level=%level,app=my-app", ",", "=", true));
-        encoder.setSortByTime(true);
-        return encoder;
+    public static JsonLayout jsonLayout(boolean staticLabels, String testLabel) {
+        var layout = new JsonLayout();
+        layout.setStaticLabels(staticLabels);
+        layout.setLabel(labelCfg("test=" + testLabel + ",level=%level,app=my-app", ",", "=", true));
+        layout.setSortByTime(true);
+        return layout;
     }
 
-    public static ProtobufEncoder protobufEncoder(boolean staticLabels, String testLabel) {
-        var encoder = new ProtobufEncoder();
-        encoder.setStaticLabels(staticLabels);
-        encoder.setLabel(labelCfg("test=" + testLabel + ",level=%level,app=my-app", ",", "=", true));
-        return encoder;
+    public static ProtobufLayout protobufLayout(boolean staticLabels, String testLabel) {
+        var layout = new ProtobufLayout();
+        layout.setStaticLabels(staticLabels);
+        layout.setLabel(labelCfg("test=" + testLabel + ",level=%level,app=my-app", ",", "=", true));
+        return layout;
     }
 
     public static <U> U withAppender(
@@ -116,30 +116,30 @@ public class Generators {
         }
     }
 
-    public static AbstractLoki4jEncoder defaultToStringEncoder() {
-        return toStringEncoder(
+    public static AbstractLoki4jLayout defaultToStringLayout() {
+        return toStringLayout(
             labelCfg("level=%level,app=my-app", ",", "=", true),
             messageCfg("l=%level c=%logger{20} t=%thread | %msg %ex{1}"),
             true,
             false);
     }
 
-    public static void withEncoder(AbstractLoki4jEncoder encoder, Consumer<AbstractLoki4jEncoder> body) {
-        encoder.setContext(new LoggerContext());
-        encoder.start();
+    public static void withLayout(AbstractLoki4jLayout layout, Consumer<AbstractLoki4jLayout> body) {
+        layout.setContext(new LoggerContext());
+        layout.start();
         try {
-            body.accept(encoder);
+            body.accept(layout);
         } finally {
-            encoder.stop();
+            layout.stop();
         }
     }
 
-    public static AbstractLoki4jEncoder toStringEncoder(
-        AbstractLoki4jEncoder.LabelCfg label,
-        AbstractLoki4jEncoder.MessageCfg message,
+    public static AbstractLoki4jLayout toStringLayout(
+        AbstractLoki4jLayout.LabelCfg label,
+        AbstractLoki4jLayout.MessageCfg message,
         boolean sortByTime,
         boolean staticLabels) {
-        var encoder = new AbstractLoki4jEncoder() {
+        var layout = new AbstractLoki4jLayout() {
             @Override
             public String getContentType() {
                 return "text/plain";
@@ -153,19 +153,19 @@ public class Generators {
                 return batchToString(batch).getBytes(charset);
             }
         };
-        encoder.setLabel(label);
-        encoder.setMessage(message);
-        encoder.setSortByTime(sortByTime);
-        encoder.setStaticLabels(staticLabels);
-        return encoder;
+        layout.setLabel(label);
+        layout.setMessage(message);
+        layout.setSortByTime(sortByTime);
+        layout.setStaticLabels(staticLabels);
+        return layout;
     }
 
-    public static AbstractLoki4jEncoder.LabelCfg labelCfg(
+    public static AbstractLoki4jLayout.LabelCfg labelCfg(
             String pattern,
             String pairSeparator,
             String keyValueSeparator,
             boolean nopex) {
-        var label = new AbstractLoki4jEncoder.LabelCfg();
+        var label = new AbstractLoki4jLayout.LabelCfg();
         label.setPattern(pattern);
         label.setPairSeparator(pairSeparator);
         label.setKeyValueSeparator(keyValueSeparator);
@@ -173,9 +173,9 @@ public class Generators {
         return label;
     }
 
-    public static AbstractLoki4jEncoder.MessageCfg messageCfg(
+    public static AbstractLoki4jLayout.MessageCfg messageCfg(
             String pattern) {
-        var message = new AbstractLoki4jEncoder.MessageCfg();
+        var message = new AbstractLoki4jLayout.MessageCfg();
         message.setPattern(pattern);
         return message;
     }

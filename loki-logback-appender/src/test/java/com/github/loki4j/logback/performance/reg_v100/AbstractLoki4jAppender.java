@@ -10,8 +10,8 @@ import java.util.concurrent.locks.ReentrantLock;
 import com.github.loki4j.common.ConcurrentBatchBuffer;
 import com.github.loki4j.common.LogRecord;
 import com.github.loki4j.common.LokiThreadFactory;
-import com.github.loki4j.logback.JsonEncoder;
-import com.github.loki4j.logback.Loki4jEncoder;
+import com.github.loki4j.logback.JsonLayout;
+import com.github.loki4j.logback.Loki4jLayout;
 import com.github.loki4j.logback.StatusPrinter;
 
 import ch.qos.logback.classic.spi.ILoggingEvent;
@@ -76,7 +76,7 @@ public abstract class AbstractLoki4jAppender extends UnsynchronizedAppenderBase<
     /**
      * An encoder to use for converting log record batches to format acceptable by Loki
      */
-    private Loki4jEncoder encoder;
+    private Loki4jLayout encoder;
 
     private ConcurrentBatchBuffer<ILoggingEvent, LogRecord> buffer;
 
@@ -98,7 +98,7 @@ public abstract class AbstractLoki4jAppender extends UnsynchronizedAppenderBase<
 
         if (encoder == null) {
             addWarn("No encoder specified. Switching to default encoder");
-            encoder = new JsonEncoder();
+            encoder = new JsonLayout();
         }
         encoder.setContext(context);
         encoder.start();
@@ -234,7 +234,7 @@ public abstract class AbstractLoki4jAppender extends UnsynchronizedAppenderBase<
         this.batchTimeoutMs = batchTimeoutMs;
     }
 
-    public void setEncoder(Loki4jEncoder encoder) {
+    public void setEncoder(Loki4jLayout encoder) {
         this.encoder = encoder;
     }
 

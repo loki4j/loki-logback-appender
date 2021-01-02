@@ -13,7 +13,7 @@ import com.google.protobuf.Timestamp;
 
 import static com.github.loki4j.logback.Generators.*;
 
-public class ProtobufEncoderTest {
+public class ProtobufLayoutTest {
 
     private LogRecord[] records = new LogRecord[] {
         LogRecord.create(100L, 1, "level=INFO,app=my-app", "l=INFO c=test.TestApp t=thread-1 | Test message 1"),
@@ -22,21 +22,21 @@ public class ProtobufEncoderTest {
         LogRecord.create(102L, 4, "level=INFO,app=my-app", "l=INFO c=test.TestApp t=thread-3 | Test message 4"),
     };
 
-    private static ProtobufEncoder protobufEncoder(boolean staticLabels) {
-        var encoder = new ProtobufEncoder();
-        encoder.setStaticLabels(staticLabels);
+    private static ProtobufLayout protobufLayout(boolean staticLabels) {
+        var layout = new ProtobufLayout();
+        layout.setStaticLabels(staticLabels);
 
         // we don't use these settings in tests
-        // they are tested in AbstractLoki4jEncoderTest
-        encoder.setLabel(labelCfg("level=%level,app=my-app", ",", "=", true));
-        encoder.setMessage(messageCfg("l=%level c=%logger{20} t=%thread | %msg %ex{1}"));
-        encoder.setSortByTime(false);
-        return encoder;
+        // they are tested in AbstractLoki4jLayoutTest
+        layout.setLabel(labelCfg("level=%level,app=my-app", ",", "=", true));
+        layout.setMessage(messageCfg("l=%level c=%logger{20} t=%thread | %msg %ex{1}"));
+        layout.setSortByTime(false);
+        return layout;
     }
 
     @Test
     public void testEncodeStaticLabels() {
-        withEncoder(protobufEncoder(true), encoder -> {
+        withLayout(protobufLayout(true), layout -> {
             var expected = PushRequest.newBuilder()
                 .addStreams(StreamAdapter.newBuilder()
                     .setLabels("{level=\"INFO\",app=\"my-app\"}")
@@ -54,7 +54,7 @@ public class ProtobufEncoderTest {
                         .setLine("l=INFO c=test.TestApp t=thread-3 | Test message 4")))
                 .build();
             try {
-                var actual = PushRequest.parseFrom(Snappy.uncompress(encoder.encode(records)));
+                var actual = PushRequest.parseFrom(Snappy.uncompress(layout.encode(records)));
                 assertEquals("static labels", expected, actual);
             } catch (Exception e) {
                 throw new RuntimeException(e);
@@ -64,7 +64,7 @@ public class ProtobufEncoderTest {
 
     @Test
     public void testEncodeDynamicLabels() {
-        withEncoder(protobufEncoder(false), encoder -> {
+        withLayout(protobufLayout(false), layout -> {
             var expected = PushRequest.newBuilder()
                 .addStreams(StreamAdapter.newBuilder()
                     .setLabels("{level=\"DEBUG\",app=\"my-app\"}")
@@ -84,7 +84,7 @@ public class ProtobufEncoderTest {
                         .setLine("l=INFO c=test.TestApp t=thread-3 | Test message 4")))
                 .build();
             try {
-                var actual = PushRequest.parseFrom(Snappy.uncompress(encoder.encode(records)));
+                var actual = PushRequest.parseFrom(Snappy.uncompress(layout.encode(records)));
                 assertEquals("dynamic labels", expected, actual);
             } catch (Exception e) {
                 throw new RuntimeException(e);

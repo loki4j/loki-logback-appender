@@ -42,9 +42,9 @@ public class Loki4jAppenderTest {
 
     @Test
     public void testBatchSize() {
-        var encoder = defaultToStringEncoder();
+        var layout = defaultToStringLayout();
         var sender = dummySender();
-        var appender = appender(3, 1000L, encoder, sender);
+        var appender = appender(3, 1000L, layout, sender);
         appender.start();
         appender.append(events[0]);
         appender.append(events[1]);
@@ -52,15 +52,15 @@ public class Loki4jAppenderTest {
 
         appender.append(events[2]);
         try { Thread.sleep(100L); } catch (InterruptedException e1) { }
-        assertEquals("batchSize", expected, new String(sender.lastBatch, encoder.charset));
+        assertEquals("batchSize", expected, new String(sender.lastBatch, layout.charset));
         appender.stop();
     }
 
     @Test
     public void testBatchTimeout() {
-        var encoder = defaultToStringEncoder();
+        var layout = defaultToStringLayout();
         var sender = dummySender();
-        var appender = appender(30, 400L, encoder, sender);
+        var appender = appender(30, 400L, layout, sender);
         appender.start();
         appender.append(events[0]);
         appender.append(events[1]);
@@ -71,15 +71,15 @@ public class Loki4jAppenderTest {
         assertTrue("no batches before batchTimeout reached", sender.lastBatch == null);
         
         try { Thread.sleep(300L); } catch (InterruptedException e1) { }
-        assertEquals("batchTimeout", expected, new String(sender.lastBatch, encoder.charset));
+        assertEquals("batchTimeout", expected, new String(sender.lastBatch, layout.charset));
         appender.stop();
     }
 
     @Test
     public void testDrainOnStop() {
-        var encoder = defaultToStringEncoder();
+        var layout = defaultToStringLayout();
         var sender = dummySender();
-        var appender = appender(30, 4000L, encoder, sender);
+        var appender = appender(30, 4000L, layout, sender);
         appender.start();
         appender.append(events[0]);
         appender.append(events[1]);
@@ -90,7 +90,7 @@ public class Loki4jAppenderTest {
         assertTrue("no batches before stop", sender.lastBatch == null);
         
         appender.stop();
-        assertEquals("batchTimeout", expected, new String(sender.lastBatch, encoder.charset));
+        assertEquals("batchTimeout", expected, new String(sender.lastBatch, layout.charset));
     }
 
     @Test
@@ -101,9 +101,9 @@ public class Loki4jAppenderTest {
             loggingEvent(100L, Level.INFO, "TestApp", "main", "m3-line1\rline2\r", null)
         };
 
-        var encoder = jsonEncoder(false, "testEncodeEscapes");
+        var layout = jsonLayout(false, "testEncodeEscapes");
         var sender = dummySender();
-        var appender = appender(3, 1000L, encoder, sender);
+        var appender = appender(3, 1000L, layout, sender);
         appender.start();
 
         appender.append(escEvents[0]);
@@ -119,7 +119,7 @@ public class Loki4jAppenderTest {
             "['100000003','l=INFO c=TestApp t=main | m3-line1\\rline2\\r ']]}]}"
             ).replace('\'', '"');
 
-        assertEquals("batchSize", expected, new String(sender.lastBatch, encoder.charset));
+        assertEquals("batchSize", expected, new String(sender.lastBatch, layout.charset));
         appender.stop();
     }
 }

@@ -12,10 +12,10 @@ import org.xerial.snappy.Snappy;
 import ch.qos.logback.core.joran.spi.NoAutoStart;
 
 /**
- * Encoder that converts log batches into Protobuf format specified by Loki API
+ * Layout that converts log batches into Protobuf format specified by Loki API
  */
 @NoAutoStart
-public class ProtobufEncoder extends AbstractLoki4jEncoder {
+public class ProtobufLayout extends AbstractLoki4jLayout {
 
     public String getContentType() {
         return "application/x-protobuf";

@@ -6,10 +6,10 @@ import com.github.loki4j.common.LogRecord;
 import ch.qos.logback.core.joran.spi.NoAutoStart;
 
 /**
- * Encoder that converts log batches into JSON format specified by Loki API
+ * Layout that converts log batches into JSON format specified by Loki API
  */
 @NoAutoStart
-public class JsonEncoder extends AbstractLoki4jEncoder {
+public class JsonLayout extends AbstractLoki4jLayout {
 
     public String getContentType() {
         return "application/json";

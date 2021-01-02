@@ -34,7 +34,7 @@ public interface HttpSender extends ContextAware, LifeCycle {
 
     /**
      * Content type of the requests to send to Loki.
-     * It depends on the encoder selected in config (JSON vs Protobuf)
+     * It depends on the layout selected in config (JSON vs Protobuf)
      */
     public void setContentType(String contentType);
     

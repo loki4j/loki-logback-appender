@@ -16,7 +16,7 @@ import ch.qos.logback.core.encoder.EncoderBase;
 /**
  * Abstract class that provides basic Loki4j batch encoding functionality
  */
-public abstract class AbstractLoki4jEncoder extends EncoderBase<LogRecord[]> implements Loki4jEncoder {
+public abstract class AbstractLoki4jLayout extends EncoderBase<LogRecord[]> implements Loki4jLayout {
     
     private static final byte[] ZERO_BYTES = new byte[0];
 

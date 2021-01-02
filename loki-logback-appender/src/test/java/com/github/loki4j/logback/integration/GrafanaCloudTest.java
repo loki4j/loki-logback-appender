@@ -46,12 +46,12 @@ public class GrafanaCloudTest {
     @Category({IntegrationTests.class})
     public void testApacheJsonCloud() throws Exception {
         var label = "testApacheJsonCloud";
-        var encoder = jsonEncoder(false, label);
+        var layout = jsonLayout(false, label);
         var sender = authorize(apacheHttpSender(urlPush));
-        var appender = appender(10, 1000, encoder, sender);
+        var appender = appender(10, 1000, layout, sender);
 
         var events = generateEvents(20, 20);
-        client.testHttpSend(label, events, appender, jsonEncoder(false, label));
+        client.testHttpSend(label, events, appender, jsonLayout(false, label));
 
         assertTrue(true);
     }
@@ -60,36 +60,36 @@ public class GrafanaCloudTest {
     @Category({IntegrationTests.class})
     public void testJavaJsonCloud() throws Exception {
         var label = "testJavaJsonCloud";
-        var encoder = jsonEncoder(false, label);
+        var layout = jsonLayout(false, label);
         var sender = authorize(javaHttpSender(urlPush));
-        var appender = appender(10, 1000, encoder, sender);
+        var appender = appender(10, 1000, layout, sender);
 
         var events = generateEvents(20, 10);
-        client.testHttpSend(label, events, appender, jsonEncoder(false, label));
+        client.testHttpSend(label, events, appender, jsonLayout(false, label));
     }
 
     @Test
     @Category({IntegrationTests.class})
     public void testApacheProtobufCloud() throws Exception {
         var label = "testApacheProtobufCloud";
-        var encoder = protobufEncoder(false, label);
+        var layout = protobufLayout(false, label);
         var sender = authorize(apacheHttpSender(urlPush));
-        var appender = appender(10, 1000, encoder, sender);
+        var appender = appender(10, 1000, layout, sender);
 
         var events = generateEvents(50, 10);
-        client.testHttpSend(label, events, appender, jsonEncoder(false, label));
+        client.testHttpSend(label, events, appender, jsonLayout(false, label));
     }
 
     @Test
     @Category({IntegrationTests.class})
     public void testJavaProtobufCloud() throws Exception {
         var label = "testJavaProtobufCloud";
-        var encoder = protobufEncoder(false, label);
+        var layout = protobufLayout(false, label);
         var sender = authorize(javaHttpSender(urlPush));
-        var appender = appender(10, 1000, encoder, sender);
+        var appender = appender(10, 1000, layout, sender);
 
         var events = generateEvents(100, 10);
-        client.testHttpSend(label, events, appender, jsonEncoder(false, label));
+        client.testHttpSend(label, events, appender, jsonLayout(false, label));
     }
 
 }

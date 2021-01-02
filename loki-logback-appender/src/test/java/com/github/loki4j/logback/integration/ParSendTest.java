@@ -40,9 +40,9 @@ public class ParSendTest {
         for (int i = 0; i < parFactor; i++) {
             var idx = i;
             var label = "testJavaJsonParSend" + idx;
-            var encoder = jsonEncoder(false, label);
+            var layout = jsonLayout(false, label);
             var sender = javaHttpSender(urlPush);
-            var appender = appender(10, 150_000, encoder, sender);
+            var appender = appender(10, 150_000, layout, sender);
 
             fs[i] = CompletableFuture
                 .supplyAsync(() -> {
@@ -51,7 +51,7 @@ public class ParSendTest {
                             label,
                             events,
                             appender,
-                            jsonEncoder(false, label),
+                            jsonLayout(false, label),
                             5,
                             (parFactor - idx) + 500L);
                     } catch (Exception e) {
@@ -76,9 +76,9 @@ public class ParSendTest {
         for (int i = 0; i < parFactor; i++) {
             var idx = i;
             var label = "testApacheJsonParSend" + idx;
-            var encoder = jsonEncoder(false, label);
+            var layout = jsonLayout(false, label);
             var sender = apacheHttpSender(urlPush);
-            var appender = appender(10, 150_000, encoder, sender);
+            var appender = appender(10, 150_000, layout, sender);
 
             fs[i] = CompletableFuture
                 .supplyAsync(() -> {
@@ -87,7 +87,7 @@ public class ParSendTest {
                             label,
                             events,
                             appender,
-                            jsonEncoder(false, label),
+                            jsonLayout(false, label),
                             5,
                             (parFactor - idx) + 500L);
                     } catch (Exception e) {
@@ -107,11 +107,11 @@ public class ParSendTest {
         var events = generateEvents(3, 20);
 
         var label = "testApacheJsonSend";
-        var encoder = jsonEncoder(false, label);
+        var layout = jsonLayout(false, label);
         var sender = apacheHttpSender(urlPush);
-        var appender = appender(2, 150_000, encoder, sender);
+        var appender = appender(2, 150_000, layout, sender);
         
-        client.testHttpSend(label, events, appender, jsonEncoder(false, label));
+        client.testHttpSend(label, events, appender, jsonLayout(false, label));
     }
 
 }

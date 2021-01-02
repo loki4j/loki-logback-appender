@@ -6,9 +6,9 @@ import ch.qos.logback.classic.spi.ILoggingEvent;
 import ch.qos.logback.core.encoder.Encoder;
 
 /**
- * Basic interface for all Loki4j encoders
+ * Basic interface for all Loki4j layouts
  */
-public interface Loki4jEncoder extends Encoder<LogRecord[]> {
+public interface Loki4jLayout extends Encoder<LogRecord[]> {
     
     public LogRecord eventToRecord(ILoggingEvent e, LogRecord r);
 

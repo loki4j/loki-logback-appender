@@ -7,7 +7,7 @@ import java.util.function.UnaryOperator;
 import java.util.stream.Stream;
 
 import com.github.loki4j.common.LogRecord;
-import com.github.loki4j.logback.AbstractLoki4jEncoder;
+import com.github.loki4j.logback.AbstractLoki4jLayout;
 import com.github.loki4j.logback.performance.Benchmarker.Benchmark;
 
 import org.junit.Test;
@@ -15,9 +15,9 @@ import org.junit.experimental.categories.Category;
 
 import ch.qos.logback.classic.LoggerContext;
 
-public class EncodersTest {
+public class LayoutsTest {
 
-    private static AbstractLoki4jEncoder initEnc(AbstractLoki4jEncoder e) {
+    private static AbstractLoki4jLayout initEnc(AbstractLoki4jLayout e) {
         e.setContext(new LoggerContext());
         e.start();
         return e;
@@ -32,7 +32,7 @@ public class EncodersTest {
             this.runs = 50;
             this.parFactor = 1;
             this.generator = () -> {
-                var jsonEncSta = initEnc(jsonEncoder(true, "testLabel"));
+                var jsonEncSta = initEnc(jsonLayout(true, "testLabel"));
                 return Stream.iterate(
                         Arrays.stream(generateEvents(batchSize, 10))
                             .map(e -> jsonEncSta.eventToRecord(e, new LogRecord()))
@@ -43,19 +43,19 @@ public class EncodersTest {
             };
             this.benchmarks = Arrays.asList(
                 Benchmark.of("defaultEnc",
-                    () -> initEnc(defaultToStringEncoder()),
+                    () -> initEnc(defaultToStringLayout()),
                     (e, batch) -> e.encode(batch)),
                 Benchmark.of("jsonEncSta",
-                    () -> initEnc(jsonEncoder(true, "testLabel")),
+                    () -> initEnc(jsonLayout(true, "testLabel")),
                     (e, batch) -> e.encode(batch)),
                 Benchmark.of("jsonEncDyn",
-                    () -> initEnc(jsonEncoder(false, "testLabel")),
+                    () -> initEnc(jsonLayout(false, "testLabel")),
                     (e, batch) -> e.encode(batch)),
                 Benchmark.of("protEncSta",
-                    () -> initEnc(protobufEncoder(true, "testLabel")),
+                    () -> initEnc(protobufLayout(true, "testLabel")),
                     (e, batch) -> e.encode(batch)),
                 Benchmark.of("protEncDyn",
-                    () -> initEnc(protobufEncoder(false, "testLabel")),
+                    () -> initEnc(protobufLayout(false, "testLabel")),
                     (e, batch) -> e.encode(batch))
             );
         }});

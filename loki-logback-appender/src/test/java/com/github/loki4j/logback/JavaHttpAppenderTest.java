@@ -40,7 +40,7 @@ public class JavaHttpAppenderTest {
 
     @Test
     public void testJavaHttpSend() {
-        withAppender(appender(3, 1000L, defaultToStringEncoder(), javaHttpSender(url)), a -> {
+        withAppender(appender(3, 1000L, defaultToStringLayout(), javaHttpSender(url)), a -> {
             a.appendAndWait(events[0], events[1]);
             assertTrue("no batches before batchSize reached", mockLoki.lastBatch == null);
 

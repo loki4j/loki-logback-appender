@@ -42,9 +42,9 @@ public class Loki4jAppender extends UnsynchronizedAppenderBase<ILoggingEvent> {
     private boolean verbose = false;
 
     /**
-     * An encoder to use for converting log record batches to format acceptable by Loki
+     * A layer to use for converting log record batches to format acceptable by Loki
      */
-    private Loki4jEncoder encoder;
+    private Loki4jLayout layout;
 
     /**
      * A HTTPS sender to use for pushing logs to Loki
@@ -69,14 +69,14 @@ public class Loki4jAppender extends UnsynchronizedAppenderBase<ILoggingEvent> {
             "procThreads=%s, batchSize=%s, batchTimeout=%s...",
             processingThreads, batchSize, batchTimeoutMs));
 
-        if (encoder == null) {
-            addWarn("No encoder specified in the config. Using JsonEncoder with default settings");
-            encoder = new JsonEncoder();
+        if (layout == null) {
+            addWarn("No layout specified in the config. Using JsonLayout with default settings");
+            layout = new JsonLayout();
         }
-        encoder.setContext(context);
-        encoder.start();
+        layout.setContext(context);
+        layout.start();
 
-        buffer = new ConcurrentBatchBuffer<>(batchSize, LogRecord::create, (e, r) -> encoder.eventToRecord(e, r));
+        buffer = new ConcurrentBatchBuffer<>(batchSize, LogRecord::create, (e, r) -> layout.eventToRecord(e, r));
 
         scheduler = Executors.newScheduledThreadPool(processingThreads, new LokiThreadFactory("loki-scheduler"));
 
@@ -88,7 +88,7 @@ public class Loki4jAppender extends UnsynchronizedAppenderBase<ILoggingEvent> {
             addWarn("No sender specified in the config. Using JavaHttpSender with default settings");
         }
         sender.setContext(context);
-        sender.setContentType(encoder.getContentType());
+        sender.setContentType(layout.getContentType());
         sender.start();
 
         super.start();
@@ -117,7 +117,7 @@ public class Loki4jAppender extends UnsynchronizedAppenderBase<ILoggingEvent> {
             addWarn("Error during buffer drain on stop", e);
         }
 
-        encoder.stop();
+        layout.stop();
 
         scheduler.shutdown();
         
@@ -146,7 +146,7 @@ public class Loki4jAppender extends UnsynchronizedAppenderBase<ILoggingEvent> {
     }
 
     protected byte[] encode(LogRecord[] batch) {
-        return encoder.encode(batch);
+        return layout.encode(batch);
     }
 
     protected CompletableFuture<LokiResponse> sendAsync(byte[] batch) {
@@ -204,8 +204,8 @@ public class Loki4jAppender extends UnsynchronizedAppenderBase<ILoggingEvent> {
         this.batchTimeoutMs = batchTimeoutMs;
     }
 
-    public void setEncoder(Loki4jEncoder encoder) {
-        this.encoder = encoder;
+    public void setLayout(Loki4jLayout layout) {
+        this.layout = layout;
     }
 
     HttpSender getSender() {

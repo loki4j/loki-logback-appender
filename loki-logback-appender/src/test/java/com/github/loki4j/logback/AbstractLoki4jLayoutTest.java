@@ -10,12 +10,12 @@ import com.github.loki4j.common.LogRecord;
 
 import static com.github.loki4j.logback.Generators.*;
 
-public class AbstractLoki4jEncoderTest {
+public class AbstractLoki4jLayoutTest {
 
     @Test
     public void testEventToRecord() {
-        withEncoder(defaultToStringEncoder(), encoder -> {
-            var r1 = encoder.eventToRecord(
+        withLayout(defaultToStringLayout(), layout -> {
+            var r1 = layout.eventToRecord(
                 loggingEvent(
                     100L,
                     Level.INFO,
@@ -27,7 +27,7 @@ public class AbstractLoki4jEncoderTest {
             var re1 = LogRecord.create(100L, 1, "level=INFO,app=my-app", "l=INFO c=test.TestApp t=thread-1 | Test message ");
             assertEquals("Simple event", re1, r1);
 
-            var r2 = encoder.eventToRecord(
+            var r2 = layout.eventToRecord(
                 loggingEvent(
                     102L,
                     Level.DEBUG,
@@ -48,12 +48,12 @@ public class AbstractLoki4jEncoderTest {
 
     @Test(expected = IllegalArgumentException.class)
     public void testExtractStreamKVPairsIncorrectFormat() {
-        withEncoder(toStringEncoder(
+        withLayout(toStringLayout(
                 labelCfg("level=%level,app=\"my\"app", "|", "~", true),
                 messageCfg("l=%level c=%logger{20} t=%thread | %msg %ex{1}"),
                 false,
-                false), encoder -> {
-            var kvs1 = encoder.extractStreamKVPairs("level=INFO,app=\"my\"app,test=test");
+                false), layout -> {
+            var kvs1 = layout.extractStreamKVPairs("level=INFO,app=\"my\"app,test=test");
             var kvse1 = new String[] {"level", "INFO", "app", "\"my\"app", "test", "test"};
             assertArrayEquals("Split by |~", kvse1, kvs1);
         });
@@ -61,32 +61,32 @@ public class AbstractLoki4jEncoderTest {
 
     @Test
     public void testExtractStreamKVPairs() {
-        withEncoder(toStringEncoder(
+        withLayout(toStringLayout(
                 labelCfg("level=%level,app=\"my\"app", ",", "=", true),
                 messageCfg("l=%level c=%logger{20} t=%thread | %msg %ex{1}"),
                 false,
-                false), encoder -> {
-            var kvs1 = encoder.extractStreamKVPairs("level=INFO,app=\"my\"app,test=test");
+                false), layout -> {
+            var kvs1 = layout.extractStreamKVPairs("level=INFO,app=\"my\"app,test=test");
             var kvse1 = new String[] {"level", "INFO", "app", "\"my\"app", "test", "test"};
             assertArrayEquals("Split by ,=", kvse1, kvs1);
         });
 
-        withEncoder(toStringEncoder(
+        withLayout(toStringLayout(
                 labelCfg("level:%level;app:\"my\"app", ";", ":", true),
                 messageCfg("l=%level c=%logger{20} t=%thread | %msg %ex{1}"),
                 false,
-                false), encoder -> {
-            var kvs2 = encoder.extractStreamKVPairs("level:INFO;app:\"my\"app;test:test");
+                false), layout -> {
+            var kvs2 = layout.extractStreamKVPairs("level:INFO;app:\"my\"app;test:test");
             var kvse1 = new String[] {"level", "INFO", "app", "\"my\"app", "test", "test"};
             assertArrayEquals("Split by ;:", kvse1, kvs2);
         });
 
-        withEncoder(toStringEncoder(
+        withLayout(toStringLayout(
                 labelCfg("level.%level|app.\"my\"app", "|", ".", true),
                 messageCfg("l=%level c=%logger{20} t=%thread | %msg %ex{1}"),
                 false,
-                false), encoder -> {
-            var kvs3 = encoder.extractStreamKVPairs("level.INFO|app.\"my\"app|test.test");
+                false), layout -> {
+            var kvs3 = layout.extractStreamKVPairs("level.INFO|app.\"my\"app|test.test");
             var kvse1 = new String[] {"level", "INFO", "app", "\"my\"app", "test", "test"};
             assertArrayEquals("Split by |.", kvse1, kvs3);
         });
@@ -104,20 +104,20 @@ public class AbstractLoki4jEncoderTest {
             LogRecord.create(110L, 6, "level=INFO,app=my-app", "l=INFO c=test.TestApp t=thread-2 | Test message 6")
         };
 
-        withEncoder(toStringEncoder(
+        withLayout(toStringLayout(
                 labelCfg("level=%level,app=\"my\"app", ",", "=", true),
                 messageCfg("l=%level c=%logger{20} t=%thread | %msg %ex{1}"),
                 false,
-                true), encoder -> {
-            assertArrayEquals(new byte[0], encoder.encode(new LogRecord[0]));
-            assertEquals("static labels, no sort", batchToString(rs), new String(encoder.encode(rs), encoder.charset));
+                true), layout -> {
+            assertArrayEquals(new byte[0], layout.encode(new LogRecord[0]));
+            assertEquals("static labels, no sort", batchToString(rs), new String(layout.encode(rs), layout.charset));
         });
 
-        withEncoder(toStringEncoder(
+        withLayout(toStringLayout(
                 labelCfg("level=%level,app=\"my\"app", ",", "=", true),
                 messageCfg("l=%level c=%logger{20} t=%thread | %msg %ex{1}"),
                 true,
-                true), encoder -> {
+                true), layout -> {
             assertEquals("static labels, sort by time", batchToString(new LogRecord[] {
                     LogRecord.create(100L, 1, "level=INFO,app=my-app", "l=INFO c=test.TestApp t=thread-1 | Test message 1"),
                     LogRecord.create(103L, 1, "level=ERROR,app=my-app", "l=INFO c=test.TestApp t=thread-2 | Test message 5"),
@@ -125,14 +125,14 @@ public class AbstractLoki4jEncoderTest {
                     LogRecord.create(104L, 4, "level=WARN,app=my-app", "l=INFO c=test.TestApp t=thread-1 | Test message 4"),
                     LogRecord.create(105L, 3, "level=INFO,app=my-app", "l=INFO c=test.TestApp t=thread-1 | Test message 3"),
                     LogRecord.create(110L, 6, "level=INFO,app=my-app", "l=INFO c=test.TestApp t=thread-2 | Test message 6")
-                }), new String(encoder.encode(rs), encoder.charset));
+                }), new String(layout.encode(rs), layout.charset));
         });
 
-        withEncoder(toStringEncoder(
+        withLayout(toStringLayout(
                 labelCfg("level=%level,app=\"my\"app", ",", "=", true),
                 messageCfg("l=%level c=%logger{20} t=%thread | %msg %ex{1}"),
                 false,
-                false), encoder -> {
+                false), layout -> {
             assertEquals("dynamic labels, no sort", batchToString(new LogRecord[] {
                     LogRecord.create(103L, 2, "level=DEBUG,app=my-app", "l=INFO c=test.TestApp t=thread-2 | Test message 2"),
                     LogRecord.create(103L, 1, "level=ERROR,app=my-app", "l=INFO c=test.TestApp t=thread-2 | Test message 5"),
@@ -140,14 +140,14 @@ public class AbstractLoki4jEncoderTest {
                     LogRecord.create(105L, 3, "level=INFO,app=my-app", "l=INFO c=test.TestApp t=thread-1 | Test message 3"),
                     LogRecord.create(110L, 6, "level=INFO,app=my-app", "l=INFO c=test.TestApp t=thread-2 | Test message 6"),
                     LogRecord.create(104L, 4, "level=WARN,app=my-app", "l=INFO c=test.TestApp t=thread-1 | Test message 4")
-                }), new String(encoder.encode(rs), encoder.charset));
+                }), new String(layout.encode(rs), layout.charset));
         });
 
-        withEncoder(toStringEncoder(
+        withLayout(toStringLayout(
                 labelCfg("level=%level,app=\"my\"app", ",", "=", true),
                 messageCfg("l=%level c=%logger{20} t=%thread | %msg %ex{1}"),
                 true,
-                false), encoder -> {
+                false), layout -> {
             assertEquals("dynamic labels, sort by time", batchToString(new LogRecord[] {
                     LogRecord.create(103L, 2, "level=DEBUG,app=my-app", "l=INFO c=test.TestApp t=thread-2 | Test message 2"),
                     LogRecord.create(103L, 1, "level=ERROR,app=my-app", "l=INFO c=test.TestApp t=thread-2 | Test message 5"),
@@ -155,7 +155,7 @@ public class AbstractLoki4jEncoderTest {
                     LogRecord.create(105L, 3, "level=INFO,app=my-app", "l=INFO c=test.TestApp t=thread-1 | Test message 3"),
                     LogRecord.create(110L, 6, "level=INFO,app=my-app", "l=INFO c=test.TestApp t=thread-2 | Test message 6"),
                     LogRecord.create(104L, 4, "level=WARN,app=my-app", "l=INFO c=test.TestApp t=thread-1 | Test message 4")
-                }), new String(encoder.encode(rs), encoder.charset));
+                }), new String(layout.encode(rs), layout.charset));
         });
     }
 }

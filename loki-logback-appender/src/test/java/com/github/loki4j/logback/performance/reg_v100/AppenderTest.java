@@ -36,7 +36,7 @@ public class AppenderTest {
                         a.setContext(new LoggerContext());
                         a.setBatchSize(capacity);
                         a.setBatchTimeoutMs(60_000);
-                        a.setEncoder(defaultToStringEncoder());
+                        a.setEncoder(defaultToStringLayout());
                         a.setVerbose(false);
                         a.start();
                         return new Wrapper<DummyLoki4jAppender>(a);
@@ -45,7 +45,7 @@ public class AppenderTest {
                     a -> a.stop()),
                 Benchmark.of("newAppenderWait",
                     () -> {
-                        var a = appender(capacity, 60_000L, defaultToStringEncoder(), dummySender());
+                        var a = appender(capacity, 60_000L, defaultToStringLayout(), dummySender());
                         a.setVerbose(false);
                         a.start();
                         return new AppenderWrapper(a);
@@ -57,7 +57,7 @@ public class AppenderTest {
                         var a = new InstrumentedLoki4jAppender();
                         a.setContext(new LoggerContext());
                         a.setBatchTimeoutMs(60_000);
-                        a.setEncoder(defaultToStringEncoder());
+                        a.setLayout(defaultToStringLayout());
                         a.setSender(dummySender());
                         a.setVerbose(false);
                         a.start();

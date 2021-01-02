@@ -23,7 +23,7 @@ import com.fasterxml.jackson.databind.JsonMappingException;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.github.loki4j.common.LogRecord;
 import com.github.loki4j.logback.Loki4jAppender;
-import com.github.loki4j.logback.AbstractLoki4jEncoder;
+import com.github.loki4j.logback.AbstractLoki4jLayout;
 
 import ch.qos.logback.classic.spi.ILoggingEvent;
 
@@ -96,15 +96,15 @@ public class LokiTestingClient {
             String lbl,
             ILoggingEvent[] events,
             Loki4jAppender actualAppender,
-            AbstractLoki4jEncoder expectedEncoder) throws Exception {
-        testHttpSend(lbl, events, actualAppender, expectedEncoder, events.length, 500L);
+            AbstractLoki4jLayout expectedLayout) throws Exception {
+        testHttpSend(lbl, events, actualAppender, expectedLayout, events.length, 500L);
     }
 
     public void testHttpSend(
             String lbl,
             ILoggingEvent[] events,
             Loki4jAppender actualAppender,
-            AbstractLoki4jEncoder expectedEncoder,
+            AbstractLoki4jLayout expectedLayout,
             int chunkSize,
             long chunkDelayMs) throws Exception {
         var records = new LogRecord[events.length];
@@ -120,12 +120,12 @@ public class LokiTestingClient {
             }
             return null;
         });
-        withEncoder(expectedEncoder, encoder -> {
+        withLayout(expectedLayout, layout -> {
             for (int i = 0; i < events.length; i++) {
                 records[i] = new LogRecord();
-                encoder.eventToRecord(events[i], records[i]);
+                layout.eventToRecord(events[i], records[i]);
             }
-            reqStr.set(new String(encoder.encode(records)));
+            reqStr.set(new String(layout.encode(records)));
         });
 
         var req = parseRequest(reqStr.get());
