@@ -1,6 +1,6 @@
 Loki4j is the simplest way to store logs from your Java application
 to [Loki](https://grafana.com/oss/loki/) and to connect them with all other metrics
-using [Garafana](https://grafana.com/oss/grafana/) dashboards.
+using [Grafana](https://grafana.com/oss/grafana/) dashboards.
 No extra tools needed, just add Loki4j appender to your [Logback](http://logback.qos.ch/)
 configuration and enjoy.
 
