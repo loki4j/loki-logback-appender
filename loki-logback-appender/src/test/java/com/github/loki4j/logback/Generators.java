@@ -58,8 +58,8 @@ public class Generators {
         appender.setContext(new LoggerContext());
         appender.setBatchSize(batchSize);
         appender.setBatchTimeoutMs(batchTimeoutMs);
-        appender.setEncoder(encoder);
-        appender.setSender(sender);
+        appender.setFormat(encoder);
+        appender.setHttp(sender);
         appender.setVerbose(true);
         return appender;
     }

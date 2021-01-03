@@ -57,8 +57,8 @@ public class AppenderTest {
                         var a = new InstrumentedLoki4jAppender();
                         a.setContext(new LoggerContext());
                         a.setBatchTimeoutMs(60_000);
-                        a.setEncoder(defaultToStringEncoder());
-                        a.setSender(dummySender());
+                        a.setFormat(defaultToStringEncoder());
+                        a.setHttp(dummySender());
                         a.setVerbose(false);
                         a.start();
                         return new AppenderWrapper(a);
