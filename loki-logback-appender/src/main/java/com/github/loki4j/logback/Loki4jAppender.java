@@ -9,10 +9,10 @@ import com.github.loki4j.common.ConcurrentBatchBuffer;
 import com.github.loki4j.common.LogRecord;
 import com.github.loki4j.common.LokiResponse;
 import com.github.loki4j.common.LokiThreadFactory;
-import com.github.loki4j.common.ReflectionUtils;
 
 import ch.qos.logback.classic.spi.ILoggingEvent;
 import ch.qos.logback.core.UnsynchronizedAppenderBase;
+import ch.qos.logback.core.joran.spi.DefaultClass;
 import ch.qos.logback.core.status.Status;
 
 /**
@@ -81,11 +81,8 @@ public class Loki4jAppender extends UnsynchronizedAppenderBase<ILoggingEvent> {
         scheduler = Executors.newScheduledThreadPool(processingThreads, new LokiThreadFactory("loki-scheduler"));
 
         if (sender == null) {
-            sender = ReflectionUtils
-                .<HttpSender>tryCreateInstance("com.github.loki4j.logback.JavaHttpSender")
-                .orElseThrow(() ->  // only possible on Java 8
-                    new RuntimeException("No sender specified. Please specify a sender explicitly in logback config"));
-            addWarn("No sender specified in the config. Using JavaHttpSender with default settings");
+            addWarn("No sender specified in the config. Trying to use JavaHttpSender with default settings");
+            sender = new JavaHttpSender();
         }
         sender.setContext(context);
         sender.setContentType(encoder.getContentType());
@@ -204,7 +201,13 @@ public class Loki4jAppender extends UnsynchronizedAppenderBase<ILoggingEvent> {
         this.batchTimeoutMs = batchTimeoutMs;
     }
 
-    public void setEncoder(Loki4jEncoder encoder) {
+    /**
+     * "format" instead of "encoder" in the name allows to specify
+     * the default implementation, so users don't have to write
+     * full-qualified class name by default
+     */
+    @DefaultClass(JsonEncoder.class)
+    public void setFormat(Loki4jEncoder encoder) {
         this.encoder = encoder;
     }
 
@@ -212,7 +215,12 @@ public class Loki4jAppender extends UnsynchronizedAppenderBase<ILoggingEvent> {
         return sender;
     }
 
-    public void setSender(HttpSender sender) {
+    /**
+     * "http" instead of "sender" is just to have a more clear name
+     * for the configuration section
+     */
+    @DefaultClass(JavaHttpSender.class)
+    public void setHttp(HttpSender sender) {
         this.sender = sender;
     }
 
