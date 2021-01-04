@@ -21,7 +21,7 @@ public class JavaHttpSender extends AbstractHttpSender {
     public JavaHttpSender() {
         // only possible when running under Java 8
         throw new RuntimeException(
-            "JavaHttpSender only supported for Java 11+. Please specify <http class=\"" +
+            "JavaHttpSender is supported only for Java 11+. Please specify <http class=\"" +
             ApacheHttpSender.class.getName() +
             "\"> your logback config");
     }
