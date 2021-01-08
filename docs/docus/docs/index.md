@@ -26,6 +26,11 @@ For Maven project add the following dependency to your `pom.xml`:
     <artifactId>loki-logback-appender-jdk8</artifactId>
     <version>%version%</version>
 </dependency>
+<dependency>
+    <groupId>org.apache.httpcomponents</groupId>
+    <artifactId>httpclient</artifactId>
+    <version>4.5.13</version>
+</dependency>
 ```
 <!--END_DOCUSAURUS_CODE_TABS-->
 
@@ -41,6 +46,7 @@ implementation 'com.github.loki4j:loki-logback-appender:%version%'
 
 ```groovy
 implementation 'com.github.loki4j:loki-logback-appender-jdk8:%version%'
+implementation 'org.apache.httpcomponents:httpclient:4.5.13'
 ```
 <!--END_DOCUSAURUS_CODE_TABS-->
 
@@ -50,11 +56,11 @@ Then add Loki appender to your `logback.xml`:
 <!--Java 11+-->
 
 ```xml
-<appender name="LOKI" class="com.github.loki4j.logback.LokiJavaHttpAppender">
-    <url>http://localhost:3100/loki/api/v1/push</url>
-    <batchSize>100</batchSize>
-    <batchTimeoutMs>10000</batchTimeoutMs>
-    <encoder class="com.github.loki4j.logback.JsonEncoder">
+<appender name="LOKI" class="com.github.loki4j.logback.Loki4jAppender">
+    <http>
+        <url>http://localhost:3100/loki/api/v1/push</url>
+    </http>
+    <format>
         <label>
             <pattern>app=my-app,host=${HOSTNAME},level=%level</pattern>
         </label>
@@ -62,7 +68,7 @@ Then add Loki appender to your `logback.xml`:
             <pattern>l=%level h=${HOSTNAME} c=%logger{20} t=%thread | %msg %ex</pattern>
         </message>
         <sortByTime>true</sortByTime>
-    </encoder>
+    </format>
 </appender>
 
 <root level="DEBUG">
@@ -73,11 +79,11 @@ Then add Loki appender to your `logback.xml`:
 <!--Java 8-->
 
 ```xml
-<appender name="LOKI" class="com.github.loki4j.logback.LokiApacheHttpAppender">
-    <url>http://localhost:3100/loki/api/v1/push</url>
-    <batchSize>100</batchSize>
-    <batchTimeoutMs>10000</batchTimeoutMs>
-    <encoder class="com.github.loki4j.logback.JsonEncoder">
+<appender name="LOKI" class="com.github.loki4j.logback.Loki4jAppender">
+    <http class="com.github.loki4j.logback.ApacheHttpSender">
+        <url>http://localhost:3100/loki/api/v1/push</url>
+    </http>
+    <format>
         <label>
             <pattern>app=my-app,host=${HOSTNAME},level=%level</pattern>
         </label>
@@ -85,7 +91,7 @@ Then add Loki appender to your `logback.xml`:
             <pattern>l=%level h=${HOSTNAME} c=%logger{20} t=%thread | %msg %ex</pattern>
         </message>
         <sortByTime>true</sortByTime>
-    </encoder>
+    </format>
 </appender>
 
 <root level="DEBUG">
@@ -94,14 +100,22 @@ Then add Loki appender to your `logback.xml`:
 ```
 <!--END_DOCUSAURUS_CODE_TABS-->
 
-For more details, please refer to [Docs](docs/appenders).
+For more details, please refer to [Docs](docs/configuration).
+
+Migrating from v0.0.4? Read the [Migration Guide](docs/migration).
 
 ### Key Features:
 
 - **Support for both JSON and Protobuf formats.**
 With Loki4j you can try out both JSON and Protobuf API for sending log records to Loki.
+[Learn more...](docs/configuration#switching-to-protobuf-format)
 
-- **Optionally order log records before sending to Loki.**
+- **Compatibility with Grafana Cloud.**
+Loki4j supports HTTP basic authentication, so you can use it for hosted Loki services (e.g. Grafana Cloud)
+as well as for on-premise Loki instances.
+See the [example](docs/configuration#sending-logs-to-grafana-cloud)...
+
+- **Optionally sort log records before sending to Loki.**
 In order to prevent log records loss, Loki4j can sort log records by timestamp inside each batch,
 so they will not be rejected by Loki with 'entry out of order' error.
 
@@ -119,6 +133,12 @@ Loki4j comes with a small part of JSON rendering functionality it needs embedded
 - **Zero-dependency.**
 Loki4j does not bring any new transitive dependencies to your project,
 assuming that you already use `logback-classic` for logging.
+See the [example](docs/configuration#minimalistic-zero-dependency-configuration)...
+
+- **Logging performance metrics.**
+You can monitor Loki4j's performance (e.g. encode/send duration, number of batches sent, etc.)
+by enabling instrumentation powered by [Micrometer](https://micrometer.io/).
+[Learn more...](docs/performance)
 
 ### Project Status
 

@@ -17,10 +17,11 @@ If you are interested in this project, please drop a :star:!
 ## Key features
 
 - Support for both JSON and Protobuf formats
+- Compatibility with Grafana Cloud
 - Optionally order log records before sending to Loki
 - Use Logback patterns for labels and messages formatting
-- No JSON library bundled
 - Zero-dependency (for Java 11+)
+- Logging performance metrics
 
 ## Contributing
 
