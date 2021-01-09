@@ -10,3 +10,4 @@ temp/
 .project
 .settings
 .vscode/
+.metals

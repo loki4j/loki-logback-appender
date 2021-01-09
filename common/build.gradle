@@ -19,15 +19,9 @@ sourceSets {
 }
 
 dependencies {
-    compileOnly 'com.google.protobuf:protobuf-java:3.12.4'
-    compileOnly 'org.xerial.snappy:snappy-java:1.1.8'
-    compileOnly 'org.apache.httpcomponents:httpclient:4.5.13'
+    compileOnly 'com.google.protobuf:protobuf-java:3.14.0'
 
     testImplementation 'junit:junit:4.13'
-    testImplementation 'com.google.protobuf:protobuf-java:3.12.4'
-    testImplementation 'org.xerial.snappy:snappy-java:1.1.8'
-    testImplementation 'org.apache.httpcomponents:httpclient:4.5.13'
-    testImplementation 'com.fasterxml.jackson.core:jackson-databind:2.10.0'
 }
 
 compileJava {
