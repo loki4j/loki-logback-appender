@@ -21,7 +21,7 @@ const users = [
 ];
 
 const ghUrl = 'https://github.com/loki4j/loki-logback-appender';
-const defaultDoc = 'appenders';
+const defaultDoc = 'configuration';
 
 const siteConfig = {
   title: 'Loki4j Logback', // Title for your website.
@@ -112,7 +112,7 @@ const siteConfig = {
   repoUrl: ghUrl,
   startDoc: defaultDoc,
 
-  artifactVersion: '0.4.0',
+  artifactVersion: '1.0.0',
 };
 
 module.exports = siteConfig;

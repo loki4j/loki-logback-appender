@@ -1,6 +1,6 @@
 {
   "docs": {
-    "Configuration": ["appenders", "encoders", "examples"]
+    "Logback": ["configuration", "performance", "migration", "olddocs"]
   },
   "docs-other": {
     "First Category": ["doc4", "doc5"]
