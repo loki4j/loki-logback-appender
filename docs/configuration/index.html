@@ -1,0 +1,228 @@
+<!DOCTYPE html><html lang="en"><head><meta charSet="utf-8"/><meta http-equiv="X-UA-Compatible" content="IE=edge"/><title>Loki4j Configuration · Loki4j Logback</title><meta name="viewport" content="width=device-width"/><meta name="generator" content="Docusaurus"/><meta name="description" content="## Reference"/><meta name="docsearch:language" content="en"/><meta property="og:title" content="Loki4j Configuration · Loki4j Logback"/><meta property="og:type" content="website"/><meta property="og:url" content="https://loki4j.github.io/loki-logback-appender/"/><meta property="og:description" content="## Reference"/><meta property="og:image" content="https://loki4j.github.io/loki-logback-appender/img/undraw_online.svg"/><meta name="twitter:card" content="summary"/><meta name="twitter:image" content="https://loki4j.github.io/loki-logback-appender/img/undraw_tweetstorm.svg"/><link rel="shortcut icon" href="/loki-logback-appender/img/logo-lite.svg"/><link rel="stylesheet" href="//cdnjs.cloudflare.com/ajax/libs/highlight.js/9.12.0/styles/default.min.css"/><script async="" src="https://www.googletagmanager.com/gtag/js?id=G-0Z4FEXM003"></script><script>
+              window.dataLayer = window.dataLayer || [];
+              function gtag(){dataLayer.push(arguments); }
+              gtag('js', new Date());
+              gtag('config', 'G-0Z4FEXM003');
+            </script><script type="text/javascript" src="https://buttons.github.io/buttons.js"></script><script src="/loki-logback-appender/js/scrollSpy.js"></script><link rel="stylesheet" href="/loki-logback-appender/css/main.css"/><script src="/loki-logback-appender/js/codetabs.js"></script></head><body class="sideNavVisible separateOnPageNav"><div class="fixedHeaderContainer"><div class="headerWrapper wrapper"><header><a href="/loki-logback-appender/"><img class="logo" src="/loki-logback-appender/img/logo-gray.svg" alt="Loki4j Logback"/><h2 class="headerTitleWithLogo">Loki4j Logback</h2></a><div class="navigationWrapper navigationSlider"><nav class="slidingNav"><ul class="nav-site nav-site-internal"><li class="siteNavGroupActive siteNavItemActive"><a href="/loki-logback-appender/docs/configuration" target="_self">Docs</a></li><li class=""><a href="https://github.com/loki4j/loki-logback-appender/blob/main/CONTRIBUTING.md" target="_self">Contributing</a></li><li class=""><a href="/loki-logback-appender/help" target="_self">Help</a></li><li class=""><a href="https://github.com/loki4j/loki-logback-appender" target="_self">GitHub</a></li></ul></nav></div></header></div></div><div class="navPusher"><div class="docMainWrapper wrapper"><div class="docsNavContainer" id="docsNav"><nav class="toc"><div class="toggleNav"><section class="navWrapper wrapper"><div class="navBreadcrumb wrapper"><div class="navToggle" id="navToggler"><div class="hamburger-menu"><div class="line1"></div><div class="line2"></div><div class="line3"></div></div></div><h2><i>›</i><span>Logback</span></h2><div class="tocToggler" id="tocToggler"><i class="icon-toc"></i></div></div><div class="navGroups"><div class="navGroup"><h3 class="navGroupCategoryTitle">Logback</h3><ul class=""><li class="navListItem navListItemActive"><a class="navItem" href="/loki-logback-appender/docs/configuration">Configuration</a></li><li class="navListItem"><a class="navItem" href="/loki-logback-appender/docs/performance">Performance Monitoring</a></li><li class="navListItem"><a class="navItem" href="/loki-logback-appender/docs/migration">Migration Guide</a></li><li class="navListItem"><a class="navItem" href="/loki-logback-appender/docs/olddocs">Old Docs</a></li></ul></div></div></section></div><script>
+            var coll = document.getElementsByClassName('collapsible');
+            var checkActiveCategory = true;
+            for (var i = 0; i < coll.length; i++) {
+              var links = coll[i].nextElementSibling.getElementsByTagName('*');
+              if (checkActiveCategory){
+                for (var j = 0; j < links.length; j++) {
+                  if (links[j].classList.contains('navListItemActive')){
+                    coll[i].nextElementSibling.classList.toggle('hide');
+                    coll[i].childNodes[1].classList.toggle('rotate');
+                    checkActiveCategory = false;
+                    break;
+                  }
+                }
+              }
+
+              coll[i].addEventListener('click', function() {
+                var arrow = this.childNodes[1];
+                arrow.classList.toggle('rotate');
+                var content = this.nextElementSibling;
+                content.classList.toggle('hide');
+              });
+            }
+
+            document.addEventListener('DOMContentLoaded', function() {
+              createToggler('#navToggler', '#docsNav', 'docsSliderActive');
+              createToggler('#tocToggler', 'body', 'tocActive');
+
+              var headings = document.querySelector('.toc-headings');
+              headings && headings.addEventListener('click', function(event) {
+                var el = event.target;
+                while(el !== headings){
+                  if (el.tagName === 'A') {
+                    document.body.classList.remove('tocActive');
+                    break;
+                  } else{
+                    el = el.parentNode;
+                  }
+                }
+              }, false);
+
+              function createToggler(togglerSelector, targetSelector, className) {
+                var toggler = document.querySelector(togglerSelector);
+                var target = document.querySelector(targetSelector);
+
+                if (!toggler) {
+                  return;
+                }
+
+                toggler.onclick = function(event) {
+                  event.preventDefault();
+
+                  target.classList.toggle(className);
+                };
+              }
+            });
+        </script></nav></div><div class="container mainContainer docsContainer"><div class="wrapper"><div class="post"><header class="postHeader"><h1 id="__docusaurus" class="postHeaderTitle">Loki4j Configuration</h1></header><article><div><span><h2><a class="anchor" aria-hidden="true" id="reference"></a><a href="#reference" aria-hidden="true" class="hash-link"><svg class="hash-link-icon" aria-hidden="true" height="16" version="1.1" viewBox="0 0 16 16" width="16"><path fill-rule="evenodd" d="M4 9h1v1H4c-1.5 0-3-1.69-3-3.5S2.55 3 4 3h4c1.45 0 3 1.69 3 3.5 0 1.41-.91 2.72-2 3.25V8.59c.58-.45 1-1.27 1-2.09C10 5.22 8.98 4 8 4H4c-.98 0-2 1.22-2 2.5S3 9 4 9zm9-3h-1v1h1c1 0 2 1.22 2 2.5S13.98 12 13 12H9c-.98 0-2-1.22-2-2.5 0-.83.42-1.64 1-2.09V6.25c-1.09.53-2 1.84-2 3.25C6 11.31 7.55 13 9 13h4c1.45 0 3-1.69 3-3.5S14.5 6 13 6z"></path></svg></a>Reference</h2>
+<p>Most Loki4j appender settings are optional. These few that are required are marked explicitly.</p>
+<h3><a class="anchor" aria-hidden="true" id="general-settings"></a><a href="#general-settings" aria-hidden="true" class="hash-link"><svg class="hash-link-icon" aria-hidden="true" height="16" version="1.1" viewBox="0 0 16 16" width="16"><path fill-rule="evenodd" d="M4 9h1v1H4c-1.5 0-3-1.69-3-3.5S2.55 3 4 3h4c1.45 0 3 1.69 3 3.5 0 1.41-.91 2.72-2 3.25V8.59c.58-.45 1-1.27 1-2.09C10 5.22 8.98 4 8 4H4c-.98 0-2 1.22-2 2.5S3 9 4 9zm9-3h-1v1h1c1 0 2 1.22 2 2.5S13.98 12 13 12H9c-.98 0-2-1.22-2-2.5 0-.83.42-1.64 1-2.09V6.25c-1.09.53-2 1.84-2 3.25C6 11.31 7.55 13 9 13h4c1.45 0 3-1.69 3-3.5S14.5 6 13 6z"></path></svg></a>General settings</h3>
+<table>
+<thead>
+<tr><th>Setting</th><th>Default</th><th>Description</th></tr>
+</thead>
+<tbody>
+<tr><td>batchSize</td><td>1000</td><td>Max number of messages to put into single batch and send to Loki</td></tr>
+<tr><td>batchTimeoutMs</td><td>60000</td><td>Max time in milliseconds to wait before sending a batch to Loki</td></tr>
+<tr><td>processingThreads</td><td>1</td><td>Number of threads to use for log message processing and formatting</td></tr>
+<tr><td>verbose</td><td>false</td><td>If true, the appender will print its own debug logs to stderr</td></tr>
+</tbody>
+</table>
+<h3><a class="anchor" aria-hidden="true" id="http-settings"></a><a href="#http-settings" aria-hidden="true" class="hash-link"><svg class="hash-link-icon" aria-hidden="true" height="16" version="1.1" viewBox="0 0 16 16" width="16"><path fill-rule="evenodd" d="M4 9h1v1H4c-1.5 0-3-1.69-3-3.5S2.55 3 4 3h4c1.45 0 3 1.69 3 3.5 0 1.41-.91 2.72-2 3.25V8.59c.58-.45 1-1.27 1-2.09C10 5.22 8.98 4 8 4H4c-.98 0-2 1.22-2 2.5S3 9 4 9zm9-3h-1v1h1c1 0 2 1.22 2 2.5S13.98 12 13 12H9c-.98 0-2-1.22-2-2.5 0-.83.42-1.64 1-2.09V6.25c-1.09.53-2 1.84-2 3.25C6 11.31 7.55 13 9 13h4c1.45 0 3-1.69 3-3.5S14.5 6 13 6z"></path></svg></a>HTTP settings</h3>
+<table>
+<thead>
+<tr><th>Setting</th><th>Default</th><th>Description</th></tr>
+</thead>
+<tbody>
+<tr><td>http.url</td><td></td><td><strong>Required</strong>. Loki endpoint to be used for sending batches</td></tr>
+<tr><td>http.connectionTimeoutMs</td><td>30000</td><td>Time in milliseconds to wait for HTTP connection to Loki to be established before reporting an error</td></tr>
+<tr><td>http.requestTimeoutMs</td><td>5000</td><td>Time in milliseconds to wait for HTTP request to Loki to be responded before reporting an error</td></tr>
+<tr><td>http.auth.username</td><td></td><td>Username to use for basic auth</td></tr>
+<tr><td>http.auth.password</td><td></td><td>Password to use for basic auth</td></tr>
+</tbody>
+</table>
+<h3><a class="anchor" aria-hidden="true" id="format-settings"></a><a href="#format-settings" aria-hidden="true" class="hash-link"><svg class="hash-link-icon" aria-hidden="true" height="16" version="1.1" viewBox="0 0 16 16" width="16"><path fill-rule="evenodd" d="M4 9h1v1H4c-1.5 0-3-1.69-3-3.5S2.55 3 4 3h4c1.45 0 3 1.69 3 3.5 0 1.41-.91 2.72-2 3.25V8.59c.58-.45 1-1.27 1-2.09C10 5.22 8.98 4 8 4H4c-.98 0-2 1.22-2 2.5S3 9 4 9zm9-3h-1v1h1c1 0 2 1.22 2 2.5S13.98 12 13 12H9c-.98 0-2-1.22-2-2.5 0-.83.42-1.64 1-2.09V6.25c-1.09.53-2 1.84-2 3.25C6 11.31 7.55 13 9 13h4c1.45 0 3-1.69 3-3.5S14.5 6 13 6z"></path></svg></a>Format settings</h3>
+<table>
+<thead>
+<tr><th>Setting</th><th>Default</th><th>Description</th></tr>
+</thead>
+<tbody>
+<tr><td>format.label.pattern</td><td></td><td><strong>Required</strong>. Logback pattern to use for log record's label</td></tr>
+<tr><td>format.label.pairSeparator</td><td>,</td><td>Character to use as a separator between labels</td></tr>
+<tr><td>format.label.keyValueSeparator</td><td>=</td><td>Character to use as a separator between label's name and its value</td></tr>
+<tr><td>format.label.nopex</td><td>true</td><td>If true, exception info is not added to labels. If false, you should take care of proper formatting</td></tr>
+<tr><td>format.message.pattern</td><td></td><td><strong>Required</strong>. Logback pattern to use for log record's message</td></tr>
+<tr><td>format.staticLabels</td><td>false</td><td>If you use only one label for all log records, you can set this flag to true and save some CPU time on grouping records by label</td></tr>
+<tr><td>format.sortByTime</td><td>false</td><td>If true, log records in batch are sorted by timestamp. If false, records will be sent to Loki in arrival order. Enable this if you see 'entry out of order' error from Loki</td></tr>
+</tbody>
+</table>
+<h3><a class="anchor" aria-hidden="true" id="using-apache-httpclient"></a><a href="#using-apache-httpclient" aria-hidden="true" class="hash-link"><svg class="hash-link-icon" aria-hidden="true" height="16" version="1.1" viewBox="0 0 16 16" width="16"><path fill-rule="evenodd" d="M4 9h1v1H4c-1.5 0-3-1.69-3-3.5S2.55 3 4 3h4c1.45 0 3 1.69 3 3.5 0 1.41-.91 2.72-2 3.25V8.59c.58-.45 1-1.27 1-2.09C10 5.22 8.98 4 8 4H4c-.98 0-2 1.22-2 2.5S3 9 4 9zm9-3h-1v1h1c1 0 2 1.22 2 2.5S13.98 12 13 12H9c-.98 0-2-1.22-2-2.5 0-.83.42-1.64 1-2.09V6.25c-1.09.53-2 1.84-2 3.25C6 11.31 7.55 13 9 13h4c1.45 0 3-1.69 3-3.5S14.5 6 13 6z"></path></svg></a>Using Apache HttpClient</h3>
+<p>By default Loki4j uses <code>JavaHttpSender</code>, backed by <code>java.net.http.HttpClient</code> available in Java 11 and later.
+This sender does not require any extra dependencies.</p>
+<p>However, you may want to switch to <code>ApacheHttpSender</code>, backed by <code>org.apache.http.client.HttpClient</code> available for Java 8+ projects.
+In this case you need to ensure you have added the required dependencies to your project:</p>
+<div class="tabs"><div class="nav-tabs"><div id="tab-group-1-tab-2" class="nav-link active" data-group="group_1" data-tab="tab-group-1-content-2">Maven</div><div id="tab-group-1-tab-3" class="nav-link" data-group="group_1" data-tab="tab-group-1-content-3">Gradle</div></div><div class="tab-content"><div id="tab-group-1-content-2" class="tab-pane active" data-group="group_1" tabindex="-1"><div><span><pre><code class="hljs css language-xml"><span class="hljs-tag">&lt;<span class="hljs-name">dependency</span>&gt;</span><br />    <span class="hljs-tag">&lt;<span class="hljs-name">groupId</span>&gt;</span>org.apache.httpcomponents<span class="hljs-tag">&lt;/<span class="hljs-name">groupId</span>&gt;</span><br />    <span class="hljs-tag">&lt;<span class="hljs-name">artifactId</span>&gt;</span>httpclient<span class="hljs-tag">&lt;/<span class="hljs-name">artifactId</span>&gt;</span><br />    <span class="hljs-tag">&lt;<span class="hljs-name">version</span>&gt;</span>4.5.13<span class="hljs-tag">&lt;/<span class="hljs-name">version</span>&gt;</span><br /><span class="hljs-tag">&lt;/<span class="hljs-name">dependency</span>&gt;</span><br /></code></pre>
+</span></div></div><div id="tab-group-1-content-3" class="tab-pane" data-group="group_1" tabindex="-1"><div><span><pre><code class="hljs css language-groovy">compile <span class="hljs-string">'org.apache.httpcomponents:httpclient:4.5.13'</span><br /></code></pre>
+</span></div></div></div></div>
+<p>Then you can explicitly specify <code>ApacheHttpSender</code> by setting <code>class</code> attribute for <code>http</code> section:</p>
+<pre><code class="hljs css language-xml"><span class="hljs-tag">&lt;<span class="hljs-name">appender</span> <span class="hljs-attr">name</span>=<span class="hljs-string">"LOKI"</span> <span class="hljs-attr">class</span>=<span class="hljs-string">"com.github.loki4j.logback.Loki4jAppender"</span>&gt;</span>
+    <span class="hljs-tag">&lt;<span class="hljs-name">http</span> <span class="hljs-attr">class</span>=<span class="hljs-string">"com.github.loki4j.logback.ApacheHttpSender"</span>&gt;</span>
+        ...
+    <span class="hljs-tag">&lt;/<span class="hljs-name">http</span>&gt;</span>
+<span class="hljs-tag">&lt;/<span class="hljs-name">appender</span>&gt;</span>
+</code></pre>
+<p><code>ApacheHttpSender</code> shares most of the settings with <code>JavaHttpSender</code>.
+However, there are some specific settings available only for <code>ApacheHttpSender</code>:</p>
+<table>
+<thead>
+<tr><th>Setting</th><th>Default</th><th>Description</th></tr>
+</thead>
+<tbody>
+<tr><td>http.maxConnections</td><td>1</td><td>Maximum number of HTTP connections to keep in the pool</td></tr>
+<tr><td>http.connectionKeepAliveMs</td><td>120000</td><td>A duration of time in milliseconds which the connection can be safely kept idle for later reuse. This value should not be greater than <code>server.http-idle-timeout</code> in your Loki config</td></tr>
+<tr><td>http.httpThreads</td><td>1</td><td>Number of threads to use for sending HTTP requests</td></tr>
+</tbody>
+</table>
+<h3><a class="anchor" aria-hidden="true" id="switching-to-protobuf-format"></a><a href="#switching-to-protobuf-format" aria-hidden="true" class="hash-link"><svg class="hash-link-icon" aria-hidden="true" height="16" version="1.1" viewBox="0 0 16 16" width="16"><path fill-rule="evenodd" d="M4 9h1v1H4c-1.5 0-3-1.69-3-3.5S2.55 3 4 3h4c1.45 0 3 1.69 3 3.5 0 1.41-.91 2.72-2 3.25V8.59c.58-.45 1-1.27 1-2.09C10 5.22 8.98 4 8 4H4c-.98 0-2 1.22-2 2.5S3 9 4 9zm9-3h-1v1h1c1 0 2 1.22 2 2.5S13.98 12 13 12H9c-.98 0-2-1.22-2-2.5 0-.83.42-1.64 1-2.09V6.25c-1.09.53-2 1.84-2 3.25C6 11.31 7.55 13 9 13h4c1.45 0 3-1.69 3-3.5S14.5 6 13 6z"></path></svg></a>Switching to Protobuf format</h3>
+<p>By default Loki4j uses <code>JsonEncoder</code> that converts log batches into JSON format specified by Loki API.
+This encoder does not use any extra libs for JSON generation.</p>
+<p>If you want to use <code>ProtobufEncoder</code>, you need to add Protobuf-related dependencies to your project:</p>
+<div class="tabs"><div class="nav-tabs"><div id="tab-group-4-tab-5" class="nav-link active" data-group="group_4" data-tab="tab-group-4-content-5">Maven</div><div id="tab-group-4-tab-6" class="nav-link" data-group="group_4" data-tab="tab-group-4-content-6">Gradle</div></div><div class="tab-content"><div id="tab-group-4-content-5" class="tab-pane active" data-group="group_4" tabindex="-1"><div><span><pre><code class="hljs css language-xml"><span class="hljs-tag">&lt;<span class="hljs-name">dependency</span>&gt;</span><br />    <span class="hljs-tag">&lt;<span class="hljs-name">groupId</span>&gt;</span>com.google.protobuf<span class="hljs-tag">&lt;/<span class="hljs-name">groupId</span>&gt;</span><br />    <span class="hljs-tag">&lt;<span class="hljs-name">artifactId</span>&gt;</span>protobuf-java<span class="hljs-tag">&lt;/<span class="hljs-name">artifactId</span>&gt;</span><br />    <span class="hljs-tag">&lt;<span class="hljs-name">version</span>&gt;</span>3.14.0<span class="hljs-tag">&lt;/<span class="hljs-name">version</span>&gt;</span><br /><span class="hljs-tag">&lt;/<span class="hljs-name">dependency</span>&gt;</span><br /><span class="hljs-tag">&lt;<span class="hljs-name">dependency</span>&gt;</span><br />    <span class="hljs-tag">&lt;<span class="hljs-name">groupId</span>&gt;</span>org.xerial.snappy<span class="hljs-tag">&lt;/<span class="hljs-name">groupId</span>&gt;</span><br />    <span class="hljs-tag">&lt;<span class="hljs-name">artifactId</span>&gt;</span>snappy-java<span class="hljs-tag">&lt;/<span class="hljs-name">artifactId</span>&gt;</span><br />    <span class="hljs-tag">&lt;<span class="hljs-name">version</span>&gt;</span>1.1.8<span class="hljs-tag">&lt;/<span class="hljs-name">version</span>&gt;</span><br /><span class="hljs-tag">&lt;/<span class="hljs-name">dependency</span>&gt;</span><br /></code></pre>
+</span></div></div><div id="tab-group-4-content-6" class="tab-pane" data-group="group_4" tabindex="-1"><div><span><pre><code class="hljs css language-groovy">compile <span class="hljs-string">'com.google.protobuf:protobuf-java:3.12.4'</span><br />compile <span class="hljs-string">'org.xerial.snappy:snappy-java:1.1.8'</span><br /></code></pre>
+</span></div></div></div></div>
+<p>Then you can explicitly specify <code>ProtobufEncoder</code> by setting <code>class</code> attribute for <code>format</code> section:</p>
+<pre><code class="hljs css language-xml"><span class="hljs-tag">&lt;<span class="hljs-name">appender</span> <span class="hljs-attr">name</span>=<span class="hljs-string">"LOKI"</span> <span class="hljs-attr">class</span>=<span class="hljs-string">"com.github.loki4j.logback.Loki4jAppender"</span>&gt;</span>
+    <span class="hljs-tag">&lt;<span class="hljs-name">format</span> <span class="hljs-attr">class</span>=<span class="hljs-string">"com.github.loki4j.logback.ProtobufEncoder"</span>&gt;</span>
+        ...
+    <span class="hljs-tag">&lt;/<span class="hljs-name">format</span>&gt;</span>
+<span class="hljs-tag">&lt;/<span class="hljs-name">appender</span>&gt;</span>
+</code></pre>
+<h2><a class="anchor" aria-hidden="true" id="examples"></a><a href="#examples" aria-hidden="true" class="hash-link"><svg class="hash-link-icon" aria-hidden="true" height="16" version="1.1" viewBox="0 0 16 16" width="16"><path fill-rule="evenodd" d="M4 9h1v1H4c-1.5 0-3-1.69-3-3.5S2.55 3 4 3h4c1.45 0 3 1.69 3 3.5 0 1.41-.91 2.72-2 3.25V8.59c.58-.45 1-1.27 1-2.09C10 5.22 8.98 4 8 4H4c-.98 0-2 1.22-2 2.5S3 9 4 9zm9-3h-1v1h1c1 0 2 1.22 2 2.5S13.98 12 13 12H9c-.98 0-2-1.22-2-2.5 0-.83.42-1.64 1-2.09V6.25c-1.09.53-2 1.84-2 3.25C6 11.31 7.55 13 9 13h4c1.45 0 3-1.69 3-3.5S14.5 6 13 6z"></path></svg></a>Examples</h2>
+<h3><a class="anchor" aria-hidden="true" id="overriding-the-default-settings"></a><a href="#overriding-the-default-settings" aria-hidden="true" class="hash-link"><svg class="hash-link-icon" aria-hidden="true" height="16" version="1.1" viewBox="0 0 16 16" width="16"><path fill-rule="evenodd" d="M4 9h1v1H4c-1.5 0-3-1.69-3-3.5S2.55 3 4 3h4c1.45 0 3 1.69 3 3.5 0 1.41-.91 2.72-2 3.25V8.59c.58-.45 1-1.27 1-2.09C10 5.22 8.98 4 8 4H4c-.98 0-2 1.22-2 2.5S3 9 4 9zm9-3h-1v1h1c1 0 2 1.22 2 2.5S13.98 12 13 12H9c-.98 0-2-1.22-2-2.5 0-.83.42-1.64 1-2.09V6.25c-1.09.53-2 1.84-2 3.25C6 11.31 7.55 13 9 13h4c1.45 0 3-1.69 3-3.5S14.5 6 13 6z"></path></svg></a>Overriding the default settings</h3>
+<p>In this example we would like to change max batch size to 100 records, batch timeout to 10s, label key-value separator to <code>:</code>,
+and sort log records by time before sending them to Loki.
+Also we would like to use <a href="#using-apache-httpclient">Apache HTTP sender</a> with a pool of 10 connections and <a href="#switching-to-protobuf-format">Protobuf API</a>.
+Finally, we want to see Loki4j debug output.</p>
+<pre><code class="hljs css language-xml"><span class="hljs-tag">&lt;<span class="hljs-name">appender</span> <span class="hljs-attr">name</span>=<span class="hljs-string">"LOKI"</span> <span class="hljs-attr">class</span>=<span class="hljs-string">"com.github.loki4j.logback.Loki4jAppender"</span>&gt;</span>
+    <span class="hljs-tag">&lt;<span class="hljs-name">batchSize</span>&gt;</span>100<span class="hljs-tag">&lt;/<span class="hljs-name">batchSize</span>&gt;</span>
+    <span class="hljs-tag">&lt;<span class="hljs-name">batchTimeoutMs</span>&gt;</span>10000<span class="hljs-tag">&lt;/<span class="hljs-name">batchTimeoutMs</span>&gt;</span>
+    <span class="hljs-tag">&lt;<span class="hljs-name">verbose</span>&gt;</span>true<span class="hljs-tag">&lt;/<span class="hljs-name">verbose</span>&gt;</span>
+    <span class="hljs-tag">&lt;<span class="hljs-name">http</span> <span class="hljs-attr">class</span>=<span class="hljs-string">"com.github.loki4j.logback.ApacheHttpSender"</span>&gt;</span>
+        <span class="hljs-tag">&lt;<span class="hljs-name">url</span>&gt;</span>http://localhost:3100/loki/api/v1/push<span class="hljs-tag">&lt;/<span class="hljs-name">url</span>&gt;</span>
+        <span class="hljs-tag">&lt;<span class="hljs-name">maxConnections</span>&gt;</span>10<span class="hljs-tag">&lt;/<span class="hljs-name">maxConnections</span>&gt;</span>
+    <span class="hljs-tag">&lt;/<span class="hljs-name">http</span>&gt;</span>
+    <span class="hljs-tag">&lt;<span class="hljs-name">format</span> <span class="hljs-attr">class</span>=<span class="hljs-string">"com.github.loki4j.logback.ProtobufEncoder"</span>&gt;</span>
+        <span class="hljs-tag">&lt;<span class="hljs-name">label</span>&gt;</span>
+            <span class="hljs-tag">&lt;<span class="hljs-name">pattern</span>&gt;</span>app:my-app,host:${HOSTNAME}<span class="hljs-tag">&lt;/<span class="hljs-name">pattern</span>&gt;</span>
+            <span class="hljs-tag">&lt;<span class="hljs-name">keyValueSeparator</span>&gt;</span>:<span class="hljs-tag">&lt;/<span class="hljs-name">keyValueSeparator</span>&gt;</span>
+        <span class="hljs-tag">&lt;/<span class="hljs-name">label</span>&gt;</span>
+        <span class="hljs-tag">&lt;<span class="hljs-name">message</span>&gt;</span>
+            <span class="hljs-tag">&lt;<span class="hljs-name">pattern</span>&gt;</span>l=%level c=%logger{20} t=%thread | %msg %ex<span class="hljs-tag">&lt;/<span class="hljs-name">pattern</span>&gt;</span>
+        <span class="hljs-tag">&lt;/<span class="hljs-name">message</span>&gt;</span>
+        <span class="hljs-tag">&lt;<span class="hljs-name">sortByTime</span>&gt;</span>true<span class="hljs-tag">&lt;/<span class="hljs-name">sortByTime</span>&gt;</span>
+    <span class="hljs-tag">&lt;/<span class="hljs-name">format</span>&gt;</span>
+<span class="hljs-tag">&lt;/<span class="hljs-name">appender</span>&gt;</span>
+</code></pre>
+<h3><a class="anchor" aria-hidden="true" id="minimalistic-zero-dependency-configuration"></a><a href="#minimalistic-zero-dependency-configuration" aria-hidden="true" class="hash-link"><svg class="hash-link-icon" aria-hidden="true" height="16" version="1.1" viewBox="0 0 16 16" width="16"><path fill-rule="evenodd" d="M4 9h1v1H4c-1.5 0-3-1.69-3-3.5S2.55 3 4 3h4c1.45 0 3 1.69 3 3.5 0 1.41-.91 2.72-2 3.25V8.59c.58-.45 1-1.27 1-2.09C10 5.22 8.98 4 8 4H4c-.98 0-2 1.22-2 2.5S3 9 4 9zm9-3h-1v1h1c1 0 2 1.22 2 2.5S13.98 12 13 12H9c-.98 0-2-1.22-2-2.5 0-.83.42-1.64 1-2.09V6.25c-1.09.53-2 1.84-2 3.25C6 11.31 7.55 13 9 13h4c1.45 0 3-1.69 3-3.5S14.5 6 13 6z"></path></svg></a>Minimalistic zero-dependency configuration</h3>
+<p>In Java 11 and later we can use standard HTTP client and Loki JSON API.
+This setup is supported natively by Loki4j and does not require any extra dependencies.</p>
+<pre><code class="hljs css language-xml"><span class="hljs-tag">&lt;<span class="hljs-name">appender</span> <span class="hljs-attr">name</span>=<span class="hljs-string">"LOKI"</span> <span class="hljs-attr">class</span>=<span class="hljs-string">"com.github.loki4j.logback.Loki4jAppender"</span>&gt;</span>
+    <span class="hljs-tag">&lt;<span class="hljs-name">http</span>&gt;</span>
+        <span class="hljs-tag">&lt;<span class="hljs-name">url</span>&gt;</span>http://localhost:3100/loki/api/v1/push<span class="hljs-tag">&lt;/<span class="hljs-name">url</span>&gt;</span>
+    <span class="hljs-tag">&lt;/<span class="hljs-name">http</span>&gt;</span>
+    <span class="hljs-tag">&lt;<span class="hljs-name">format</span>&gt;</span>
+        <span class="hljs-tag">&lt;<span class="hljs-name">label</span>&gt;</span>
+            <span class="hljs-tag">&lt;<span class="hljs-name">pattern</span>&gt;</span>app=my-app,host=${HOSTNAME},level=%level<span class="hljs-tag">&lt;/<span class="hljs-name">pattern</span>&gt;</span>
+        <span class="hljs-tag">&lt;/<span class="hljs-name">label</span>&gt;</span>
+        <span class="hljs-tag">&lt;<span class="hljs-name">message</span>&gt;</span>
+            <span class="hljs-tag">&lt;<span class="hljs-name">pattern</span>&gt;</span>l=%level h=${HOSTNAME} c=%logger{20} t=%thread | %msg %ex<span class="hljs-tag">&lt;/<span class="hljs-name">pattern</span>&gt;</span>
+        <span class="hljs-tag">&lt;/<span class="hljs-name">message</span>&gt;</span>
+    <span class="hljs-tag">&lt;/<span class="hljs-name">format</span>&gt;</span>
+<span class="hljs-tag">&lt;/<span class="hljs-name">appender</span>&gt;</span>
+</code></pre>
+<h3><a class="anchor" aria-hidden="true" id="minimalistic-configuration-compatible-with-java-8"></a><a href="#minimalistic-configuration-compatible-with-java-8" aria-hidden="true" class="hash-link"><svg class="hash-link-icon" aria-hidden="true" height="16" version="1.1" viewBox="0 0 16 16" width="16"><path fill-rule="evenodd" d="M4 9h1v1H4c-1.5 0-3-1.69-3-3.5S2.55 3 4 3h4c1.45 0 3 1.69 3 3.5 0 1.41-.91 2.72-2 3.25V8.59c.58-.45 1-1.27 1-2.09C10 5.22 8.98 4 8 4H4c-.98 0-2 1.22-2 2.5S3 9 4 9zm9-3h-1v1h1c1 0 2 1.22 2 2.5S13.98 12 13 12H9c-.98 0-2-1.22-2-2.5 0-.83.42-1.64 1-2.09V6.25c-1.09.53-2 1.84-2 3.25C6 11.31 7.55 13 9 13h4c1.45 0 3-1.69 3-3.5S14.5 6 13 6z"></path></svg></a>Minimalistic configuration compatible with Java 8</h3>
+<p>In this example we would like to define only required settings.
+We would have to use Apache HTTP sender because the default Java HTTP sender works only for Java 11+.
+Check the corresponding <a href="#using-apache-httpclient">configuration section</a> for details.</p>
+<pre><code class="hljs css language-xml"><span class="hljs-tag">&lt;<span class="hljs-name">appender</span> <span class="hljs-attr">name</span>=<span class="hljs-string">"LOKI"</span> <span class="hljs-attr">class</span>=<span class="hljs-string">"com.github.loki4j.logback.Loki4jAppender"</span>&gt;</span>
+    <span class="hljs-tag">&lt;<span class="hljs-name">http</span> <span class="hljs-attr">class</span>=<span class="hljs-string">"com.github.loki4j.logback.ApacheHttpSender"</span>&gt;</span>
+        <span class="hljs-tag">&lt;<span class="hljs-name">url</span>&gt;</span>http://localhost:3100/loki/api/v1/push<span class="hljs-tag">&lt;/<span class="hljs-name">url</span>&gt;</span>
+    <span class="hljs-tag">&lt;/<span class="hljs-name">http</span>&gt;</span>
+    <span class="hljs-tag">&lt;<span class="hljs-name">format</span>&gt;</span>
+        <span class="hljs-tag">&lt;<span class="hljs-name">label</span>&gt;</span>
+            <span class="hljs-tag">&lt;<span class="hljs-name">pattern</span>&gt;</span>app=my-app,host=${HOSTNAME},level=%level<span class="hljs-tag">&lt;/<span class="hljs-name">pattern</span>&gt;</span>
+        <span class="hljs-tag">&lt;/<span class="hljs-name">label</span>&gt;</span>
+        <span class="hljs-tag">&lt;<span class="hljs-name">message</span>&gt;</span>
+            <span class="hljs-tag">&lt;<span class="hljs-name">pattern</span>&gt;</span>l=%level h=${HOSTNAME} c=%logger{20} t=%thread | %msg %ex<span class="hljs-tag">&lt;/<span class="hljs-name">pattern</span>&gt;</span>
+        <span class="hljs-tag">&lt;/<span class="hljs-name">message</span>&gt;</span>
+    <span class="hljs-tag">&lt;/<span class="hljs-name">format</span>&gt;</span>
+<span class="hljs-tag">&lt;/<span class="hljs-name">appender</span>&gt;</span>
+</code></pre>
+<h3><a class="anchor" aria-hidden="true" id="sending-logs-to-grafana-cloud"></a><a href="#sending-logs-to-grafana-cloud" aria-hidden="true" class="hash-link"><svg class="hash-link-icon" aria-hidden="true" height="16" version="1.1" viewBox="0 0 16 16" width="16"><path fill-rule="evenodd" d="M4 9h1v1H4c-1.5 0-3-1.69-3-3.5S2.55 3 4 3h4c1.45 0 3 1.69 3 3.5 0 1.41-.91 2.72-2 3.25V8.59c.58-.45 1-1.27 1-2.09C10 5.22 8.98 4 8 4H4c-.98 0-2 1.22-2 2.5S3 9 4 9zm9-3h-1v1h1c1 0 2 1.22 2 2.5S13.98 12 13 12H9c-.98 0-2-1.22-2-2.5 0-.83.42-1.64 1-2.09V6.25c-1.09.53-2 1.84-2 3.25C6 11.31 7.55 13 9 13h4c1.45 0 3-1.69 3-3.5S14.5 6 13 6z"></path></svg></a>Sending logs to Grafana Cloud</h3>
+<p>In this example we will see how to send log records to hosted Loki service (e.g. Grafana Cloud).
+We will need to specify the credentials and increase the request timeout to 15s.</p>
+<pre><code class="hljs css language-xml"><span class="hljs-tag">&lt;<span class="hljs-name">appender</span> <span class="hljs-attr">name</span>=<span class="hljs-string">"LOKI"</span> <span class="hljs-attr">class</span>=<span class="hljs-string">"com.github.loki4j.logback.Loki4jAppender"</span>&gt;</span>
+    <span class="hljs-tag">&lt;<span class="hljs-name">http</span>&gt;</span>
+        <span class="hljs-tag">&lt;<span class="hljs-name">url</span>&gt;</span>https://logs-prod-us-central1.grafana.net/loki/api/v1<span class="hljs-tag">&lt;/<span class="hljs-name">url</span>&gt;</span>
+        <span class="hljs-tag">&lt;<span class="hljs-name">auth</span>&gt;</span>
+            <span class="hljs-tag">&lt;<span class="hljs-name">username</span>&gt;</span>example_username<span class="hljs-tag">&lt;/<span class="hljs-name">username</span>&gt;</span>
+            <span class="hljs-tag">&lt;<span class="hljs-name">password</span>&gt;</span>example_api_token<span class="hljs-tag">&lt;/<span class="hljs-name">password</span>&gt;</span>
+        <span class="hljs-tag">&lt;/<span class="hljs-name">auth</span>&gt;</span>
+        <span class="hljs-tag">&lt;<span class="hljs-name">requestTimeoutMs</span>&gt;</span>15000<span class="hljs-tag">&lt;/<span class="hljs-name">requestTimeoutMs</span>&gt;</span>
+    <span class="hljs-tag">&lt;/<span class="hljs-name">http</span>&gt;</span>
+    <span class="hljs-tag">&lt;<span class="hljs-name">format</span>&gt;</span>
+        <span class="hljs-tag">&lt;<span class="hljs-name">label</span>&gt;</span>
+            <span class="hljs-tag">&lt;<span class="hljs-name">pattern</span>&gt;</span>app=my-app<span class="hljs-tag">&lt;/<span class="hljs-name">pattern</span>&gt;</span>
+        <span class="hljs-tag">&lt;/<span class="hljs-name">label</span>&gt;</span>
+        <span class="hljs-tag">&lt;<span class="hljs-name">message</span>&gt;</span>
+            <span class="hljs-tag">&lt;<span class="hljs-name">pattern</span>&gt;</span>l=%level c=%logger{20} t=%thread | %msg %ex<span class="hljs-tag">&lt;/<span class="hljs-name">pattern</span>&gt;</span>
+        <span class="hljs-tag">&lt;/<span class="hljs-name">message</span>&gt;</span>
+    <span class="hljs-tag">&lt;/<span class="hljs-name">format</span>&gt;</span>
+<span class="hljs-tag">&lt;/<span class="hljs-name">appender</span>&gt;</span>
+</code></pre>
+</span></div></article></div><div class="docs-prevnext"><a class="docs-next button" href="/loki-logback-appender/docs/performance"><span>Performance Monitoring</span><span class="arrow-next"> →</span></a></div></div></div><nav class="onPageNav"><ul class="toc-headings"><li><a href="#reference">Reference</a><ul class="toc-headings"><li><a href="#general-settings">General settings</a></li><li><a href="#http-settings">HTTP settings</a></li><li><a href="#format-settings">Format settings</a></li><li><a href="#using-apache-httpclient">Using Apache HttpClient</a></li><li><a href="#switching-to-protobuf-format">Switching to Protobuf format</a></li></ul></li><li><a href="#examples">Examples</a><ul class="toc-headings"><li><a href="#overriding-the-default-settings">Overriding the default settings</a></li><li><a href="#minimalistic-zero-dependency-configuration">Minimalistic zero-dependency configuration</a></li><li><a href="#minimalistic-configuration-compatible-with-java-8">Minimalistic configuration compatible with Java 8</a></li><li><a href="#sending-logs-to-grafana-cloud">Sending logs to Grafana Cloud</a></li></ul></li></ul></nav></div><footer class="nav-footer" id="footer"><section class="sitemap"><a href="/loki-logback-appender/" class="nav-home"><img src="/loki-logback-appender/img/logo.svg" alt="Loki4j Logback" width="66" height="58"/></a><div><h5>Docs</h5><a href="/loki-logback-appender/docs/configuration">Reference</a></div><div><h5>Community</h5><a class="github-button" href="https://github.com/loki4j/loki-logback-appender" data-icon="octicon-star" data-count-href="/loki4j/loki-logback-appender/stargazers" data-show-count="true" data-count-aria-label="# stargazers on GitHub" aria-label="Star this project on GitHub">Loki4j GitHub</a><div class="social"><a href="https://twitter.com/arnehaev" class="twitter-follow-button">Follow @arnehaev</a></div><a href="https://stackoverflow.com/questions/tagged/loki4j" target="_blank" rel="noreferrer noopener">Stack Overflow</a></div><div><h5>More</h5><a href="https://docusaurus.io/">Powered by Docusaurus</a></div></section><section class="copyright">Copyright © 2021 Anton Nehaev</section></footer></div><script>window.twttr=(function(d,s, id){var js,fjs=d.getElementsByTagName(s)[0],t=window.twttr||{};if(d.getElementById(id))return t;js=d.createElement(s);js.id=id;js.src='https://platform.twitter.com/widgets.js';fjs.parentNode.insertBefore(js, fjs);t._e = [];t.ready = function(f) {t._e.push(f);};return t;}(document, 'script', 'twitter-wjs'));</script></body></html>
