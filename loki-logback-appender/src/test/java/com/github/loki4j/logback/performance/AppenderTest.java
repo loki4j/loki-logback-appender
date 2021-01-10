@@ -5,7 +5,9 @@ import static com.github.loki4j.logback.Generators.*;
 import java.util.Arrays;
 
 import com.github.loki4j.logback.Loki4jEncoder;
-import com.github.loki4j.logback.performance.Benchmarker.Benchmark;
+import com.github.loki4j.testkit.benchmark.Benchmarker;
+import com.github.loki4j.testkit.benchmark.Benchmarker.Benchmark;
+import com.github.loki4j.testkit.categories.PerformanceTests;
 
 import org.junit.Test;
 import org.junit.experimental.categories.Category;

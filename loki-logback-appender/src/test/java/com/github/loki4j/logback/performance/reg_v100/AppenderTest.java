@@ -6,11 +6,11 @@ import java.util.Arrays;
 
 import com.github.loki4j.logback.InstrumentedLoki4jAppender;
 import com.github.loki4j.logback.Generators.InfiniteEventIterator;
-import com.github.loki4j.logback.performance.Benchmarker;
-import com.github.loki4j.logback.performance.PerformanceTests;
-import com.github.loki4j.logback.performance.Benchmarker.Benchmark;
 import com.github.loki4j.logback.performance.reg_v100.AbstractLoki4jAppender.DummyLoki4jAppender;
 import com.github.loki4j.logback.performance.reg_v100.AbstractLoki4jAppender.Wrapper;
+import com.github.loki4j.testkit.benchmark.Benchmarker;
+import com.github.loki4j.testkit.benchmark.Benchmarker.Benchmark;
+import com.github.loki4j.testkit.categories.PerformanceTests;
 
 import org.junit.Test;
 import org.junit.experimental.categories.Category;

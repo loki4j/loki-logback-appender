@@ -7,6 +7,7 @@ import ch.qos.logback.classic.Level;
 import static org.junit.Assert.*;
 
 import com.github.loki4j.common.LogRecord;
+import com.github.loki4j.testkit.dummy.ExceptionGenerator;
 
 import static com.github.loki4j.logback.Generators.*;
 
@@ -34,14 +35,14 @@ public class AbstractLoki4jEncoderTest {
                     "com.example.testtesttest.somepackage.TestApp",
                     "thread-2",
                     "Message with error",
-                    exception("Test exception")),
+                    ExceptionGenerator.exception("Test exception")),
                 new LogRecord());
             // make the message a bit easier to check
             r2.message = r2.message.replaceAll("\r\n", "\n").replaceAll(":\\d+", "");
 
             var re2 = LogRecord.create(102L, 2, "level=DEBUG,app=my-app",
                     "l=DEBUG c=c.e.t.s.TestApp t=thread-2 | Message with error java.lang.RuntimeException: Test exception\n" +
-                    "	at com.github.loki4j.logback.Generators.exception(Generators.java)\n");
+                    "	at com.github.loki4j.testkit.dummy.ExceptionGenerator.exception(ExceptionGenerator.java)\n");
             assertEquals("A bit more complex event", re2, r2);
         });
     }
