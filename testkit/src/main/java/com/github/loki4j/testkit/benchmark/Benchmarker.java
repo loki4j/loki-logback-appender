@@ -1,4 +1,4 @@
-package com.github.loki4j.logback.performance;
+package com.github.loki4j.testkit.benchmark;
 
 import java.util.ArrayList;
 import java.util.Iterator;

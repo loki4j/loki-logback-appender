@@ -8,6 +8,8 @@ plugins {
 group = "com.github.loki4j"
 version = "${file("VERSION").text.trim()}"
 
+evaluationDependsOn(":testkit")
+
 repositories {
      mavenCentral()
 }
@@ -16,6 +18,11 @@ sourceSets {
     main {
         java {
             srcDirs += [files(project(":common").sourceSets.main.java.srcDirs)]
+        }
+    }
+    test {
+        java {
+            srcDirs += [files(project(":testkit").sourceSets.main.java.srcDirs)]
         }
     }
 }
@@ -50,7 +57,7 @@ test {
         exceptionFormat "full"
     }
     useJUnit {
-        excludeCategories 'com.github.loki4j.SlowTests'
+        excludeCategories 'com.github.loki4j.testkit.categories.SlowTests'
     }
 }
 
@@ -76,14 +83,14 @@ jacocoTestReport {
 task integTests(type: Test) {
     description = 'Run integration tests'
     useJUnit {
-        includeCategories 'com.github.loki4j.logback.integration.IntegrationTests'
+        includeCategories 'com.github.loki4j.testkit.categories.IntegrationTests'
     }
 }
 
 task perfTests(type: Test) {
     description = 'Run performance tests'
     useJUnit {
-        includeCategories 'com.github.loki4j.logback.performance.PerformanceTests'
+        includeCategories 'com.github.loki4j.testkit.categories.PerformanceTests'
     }
     forkEvery = 1
     maxHeapSize = "1G"

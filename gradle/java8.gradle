@@ -82,7 +82,7 @@ task java8Test (type: Test) {
     //sourceSets.java8Test.output.classesDirs.forEach { println "$it"};
 
     useJUnit {
-        excludeCategories 'com.github.loki4j.SlowTests'
+        excludeCategories 'com.github.loki4j.testkit.categories.SlowTests'
     }
 
     //shouldRunAfter compileJava8TestJava

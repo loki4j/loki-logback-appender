@@ -7,6 +7,8 @@ import java.util.concurrent.CompletableFuture;
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
 
+import com.github.loki4j.testkit.categories.IntegrationTests;
+
 import org.junit.AfterClass;
 import org.junit.BeforeClass;
 import org.junit.Test;

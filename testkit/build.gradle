@@ -1,0 +1,27 @@
+plugins {
+    id 'java-library'
+}
+
+group = "com.github.loki4j"
+
+repositories {
+     mavenCentral()
+}
+
+
+dependencies {
+    testImplementation 'junit:junit:4.13'
+}
+
+compileJava {
+    sourceCompatibility = 11
+    targetCompatibility = 11
+}
+
+tasks.withType(JavaCompile) {
+    options.encoding = "UTF-8"
+}
+
+tasks.withType(Test) {
+    systemProperty "file.encoding", "UTF-8"
+}

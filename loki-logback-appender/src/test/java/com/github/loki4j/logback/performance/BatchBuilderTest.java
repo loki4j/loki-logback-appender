@@ -9,7 +9,9 @@ import java.util.concurrent.ArrayBlockingQueue;
 
 import com.github.loki4j.common.ConcurrentBatchBuffer;
 import com.github.loki4j.common.LogRecord;
-import com.github.loki4j.logback.performance.Benchmarker.Benchmark;
+import com.github.loki4j.testkit.benchmark.Benchmarker;
+import com.github.loki4j.testkit.benchmark.Benchmarker.Benchmark;
+import com.github.loki4j.testkit.categories.PerformanceTests;
 
 import org.junit.Test;
 import org.junit.experimental.categories.Category;
