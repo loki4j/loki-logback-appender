@@ -9,6 +9,9 @@ import io.micrometer.core.instrument.Metrics;
 import io.micrometer.core.instrument.Tag;
 import io.micrometer.core.instrument.Timer;
 
+/**
+ * Provides an ability to report logging performance metrics using Micrometer framework
+ */
 public class LoggerMetrics {
 
     private Timer appendTimer;
