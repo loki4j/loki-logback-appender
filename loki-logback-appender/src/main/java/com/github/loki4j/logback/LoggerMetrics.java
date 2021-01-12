@@ -2,24 +2,14 @@ package com.github.loki4j.logback;
 
 import java.time.Duration;
 import java.util.Arrays;
-import java.util.concurrent.CompletableFuture;
 
-import com.github.loki4j.common.LogRecord;
-import com.github.loki4j.common.LokiResponse;
-
-import ch.qos.logback.classic.spi.ILoggingEvent;
-import ch.qos.logback.core.CoreConstants;
 import io.micrometer.core.instrument.Counter;
 import io.micrometer.core.instrument.DistributionSummary;
 import io.micrometer.core.instrument.Metrics;
 import io.micrometer.core.instrument.Tag;
 import io.micrometer.core.instrument.Timer;
 
-/**
- * Extends {@code Loki4jAppender} with ability to report its
- * performance metrics via Micrometer framework.
- */
-public class InstrumentedLoki4jAppender extends Loki4jAppender {
+public class LoggerMetrics {
 
     private Timer appendTimer;
     private Timer encodeTimer;
@@ -30,15 +20,12 @@ public class InstrumentedLoki4jAppender extends Loki4jAppender {
 
     private Counter batchesEncodedCounter;
     private Counter batchesSentCounter;
+    private Counter sendErrorsCounter;
 
-    @Override
-    public void start() {
-        super.start();
-
-        var host = context.getProperty(CoreConstants.HOSTNAME_KEY);
+    public LoggerMetrics(String appenderName, String host) {
         var tags = Arrays.asList(
-            Tag.of("appender", this.getName() == null ? "none" : this.getName()),
-            Tag.of("host", host == null ? "unknown" : host));
+            Tag.of("appender", appenderName),
+            Tag.of("host", host));
 
         appendTimer = Timer
             .builder("loki4j.append.time")
@@ -82,39 +69,32 @@ public class InstrumentedLoki4jAppender extends Loki4jAppender {
             .description("Number of batches sent to Loki")
             .tags(tags)
             .register(Metrics.globalRegistry);
+
+        sendErrorsCounter = Counter
+            .builder("loki4j.send.errors")
+            .description("Number of errors occurred while sending batches to Loki")
+            .tags(tags)
+            .register(Metrics.globalRegistry);
     }
 
     private void recordTimer(Timer timer, long startedNs) {
         timer.record(Duration.ofNanos(System.nanoTime() - startedNs));
     }
 
-    @Override
-    protected void append(ILoggingEvent event) {
-        var startedNs = System.nanoTime();
-        super.append(event);
+    public void eventAppended(long startedNs) {
         recordTimer(appendTimer, startedNs);
     }
-
-    @Override
-    protected byte[] encode(LogRecord[] batch) {
-        var startedNs = System.nanoTime();
-        var encoded = super.encode(batch);
-        recordTimer(encodeTimer, startedNs);
-        eventsEncodedSummary.record(batch.length);
-        batchesEncodedCounter.increment();
-        return encoded;
-    }
-
-    @Override
-    protected CompletableFuture<LokiResponse> sendAsync(byte[] batch) {
-        var startedNs = System.nanoTime();
-        return super
-            .sendAsync(batch)
-            .whenComplete((r, e) -> {
-                recordTimer(sendTimer, startedNs);
-                bytesSentSummary.record(batch.length);
-                batchesSentCounter.increment();
-            });
-    }
     
+    public void batchEncoded(long startedNs, int count) {
+        recordTimer(encodeTimer, startedNs);
+        eventsEncodedSummary.record(count);
+        batchesEncodedCounter.increment();
+    }
+
+    public void batchSent(long startedNs, int bytesCount, boolean failed) {
+        recordTimer(sendTimer, startedNs);
+        bytesSentSummary.record(bytesCount);
+        batchesSentCounter.increment();
+        if (failed) sendErrorsCounter.increment();
+    }
 }
