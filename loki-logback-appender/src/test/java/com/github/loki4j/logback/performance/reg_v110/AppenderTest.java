@@ -1,14 +1,10 @@
-package com.github.loki4j.logback.performance.reg_v100;
+package com.github.loki4j.logback.performance.reg_v110;
 
 import static com.github.loki4j.logback.Generators.*;
 
 import java.util.Arrays;
 
 import com.github.loki4j.logback.Generators.InfiniteEventIterator;
-import com.github.loki4j.logback.performance.reg_v100.AbstractLoki4jAppender.DummyLoki4jAppender;
-import com.github.loki4j.logback.performance.reg_v100.AbstractLoki4jAppender.Wrapper;
-import com.github.loki4j.logback.performance.reg_v110.InstrumentedLoki4jAppender;
-import com.github.loki4j.logback.performance.reg_v110.Loki4jAppenderV100;
 import com.github.loki4j.testkit.benchmark.Benchmarker;
 import com.github.loki4j.testkit.benchmark.Benchmarker.Benchmark;
 import com.github.loki4j.testkit.categories.PerformanceTests;
@@ -33,14 +29,15 @@ public class AppenderTest {
             this.benchmarks = Arrays.asList(
                 Benchmark.of("oldAppenderWait",
                     () -> {
-                        var a = new DummyLoki4jAppender();
+                        var a = new Loki4jAppenderV100();
                         a.setContext(new LoggerContext());
                         a.setBatchSize(capacity);
                         a.setBatchTimeoutMs(60_000);
-                        a.setEncoder(defaultToStringEncoder());
+                        a.setFormat(defaultToStringEncoder());
+                        a.setHttp(dummySender());
                         a.setVerbose(false);
                         a.start();
-                        return new Wrapper<>(a);
+                        return new Loki4jAppenderV100.Wrapper<>(a);
                     },
                     (a, e) -> a.appendAndWait(e),
                     a -> a.stop()),
@@ -53,7 +50,7 @@ public class AppenderTest {
                     },
                     (a, e) -> a.appendAndWait(e),
                     a -> a.stop()),
-                Benchmark.of("instrumentedAppenderWait",
+                Benchmark.of("oldInstrumentedAppenderWait",
                     () -> {
                         var a = new InstrumentedLoki4jAppender();
                         a.setContext(new LoggerContext());
@@ -63,6 +60,16 @@ public class AppenderTest {
                         a.setVerbose(false);
                         a.start();
                         return new Loki4jAppenderV100.Wrapper<>(a);
+                    },
+                    (a, e) -> a.appendAndWait(e),
+                    a -> a.stop()),
+                Benchmark.of("newMetricsEnabledAppenderWait",
+                    () -> {
+                        var a = appender(capacity, 60_000L, defaultToStringEncoder(), dummySender());
+                        a.setVerbose(false);
+                        a.setMetricsEnabled(true);
+                        a.start();
+                        return new AppenderWrapper(a);
                     },
                     (a, e) -> a.appendAndWait(e),
                     a -> a.stop())

@@ -1,8 +1,6 @@
 import static groovy.io.FileVisitResult.*
 import static groovy.io.FileType.*
 
-rootProject.name = 'loki4j'
-
 include 'common'
 include 'testkit'
 include 'loki-logback-appender'

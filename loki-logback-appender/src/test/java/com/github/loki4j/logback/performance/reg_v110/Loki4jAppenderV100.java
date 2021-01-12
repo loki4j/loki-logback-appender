@@ -1,4 +1,4 @@
-package com.github.loki4j.logback;
+package com.github.loki4j.logback.performance.reg_v110;
 
 import java.util.concurrent.CompletableFuture;
 import java.util.concurrent.Executors;
@@ -9,9 +9,9 @@ import com.github.loki4j.common.ConcurrentBatchBuffer;
 import com.github.loki4j.common.LogRecord;
 import com.github.loki4j.common.LokiResponse;
 import com.github.loki4j.common.LokiThreadFactory;
+import com.github.loki4j.logback.*;
 
 import ch.qos.logback.classic.spi.ILoggingEvent;
-import ch.qos.logback.core.CoreConstants;
 import ch.qos.logback.core.UnsynchronizedAppenderBase;
 import ch.qos.logback.core.joran.spi.DefaultClass;
 import ch.qos.logback.core.status.Status;
@@ -19,7 +19,7 @@ import ch.qos.logback.core.status.Status;
 /**
  * Main appender that provides functionality for sending log record batches to Loki
  */
-public class Loki4jAppender extends UnsynchronizedAppenderBase<ILoggingEvent> {
+public class Loki4jAppenderV100 extends UnsynchronizedAppenderBase<ILoggingEvent> {
 
     private static final LogRecord[] ZERO_EVENTS = new LogRecord[0];
 
@@ -38,14 +38,9 @@ public class Loki4jAppender extends UnsynchronizedAppenderBase<ILoggingEvent> {
     private int processingThreads = 1;
 
     /**
-     * If true, the appender will print its own debug logs to stderr
+     * If true, appender will print its own debug logs to stderr
      */
     private boolean verbose = false;
-
-    /**
-     * If true, the appender will report its metrics using Micrometer
-     */
-    private boolean metricsEnabled = false;
 
     /**
      * An encoder to use for converting log record batches to format acceptable by Loki
@@ -56,11 +51,6 @@ public class Loki4jAppender extends UnsynchronizedAppenderBase<ILoggingEvent> {
      * A HTTPS sender to use for pushing logs to Loki
      */
     private HttpSender sender;
-
-    /**
-     * A tracker for the appender's metrics (if enabled)
-     */
-    private LoggerMetrics metrics;
 
     private ConcurrentBatchBuffer<ILoggingEvent, LogRecord> buffer;
 
@@ -86,13 +76,6 @@ public class Loki4jAppender extends UnsynchronizedAppenderBase<ILoggingEvent> {
         }
         encoder.setContext(context);
         encoder.start();
-
-        if (metricsEnabled) {
-            var host = context.getProperty(CoreConstants.HOSTNAME_KEY);
-            metrics = new LoggerMetrics(
-                this.getName() == null ? "none" : this.getName(),
-                host == null ? "unknown" : host);
-        }
 
         buffer = new ConcurrentBatchBuffer<>(batchSize, LogRecord::create, (e, r) -> encoder.eventToRecord(e, r));
 
@@ -143,9 +126,7 @@ public class Loki4jAppender extends UnsynchronizedAppenderBase<ILoggingEvent> {
 
     @Override
     protected void append(ILoggingEvent event) {
-        var startedNs = System.nanoTime();
         appendAsync(event);
-        if (metricsEnabled) metrics.eventAppended(startedNs);
     }
 
     protected final CompletableFuture<Void> appendAsync(ILoggingEvent event) {
@@ -163,20 +144,11 @@ public class Loki4jAppender extends UnsynchronizedAppenderBase<ILoggingEvent> {
     }
 
     protected byte[] encode(LogRecord[] batch) {
-        var startedNs = System.nanoTime();
-        var encoded = encoder.encode(batch);
-        if (metricsEnabled) metrics.batchEncoded(startedNs, batch.length);
-        return encoded;
+        return encoder.encode(batch);
     }
 
     protected CompletableFuture<LokiResponse> sendAsync(byte[] batch) {
-        var startedNs = System.nanoTime();
-        return sender
-            .sendAsync(batch)
-            .whenComplete((r, e) -> {
-                if (metricsEnabled)
-                    metrics.batchSent(startedNs, batch.length, e != null || r.status > 299);
-            });
+        return sender.sendAsync(batch);
     }
 
     private CompletableFuture<Void> drainAsync(long timeoutMs) {
@@ -261,8 +233,29 @@ public class Loki4jAppender extends UnsynchronizedAppenderBase<ILoggingEvent> {
         this.verbose = verbose;
     }
 
-    public void setMetricsEnabled(boolean metricsEnabled) {
-        this.metricsEnabled = metricsEnabled;
+    public static class Wrapper<T extends Loki4jAppenderV100> {
+        private T appender;
+        public Wrapper(T appender) {
+            this.appender = appender;
+        }
+        public void append(ILoggingEvent event) {
+            appender.append(event);
+        }
+        @SuppressWarnings("unchecked")
+        public void appendAndWait(ILoggingEvent... events) {
+            var fs = (CompletableFuture<Void>[]) new CompletableFuture[events.length];
+            for (int i = 0; i < events.length; i++) {
+                fs[i] = appender.appendAsync(events[i]);
+            }
+            try {
+                CompletableFuture.allOf(fs).get(120, TimeUnit.SECONDS);
+            } catch (Exception e) {
+                throw new RuntimeException("Error while waiting for futures", e);
+            }
+        }
+        public void stop() {
+            appender.stop();
+        }
     }
 
 }
