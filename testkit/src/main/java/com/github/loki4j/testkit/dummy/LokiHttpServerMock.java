@@ -1,6 +1,5 @@
 package com.github.loki4j.testkit.dummy;
 
-import com.github.loki4j.logback.AbstractHttpSender;
 import com.sun.net.httpserver.HttpServer;
 
 import java.io.ByteArrayOutputStream;
@@ -20,7 +19,7 @@ public class LokiHttpServerMock {
     public LokiHttpServerMock(int port) throws IOException {
         server = HttpServer.create(new InetSocketAddress(port), 0);
         server.createContext("/loki/api/v1/push", httpExchange -> {
-            tenantHeaders=httpExchange.getRequestHeaders().getOrDefault(AbstractHttpSender.X_SCOPE_ORIG_HEADER,new ArrayList<>());
+            tenantHeaders=httpExchange.getRequestHeaders().getOrDefault("X-Scope-OrgID",new ArrayList<>());
             try (var is = httpExchange.getRequestBody()) {
                 lastBatch = getBytesFromInputStream(is); //is.readAllBytes();
                 batches.add(lastBatch);
