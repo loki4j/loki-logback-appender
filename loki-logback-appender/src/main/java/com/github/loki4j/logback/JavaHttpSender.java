@@ -81,10 +81,11 @@ public class JavaHttpSender extends AbstractHttpSender {
         return CompletableFuture
             .supplyAsync(() -> {
                 try {
-                    var request = requestBuilder
-                        .copy()
-                        .POST(HttpRequest.BodyPublishers.ofByteArray(batch))
-                        .build();
+                    var builder = getTenantId() == null ? requestBuilder
+                            .copy() : requestBuilder.copy().header(AbstractHttpSender.X_SCOPE_ORIG_HEADER, getTenantId());
+
+                    var request = builder.POST(HttpRequest.BodyPublishers.ofByteArray(batch))
+                            .build();
 
                     var response = client.send(request, HttpResponse.BodyHandlers.ofString());
                     return new LokiResponse(response.statusCode(), response.body());

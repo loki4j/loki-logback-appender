@@ -28,11 +28,13 @@ public abstract class AbstractHttpSender extends ContextAwareBase implements Htt
         }
     }
 
+    public static final String X_SCOPE_ORIG_HEADER = "X-Scope-OrgID";
+
     /**
     * Loki endpoint to be used for sending batches
     */
     protected String url = "http://localhost:3100/loki/api/v1/push";
-
+    protected String tenantId;
     /**
      * Content-type header to send to Loki
      */
@@ -105,6 +107,16 @@ public abstract class AbstractHttpSender extends ContextAwareBase implements Htt
 
     public void setContentType(String contentType) {
         this.contentType = contentType;
+    }
+
+    @Override
+    public String getTenantId() {
+        return tenantId;
+    }
+
+    @Override
+    public void setTenantId(String tenantId) {
+        this.tenantId = tenantId;
     }
 
 }

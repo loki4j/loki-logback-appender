@@ -74,10 +74,13 @@ public class ApacheHttpSender extends AbstractHttpSender {
                 .setConnectionRequestTimeout((int)requestTimeoutMs)
                 .build())
             .build();
-        
+
         requestBuilder = (body) -> {
             var request = new HttpPost(url);
             request.addHeader("Content-Type", contentType);
+            if(getTenantId() != null) {
+                request.addHeader(AbstractHttpSender.X_SCOPE_ORIG_HEADER, getTenantId());
+            }
             basicAuthToken.ifPresent(token -> request.setHeader("Authorization", "Basic " + token));
 
             request.setEntity(new ByteArrayEntity(body));

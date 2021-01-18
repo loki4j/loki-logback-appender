@@ -19,7 +19,7 @@ public class JavaHttpAppenderTest {
     private static int testPort = -1;
     private static LokiHttpServerMock mockLoki;
     private static String url;
-    
+
     @BeforeClass
     public static void startMockLoki() {
         testPort = 20_000 + new Random().nextInt(10_000);
@@ -47,7 +47,20 @@ public class JavaHttpAppenderTest {
 
             a.appendAndWait(events[2]);
             assertEquals("http send", expected, new String(mockLoki.lastBatch));
+            assertTrue(mockLoki.tenantHeaders.isEmpty());
+            return null;
+        });
+    }
 
+    @Test
+    public void testJavaHttpSendWithTenantHeader() {
+        withAppender(appender(3, 1000L, defaultToStringEncoder(), javaHttpSender(url,"tenant1")), a -> {
+            a.appendAndWait(events[0], events[1]);
+            assertTrue("no batches before batchSize reached", mockLoki.lastBatch == null);
+
+            a.appendAndWait(events[2]);
+            assertEquals("http send", expected, new String(mockLoki.lastBatch));
+            assertTrue(mockLoki.tenantHeaders.contains("tenant1"));
             return null;
         });
     }

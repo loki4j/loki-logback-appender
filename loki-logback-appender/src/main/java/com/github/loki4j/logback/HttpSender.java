@@ -17,7 +17,7 @@ public interface HttpSender extends ContextAware, LifeCycle {
     /**
      * Send a batch to Loki.
      * Send operation should be performed asynchronously (in separate thread)
-     * 
+     *
      * @return Future containing a response from Loki
      */
     public CompletableFuture<LokiResponse> sendAsync(byte[] batch);
@@ -33,9 +33,23 @@ public interface HttpSender extends ContextAware, LifeCycle {
     public void setUrl(String url);
 
     /**
+     * get optional tenantId. Loki is a multi-tenant system; requests and data for tenant A are isolated from tenant B.
+     * Requests to the Loki API should include an HTTP header (X-Scope-OrgID) that identifies the tenant for the request.
+     *
+     * @return tenantId
+     */
+    public String getTenantId();
+
+    /**
+     * Set optional tenantId
+     * @param tenantId
+     */
+    public void setTenantId(String tenantId);
+
+    /**
      * Content type of the requests to send to Loki.
      * It depends on the encoder selected in config (JSON vs Protobuf)
      */
     public void setContentType(String contentType);
-    
+
 }
