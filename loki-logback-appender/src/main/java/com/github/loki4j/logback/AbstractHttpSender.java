@@ -34,7 +34,15 @@ public abstract class AbstractHttpSender extends ContextAwareBase implements Htt
     * Loki endpoint to be used for sending batches
     */
     protected String url = "http://localhost:3100/loki/api/v1/push";
-    protected String tenantId;
+
+    /**
+     * Loki is a multi-tenant system; requests and data for tenant A are isolated from tenant B.
+     * Requests to the Loki API should include an HTTP header (X-Scope-OrgID) that identifies the tenant for the request.
+     * To run in multi-tenant mode, Loki should be started with auth_enabled: true.
+     * Loki can be run in “single-tenant” mode where the X-Scope-OrgID header is not required. Due to that tenantId parameter is optional in HttpSender
+     */
+    protected Optional<String> tenantId = Optional.empty();
+
     /**
      * Content-type header to send to Loki
      */
@@ -110,13 +118,10 @@ public abstract class AbstractHttpSender extends ContextAwareBase implements Htt
     }
 
     @Override
-    public String getTenantId() {
-        return tenantId;
-    }
-
-    @Override
-    public void setTenantId(String tenantId) {
-        this.tenantId = tenantId;
+    public void setTenantId(String tenant) {
+        if (tenant != null) {
+            this.tenantId = Optional.of(tenant);
+        }
     }
 
 }

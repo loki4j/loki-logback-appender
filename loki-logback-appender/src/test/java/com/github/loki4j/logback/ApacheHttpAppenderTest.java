@@ -52,4 +52,19 @@ public class ApacheHttpAppenderTest {
         });
     }
 
+    @Test
+    public void testApacheHttpSendWithTenantHeader() {
+        var sender = apacheHttpSender(url);
+        sender.setTenantId("tenant1");
+        withAppender(appender(3, 1000L, defaultToStringEncoder(), sender), a -> {
+            a.appendAndWait(events[0], events[1]);
+            assertTrue("no batches before batchSize reached", mockLoki.lastBatch == null);
+
+            a.appendAndWait(events[2]);
+            assertEquals("http send", expected, new String(mockLoki.lastBatch));
+            assertTrue(mockLoki.tenantHeaders.contains("tenant1"));
+            return null;
+        });
+    }
+
 }

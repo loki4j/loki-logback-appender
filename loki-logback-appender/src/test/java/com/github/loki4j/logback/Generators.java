@@ -60,14 +60,9 @@ public class Generators {
     }
 
     public static JavaHttpSender javaHttpSender(String url) {
-        return javaHttpSender(url,null);
-    }
-
-    public static JavaHttpSender javaHttpSender(String url,String tenantId) {
         var sender = new JavaHttpSender();
 
         sender.setUrl(url);
-        sender.setTenantId(tenantId);
         sender.setConnectionTimeoutMs(1000L);
         sender.setRequestTimeoutMs(500L);
 

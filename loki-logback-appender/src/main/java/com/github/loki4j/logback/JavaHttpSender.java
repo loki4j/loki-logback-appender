@@ -62,6 +62,8 @@ public class JavaHttpSender extends AbstractHttpSender {
             .uri(URI.create(url))
             .header("Content-Type", contentType);
 
+        tenantId.ifPresent(tenant -> requestBuilder.setHeader(AbstractHttpSender.X_SCOPE_ORIG_HEADER,tenant));
+
         super.start();
 
         basicAuthToken.ifPresent(token -> requestBuilder.setHeader("Authorization", "Basic " + token));
@@ -81,11 +83,10 @@ public class JavaHttpSender extends AbstractHttpSender {
         return CompletableFuture
             .supplyAsync(() -> {
                 try {
-                    var builder = getTenantId() == null ? requestBuilder
-                            .copy() : requestBuilder.copy().header(AbstractHttpSender.X_SCOPE_ORIG_HEADER, getTenantId());
-
-                    var request = builder.POST(HttpRequest.BodyPublishers.ofByteArray(batch))
-                            .build();
+                    var request = requestBuilder
+                        .copy()
+                        .POST(HttpRequest.BodyPublishers.ofByteArray(batch))
+                        .build();
 
                     var response = client.send(request, HttpResponse.BodyHandlers.ofString());
                     return new LokiResponse(response.statusCode(), response.body());

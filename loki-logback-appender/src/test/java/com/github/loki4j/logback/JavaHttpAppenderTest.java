@@ -54,7 +54,9 @@ public class JavaHttpAppenderTest {
 
     @Test
     public void testJavaHttpSendWithTenantHeader() {
-        withAppender(appender(3, 1000L, defaultToStringEncoder(), javaHttpSender(url,"tenant1")), a -> {
+        var sender = javaHttpSender(url);
+        sender.setTenantId("tenant1");
+        withAppender(appender(3, 1000L, defaultToStringEncoder(), sender), a -> {
             a.appendAndWait(events[0], events[1]);
             assertTrue("no batches before batchSize reached", mockLoki.lastBatch == null);
 

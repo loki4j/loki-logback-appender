@@ -33,14 +33,6 @@ public interface HttpSender extends ContextAware, LifeCycle {
     public void setUrl(String url);
 
     /**
-     * get optional tenantId. Loki is a multi-tenant system; requests and data for tenant A are isolated from tenant B.
-     * Requests to the Loki API should include an HTTP header (X-Scope-OrgID) that identifies the tenant for the request.
-     *
-     * @return tenantId
-     */
-    public String getTenantId();
-
-    /**
      * Set optional tenantId
      * @param tenantId
      */
