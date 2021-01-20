@@ -14,7 +14,6 @@ public class FastSendTest {
 
     private static String urlBase = "http://localhost:3100/loki/api/v1";
     private static String urlPush = urlBase + "/push";
-    private static String tenant = "tenantX";
 
     private static LokiTestingClient client;
 
@@ -78,19 +77,5 @@ public class FastSendTest {
         var events = generateEvents(1000, 10);
         client.testHttpSend(label, events, appender, jsonEncoder(false, label));
     }
-
-    @Test
-    @Category({IntegrationTests.class})
-    public void testJavaJsonFastSendWithTenant() throws Exception {
-        var label = "testJavaJsonFastSendWithTenant";
-        var encoder = protobufEncoder(false, label);
-        var sender = javaHttpSender(urlPush);
-        sender.setTenantId(tenant);
-        var appender = appender(10, 1000, encoder, sender);
-
-        var events = generateEvents(1000, 10);
-        client.testHttpSend(label, events, appender, jsonEncoder(false, label));
-    }
-
 
 }

@@ -119,9 +119,7 @@ public abstract class AbstractHttpSender extends ContextAwareBase implements Htt
 
     @Override
     public void setTenantId(String tenant) {
-        if (tenant != null) {
-            this.tenantId = Optional.of(tenant);
-        }
+        this.tenantId = Optional.ofNullable(tenant);
     }
 
 }
