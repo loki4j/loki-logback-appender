@@ -24,6 +24,7 @@ public class LoggerMetrics {
     private Counter batchesEncodedCounter;
     private Counter batchesSentCounter;
     private Counter sendErrorsCounter;
+    private Counter droppedEventsCounter;
 
     public LoggerMetrics(String appenderName, String host) {
         var tags = Arrays.asList(
@@ -78,14 +79,21 @@ public class LoggerMetrics {
             .description("Number of errors occurred while sending batches to Loki")
             .tags(tags)
             .register(Metrics.globalRegistry);
+
+        droppedEventsCounter = Counter
+            .builder("loki4j.drop.events")
+            .description("Number of events dropped because send queue is full")
+            .tags(tags)
+            .register(Metrics.globalRegistry);
     }
 
     private void recordTimer(Timer timer, long startedNs) {
         timer.record(Duration.ofNanos(System.nanoTime() - startedNs));
     }
 
-    public void eventAppended(long startedNs) {
+    public void eventAppended(long startedNs, boolean dropped) {
         recordTimer(appendTimer, startedNs);
+        if (dropped) droppedEventsCounter.increment();
     }
     
     public void batchEncoded(long startedNs, int count) {

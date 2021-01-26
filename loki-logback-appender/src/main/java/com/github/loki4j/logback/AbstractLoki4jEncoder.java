@@ -130,6 +130,16 @@ public abstract class AbstractLoki4jEncoder extends EncoderBase<LogRecord[]> imp
         return r;
     }
 
+    public LogRecord eventToRecord(ILoggingEvent e) {
+        LogRecord r = new LogRecord();
+        r.timestampMs = e.getTimeStamp();
+        r.nanos = nanoCounter.updateAndGet(i -> i < 999_999 ? i + 1 : 0);
+        r.stream = labelPatternLayout.doLayout(e).intern();
+        r.streamHashCode = r.stream.hashCode();
+        r.message = messagePatternLayout.doLayout(e);
+        return r;
+    }
+
     @Override
     public byte[] headerBytes() {
         return ZERO_BYTES;
@@ -158,9 +168,27 @@ public abstract class AbstractLoki4jEncoder extends EncoderBase<LogRecord[]> imp
         }
     }
 
+    public int encode(LogRecord[] events, int eventsLen, byte[] output) {
+        if (staticLabels) {
+            if (sortByTime) 
+                Arrays.sort(events, 0, eventsLen, byTime);
+
+            return encodeStaticLabels(events, eventsLen, output);
+        } else {
+            var comp = sortByTime ? byStream.thenComparing(byTime) : byStream; 
+            Arrays.sort(events, 0, eventsLen, comp);
+
+            return encodeDynamicLabels(events, eventsLen, output);
+        }
+    }
+
     protected abstract byte[] encodeStaticLabels(LogRecord[] batch);
 
     protected abstract byte[] encodeDynamicLabels(LogRecord[] batch);
+
+    protected abstract int encodeStaticLabels(LogRecord[] events, int eventsLen, byte[] output);
+
+    protected abstract int encodeDynamicLabels(LogRecord[] events, int eventsLen, byte[] output);
 
     private PatternLayout initPatternLayout(String pattern) {
         var patternLayout = new PatternLayout();

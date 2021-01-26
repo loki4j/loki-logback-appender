@@ -21,8 +21,8 @@ public class ProtobufEncoder extends AbstractLoki4jEncoder {
         return "application/x-protobuf";
     }
 
-	@Override
-	protected byte[] encodeStaticLabels(LogRecord[] batch) {
+    @Override
+    protected byte[] encodeStaticLabels(LogRecord[] batch) {
         var request = PushRequest.newBuilder();
         var streamBuilder = request
             .addStreamsBuilder()
@@ -31,10 +31,10 @@ public class ProtobufEncoder extends AbstractLoki4jEncoder {
             streamBuilder.addEntries(entry(batch[i]));
         }
         return compress(request.build().toByteArray());
-	}
+    }
 
-	@Override
-	protected byte[] encodeDynamicLabels(LogRecord[] batch) {
+    @Override
+    protected byte[] encodeDynamicLabels(LogRecord[] batch) {
         var request = PushRequest.newBuilder();
         var currentStream = batch[0].stream;
         var streamBuilder = request
@@ -49,7 +49,38 @@ public class ProtobufEncoder extends AbstractLoki4jEncoder {
             }
             streamBuilder.addEntries(entry(batch[i]));
         }
-		return compress(request.build().toByteArray());
+        return compress(request.build().toByteArray());
+    }
+
+    @Override
+    protected int encodeStaticLabels(LogRecord[] batch, int eventsLen, byte[] output) {
+        var request = PushRequest.newBuilder();
+        var streamBuilder = request
+            .addStreamsBuilder()
+            .setLabels(labels(extractStreamKVPairs(batch[0].stream)));
+        for (int i = 0; i < eventsLen; i++) {
+            streamBuilder.addEntries(entry(batch[i]));
+        }
+        return compress(request.build().toByteArray(), output);
+    }
+
+    @Override
+    protected int encodeDynamicLabels(LogRecord[] batch, int eventsLen, byte[] output) {
+        var request = PushRequest.newBuilder();
+        var currentStream = batch[0].stream;
+        var streamBuilder = request
+            .addStreamsBuilder()
+            .setLabels(labels(extractStreamKVPairs(currentStream)));
+        for (int i = 0; i < eventsLen; i++) {
+            if (batch[i].stream != currentStream) {
+                currentStream = batch[i].stream;
+                streamBuilder = request
+                    .addStreamsBuilder()
+                    .setLabels(labels(extractStreamKVPairs(currentStream)));
+            }
+            streamBuilder.addEntries(entry(batch[i]));
+        }
+        return compress(request.build().toByteArray(), output);
     }
 
     private String labels(String[] labels) {
@@ -86,5 +117,13 @@ public class ProtobufEncoder extends AbstractLoki4jEncoder {
             throw new RuntimeException("Snappy compression error", e);
         }
     }
-    
+
+    private int compress(byte[] input, byte[] output) {
+        try {
+            return Snappy.compress(input, 0, input.length, output, 0);
+        } catch (IOException e) {
+            throw new RuntimeException("Snappy compression error", e);
+        }
+    }
+
 }

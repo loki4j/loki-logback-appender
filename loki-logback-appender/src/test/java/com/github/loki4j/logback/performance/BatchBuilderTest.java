@@ -6,6 +6,8 @@ import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Collections;
 import java.util.concurrent.ArrayBlockingQueue;
+import java.util.concurrent.ConcurrentLinkedQueue;
+import java.util.concurrent.atomic.AtomicInteger;
 
 import com.github.loki4j.common.ConcurrentBatchBuffer;
 import com.github.loki4j.common.LogRecord;
@@ -34,6 +36,7 @@ public class BatchBuilderTest {
     public void singleThreadPerformance() throws Exception {
         var capacity = 1000;
         var emptyArray = new LogRecord[0];
+        var clqCounter = new AtomicInteger(0);
 
         var stats = Benchmarker.run(new Benchmarker.Config<ILoggingEvent>() {{
             this.runs = 100;
@@ -47,6 +50,13 @@ public class BatchBuilderTest {
                     () -> new ArrayBlockingQueue<LogRecord>(capacity),
                     (r, e) -> {
                         if (!r.offer(eventToRecord(e, LogRecord.create())))
+                            r.clear();
+                    }),
+                Benchmark.of("clq",
+                    () -> new ConcurrentLinkedQueue<LogRecord>(),
+                    (r, e) -> {
+                        r.offer(eventToRecord(e, LogRecord.create()));
+                        if (clqCounter.incrementAndGet() > capacity)
                             r.clear();
                     }),
                 Benchmark.of("sal",
@@ -67,6 +77,7 @@ public class BatchBuilderTest {
     public void multiThreadPerformance() throws Exception {
         var capacity = 1000;
         var emptyArray = new LogRecord[0];
+        var clqCounter = new AtomicInteger(0);
 
         var stats = Benchmarker.run(new Benchmarker.Config<ILoggingEvent>() {{
             this.runs = 100;
@@ -80,6 +91,13 @@ public class BatchBuilderTest {
                     () -> new ArrayBlockingQueue<LogRecord>(capacity),
                     (r, e) -> {
                         if (!r.offer(eventToRecord(e, LogRecord.create())))
+                            r.clear();
+                    }),
+                Benchmark.of("clq",
+                    () -> new ConcurrentLinkedQueue<LogRecord>(),
+                    (r, e) -> {
+                        r.offer(eventToRecord(e, LogRecord.create()));
+                        if (clqCounter.incrementAndGet() > capacity)
                             r.clear();
                     }),
                 Benchmark.of("sal",
