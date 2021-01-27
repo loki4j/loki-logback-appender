@@ -25,6 +25,10 @@ jobs:
             -config.file=/etc/loki/local-config.yaml \
             -server.grpc-max-recv-msg-size-bytes=18388608 \
             -distributor.ingestion-rate-limit-mb=16 -distributor.ingestion-burst-size-mb=24
+          docker run --name lokimultitenant -d -p 3110:3100 grafana/loki:${{ matrix.loki }} \
+                      -config.file=/etc/loki/local-config.yaml \
+                      -server.grpc-max-recv-msg-size-bytes=18388608 -auth_enabled=true \
+                      -distributor.ingestion-rate-limit-mb=16 -distributor.ingestion-burst-size-mb=24
           sleep 5s
           ./gradlew check integTests
           docker stop loki

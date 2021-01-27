@@ -11,7 +11,7 @@ import static org.junit.Assert.assertTrue;
 
 public class MultitenantTenantSendTest {
 
-    private static String urlBase = "http://localhost:3100/loki/api/v1";
+    private static String urlBase = "http://localhost:3110/loki/api/v1";
     private static String urlPush = urlBase + "/push";
     private static String tenant = "tenantX";
 
@@ -31,7 +31,7 @@ public class MultitenantTenantSendTest {
     @Category({IntegrationTests.class})
     public void testJavaJsonFastSendWithTenant() throws Exception {
         var label = "testJavaJsonFastSendWithTenant";
-        var encoder = protobufEncoder(false, label);
+        var encoder = jsonEncoder(false, label);
         var sender = javaHttpSender(urlPush);
         sender.setTenantId(tenant);
         var appender = appender(10, 1000, encoder, sender);
