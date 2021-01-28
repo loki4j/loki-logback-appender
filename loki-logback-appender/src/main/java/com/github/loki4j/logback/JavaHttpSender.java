@@ -64,6 +64,7 @@ public class JavaHttpSender extends AbstractHttpSender {
 
         super.start();
 
+        tenantId.ifPresent(tenant -> requestBuilder.setHeader(AbstractHttpSender.X_SCOPE_ORIG_HEADER,tenant));
         basicAuthToken.ifPresent(token -> requestBuilder.setHeader("Authorization", "Basic " + token));
     }
 

@@ -1,5 +1,6 @@
 package com.github.loki4j.logback;
 
+import java.util.ArrayList;
 import java.util.Random;
 
 import com.github.loki4j.testkit.dummy.LokiHttpServerMock;
@@ -19,7 +20,7 @@ public class JavaHttpAppenderTest {
     private static int testPort = -1;
     private static LokiHttpServerMock mockLoki;
     private static String url;
-    
+
     @BeforeClass
     public static void startMockLoki() {
         testPort = 20_000 + new Random().nextInt(10_000);
@@ -47,7 +48,22 @@ public class JavaHttpAppenderTest {
 
             a.appendAndWait(events[2]);
             assertEquals("http send", expected, new String(mockLoki.lastBatch));
+            assertTrue(mockLoki.lastHeaders.getOrDefault(AbstractHttpSender.X_SCOPE_ORIG_HEADER,new ArrayList<>()).isEmpty());
+            return null;
+        });
+    }
 
+    @Test
+    public void testJavaHttpSendWithTenantHeader() {
+        var sender = javaHttpSender(url);
+        sender.setTenantId("tenant1");
+        withAppender(appender(3, 1000L, defaultToStringEncoder(), sender), a -> {
+            a.appendAndWait(events[0], events[1]);
+            assertTrue("no batches before batchSize reached", mockLoki.lastBatch == null);
+
+            a.appendAndWait(events[2]);
+            assertEquals("http send", expected, new String(mockLoki.lastBatch));
+            assertTrue(mockLoki.lastHeaders.getOrDefault(AbstractHttpSender.X_SCOPE_ORIG_HEADER,new ArrayList<>()).contains("tenant1"));
             return null;
         });
     }
