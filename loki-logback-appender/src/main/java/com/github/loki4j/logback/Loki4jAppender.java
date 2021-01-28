@@ -166,9 +166,9 @@ public class Loki4jAppender extends UnsynchronizedAppenderBase<ILoggingEvent> {
                 LogRecord record = buffer.poll();
                 while(record != null && batch.length == 0) {
                     batch = batcher.add(record, ZERO_EVENTS);
-                    record = buffer.poll();
+                    if (batch.length == 0)
+                        record = buffer.poll();
                 }
-                System.out.println("poll " + Thread.currentThread().getName());
                 return batch;
             }, scheduler)
             .thenComposeAsync(this::handleBatchAsync, scheduler);
@@ -186,11 +186,9 @@ public class Loki4jAppender extends UnsynchronizedAppenderBase<ILoggingEvent> {
 
     protected CompletableFuture<LokiResponse> sendAsync(byte[] batch) {
         var startedNs = System.nanoTime();
-        System.out.println("send " + Thread.currentThread().getName());
         return sender
             .sendAsync(batch)
             .whenComplete((r, e) -> {
-                System.out.println("complete-metr " + Thread.currentThread().getName());
                 if (metricsEnabled)
                     metrics.batchSent(startedNs, batch.length, e != null || r.status > 299);
             });
@@ -208,17 +206,15 @@ public class Loki4jAppender extends UnsynchronizedAppenderBase<ILoggingEvent> {
             return CompletableFuture.completedFuture(null);
 
         var batchId = System.nanoTime();
-        System.out.println("encode " + Thread.currentThread().getName());
         var body = encode(batch);
         addInfo(String.format(
             ">>> Batch #%x: Sending %,d items converted to %,d bytes",
             batchId, batch.length, body.length));
-        try { System.out.write(body); } catch (Exception e) { e.printStackTrace(); }
-        System.out.println("\n");
+        //try { System.out.write(body); } catch (Exception e) { e.printStackTrace(); }
+        //System.out.println("\n");
 
         return sendAsync(body)
             .whenComplete((r, e) -> {
-                System.out.println("complete " + Thread.currentThread().getName());
                 buffer.commit(batch.length);
                 lastSendTime.set(System.currentTimeMillis());
                 if (e != null) {
