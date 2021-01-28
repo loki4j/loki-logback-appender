@@ -19,7 +19,7 @@ public final class SoftLimitBuffer<E> extends AbstractQueue<E> {
     }
 
     public boolean offer(Supplier<E> e) {
-        if (size.get() + 1 < softLimit)
+        if (size.get() + 1 > softLimit)
             return false;
         
         items.offer(e.get());

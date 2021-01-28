@@ -168,27 +168,9 @@ public abstract class AbstractLoki4jEncoder extends EncoderBase<LogRecord[]> imp
         }
     }
 
-    public int encode(LogRecord[] events, int eventsLen, byte[] output) {
-        if (staticLabels) {
-            if (sortByTime) 
-                Arrays.sort(events, 0, eventsLen, byTime);
-
-            return encodeStaticLabels(events, eventsLen, output);
-        } else {
-            var comp = sortByTime ? byStream.thenComparing(byTime) : byStream; 
-            Arrays.sort(events, 0, eventsLen, comp);
-
-            return encodeDynamicLabels(events, eventsLen, output);
-        }
-    }
-
     protected abstract byte[] encodeStaticLabels(LogRecord[] batch);
 
     protected abstract byte[] encodeDynamicLabels(LogRecord[] batch);
-
-    protected abstract int encodeStaticLabels(LogRecord[] events, int eventsLen, byte[] output);
-
-    protected abstract int encodeDynamicLabels(LogRecord[] events, int eventsLen, byte[] output);
 
     private PatternLayout initPatternLayout(String pattern) {
         var patternLayout = new PatternLayout();

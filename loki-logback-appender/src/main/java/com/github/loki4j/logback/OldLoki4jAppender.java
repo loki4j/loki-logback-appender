@@ -5,12 +5,10 @@ import java.util.concurrent.Executors;
 import java.util.concurrent.ScheduledExecutorService;
 import java.util.concurrent.TimeUnit;
 
-import com.github.loki4j.common.Batcher;
 import com.github.loki4j.common.ConcurrentBatchBuffer;
 import com.github.loki4j.common.LogRecord;
 import com.github.loki4j.common.LokiResponse;
 import com.github.loki4j.common.LokiThreadFactory;
-import com.github.loki4j.common.SoftLimitBuffer;
 
 import ch.qos.logback.classic.spi.ILoggingEvent;
 import ch.qos.logback.core.CoreConstants;
@@ -21,26 +19,18 @@ import ch.qos.logback.core.status.Status;
 /**
  * Main appender that provides functionality for sending log record batches to Loki
  */
-public class NewLoki4jAppender extends UnsynchronizedAppenderBase<ILoggingEvent> {
+public class OldLoki4jAppender extends UnsynchronizedAppenderBase<ILoggingEvent> {
+
+    private static final LogRecord[] ZERO_EVENTS = new LogRecord[0];
 
     /**
-     * Max number of events to put into single batch and send to Loki
+     * Max number of messages to put into single batch and send to Loki
      */
     private int batchSize = 1000;
-    /**
-     * Max number of bytes a single batch can contain
-     */
-    private int batchLengthBytes = 4 * 1024 * 1024;
     /**
      * Max time in milliseconds to wait before sending a batch to Loki
      */
     private long batchTimeoutMs = 60 * 1000;
-
-    /**
-     * Max number of events to keep in the send queue.
-     * When the queue id full, incoming log events are dropped
-     */
-    private int sendQueueSize = 50 * 1000;
 
     /**
      * Number of threads to use for log message processing and formatting
@@ -72,8 +62,7 @@ public class NewLoki4jAppender extends UnsynchronizedAppenderBase<ILoggingEvent>
      */
     private LoggerMetrics metrics;
 
-    private SoftLimitBuffer<LogRecord> buffer;
-    private Batcher batcher;
+    private ConcurrentBatchBuffer<ILoggingEvent, LogRecord> buffer;
 
     private ScheduledExecutorService scheduler;
 
@@ -105,8 +94,7 @@ public class NewLoki4jAppender extends UnsynchronizedAppenderBase<ILoggingEvent>
                 host == null ? "unknown" : host);
         }
 
-        buffer = new SoftLimitBuffer<>(sendQueueSize);
-        batcher = new Batcher(batchSize, batchLengthBytes, batchTimeoutMs, buffer, encoder);
+        buffer = new ConcurrentBatchBuffer<>(batchSize, LogRecord::create, (e, r) -> encoder.eventToRecord(e, r));
 
         scheduler = Executors.newScheduledThreadPool(processingThreads, new LokiThreadFactory("loki-scheduler"));
 
@@ -156,8 +144,22 @@ public class NewLoki4jAppender extends UnsynchronizedAppenderBase<ILoggingEvent>
     @Override
     protected void append(ILoggingEvent event) {
         var startedNs = System.nanoTime();
-        var appended = buffer.offer(() -> encoder.eventToRecord(event));
-        if (metricsEnabled) metrics.eventAppended(startedNs, !appended);
+        appendAsync(event);
+        if (metricsEnabled) metrics.eventAppended(startedNs, false);
+    }
+
+    protected final CompletableFuture<Void> appendAsync(ILoggingEvent event) {
+        try {
+            event.prepareForDeferredProcessing();
+        } catch (RuntimeException e) {
+            addWarn("Unable to prepare the event for deferred processing", e);
+        }
+
+        var batch = buffer.add(event, ZERO_EVENTS);
+        if (batch.length > 0)
+            return handleBatchAsync(batch).thenApply(r -> null);
+        else
+            return CompletableFuture.completedFuture(null);
     }
 
     protected byte[] encode(LogRecord[] batch) {
@@ -226,9 +228,6 @@ public class NewLoki4jAppender extends UnsynchronizedAppenderBase<ILoggingEvent>
     }
     public void setBatchTimeoutMs(long batchTimeoutMs) {
         this.batchTimeoutMs = batchTimeoutMs;
-    }
-    public void setSendQueueSize(int sendQueueSize) {
-        this.sendQueueSize = sendQueueSize;
     }
 
     /**

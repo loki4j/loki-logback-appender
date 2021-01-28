@@ -52,37 +52,6 @@ public class ProtobufEncoder extends AbstractLoki4jEncoder {
         return compress(request.build().toByteArray());
     }
 
-    @Override
-    protected int encodeStaticLabels(LogRecord[] batch, int eventsLen, byte[] output) {
-        var request = PushRequest.newBuilder();
-        var streamBuilder = request
-            .addStreamsBuilder()
-            .setLabels(labels(extractStreamKVPairs(batch[0].stream)));
-        for (int i = 0; i < eventsLen; i++) {
-            streamBuilder.addEntries(entry(batch[i]));
-        }
-        return compress(request.build().toByteArray(), output);
-    }
-
-    @Override
-    protected int encodeDynamicLabels(LogRecord[] batch, int eventsLen, byte[] output) {
-        var request = PushRequest.newBuilder();
-        var currentStream = batch[0].stream;
-        var streamBuilder = request
-            .addStreamsBuilder()
-            .setLabels(labels(extractStreamKVPairs(currentStream)));
-        for (int i = 0; i < eventsLen; i++) {
-            if (batch[i].stream != currentStream) {
-                currentStream = batch[i].stream;
-                streamBuilder = request
-                    .addStreamsBuilder()
-                    .setLabels(labels(extractStreamKVPairs(currentStream)));
-            }
-            streamBuilder.addEntries(entry(batch[i]));
-        }
-        return compress(request.build().toByteArray(), output);
-    }
-
     private String labels(String[] labels) {
         var s = new StringBuilder();
         s.append('{');
@@ -113,14 +82,6 @@ public class ProtobufEncoder extends AbstractLoki4jEncoder {
     private byte[] compress(byte[] input) {
         try {
             return Snappy.compress(input);
-        } catch (IOException e) {
-            throw new RuntimeException("Snappy compression error", e);
-        }
-    }
-
-    private int compress(byte[] input, byte[] output) {
-        try {
-            return Snappy.compress(input, 0, input.length, output, 0);
         } catch (IOException e) {
             throw new RuntimeException("Snappy compression error", e);
         }

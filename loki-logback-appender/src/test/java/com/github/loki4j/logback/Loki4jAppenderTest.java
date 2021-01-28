@@ -44,16 +44,16 @@ public class Loki4jAppenderTest {
     public void testBatchSize() {
         var encoder = defaultToStringEncoder();
         var sender = dummySender();
-        var appender = appender(3, 1000L, encoder, sender);
-        appender.start();
-        appender.append(events[0]);
-        appender.append(events[1]);
-        assertTrue("no batches before batchSize reached", sender.lastBatch == null);
+        withAppender(appender(3, 1000L, encoder, sender), appender -> {
+            appender.appendAndWait(events[0]);
+            appender.appendAndWait(events[1]);
+            assertTrue("no batches before batchSize reached", sender.lastBatch == null);
 
-        appender.append(events[2]);
-        try { Thread.sleep(100L); } catch (InterruptedException e1) { }
-        assertEquals("batchSize", expected, new String(sender.lastBatch, encoder.charset));
-        appender.stop();
+            appender.appendAndWait(events[2]);
+            //try { Thread.sleep(300L); } catch (InterruptedException e1) { }
+            assertEquals("batchSize", expected, new String(sender.lastBatch, encoder.charset));
+            return null;
+        });
     }
 
     @Test
