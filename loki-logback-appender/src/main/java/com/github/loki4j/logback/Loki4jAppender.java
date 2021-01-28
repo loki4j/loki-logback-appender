@@ -157,7 +157,7 @@ public class Loki4jAppender extends UnsynchronizedAppenderBase<ILoggingEvent> {
         appendAsync(event);
     }
 
-    protected final CompletableFuture<Void> appendAsync(ILoggingEvent event) {
+    private CompletableFuture<Void> appendAsync(ILoggingEvent event) {
         var startedNs = System.nanoTime();
         var appended = buffer.offer(() -> encoder.eventToRecord(event));
         CompletableFuture<Void> appendResult = appended
@@ -235,6 +235,10 @@ public class Loki4jAppender extends UnsynchronizedAppenderBase<ILoggingEvent> {
                 }
             })
             .thenApply(r -> null);
+    }
+
+    boolean isSendQueueEmpty() {
+        return buffer.isEmpty();
     }
 
     public void setBatchSize(int batchSize) {

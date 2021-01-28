@@ -6,7 +6,6 @@ import java.util.ArrayList;
 import java.util.Iterator;
 import java.util.concurrent.CompletableFuture;
 import java.util.concurrent.ThreadLocalRandom;
-import java.util.concurrent.TimeUnit;
 import java.util.concurrent.locks.ReentrantLock;
 import java.util.function.Consumer;
 import java.util.function.Function;
@@ -279,19 +278,22 @@ public class Generators {
         public void append(ILoggingEvent event) {
             appender.append(event);
         }
-        @SuppressWarnings("unchecked")
-        public void appendAndWait(ILoggingEvent... events) {
-            var fs = (CompletableFuture<Void>[]) new CompletableFuture[events.length];
+        public void append(ILoggingEvent... events) {
             for (int i = 0; i < events.length; i++) {
-                fs[i] = appender.appendAsync(events[i]);
-            }
-            try {
-                CompletableFuture.allOf(fs).get(120, TimeUnit.SECONDS);
-            } catch (Exception e) {
-                throw new RuntimeException("Error while waiting for futures", e);
+                appender.append(events[i]);
             }
         }
-        public void stop() {
+        public void waitAllAppended() {
+            waitAllAppended(2L * 60 * 1000);
+        }
+        public void waitAllAppended(long timeoutMs) {
+            var started = System.currentTimeMillis();
+            var quasiNow = started;
+            while(!appender.isSendQueueEmpty() || quasiNow - started > timeoutMs)
+                try { Thread.sleep(10); quasiNow += 10; } catch (Exception e) { }
+        }
+        public void stop(boolean wait) {
+            if (wait) waitAllAppended();
             appender.stop();
         }
     }

@@ -97,7 +97,7 @@ public class LokiTestingClient {
             ILoggingEvent[] events,
             Loki4jAppender actualAppender,
             AbstractLoki4jEncoder expectedEncoder) throws Exception {
-        testHttpSend(lbl, events, actualAppender, expectedEncoder, events.length, 5000L);
+        testHttpSend(lbl, events, actualAppender, expectedEncoder, events.length, 10L);
     }
 
     public void testHttpSend(
@@ -114,10 +114,11 @@ public class LokiTestingClient {
             for (int i = 0; i < events.length; i += chunkSize) {
                 var chunk = Arrays.copyOfRange(events, i, Math.min(events.length, i + chunkSize));
                 //System.out.println(String.format("%s: %s + %s", Thread.currentThread().getName(), i, chunk.length));
-                a.appendAndWait(chunk);
+                a.append(chunk);
                 if (chunkDelayMs > 0L)
                     try { Thread.sleep(chunkDelayMs); } catch (InterruptedException e) { }
             }
+            a.waitAllAppended();
             return null;
         });
         withEncoder(expectedEncoder, encoder -> {
