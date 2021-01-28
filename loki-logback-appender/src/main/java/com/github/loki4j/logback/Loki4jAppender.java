@@ -160,18 +160,19 @@ public class Loki4jAppender extends UnsynchronizedAppenderBase<ILoggingEvent> {
     protected final CompletableFuture<Void> appendAsync(ILoggingEvent event) {
         var startedNs = System.nanoTime();
         var appended = buffer.offer(() -> encoder.eventToRecord(event));
-        var appendResult = CompletableFuture
-            .supplyAsync(() -> {
-                LogRecord[] batch = ZERO_EVENTS;
-                LogRecord record = buffer.poll();
-                while(record != null && batch.length == 0) {
-                    batch = batcher.add(record, ZERO_EVENTS);
-                    if (batch.length == 0)
-                        record = buffer.poll();
-                }
-                return batch;
-            }, scheduler)
-            .thenComposeAsync(this::handleBatchAsync, scheduler);
+        CompletableFuture<Void> appendResult = appended
+            ?   CompletableFuture.supplyAsync(() -> {
+                    LogRecord[] batch = ZERO_EVENTS;
+                    LogRecord record = buffer.poll();
+                    while(record != null && batch.length == 0) {
+                        batch = batcher.add(record, ZERO_EVENTS);
+                        if (batch.length == 0)
+                            record = buffer.poll();
+                    }
+                    return batch;
+                }, scheduler)
+                .thenComposeAsync(this::handleBatchAsync, scheduler)
+            :   CompletableFuture.completedFuture(null);
 
         if (metricsEnabled) metrics.eventAppended(startedNs, !appended);
         return appendResult;
