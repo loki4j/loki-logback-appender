@@ -292,8 +292,7 @@ public class Generators {
             while(!appender.isSendQueueEmpty() || quasiNow - started > timeoutMs)
                 try { Thread.sleep(10); quasiNow += 10; } catch (Exception e) { }
         }
-        public void stop(boolean wait) {
-            if (wait) waitAllAppended();
+        public void stop() {
             appender.stop();
         }
     }

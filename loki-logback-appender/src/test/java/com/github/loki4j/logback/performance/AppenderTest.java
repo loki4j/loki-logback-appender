@@ -37,19 +37,23 @@ public class AppenderTest {
                 Benchmark.of("dummyAppender",
                     () -> initApp(capacity, defaultToStringEncoder()),
                     (a, e) -> a.append(e),
-                    a -> a.stop(true)),
+                    a -> {},
+                    a -> a.stop()),
                 Benchmark.of("dummyAppenderWait",
                     () -> initApp(capacity, defaultToStringEncoder()),
                     (a, e) -> a.append(e),
-                    a -> a.stop(true)),
+                    a -> a.waitAllAppended(),
+                    a -> a.stop()),
                 Benchmark.of("dummyJsonAppenderWait",
                     () -> initApp(capacity, jsonEncoder(false, "singleThreadPerformance")),
                     (a, e) -> a.append(e),
-                    a -> a.stop(true)),
+                    a -> a.waitAllAppended(),
+                    a -> a.stop()),
                 Benchmark.of("dummyProtobufAppenderWait",
                     () -> initApp(capacity, protobufEncoder(false, "singleThreadPerformance")),
                     (a, e) -> a.append(e),
-                    a -> a.stop(true))
+                    a -> a.waitAllAppended(),
+                    a -> a.stop())
             );
         }});
 
@@ -69,19 +73,23 @@ public class AppenderTest {
                 Benchmark.of("dummyAppender",
                     () -> initApp(capacity, defaultToStringEncoder()),
                     (a, e) -> a.append(e),
-                    a -> a.stop(true)),
+                    a -> {},
+                    a -> a.stop()),
                 Benchmark.of("dummyAppenderWait",
                     () -> initApp(capacity, defaultToStringEncoder()),
                     (a, e) -> a.append(e),
-                    a -> a.stop(true)),
+                    a -> a.waitAllAppended(),
+                    a -> a.stop()),
                 Benchmark.of("dummyJsonAppenderWait",
                     () -> initApp(capacity, jsonEncoder(false, "singleThreadPerformance")),
                     (a, e) -> a.append(e),
-                    a -> a.stop(true)),
+                    a -> a.waitAllAppended(),
+                    a -> a.stop()),
                 Benchmark.of("dummyProtobufAppenderWait",
                     () -> initApp(capacity, protobufEncoder(false, "singleThreadPerformance")),
                     (a, e) -> a.append(e),
-                    a -> a.stop(true))
+                    a -> a.waitAllAppended(),
+                    a -> a.stop())
             );
         }});
         stats.forEach(System.out::println);

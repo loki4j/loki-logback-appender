@@ -35,19 +35,24 @@ public class Benchmarker {
                     .supplyAsync(() -> runBenchmark(events.get(), b.func), tp)
                     .get();
             }
+            b.waitUntilCompleted();
 
             var benchmarkStats = new ArrayList<BenchmarkStat>();
             var fs = new CompletableFuture[config.runs];
             var started = System.nanoTime();
             for (int run = 0; run < config.runs; run++) {
                 fs[run] = CompletableFuture
-                    .supplyAsync(() -> runBenchmark(events.get(), b.func), tp);
+                    .supplyAsync(() -> {
+                        var r = runBenchmark(events.get(), b.func);
+                        b.waitUntilCompleted();
+                        return r;
+                    }, tp);
             }
             for (int i = 0; i < fs.length; i++) {
                 var result = (RunResult)fs[i].get();
                 var stat = new BenchmarkStat(b.name, i, result.count, result.durationNs);
                 benchmarkStats.add(stat);
-                //System.out.println(stat);
+                System.out.println(stat);
             }
             var effectiveDuration = System.nanoTime() - started;
             var totalStat = benchmarkStats.stream().reduce((a, i) -> {
@@ -107,25 +112,31 @@ public class Benchmarker {
     public static class Benchmark<T, E> {
         public String name;
         public Consumer<E> func;
+        public Consumer<T> waitUntilCompleted;
         public Consumer<T> finalizer;
 
         private T recipient;
 
         public void finalize() {
-            finalizer.accept(recipient);
+
         }
 
-        public static <T, E> Benchmark<T, E> of(String name, Supplier<T> initializer, BiConsumer<T, E> func, Consumer<T> finalizer) {
+        public void waitUntilCompleted() {
+            waitUntilCompleted.accept(recipient);
+        }
+
+        public static <T, E> Benchmark<T, E> of(String name, Supplier<T> initializer, BiConsumer<T, E> func, Consumer<T> waitUntilCompleted, Consumer<T> finalizer) {
             var b = new Benchmark<T, E>();
             b.name = name;
             b.recipient = initializer.get();
             b.func = e -> func.accept(b.recipient, e);
+            b.waitUntilCompleted = waitUntilCompleted;
             b.finalizer = finalizer;
             return b;
         }
 
         public static <T, E> Benchmark<T, E> of(String name, Supplier<T> initializer, BiConsumer<T, E> func) {
-            return of(name, initializer, func, t -> {});
+            return of(name, initializer, func, t -> {}, t -> {});
         }
     }
 
