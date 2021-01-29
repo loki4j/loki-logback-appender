@@ -40,6 +40,7 @@ public class AppenderTest {
                         return new Loki4jAppenderV100.Wrapper<>(a);
                     },
                     (a, e) -> a.appendAndWait(e),
+                    a -> {},
                     a -> a.stop()),
                 Benchmark.of("newAppenderWait",
                     () -> {
@@ -48,7 +49,8 @@ public class AppenderTest {
                         a.start();
                         return new AppenderWrapper(a);
                     },
-                    (a, e) -> a.appendAndWait(e),
+                    (a, e) -> a.append(e),
+                    a -> a.waitAllAppended(),
                     a -> a.stop()),
                 Benchmark.of("oldInstrumentedAppenderWait",
                     () -> {
@@ -62,6 +64,7 @@ public class AppenderTest {
                         return new Loki4jAppenderV100.Wrapper<>(a);
                     },
                     (a, e) -> a.appendAndWait(e),
+                    a -> {},
                     a -> a.stop()),
                 Benchmark.of("newMetricsEnabledAppenderWait",
                     () -> {
@@ -71,7 +74,8 @@ public class AppenderTest {
                         a.start();
                         return new AppenderWrapper(a);
                     },
-                    (a, e) -> a.appendAndWait(e),
+                    (a, e) -> a.append(e),
+                    a -> a.waitAllAppended(),
                     a -> a.stop())
             );
         }});
