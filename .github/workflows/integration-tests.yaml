@@ -26,7 +26,7 @@ jobs:
             -server.grpc-max-recv-msg-size-bytes=18388608 \
             -distributor.ingestion-rate-limit-mb=16 -distributor.ingestion-burst-size-mb=24
           sleep 5s
-          ./gradlew clean check integTests
+          ./gradlew check integTests
           docker stop loki
       - name: Pring Log
         if: ${{ failure() }}

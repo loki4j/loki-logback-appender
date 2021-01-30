@@ -19,7 +19,7 @@ jobs:
         with:
           java-version: ${{ matrix.jdk }}
       - name: Build and Run Integration Tests
-        run: ./gradlew clean check
+        run: ./gradlew check
 
   java8-ubuntu-tests:
     runs-on: ubuntu-latest
@@ -38,7 +38,7 @@ jobs:
           architecture: x64
           targets: 'JDK_11'
       - name: Compile on Java 11
-        run: JAVA_HOME="${JDK_11}" ./gradlew clean check compileJava8TestJava
+        run: JAVA_HOME="${JDK_11}" ./gradlew check compileJava8TestJava
       - name: Test on Java 8
         run: JAVA_HOME="${JDK_8}" ./gradlew --info java8Test -x compileJava8TestJava -x compileJava8Java
 
@@ -59,6 +59,6 @@ jobs:
           architecture: x64
           targets: 'JDK_11'
       - name: Compile on Java 11
-        run: ./gradlew.bat "-Dorg.gradle.java.home=$env:JDK_11" clean check compileJava8TestJava
+        run: ./gradlew.bat "-Dorg.gradle.java.home=$env:JDK_11" check compileJava8TestJava
       - name: Test on Java 8
         run: ./gradlew.bat "-Dorg.gradle.java.home=$env:JDK_8" --info java8Test -x compileJava8TestJava -x compileJava8Java
