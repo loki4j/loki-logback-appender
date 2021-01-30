@@ -7,7 +7,6 @@ import org.junit.Test;
 import org.junit.experimental.categories.Category;
 
 import static com.github.loki4j.logback.Generators.*;
-import static org.junit.Assert.assertTrue;
 
 public class MultitenantTenantSendTest {
 
