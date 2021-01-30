@@ -237,8 +237,8 @@ public class Loki4jAppender extends UnsynchronizedAppenderBase<ILoggingEvent> {
             .thenApply(r -> null);
     }
 
-    boolean isSendQueueEmpty() {
-        return buffer.isEmpty();
+    void waitSendQueueIsEmpty(long timeoutMs) {
+        buffer.waitForEmpty(timeoutMs);
     }
 
     public void setBatchSize(int batchSize) {

@@ -6,6 +6,8 @@ import java.util.ArrayList;
 import java.util.Iterator;
 import java.util.concurrent.CompletableFuture;
 import java.util.concurrent.ThreadLocalRandom;
+import java.util.concurrent.TimeUnit;
+import java.util.concurrent.locks.LockSupport;
 import java.util.concurrent.locks.ReentrantLock;
 import java.util.function.Consumer;
 import java.util.function.Function;
@@ -284,14 +286,19 @@ public class Generators {
             }
         }
         public void waitAllAppended() {
-            waitAllAppended(2L * 60 * 1000);
+            appender.waitSendQueueIsEmpty(2L * 60 * 1000);
         }
-        public void waitAllAppended(long timeoutMs) {
-            var started = System.currentTimeMillis();
-            var quasiNow = started;
-            while(!appender.isSendQueueEmpty() || quasiNow - started > timeoutMs)
-                try { Thread.sleep(10); quasiNow += 10; } catch (Exception e) { }
-        }
+        /*public void waitAllAppended(long timeoutMs) {
+            var sleepMs = 10L;
+            var sleepNs = TimeUnit.MILLISECONDS.toNanos(sleepMs);
+            var elapsedMs = 0L;
+            while(!appender.isSendQueueEmpty() || elapsedMs < timeoutMs) {
+                LockSupport.parkNanos(sleepNs);
+                elapsedMs += sleepMs;
+            }
+            if (elapsedMs >= timeoutMs)
+                throw new RuntimeException("Not completed within timeout " + timeoutMs + " ms");
+        }*/
         public void stop() {
             appender.stop();
         }

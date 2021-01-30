@@ -34,11 +34,6 @@ public class AppenderTest {
             this.parFactor = 1;
             this.generator = () -> InfiniteEventIterator.from(generateEvents(10_000, 10)).limited(100_000);
             this.benchmarks = Arrays.asList(
-                Benchmark.of("dummyAppender",
-                    () -> initApp(capacity, defaultToStringEncoder()),
-                    (a, e) -> a.append(e),
-                    a -> {},
-                    a -> a.stop()),
                 Benchmark.of("dummyAppenderWait",
                     () -> initApp(capacity, defaultToStringEncoder()),
                     (a, e) -> a.append(e),
@@ -70,11 +65,6 @@ public class AppenderTest {
             this.parFactor = 2;
             this.generator = () -> InfiniteEventIterator.from(generateEvents(10_000, 10)).limited(100_000);
             this.benchmarks = Arrays.asList(
-                Benchmark.of("dummyAppender",
-                    () -> initApp(capacity, defaultToStringEncoder()),
-                    (a, e) -> a.append(e),
-                    a -> {},
-                    a -> a.stop()),
                 Benchmark.of("dummyAppenderWait",
                     () -> initApp(capacity, defaultToStringEncoder()),
                     (a, e) -> a.append(e),

@@ -42,11 +42,7 @@ public class Benchmarker {
             var started = System.nanoTime();
             for (int run = 0; run < config.runs; run++) {
                 fs[run] = CompletableFuture
-                    .supplyAsync(() -> {
-                        var r = runBenchmark(events.get(), b.func);
-                        b.waitUntilCompleted();
-                        return r;
-                    }, tp);
+                    .supplyAsync(() -> runBenchmark(events.get(), b.func), tp);
             }
             for (int i = 0; i < fs.length; i++) {
                 var result = (RunResult)fs[i].get();
@@ -54,6 +50,7 @@ public class Benchmarker {
                 benchmarkStats.add(stat);
                 System.out.println(stat);
             }
+            b.waitUntilCompleted();
             var effectiveDuration = System.nanoTime() - started;
             var totalStat = benchmarkStats.stream().reduce((a, i) -> {
                 a.count += i.count;
