@@ -22,6 +22,7 @@ import com.fasterxml.jackson.core.JsonProcessingException;
 import com.fasterxml.jackson.databind.JsonMappingException;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.github.loki4j.common.LogRecord;
+import com.github.loki4j.logback.AbstractHttpSender;
 import com.github.loki4j.logback.Loki4jAppender;
 import com.github.loki4j.logback.AbstractLoki4jEncoder;
 
@@ -47,6 +48,11 @@ public class LokiTestingClient {
         requestBuilder = HttpRequest
             .newBuilder()
             .timeout(Duration.ofSeconds(30));
+    }
+
+    public LokiTestingClient(String urlBase, String tenant){
+        this(urlBase);
+        requestBuilder.setHeader(AbstractHttpSender.X_SCOPE_ORIG_HEADER, tenant);
     }
 
     public LokiTestingClient(String urlBase, String username, String password) {
