@@ -18,6 +18,10 @@ jobs:
         uses: actions/setup-java@v1
         with:
           java-version: ${{ matrix.jdk }}
+      - name: Check status
+        run: git status -u
+      - name: Check file content
+        run: cat loki-logback-appender/src/test/java/com/github/loki4j/logback/ApacheHttpAppenderTest.java
       - name: Build and Run Integration Tests
         run: ./gradlew clean check
 
