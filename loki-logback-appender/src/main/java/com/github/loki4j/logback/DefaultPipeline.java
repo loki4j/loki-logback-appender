@@ -2,6 +2,9 @@ package com.github.loki4j.logback;
 
 import java.util.concurrent.ArrayBlockingQueue;
 import java.util.concurrent.CompletableFuture;
+import java.util.concurrent.ExecutorService;
+import java.util.concurrent.Executors;
+import java.util.concurrent.ScheduledExecutorService;
 import java.util.concurrent.TimeUnit;
 import java.util.concurrent.atomic.AtomicReference;
 import java.util.concurrent.locks.LockSupport;
@@ -13,11 +16,13 @@ import com.github.loki4j.common.BinaryBatch;
 import com.github.loki4j.common.LogRecord;
 import com.github.loki4j.common.LogRecordBatch;
 import com.github.loki4j.common.LokiResponse;
+import com.github.loki4j.common.LokiThreadFactory;
 import com.github.loki4j.common.SoftLimitBuffer;
 
+import ch.qos.logback.core.spi.ContextAwareBase;
 import ch.qos.logback.core.spi.LifeCycle;
 
-public final class DefaultPipeline implements LifeCycle {
+public final class DefaultPipeline extends ContextAwareBase implements LifeCycle {
 
     private static final LogRecord[] ZERO_RECORDS = new LogRecord[0];
 
@@ -30,6 +35,9 @@ public final class DefaultPipeline implements LifeCycle {
     private final ArrayBlockingQueue<BinaryBatch> senderQueue = new ArrayBlockingQueue<>(10);
 
     private final Batcher batcher;
+
+    private ScheduledExecutorService scheduler;
+    private ExecutorService httpThreadPool;
 
     private final Function<LogRecordBatch, BinaryBatch> encode;
 
@@ -50,6 +58,45 @@ public final class DefaultPipeline implements LifeCycle {
         this.send = send;
     }
 
+    @Override
+    public void start() {
+        addInfo("Pipeline is starting...");
+
+        httpThreadPool = Executors.newFixedThreadPool(1, new LokiThreadFactory("loki-http-sender"));
+        httpThreadPool.execute(() -> runSendLoop());
+
+        scheduler = Executors.newScheduledThreadPool(1, new LokiThreadFactory("loki-scheduler"));
+        scheduler.execute(() -> runEncodeLoop());
+
+        started = true;
+
+        scheduler.scheduleAtFixedRate(
+            () -> drain(),
+            100,
+            100,
+            TimeUnit.MILLISECONDS);
+    }
+
+    @Override
+    public void stop() {
+        addInfo("Pipeline is stopping...");
+
+        // TODO: proper drain
+        waitSendQueueLessThan(0, 1000);
+
+        started = false;
+
+        scheduler.shutdown();
+        httpThreadPool.shutdown();
+
+        try {
+            scheduler.awaitTermination(500, TimeUnit.MILLISECONDS);
+            httpThreadPool.awaitTermination(500, TimeUnit.MILLISECONDS);
+        } catch (InterruptedException e) {
+            addInfo("Pipeline was interrupted while stopping");
+        }
+    }
+
     public boolean append(Supplier<LogRecord> event) {
         if (buffer.offer(event)) {
             encodeAction.set(BatchAction.CHECK);
@@ -59,39 +106,59 @@ public final class DefaultPipeline implements LifeCycle {
         }
     }
 
-    public void drain() {
+    private void drain() {
         encodeAction.compareAndSet(BatchAction.NONE, BatchAction.DRAIN);
     }
 
-    private void encoderProcess() {
-        var pendingAction = encodeAction.get();
+    private void runEncodeLoop() {
         var batch = new LogRecordBatch();
         while (started) {
-            pendingAction = encodeAction.get();
-            while (started && 
-                    (pendingAction == BatchAction.NONE || senderQueue.remainingCapacity() == 0)) {
-                LockSupport.parkNanos(this, PARK_NS);
-                pendingAction = encodeAction.get();
+            try {
+                encodeStep(batch);
+            } catch (InterruptedException e) {
+                stop();
             }
-            if (!started) break;
-            LogRecord[] records = ZERO_RECORDS;
-            LogRecord record = buffer.poll();
-            while(record != null && records.length == 0) {
-                records = batcher.add(record, ZERO_RECORDS);
-                if (records.length == 0) record = buffer.poll();
-            }
-            if (records.length == 0 && pendingAction == BatchAction.DRAIN)
-                records = batcher.drain(lastSendTimeMs, ZERO_RECORDS);
-            encodeAction.set(BatchAction.NONE);
-            if (records.length == 0) continue;
-            batch.init(records);
-            var binBatch = encode.apply(batch);
-            if (!senderQueue.offer(binBatch))
-                throw new IllegalStateException("Sender queue was changed from another thread");
         }
     }
 
-    private void senderProcess() throws InterruptedException {
+    private void runSendLoop() {
+        while (started) {
+            try {
+                sendStep();
+            } catch (InterruptedException e) {
+                stop();
+            }
+        }
+    }
+
+    private void encodeStep(LogRecordBatch batch) throws InterruptedException {
+        var pendingAction = encodeAction.get();
+        while (started &&
+                (pendingAction == BatchAction.NONE || senderQueue.remainingCapacity() == 0)) {
+            LockSupport.parkNanos(this, PARK_NS);
+            pendingAction = encodeAction.get();
+        }
+        if (!started) return;
+
+        LogRecord[] records = ZERO_RECORDS;
+        LogRecord record = buffer.poll();
+        while(record != null && records.length == 0) {
+            records = batcher.add(record, ZERO_RECORDS);
+            if (records.length == 0) record = buffer.poll();
+        }
+        if (records.length == 0 && pendingAction == BatchAction.DRAIN)
+            records = batcher.drain(lastSendTimeMs, ZERO_RECORDS);
+        encodeAction.set(BatchAction.NONE);
+        if (records.length == 0) return;
+
+        batch.init(records);
+        var binBatch = encode.apply(batch);
+        var sent = false;
+        while(started && !sent)
+            sent = senderQueue.offer(binBatch, PARK_NS, TimeUnit.NANOSECONDS);
+    }
+
+    private void sendStep() throws InterruptedException {
         BinaryBatch batch = null;
         while(started && batch == null)
             batch = senderQueue.poll(PARK_NS, TimeUnit.NANOSECONDS);
@@ -106,19 +173,21 @@ public final class DefaultPipeline implements LifeCycle {
             });
     }
 
+    void waitSendQueueLessThan(int size, long timeoutMs) {
+        var sleepMs = 10L;
+        var sleepNs = TimeUnit.MILLISECONDS.toNanos(sleepMs);
+        var elapsedMs = 0L;
+        while(buffer.size() < size || elapsedMs < timeoutMs) {
+            LockSupport.parkNanos(sleepNs);
+            elapsedMs += sleepMs;
+        }
+        if (elapsedMs >= timeoutMs)
+            throw new RuntimeException("Not completed within timeout " + timeoutMs + " ms");
+    }
+
     @Override
     public boolean isStarted() {
         return started;
-    }
-
-    @Override
-    public void start() {
-        started = true;
-    }
-
-    @Override
-    public void stop() {
-        started = false;        
     }
 
     private enum BatchAction {
@@ -126,6 +195,5 @@ public final class DefaultPipeline implements LifeCycle {
         CHECK,
         DRAIN
     }
-
 
 }
