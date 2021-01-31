@@ -34,4 +34,8 @@ public final class Batcher {
         return batch;
     }
 
+    public int getCapacity() {
+        return items.length;
+    }
+
 }

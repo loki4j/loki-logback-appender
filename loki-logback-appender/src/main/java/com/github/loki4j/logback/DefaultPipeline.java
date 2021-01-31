@@ -62,13 +62,13 @@ public final class DefaultPipeline extends ContextAwareBase implements LifeCycle
     public void start() {
         addInfo("Pipeline is starting...");
 
+        started = true;
+
         httpThreadPool = Executors.newFixedThreadPool(1, new LokiThreadFactory("loki-http-sender"));
         httpThreadPool.execute(() -> runSendLoop());
 
-        scheduler = Executors.newScheduledThreadPool(1, new LokiThreadFactory("loki-scheduler"));
+        scheduler = Executors.newScheduledThreadPool(2, new LokiThreadFactory("loki-scheduler"));
         scheduler.execute(() -> runEncodeLoop());
-
-        started = true;
 
         scheduler.scheduleAtFixedRate(
             () -> drain(),
@@ -81,8 +81,10 @@ public final class DefaultPipeline extends ContextAwareBase implements LifeCycle
     public void stop() {
         addInfo("Pipeline is stopping...");
 
-        // TODO: proper drain
-        waitSendQueueLessThan(0, 1000);
+        waitSendQueueLessThan(batcher.getCapacity(), 1000);
+        lastSendTimeMs = 0;
+        drain();
+        waitSendQueueIsEmpty(100);
 
         started = false;
 
@@ -107,6 +109,7 @@ public final class DefaultPipeline extends ContextAwareBase implements LifeCycle
     }
 
     private void drain() {
+        System.out.println("drain");
         encodeAction.compareAndSet(BatchAction.NONE, BatchAction.DRAIN);
     }
 
@@ -160,8 +163,11 @@ public final class DefaultPipeline extends ContextAwareBase implements LifeCycle
 
     private void sendStep() throws InterruptedException {
         BinaryBatch batch = null;
-        while(started && batch == null)
+        System.out.println("batch: " + batch);
+        while(started && batch == null) {
             batch = senderQueue.poll(PARK_NS, TimeUnit.NANOSECONDS);
+            System.out.println("batch: " + batch);
+        }
         if (!started) return;
 
         final var batchToSend = batch;
@@ -173,15 +179,20 @@ public final class DefaultPipeline extends ContextAwareBase implements LifeCycle
             });
     }
 
+    void waitSendQueueIsEmpty(long timeoutMs) {
+        waitSendQueueLessThan(1, timeoutMs);
+    }
+
     void waitSendQueueLessThan(int size, long timeoutMs) {
-        var sleepMs = 10L;
-        var sleepNs = TimeUnit.MILLISECONDS.toNanos(sleepMs);
-        var elapsedMs = 0L;
-        while(buffer.size() < size || elapsedMs < timeoutMs) {
-            LockSupport.parkNanos(sleepNs);
-            elapsedMs += sleepMs;
+        var timeoutNs = TimeUnit.MILLISECONDS.toNanos(timeoutMs);
+        var elapsedNs = 0L;
+        while(started && buffer.size() >= size && elapsedNs < timeoutNs) {
+            System.out.println("soft: " + buffer.size() + ">=" + size);
+            LockSupport.parkNanos(PARK_NS);
+            elapsedNs += PARK_NS;
         }
-        if (elapsedMs >= timeoutMs)
+        System.out.println("wait: " + elapsedNs + ">=" + timeoutNs);
+        if (elapsedNs >= timeoutNs)
             throw new RuntimeException("Not completed within timeout " + timeoutMs + " ms");
     }
 
