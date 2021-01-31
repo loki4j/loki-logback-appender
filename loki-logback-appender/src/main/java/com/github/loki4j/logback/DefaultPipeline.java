@@ -26,7 +26,7 @@ public final class DefaultPipeline extends ContextAwareBase implements LifeCycle
 
     private static final LogRecord[] ZERO_RECORDS = new LogRecord[0];
 
-    private final long PARK_NS = TimeUnit.MILLISECONDS.toNanos(10);
+    private final long PARK_NS = TimeUnit.MILLISECONDS.toNanos(1);
 
     private final SoftLimitBuffer<LogRecord> buffer;
 
@@ -109,7 +109,6 @@ public final class DefaultPipeline extends ContextAwareBase implements LifeCycle
     }
 
     private void drain() {
-        System.out.println("drain");
         encodeAction.compareAndSet(BatchAction.NONE, BatchAction.DRAIN);
     }
 
@@ -163,11 +162,8 @@ public final class DefaultPipeline extends ContextAwareBase implements LifeCycle
 
     private void sendStep() throws InterruptedException {
         BinaryBatch batch = null;
-        System.out.println("batch: " + batch);
-        while(started && batch == null) {
+        while(started && batch == null)
             batch = senderQueue.poll(PARK_NS, TimeUnit.NANOSECONDS);
-            System.out.println("batch: " + batch);
-        }
         if (!started) return;
 
         final var batchToSend = batch;
@@ -187,11 +183,9 @@ public final class DefaultPipeline extends ContextAwareBase implements LifeCycle
         var timeoutNs = TimeUnit.MILLISECONDS.toNanos(timeoutMs);
         var elapsedNs = 0L;
         while(started && buffer.size() >= size && elapsedNs < timeoutNs) {
-            System.out.println("soft: " + buffer.size() + ">=" + size);
             LockSupport.parkNanos(PARK_NS);
             elapsedNs += PARK_NS;
         }
-        System.out.println("wait: " + elapsedNs + ">=" + timeoutNs);
         if (elapsedNs >= timeoutNs)
             throw new RuntimeException("Not completed within timeout " + timeoutMs + " ms");
     }

@@ -33,7 +33,6 @@ public final class SoftLimitBuffer<E> extends AbstractQueue<E> {
 
     public void commit(int count) {
         var s = size.addAndGet(-count);
-        System.out.println(s + " - " + count);
         if (s == 0 && waiter != null) LockSupport.unpark(waiter);
     }
 
