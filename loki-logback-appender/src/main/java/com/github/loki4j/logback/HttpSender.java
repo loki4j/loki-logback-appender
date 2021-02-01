@@ -23,6 +23,13 @@ public interface HttpSender extends ContextAware, LifeCycle {
     public CompletableFuture<LokiResponse> sendAsync(byte[] batch);
 
     /**
+     * Send a batch to Loki
+     *
+     * @return A response from Loki
+     */
+    public LokiResponse send(byte[] batch);
+
+    /**
      * Get Loki target URL
      */
     public String getUrl();

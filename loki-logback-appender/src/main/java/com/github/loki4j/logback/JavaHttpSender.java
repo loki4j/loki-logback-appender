@@ -80,19 +80,22 @@ public class JavaHttpSender extends AbstractHttpSender {
         // Java HttpClient natively supports async API
         // But we have to use its sync API to preserve the ordering of batches
         return CompletableFuture
-            .supplyAsync(() -> {
-                try {
-                    var request = requestBuilder
-                        .copy()
-                        .POST(HttpRequest.BodyPublishers.ofByteArray(batch))
-                        .build();
+            .supplyAsync(() -> send(batch), httpThreadPool);
+    }
 
-                    var response = client.send(request, HttpResponse.BodyHandlers.ofString());
-                    return new LokiResponse(response.statusCode(), response.body());
-                } catch (Exception e) {
-                    throw new RuntimeException("Error while sending batch to Loki", e);
-                }
-            }, httpThreadPool);
+    @Override
+    public LokiResponse send(byte[] batch) {
+        try {
+            var request = requestBuilder
+                .copy()
+                .POST(HttpRequest.BodyPublishers.ofByteArray(batch))
+                .build();
+
+            var response = client.send(request, HttpResponse.BodyHandlers.ofString());
+            return new LokiResponse(response.statusCode(), response.body());
+        } catch (Exception e) {
+            throw new RuntimeException("Error while sending batch to Loki", e);
+        }
     }
 
     public void setHttpThreads(int httpThreads) {

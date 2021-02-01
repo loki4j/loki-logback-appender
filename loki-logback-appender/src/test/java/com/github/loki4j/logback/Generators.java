@@ -298,10 +298,19 @@ public class Generators {
         @Override
         public CompletableFuture<LokiResponse> sendAsync(byte[] batch) {
             lock.lock();
-            lastBatch = batch;
-            lock.unlock();
-            return CompletableFuture.completedFuture(new LokiResponse(204, ""));
+            try {
+                return CompletableFuture.completedFuture(send(batch));
+            } finally {
+                lock.unlock();
+            }
         }
+
+        @Override
+        public LokiResponse send(byte[] batch) {
+            lastBatch = batch;
+            return new LokiResponse(204, "");
+        }
+
     }
 
 }

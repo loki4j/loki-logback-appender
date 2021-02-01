@@ -1,7 +1,5 @@
 package com.github.loki4j.logback;
 
-import java.util.concurrent.CompletableFuture;
-
 import com.github.loki4j.common.Batcher;
 import com.github.loki4j.common.BinaryBatch;
 import com.github.loki4j.common.LogRecord;
@@ -99,7 +97,7 @@ public class Loki4jAppender extends UnsynchronizedAppenderBase<ILoggingEvent> {
 
         var buffer = new SoftLimitBuffer<LogRecord>(sendQueueSize);
         var batcher = new Batcher(batchSize, batchTimeoutMs);
-        pipeline = new DefaultPipeline(buffer, batcher, this::encode, this::sendAsync);
+        pipeline = new DefaultPipeline(buffer, batcher, this::encode, this::send);
         pipeline.setContext(context);
         pipeline.start();
 
@@ -146,31 +144,36 @@ public class Loki4jAppender extends UnsynchronizedAppenderBase<ILoggingEvent> {
         return binBatch;
     }
 
-    protected CompletableFuture<LokiResponse> sendAsync(BinaryBatch batch) {
+    protected LokiResponse send(BinaryBatch batch) {
         var startedNs = System.nanoTime();
-        return sender
-            .sendAsync(batch.data)
-            .whenComplete((r, e) -> {
-                if (e != null) {
-                    addError(String.format(
-                        "Error while sending Batch %s to Loki (%s)",
-                            batch, sender.getUrl()), e);
-                }
-                else {
-                    if (r.status < 200 || r.status > 299)
-                        addError(String.format(
-                            "Loki responded with non-success status %s on batch %s. Error: %s",
-                            r.status, batch, r.body));
-                    else
-                        addInfo(String.format(
-                            "<<< Batch %s: Loki responded with status %s",
-                            batch, r.status));
-                }
-            })
-            .whenComplete((r, e) -> {
-                if (metricsEnabled)
-                    metrics.batchSent(startedNs, batch.data.length, e != null || r.status > 299);
-            });
+        LokiResponse r = null;
+        Exception e = null;
+        try {
+            r = sender.send(batch.data);
+        } catch (Exception re) {
+            e = re;
+        }
+
+        if (e != null) {
+            addError(String.format(
+                "Error while sending Batch %s to Loki (%s)",
+                    batch, sender.getUrl()), e);
+        }
+        else {
+            if (r.status < 200 || r.status > 299)
+                addError(String.format(
+                    "Loki responded with non-success status %s on batch %s. Error: %s",
+                    r.status, batch, r.body));
+            else
+                addInfo(String.format(
+                    "<<< Batch %s: Loki responded with status %s",
+                    batch, r.status));
+        }
+
+        if (metricsEnabled)
+            metrics.batchSent(startedNs, batch.data.length, e != null || r.status > 299);
+
+        return r;
     }
 
 

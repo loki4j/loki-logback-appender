@@ -102,17 +102,20 @@ public class ApacheHttpSender extends AbstractHttpSender {
     @Override
     public CompletableFuture<LokiResponse> sendAsync(byte[] batch) {
         return CompletableFuture
-            .supplyAsync(() -> {
-                try {
-                    var r = client.execute(requestBuilder.apply(batch));
-                    var entity = r.getEntity();
-                    return new LokiResponse(
-                        r.getStatusLine().getStatusCode(),
-                        entity != null ? EntityUtils.toString(entity) : "");
-                } catch (Exception e) {
-                    throw new RuntimeException("Error while sending batch to Loki", e);
-                }
-            }, httpThreadPool);
+            .supplyAsync(() -> send(batch), httpThreadPool);
+    }
+
+    @Override
+    public LokiResponse send(byte[] batch) {
+        try {
+            var r = client.execute(requestBuilder.apply(batch));
+            var entity = r.getEntity();
+            return new LokiResponse(
+                r.getStatusLine().getStatusCode(),
+                entity != null ? EntityUtils.toString(entity) : "");
+        } catch (Exception e) {
+            throw new RuntimeException("Error while sending batch to Loki", e);
+        }
     }
 
     public void setMaxConnections(int maxConnections) {

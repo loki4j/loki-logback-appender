@@ -1,7 +1,6 @@
 package com.github.loki4j.logback;
 
 import java.util.concurrent.ArrayBlockingQueue;
-import java.util.concurrent.CompletableFuture;
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
 import java.util.concurrent.ScheduledExecutorService;
@@ -37,11 +36,12 @@ public final class DefaultPipeline extends ContextAwareBase implements LifeCycle
     private final Batcher batcher;
 
     private ScheduledExecutorService scheduler;
-    private ExecutorService httpThreadPool;
+    private ExecutorService encoderThreadPool;
+    private ExecutorService senderThreadPool;
 
     private final Function<LogRecordBatch, BinaryBatch> encode;
 
-    private final Function<BinaryBatch, CompletableFuture<LokiResponse>> send;
+    private final Function<BinaryBatch, LokiResponse> send;
 
     private volatile boolean started = false;
 
@@ -51,7 +51,7 @@ public final class DefaultPipeline extends ContextAwareBase implements LifeCycle
             SoftLimitBuffer<LogRecord> buffer,
             Batcher batcher,
             Function<LogRecordBatch, BinaryBatch> encode,
-            Function<BinaryBatch, CompletableFuture<LokiResponse>> send) {
+            Function<BinaryBatch, LokiResponse> send) {
         this.buffer = buffer;
         this.batcher = batcher;
         this.encode = encode;
@@ -64,12 +64,13 @@ public final class DefaultPipeline extends ContextAwareBase implements LifeCycle
 
         started = true;
 
-        httpThreadPool = Executors.newFixedThreadPool(1, new LokiThreadFactory("loki-http-sender"));
-        httpThreadPool.execute(() -> runSendLoop());
+        senderThreadPool = Executors.newFixedThreadPool(1, new LokiThreadFactory("loki-sender"));
+        senderThreadPool.execute(() -> runSendLoop());
+
+        encoderThreadPool = Executors.newFixedThreadPool(1, new LokiThreadFactory("loki-encoder"));
+        encoderThreadPool.execute(() -> runEncodeLoop());
 
         scheduler = Executors.newScheduledThreadPool(2, new LokiThreadFactory("loki-scheduler"));
-        scheduler.execute(() -> runEncodeLoop());
-
         scheduler.scheduleAtFixedRate(
             () -> drain(),
             100,
@@ -89,11 +90,13 @@ public final class DefaultPipeline extends ContextAwareBase implements LifeCycle
         started = false;
 
         scheduler.shutdown();
-        httpThreadPool.shutdown();
+        encoderThreadPool.shutdown();
+        senderThreadPool.shutdown();
 
         try {
             scheduler.awaitTermination(500, TimeUnit.MILLISECONDS);
-            httpThreadPool.awaitTermination(500, TimeUnit.MILLISECONDS);
+            encoderThreadPool.awaitTermination(500, TimeUnit.MILLISECONDS);
+            senderThreadPool.awaitTermination(500, TimeUnit.MILLISECONDS);
         } catch (InterruptedException e) {
             addInfo("Pipeline was interrupted while stopping");
         }
@@ -166,13 +169,11 @@ public final class DefaultPipeline extends ContextAwareBase implements LifeCycle
             batch = senderQueue.poll(PARK_NS, TimeUnit.NANOSECONDS);
         if (!started) return;
 
-        final var batchToSend = batch;
-        send
-            .apply(batchToSend)
-            .whenComplete((r, e) -> {
-                buffer.commit(batchToSend.recordsCount);
-                lastSendTimeMs = System.currentTimeMillis();
-            });
+        // TODO: handle exceptions?
+        send.apply(batch);
+
+        buffer.commit(batch.recordsCount);
+        lastSendTimeMs = System.currentTimeMillis();
     }
 
     void waitSendQueueIsEmpty(long timeoutMs) {
