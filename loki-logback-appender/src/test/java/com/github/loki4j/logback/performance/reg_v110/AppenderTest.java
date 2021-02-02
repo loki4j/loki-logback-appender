@@ -24,7 +24,7 @@ public class AppenderTest {
 
         var stats = Benchmarker.run(new Benchmarker.Config<ILoggingEvent>() {{
             this.runs = 100;
-            this.parFactor = 4;
+            this.parFactor = 1;
             this.generator = () -> InfiniteEventIterator.from(generateEvents(10_000, 10)).limited(100_000);
             this.benchmarks = Arrays.asList(
                 Benchmark.of("oldAppenderWait",
@@ -87,7 +87,7 @@ public class AppenderTest {
 
     @Test
     @Category({PerformanceTests.class})
-    public void singleThreadPerformanceOld() throws Exception {
+    public void multiThreadPerformance() throws Exception {
         var capacity = 1000;
 
         var stats = Benchmarker.run(new Benchmarker.Config<ILoggingEvent>() {{
@@ -109,30 +109,38 @@ public class AppenderTest {
                     },
                     (a, e) -> a.appendAndWait(e),
                     a -> {},
-                    a -> a.stop())
-            );
-        }});
-
-        stats.forEach(System.out::println);
-    }
-
-
-
-    @Test
-    @Category({PerformanceTests.class})
-    public void singleThreadPerformanceNew() throws Exception {
-        var capacity = 1000;
-
-        var stats = Benchmarker.run(new Benchmarker.Config<ILoggingEvent>() {{
-            this.runs = 100;
-            this.parFactor = 4;
-            this.generator = () -> InfiniteEventIterator.from(generateEvents(10_000, 10)).limited(100_000);
-            this.benchmarks = Arrays.asList(
+                    a -> a.stop()),
                 Benchmark.of("newAppenderWait",
                     () -> {
                         var a = appender(capacity, 60_000L, defaultToStringEncoder(), dummySender());
                         a.setSendQueueSize(Integer.MAX_VALUE);
                         a.setVerbose(false);
+                        a.start();
+                        return new AppenderWrapper(a);
+                    },
+                    (a, e) -> a.append(e),
+                    a -> a.waitAllAppended(),
+                    a -> a.stop()),
+                Benchmark.of("oldInstrumentedAppenderWait",
+                    () -> {
+                        var a = new InstrumentedLoki4jAppender();
+                        a.setContext(new LoggerContext());
+                        a.setBatchTimeoutMs(60_000);
+                        a.setFormat(defaultToStringEncoder());
+                        a.setHttp(dummySender());
+                        a.setVerbose(false);
+                        a.start();
+                        return new Loki4jAppenderV100.Wrapper<>(a);
+                    },
+                    (a, e) -> a.appendAndWait(e),
+                    a -> {},
+                    a -> a.stop()),
+                Benchmark.of("newMetricsEnabledAppenderWait",
+                    () -> {
+                        var a = appender(capacity, 60_000L, defaultToStringEncoder(), dummySender());
+                        a.setSendQueueSize(Integer.MAX_VALUE);
+                        a.setVerbose(false);
+                        a.setMetricsEnabled(true);
                         a.start();
                         return new AppenderWrapper(a);
                     },

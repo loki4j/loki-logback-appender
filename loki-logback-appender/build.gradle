@@ -93,7 +93,7 @@ task perfTests(type: Test) {
         includeCategories 'com.github.loki4j.testkit.categories.PerformanceTests'
     }
     forkEvery = 1
-    maxHeapSize = "1G"
+    maxHeapSize = "3G"
     testLogging.showStandardStreams = true
 }
 

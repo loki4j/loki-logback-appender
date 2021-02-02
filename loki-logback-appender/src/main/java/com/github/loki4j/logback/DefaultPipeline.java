@@ -5,7 +5,7 @@ import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
 import java.util.concurrent.ScheduledExecutorService;
 import java.util.concurrent.TimeUnit;
-import java.util.concurrent.atomic.AtomicReference;
+import java.util.concurrent.atomic.AtomicBoolean;
 import java.util.concurrent.locks.LockSupport;
 import java.util.function.Function;
 import java.util.function.Supplier;
@@ -29,8 +29,6 @@ public final class DefaultPipeline extends ContextAwareBase implements LifeCycle
 
     private final SoftLimitBuffer<LogRecord> buffer;
 
-    private final AtomicReference<BatchAction> encodeAction = new AtomicReference<>(BatchAction.NONE);
-
     private final ArrayBlockingQueue<BinaryBatch> senderQueue = new ArrayBlockingQueue<>(10);
 
     private final Batcher batcher;
@@ -44,6 +42,8 @@ public final class DefaultPipeline extends ContextAwareBase implements LifeCycle
     private final Function<BinaryBatch, LokiResponse> send;
 
     private volatile boolean started = false;
+
+    private volatile AtomicBoolean drainRequested = new AtomicBoolean(false);
 
     private volatile long lastSendTimeMs = System.currentTimeMillis();
 
@@ -70,7 +70,7 @@ public final class DefaultPipeline extends ContextAwareBase implements LifeCycle
         encoderThreadPool = Executors.newFixedThreadPool(1, new LokiThreadFactory("loki-encoder"));
         encoderThreadPool.execute(() -> runEncodeLoop());
 
-        scheduler = Executors.newScheduledThreadPool(2, new LokiThreadFactory("loki-scheduler"));
+        scheduler = Executors.newScheduledThreadPool(1, new LokiThreadFactory("loki-scheduler"));
         scheduler.scheduleAtFixedRate(
             () -> drain(),
             100,
@@ -103,16 +103,11 @@ public final class DefaultPipeline extends ContextAwareBase implements LifeCycle
     }
 
     public boolean append(Supplier<LogRecord> event) {
-        if (buffer.offer(event)) {
-            encodeAction.set(BatchAction.CHECK);
-            return true;
-        } else {
-            return false;
-        }
+        return buffer.offer(event);
     }
 
     private void drain() {
-        encodeAction.compareAndSet(BatchAction.NONE, BatchAction.DRAIN);
+        drainRequested.set(true);
     }
 
     private void runEncodeLoop() {
@@ -137,11 +132,9 @@ public final class DefaultPipeline extends ContextAwareBase implements LifeCycle
     }
 
     private void encodeStep(LogRecordBatch batch) throws InterruptedException {
-        var pendingAction = encodeAction.get();
         while (started &&
-                (pendingAction == BatchAction.NONE || senderQueue.remainingCapacity() == 0)) {
+                (buffer.isEmpty() || senderQueue.remainingCapacity() == 0)) {
             LockSupport.parkNanos(this, PARK_NS);
-            pendingAction = encodeAction.get();
         }
         if (!started) return;
 
@@ -151,9 +144,9 @@ public final class DefaultPipeline extends ContextAwareBase implements LifeCycle
             records = batcher.add(record, ZERO_RECORDS);
             if (records.length == 0) record = buffer.poll();
         }
-        if (records.length == 0 && pendingAction == BatchAction.DRAIN)
+        if (records.length == 0 && drainRequested.get())
             records = batcher.drain(lastSendTimeMs, ZERO_RECORDS);
-        encodeAction.set(BatchAction.NONE);
+        drainRequested.set(false);
         if (records.length == 0) return;
 
         batch.init(records);
@@ -165,8 +158,12 @@ public final class DefaultPipeline extends ContextAwareBase implements LifeCycle
 
     private void sendStep() throws InterruptedException {
         BinaryBatch batch = null;
-        while(started && batch == null)
-            batch = senderQueue.poll(PARK_NS, TimeUnit.NANOSECONDS);
+        while(started && batch == null) {
+            if (senderQueue.size() > 0)
+                batch = senderQueue.poll(PARK_NS, TimeUnit.NANOSECONDS);
+            else
+                LockSupport.parkNanos(this, PARK_NS);
+        }
         if (!started) return;
 
         // TODO: handle exceptions?
@@ -194,12 +191,6 @@ public final class DefaultPipeline extends ContextAwareBase implements LifeCycle
     @Override
     public boolean isStarted() {
         return started;
-    }
-
-    private enum BatchAction {
-        NONE,
-        CHECK,
-        DRAIN
     }
 
 }
