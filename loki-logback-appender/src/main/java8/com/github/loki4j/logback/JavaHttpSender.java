@@ -30,4 +30,9 @@ public class JavaHttpSender extends AbstractHttpSender {
     public CompletableFuture<LokiResponse> sendAsync(byte[] batch) {
         throw new IllegalStateException("Not implemented");
     }
+
+    @Override
+    public LokiResponse send(byte[] batch) {
+        throw new IllegalStateException("Not implemented");
+    }
 }
