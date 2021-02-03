@@ -4,9 +4,7 @@ import java.io.IOException;
 import java.time.Instant;
 import java.util.ArrayList;
 import java.util.Iterator;
-import java.util.concurrent.CompletableFuture;
 import java.util.concurrent.ThreadLocalRandom;
-import java.util.concurrent.locks.ReentrantLock;
 import java.util.function.Consumer;
 import java.util.function.Function;
 import java.util.stream.StreamSupport;
@@ -293,17 +291,6 @@ public class Generators {
 
     public static class DummyHttpSender extends AbstractHttpSender {
         public byte[] lastBatch;
-        private final ReentrantLock lock = new ReentrantLock(false);
-
-        @Override
-        public CompletableFuture<LokiResponse> sendAsync(byte[] batch) {
-            lock.lock();
-            try {
-                return CompletableFuture.completedFuture(send(batch));
-            } finally {
-                lock.unlock();
-            }
-        }
 
         @Override
         public LokiResponse send(byte[] batch) {

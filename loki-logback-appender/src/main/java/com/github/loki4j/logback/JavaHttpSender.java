@@ -5,9 +5,7 @@ import java.net.http.HttpClient;
 import java.net.http.HttpRequest;
 import java.net.http.HttpResponse;
 import java.time.Duration;
-import java.util.concurrent.CompletableFuture;
 import java.util.concurrent.ExecutorService;
-import java.util.concurrent.Executors;
 import java.util.concurrent.SynchronousQueue;
 import java.util.concurrent.ThreadPoolExecutor;
 import java.util.concurrent.TimeUnit;
@@ -24,11 +22,6 @@ import ch.qos.logback.core.joran.spi.NoAutoStart;
 public class JavaHttpSender extends AbstractHttpSender {
 
     /**
-     * Number of threads to use for sending HTTP requests
-     */
-    private int httpThreads = 1;
-
-    /**
      * Maximum time that excess idle threads will wait for new
      * tasks before terminating inner HTTP threads
      */
@@ -37,13 +30,10 @@ public class JavaHttpSender extends AbstractHttpSender {
     private HttpClient client;
     private HttpRequest.Builder requestBuilder;
 
-    private ExecutorService httpThreadPool;
     private ExecutorService internalHttpThreadPool;
 
     @Override
     public void start() {
-        httpThreadPool = Executors.newFixedThreadPool(httpThreads, new LokiThreadFactory("loki-http-sender"));
-
         internalHttpThreadPool = new ThreadPoolExecutor(
             0, Integer.MAX_VALUE,
             innerThreadsExpirationMs, TimeUnit.MILLISECONDS, // expire unused threads after 5 batch intervals
@@ -72,15 +62,6 @@ public class JavaHttpSender extends AbstractHttpSender {
     public void stop() {
         super.stop();
         internalHttpThreadPool.shutdown();
-        httpThreadPool.shutdown();
-    }
-
-    @Override
-    public CompletableFuture<LokiResponse> sendAsync(byte[] batch) {
-        // Java HttpClient natively supports async API
-        // But we have to use its sync API to preserve the ordering of batches
-        return CompletableFuture
-            .supplyAsync(() -> send(batch), httpThreadPool);
     }
 
     @Override
@@ -96,10 +77,6 @@ public class JavaHttpSender extends AbstractHttpSender {
         } catch (Exception e) {
             throw new RuntimeException("Error while sending batch to Loki", e);
         }
-    }
-
-    public void setHttpThreads(int httpThreads) {
-        this.httpThreads = httpThreads;
     }
 
     public void setInnerThreadsExpirationMs(long innerThreadsExpirationMs) {

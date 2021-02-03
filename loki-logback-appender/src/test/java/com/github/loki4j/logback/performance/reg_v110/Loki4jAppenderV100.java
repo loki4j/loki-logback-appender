@@ -1,6 +1,7 @@
 package com.github.loki4j.logback.performance.reg_v110;
 
 import java.util.concurrent.CompletableFuture;
+import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
 import java.util.concurrent.ScheduledExecutorService;
 import java.util.concurrent.TimeUnit;
@@ -54,6 +55,7 @@ public class Loki4jAppenderV100 extends UnsynchronizedAppenderBase<ILoggingEvent
     private ConcurrentBatchBuffer<ILoggingEvent, LogRecord> buffer;
 
     private ScheduledExecutorService scheduler;
+    private ExecutorService httpThreadPool;
 
 
     @Override
@@ -79,6 +81,7 @@ public class Loki4jAppenderV100 extends UnsynchronizedAppenderBase<ILoggingEvent
         buffer = new ConcurrentBatchBuffer<>(batchSize, LogRecord::create, (e, r) -> encoder.eventToRecord(e, r));
 
         scheduler = Executors.newScheduledThreadPool(processingThreads, new LokiThreadFactory("loki-scheduler"));
+        httpThreadPool = Executors.newFixedThreadPool(1, new LokiThreadFactory("loki-http-sender"));
 
         if (sender == null) {
             addWarn("No sender specified in the config. Trying to use JavaHttpSender with default settings");
@@ -117,8 +120,8 @@ public class Loki4jAppenderV100 extends UnsynchronizedAppenderBase<ILoggingEvent
         encoder.stop();
 
         scheduler.shutdown();
+        httpThreadPool.shutdown();
         
-
         sender.stop();
         addInfo("Successfully stopped");
     }
@@ -147,7 +150,8 @@ public class Loki4jAppenderV100 extends UnsynchronizedAppenderBase<ILoggingEvent
     }
 
     protected CompletableFuture<LokiResponse> sendAsync(byte[] batch) {
-        return sender.sendAsync(batch);
+        return CompletableFuture
+            .supplyAsync(() -> sender.send(batch), httpThreadPool);
     }
 
     private CompletableFuture<Void> drainAsync(long timeoutMs) {
