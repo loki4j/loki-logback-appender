@@ -134,7 +134,7 @@ public final class DefaultPipeline extends ContextAwareBase implements LifeCycle
 
     private void encodeStep(LogRecordBatch batch) throws InterruptedException {
         while (started &&
-                (buffer.isEmpty() || senderQueue.remainingCapacity() == 0)) {
+                (noEncodeActions() || senderQueue.remainingCapacity() == 0)) {
             LockSupport.parkNanos(this, PARK_NS);
         }
         if (!started) return;
@@ -145,8 +145,10 @@ public final class DefaultPipeline extends ContextAwareBase implements LifeCycle
             records = batcher.add(record, ZERO_RECORDS);
             if (records.length == 0) record = buffer.poll();
         }
-        if (records.length == 0 && drainRequested.get())
+        if (records.length == 0 && drainRequested.get()) {
             records = batcher.drain(lastSendTimeMs.get(), ZERO_RECORDS);
+            //System.out.println("drained items: " + records.length);
+        }
         drainRequested.set(false);
         if (records.length == 0) return;
 
@@ -155,6 +157,10 @@ public final class DefaultPipeline extends ContextAwareBase implements LifeCycle
         var sent = false;
         while(started && !sent)
             sent = senderQueue.offer(binBatch, PARK_NS, TimeUnit.NANOSECONDS);
+    }
+
+    private boolean noEncodeActions() {
+        return buffer.isEmpty() && !drainRequested.get();
     }
 
     private void sendStep() throws InterruptedException {
@@ -172,6 +178,7 @@ public final class DefaultPipeline extends ContextAwareBase implements LifeCycle
 
         buffer.commit(batch.recordsCount);
         lastSendTimeMs.set(System.currentTimeMillis());
+        //System.out.println("sent items: " + batch.recordsCount);
     }
 
     void waitSendQueueIsEmpty(long timeoutMs) {
