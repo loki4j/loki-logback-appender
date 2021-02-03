@@ -102,18 +102,4 @@ public class ParSendTest {
             assertEquals("label", fs[i].get());
         }
     }
-
-    @Test
-    @Category({IntegrationTests.class})
-    public void testApacheJsonSend() throws Exception {
-        var events = generateEvents(3, 20);
-
-        var label = "testApacheJsonSend";
-        var encoder = jsonEncoder(false, label);
-        var sender = apacheHttpSender(urlPush);
-        var appender = appender(2, 150_000, encoder, sender);
-        
-        client.testHttpSend(label, events, appender, jsonEncoder(false, label));
-    }
-
 }

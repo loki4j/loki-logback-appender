@@ -21,8 +21,8 @@ public class ProtobufEncoder extends AbstractLoki4jEncoder {
         return "application/x-protobuf";
     }
 
-	@Override
-	protected byte[] encodeStaticLabels(LogRecord[] batch) {
+    @Override
+    protected byte[] encodeStaticLabels(LogRecord[] batch) {
         var request = PushRequest.newBuilder();
         var streamBuilder = request
             .addStreamsBuilder()
@@ -31,10 +31,10 @@ public class ProtobufEncoder extends AbstractLoki4jEncoder {
             streamBuilder.addEntries(entry(batch[i]));
         }
         return compress(request.build().toByteArray());
-	}
+    }
 
-	@Override
-	protected byte[] encodeDynamicLabels(LogRecord[] batch) {
+    @Override
+    protected byte[] encodeDynamicLabels(LogRecord[] batch) {
         var request = PushRequest.newBuilder();
         var currentStream = batch[0].stream;
         var streamBuilder = request
@@ -49,7 +49,7 @@ public class ProtobufEncoder extends AbstractLoki4jEncoder {
             }
             streamBuilder.addEntries(entry(batch[i]));
         }
-		return compress(request.build().toByteArray());
+        return compress(request.build().toByteArray());
     }
 
     private String labels(String[] labels) {
@@ -86,5 +86,5 @@ public class ProtobufEncoder extends AbstractLoki4jEncoder {
             throw new RuntimeException("Snappy compression error", e);
         }
     }
-    
+
 }

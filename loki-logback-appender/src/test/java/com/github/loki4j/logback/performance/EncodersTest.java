@@ -37,7 +37,7 @@ public class EncodersTest {
                 var jsonEncSta = initEnc(jsonEncoder(true, "testLabel"));
                 return Stream.iterate(
                         Arrays.stream(generateEvents(batchSize, 10))
-                            .map(e -> jsonEncSta.eventToRecord(e, new LogRecord()))
+                            .map(e -> jsonEncSta.eventToRecord(e))
                             .toArray(LogRecord[]::new),
                         UnaryOperator.identity())
                     .limit(1000)

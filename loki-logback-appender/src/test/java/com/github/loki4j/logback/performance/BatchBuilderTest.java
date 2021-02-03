@@ -6,9 +6,11 @@ import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Collections;
 import java.util.concurrent.ArrayBlockingQueue;
+import java.util.concurrent.ConcurrentLinkedQueue;
+import java.util.concurrent.atomic.AtomicInteger;
 
-import com.github.loki4j.common.ConcurrentBatchBuffer;
 import com.github.loki4j.common.LogRecord;
+import com.github.loki4j.common.SoftLimitBuffer;
 import com.github.loki4j.testkit.benchmark.Benchmarker;
 import com.github.loki4j.testkit.benchmark.Benchmarker.Benchmark;
 import com.github.loki4j.testkit.categories.PerformanceTests;
@@ -33,20 +35,31 @@ public class BatchBuilderTest {
     @Category({PerformanceTests.class})
     public void singleThreadPerformance() throws Exception {
         var capacity = 1000;
-        var emptyArray = new LogRecord[0];
+        var clqCounter = new AtomicInteger(0);
 
         var stats = Benchmarker.run(new Benchmarker.Config<ILoggingEvent>() {{
             this.runs = 100;
             this.parFactor = 1;
             this.generator = () -> InfiniteEventIterator.from(generateEvents(10_000, 10)).limited(1_000_000);
             this.benchmarks = Arrays.asList(
-                Benchmark.of("cbb",
-                    () -> new ConcurrentBatchBuffer<ILoggingEvent, LogRecord>(capacity, LogRecord::create, (e, r) -> eventToRecord(e, r)),
-                    (r, e) -> r.add(e, emptyArray)),
+                Benchmark.of("slb",
+                    () -> new SoftLimitBuffer<LogRecord>(capacity),
+                    (r, e) -> {
+                        r.offer(eventToRecord(e, LogRecord.create()));
+                        if (r.size() == capacity)
+                            while(r.poll() != null) { }
+                    }),
                 Benchmark.of("abq",
                     () -> new ArrayBlockingQueue<LogRecord>(capacity),
                     (r, e) -> {
                         if (!r.offer(eventToRecord(e, LogRecord.create())))
+                            r.clear();
+                    }),
+                Benchmark.of("clq",
+                    () -> new ConcurrentLinkedQueue<LogRecord>(),
+                    (r, e) -> {
+                        r.offer(eventToRecord(e, LogRecord.create()));
+                        if (clqCounter.incrementAndGet() > capacity)
                             r.clear();
                     }),
                 Benchmark.of("sal",
@@ -66,20 +79,31 @@ public class BatchBuilderTest {
     @Category({PerformanceTests.class})
     public void multiThreadPerformance() throws Exception {
         var capacity = 1000;
-        var emptyArray = new LogRecord[0];
+        var clqCounter = new AtomicInteger(0);
 
         var stats = Benchmarker.run(new Benchmarker.Config<ILoggingEvent>() {{
             this.runs = 100;
             this.parFactor = 2;
             this.generator = () -> InfiniteEventIterator.from(generateEvents(10_000, 10)).limited(1_000_000);
             this.benchmarks = Arrays.asList(
-                Benchmark.of("cbb",
-                    () -> new ConcurrentBatchBuffer<ILoggingEvent, LogRecord>(capacity, LogRecord::create, (e, r) -> eventToRecord(e, r)),
-                    (r, e) -> r.add(e, emptyArray)),
+                Benchmark.of("slb",
+                    () -> new SoftLimitBuffer<LogRecord>(capacity),
+                    (r, e) -> {
+                        r.offer(eventToRecord(e, LogRecord.create()));
+                        if (r.size() == capacity)
+                            while(r.poll() != null) { }
+                    }),
                 Benchmark.of("abq",
                     () -> new ArrayBlockingQueue<LogRecord>(capacity),
                     (r, e) -> {
                         if (!r.offer(eventToRecord(e, LogRecord.create())))
+                            r.clear();
+                    }),
+                Benchmark.of("clq",
+                    () -> new ConcurrentLinkedQueue<LogRecord>(),
+                    (r, e) -> {
+                        r.offer(eventToRecord(e, LogRecord.create()));
+                        if (clqCounter.incrementAndGet() > capacity)
                             r.clear();
                     }),
                 Benchmark.of("sal",

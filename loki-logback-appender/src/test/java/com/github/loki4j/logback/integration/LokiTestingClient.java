@@ -103,7 +103,7 @@ public class LokiTestingClient {
             ILoggingEvent[] events,
             Loki4jAppender actualAppender,
             AbstractLoki4jEncoder expectedEncoder) throws Exception {
-        testHttpSend(lbl, events, actualAppender, expectedEncoder, events.length, 500L);
+        testHttpSend(lbl, events, actualAppender, expectedEncoder, events.length, 10L);
     }
 
     public void testHttpSend(
@@ -120,16 +120,16 @@ public class LokiTestingClient {
             for (int i = 0; i < events.length; i += chunkSize) {
                 var chunk = Arrays.copyOfRange(events, i, Math.min(events.length, i + chunkSize));
                 //System.out.println(String.format("%s: %s + %s", Thread.currentThread().getName(), i, chunk.length));
-                a.appendAndWait(chunk);
+                a.append(chunk);
                 if (chunkDelayMs > 0L)
                     try { Thread.sleep(chunkDelayMs); } catch (InterruptedException e) { }
             }
+            a.waitAllAppended();
             return null;
         });
         withEncoder(expectedEncoder, encoder -> {
             for (int i = 0; i < events.length; i++) {
-                records[i] = new LogRecord();
-                encoder.eventToRecord(events[i], records[i]);
+                records[i] =  encoder.eventToRecord(events[i]);
             }
             reqStr.set(new String(encoder.encode(records)));
         });
@@ -142,7 +142,10 @@ public class LokiTestingClient {
         //System.out.println(resp);
         assertEquals(lbl + " status", "success", resp.status);
         assertEquals(lbl + " result type", "streams", resp.data.resultType);
-        assertEquals(lbl + " event count", req.streams.size(), resp.data.result.size());
+        assertEquals(lbl + " stream count", req.streams.size(), resp.data.result.size());
+        assertEquals(lbl + " event count",
+            req.streams.stream().mapToInt(s -> s.values.size()).sum(),
+            resp.data.result.stream().mapToInt(s -> s.values.size()).sum());
         assertEquals(lbl + " content", req.streams, resp.data.result);
     }
 

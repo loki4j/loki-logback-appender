@@ -1,7 +1,5 @@
 package com.github.loki4j.logback;
 
-import java.util.concurrent.CompletableFuture;
-
 import com.github.loki4j.common.LokiResponse;
 
 import ch.qos.logback.core.spi.ContextAware;
@@ -15,12 +13,11 @@ import ch.qos.logback.core.spi.LifeCycle;
 public interface HttpSender extends ContextAware, LifeCycle {
 
     /**
-     * Send a batch to Loki.
-     * Send operation should be performed asynchronously (in separate thread)
+     * Send a batch to Loki
      *
-     * @return Future containing a response from Loki
+     * @return A response from Loki
      */
-    public CompletableFuture<LokiResponse> sendAsync(byte[] batch);
+    public LokiResponse send(byte[] batch);
 
     /**
      * Get Loki target URL

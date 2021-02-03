@@ -4,10 +4,7 @@ import java.io.IOException;
 import java.time.Instant;
 import java.util.ArrayList;
 import java.util.Iterator;
-import java.util.concurrent.CompletableFuture;
 import java.util.concurrent.ThreadLocalRandom;
-import java.util.concurrent.TimeUnit;
-import java.util.concurrent.locks.ReentrantLock;
 import java.util.function.Consumer;
 import java.util.function.Function;
 import java.util.stream.StreamSupport;
@@ -279,17 +276,13 @@ public class Generators {
         public void append(ILoggingEvent event) {
             appender.append(event);
         }
-        @SuppressWarnings("unchecked")
-        public void appendAndWait(ILoggingEvent... events) {
-            var fs = (CompletableFuture<Void>[]) new CompletableFuture[events.length];
+        public void append(ILoggingEvent... events) {
             for (int i = 0; i < events.length; i++) {
-                fs[i] = appender.appendAsync(events[i]);
+                appender.append(events[i]);
             }
-            try {
-                CompletableFuture.allOf(fs).get(120, TimeUnit.SECONDS);
-            } catch (Exception e) {
-                throw new RuntimeException("Error while waiting for futures", e);
-            }
+        }
+        public void waitAllAppended() {
+            appender.waitSendQueueIsEmpty(2L * 60 * 1000);
         }
         public void stop() {
             appender.stop();
@@ -298,15 +291,13 @@ public class Generators {
 
     public static class DummyHttpSender extends AbstractHttpSender {
         public byte[] lastBatch;
-        private final ReentrantLock lock = new ReentrantLock(false);
 
         @Override
-        public CompletableFuture<LokiResponse> sendAsync(byte[] batch) {
-            lock.lock();
+        public LokiResponse send(byte[] batch) {
             lastBatch = batch;
-            lock.unlock();
-            return CompletableFuture.completedFuture(new LokiResponse(204, ""));
+            return new LokiResponse(204, "");
         }
+
     }
 
 }

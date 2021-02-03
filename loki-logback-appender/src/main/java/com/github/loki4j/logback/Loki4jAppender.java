@@ -1,14 +1,11 @@
 package com.github.loki4j.logback;
 
-import java.util.concurrent.CompletableFuture;
-import java.util.concurrent.Executors;
-import java.util.concurrent.ScheduledExecutorService;
-import java.util.concurrent.TimeUnit;
-
-import com.github.loki4j.common.ConcurrentBatchBuffer;
+import com.github.loki4j.common.Batcher;
+import com.github.loki4j.common.BinaryBatch;
 import com.github.loki4j.common.LogRecord;
+import com.github.loki4j.common.LogRecordBatch;
 import com.github.loki4j.common.LokiResponse;
-import com.github.loki4j.common.LokiThreadFactory;
+import com.github.loki4j.common.SoftLimitBuffer;
 
 import ch.qos.logback.classic.spi.ILoggingEvent;
 import ch.qos.logback.core.CoreConstants;
@@ -21,10 +18,8 @@ import ch.qos.logback.core.status.Status;
  */
 public class Loki4jAppender extends UnsynchronizedAppenderBase<ILoggingEvent> {
 
-    private static final LogRecord[] ZERO_EVENTS = new LogRecord[0];
-
     /**
-     * Max number of messages to put into single batch and send to Loki
+     * Max number of events to put into single batch and send to Loki
      */
     private int batchSize = 1000;
     /**
@@ -33,9 +28,10 @@ public class Loki4jAppender extends UnsynchronizedAppenderBase<ILoggingEvent> {
     private long batchTimeoutMs = 60 * 1000;
 
     /**
-     * Number of threads to use for log message processing and formatting
+     * Max number of events to keep in the send queue.
+     * When the queue id full, incoming log events are dropped
      */
-    private int processingThreads = 1;
+    private int sendQueueSize = 50 * 1000;
 
     /**
      * If true, the appender will print its own debug logs to stderr
@@ -62,10 +58,7 @@ public class Loki4jAppender extends UnsynchronizedAppenderBase<ILoggingEvent> {
      */
     private LoggerMetrics metrics;
 
-    private ConcurrentBatchBuffer<ILoggingEvent, LogRecord> buffer;
-
-    private ScheduledExecutorService scheduler;
-
+    private DefaultPipeline pipeline;
 
     @Override
     public void start() {
@@ -77,8 +70,8 @@ public class Loki4jAppender extends UnsynchronizedAppenderBase<ILoggingEvent> {
         }
 
         addInfo(String.format("Starting with " +
-            "procThreads=%s, batchSize=%s, batchTimeout=%s...",
-            processingThreads, batchSize, batchTimeoutMs));
+            "batchSize=%s, batchTimeout=%s...",
+            batchSize, batchTimeoutMs));
 
         if (encoder == null) {
             addWarn("No encoder specified in the config. Using JsonEncoder with default settings");
@@ -94,10 +87,6 @@ public class Loki4jAppender extends UnsynchronizedAppenderBase<ILoggingEvent> {
                 host == null ? "unknown" : host);
         }
 
-        buffer = new ConcurrentBatchBuffer<>(batchSize, LogRecord::create, (e, r) -> encoder.eventToRecord(e, r));
-
-        scheduler = Executors.newScheduledThreadPool(processingThreads, new LokiThreadFactory("loki-scheduler"));
-
         if (sender == null) {
             addWarn("No sender specified in the config. Trying to use JavaHttpSender with default settings");
             sender = new JavaHttpSender();
@@ -106,13 +95,14 @@ public class Loki4jAppender extends UnsynchronizedAppenderBase<ILoggingEvent> {
         sender.setContentType(encoder.getContentType());
         sender.start();
 
+        var buffer = new SoftLimitBuffer<LogRecord>(sendQueueSize);
+        var batcher = new Batcher(batchSize, batchTimeoutMs);
+        pipeline = new DefaultPipeline(buffer, batcher, this::encode, this::send);
+        pipeline.setContext(context);
+        pipeline.start();
+
         super.start();
 
-        scheduler.scheduleAtFixedRate(
-            () -> drainAsync(batchTimeoutMs - 20), // decreasing timeout, so it's slightly less than elapsed time
-            100,
-            batchTimeoutMs,
-            TimeUnit.MILLISECONDS);
         addInfo("Successfully started");
     }
 
@@ -125,109 +115,80 @@ public class Loki4jAppender extends UnsynchronizedAppenderBase<ILoggingEvent> {
 
         super.stop();
 
-        try {
-            // drain no matter how much time passed since last batch
-            drainAsync(0L).get(500, TimeUnit.MILLISECONDS);
-        } catch (Exception e) {
-            addWarn("Error during buffer drain on stop", e);
-        }
-
+        pipeline.stop();
         encoder.stop();
-
-        scheduler.shutdown();
-        
-
         sender.stop();
+
         addInfo("Successfully stopped");
     }
 
     @Override
     protected void append(ILoggingEvent event) {
         var startedNs = System.nanoTime();
-        appendAsync(event);
-        if (metricsEnabled) metrics.eventAppended(startedNs);
+        var appended = pipeline.append(() -> encoder.eventToRecord(event));
+        if (metricsEnabled)
+            metrics.eventAppended(startedNs, !appended);
     }
 
-    protected final CompletableFuture<Void> appendAsync(ILoggingEvent event) {
+    protected BinaryBatch encode(LogRecordBatch batch) {
+        var startedNs = System.nanoTime();
+        var encoded = encoder.encode(batch.records);
+        var binBatch = BinaryBatch.fromLogRecordBatch(batch, encoded);
+        addInfo(String.format(
+            ">>> Batch %s converted to %,d bytes",
+                batch, binBatch.data.length));
+        //try { System.out.write(body); } catch (Exception e) { e.printStackTrace(); }
+        //System.out.println("\n");
+        if (metricsEnabled)
+            metrics.batchEncoded(startedNs, binBatch.data.length);
+        return binBatch;
+    }
+
+    protected LokiResponse send(BinaryBatch batch) {
+        var startedNs = System.nanoTime();
+        LokiResponse r = null;
+        Exception e = null;
         try {
-            event.prepareForDeferredProcessing();
-        } catch (RuntimeException e) {
-            addWarn("Unable to prepare the event for deferred processing", e);
+            r = sender.send(batch.data);
+        } catch (Exception re) {
+            e = re;
         }
 
-        var batch = buffer.add(event, ZERO_EVENTS);
-        if (batch.length > 0)
-            return handleBatchAsync(batch).thenApply(r -> null);
-        else
-            return CompletableFuture.completedFuture(null);
-    }
-
-    protected byte[] encode(LogRecord[] batch) {
-        var startedNs = System.nanoTime();
-        var encoded = encoder.encode(batch);
-        if (metricsEnabled) metrics.batchEncoded(startedNs, batch.length);
-        return encoded;
-    }
-
-    protected CompletableFuture<LokiResponse> sendAsync(byte[] batch) {
-        var startedNs = System.nanoTime();
-        return sender
-            .sendAsync(batch)
-            .whenComplete((r, e) -> {
-                if (metricsEnabled)
-                    metrics.batchSent(startedNs, batch.length, e != null || r.status > 299);
-            });
-    }
-
-    private CompletableFuture<Void> drainAsync(long timeoutMs) {
-        var batch = buffer.drain(timeoutMs, ZERO_EVENTS);
-        if (batch.length > 0)
-            return handleBatchAsync(batch).thenApply(r -> null);
-        else
-            return CompletableFuture.completedFuture(null);
-    }
-
-    private CompletableFuture<LokiResponse> handleBatchAsync(LogRecord[] batch) {
-        var batchId = System.nanoTime();
-        return CompletableFuture
-            .supplyAsync(() -> {
-                var body = encode(batch);
+        if (e != null) {
+            addError(String.format(
+                "Error while sending Batch %s to Loki (%s)",
+                    batch, sender.getUrl()), e);
+        }
+        else {
+            if (r.status < 200 || r.status > 299)
+                addError(String.format(
+                    "Loki responded with non-success status %s on batch %s. Error: %s",
+                    r.status, batch, r.body));
+            else
                 addInfo(String.format(
-                    ">>> Batch #%x: Sending %,d items converted to %,d bytes",
-                    batchId, batch.length, body.length));
-                //try { System.out.write(body); } catch (Exception e) { e.printStackTrace(); }
-                //System.out.println("\n");
-                return body;
-            }, scheduler)
-            .thenCompose(this::sendAsync)
-            .whenComplete((r, e) -> {
-                if (e != null) {
-                    addError(String.format(
-                        "Error while sending Batch #%x (%s records) to Loki (%s)",
-                        batchId, batch.length, sender.getUrl()), e);
-                }
-                else {
-                    if (r.status < 200 || r.status > 299)
-                        addError(String.format(
-                            "Loki responded with non-success status %s on Batch #%x (%s records). Error: %s", 
-                            r.status, batchId, batch.length, r.body));
-                    else
-                        addInfo(String.format(
-                            "<<< Batch #%x: Loki responded with status %s",
-                            batchId, r.status));
-                }
-            });
+                    "<<< Batch %s: Loki responded with status %s",
+                    batch, r.status));
+        }
+
+        if (metricsEnabled)
+            metrics.batchSent(startedNs, batch.data.length, e != null || r.status > 299);
+
+        return r;
+    }
+
+
+    void waitSendQueueIsEmpty(long timeoutMs) {
+        pipeline.waitSendQueueIsEmpty(timeoutMs);
     }
 
     public void setBatchSize(int batchSize) {
         this.batchSize = batchSize;
     }
-
-    public long getBatchTimeoutMs() {
-        return batchTimeoutMs;
-    }
     public void setBatchTimeoutMs(long batchTimeoutMs) {
         this.batchTimeoutMs = batchTimeoutMs;
+    }
+    public void setSendQueueSize(int sendQueueSize) {
+        this.sendQueueSize = sendQueueSize;
     }
 
     /**
@@ -253,14 +214,9 @@ public class Loki4jAppender extends UnsynchronizedAppenderBase<ILoggingEvent> {
         this.sender = sender;
     }
 
-    public void setProcessingThreads(int processingThreads) {
-        this.processingThreads = processingThreads;
-    }
-
     public void setVerbose(boolean verbose) {
         this.verbose = verbose;
     }
-
     public void setMetricsEnabled(boolean metricsEnabled) {
         this.metricsEnabled = metricsEnabled;
     }

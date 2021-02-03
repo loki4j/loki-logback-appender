@@ -18,6 +18,7 @@ public class AppenderTest {
 
     private static AppenderWrapper initApp(int capacity, Loki4jEncoder e) {
         var a = appender(capacity, 60_000L, e, dummySender());
+        a.setSendQueueSize(Integer.MAX_VALUE);
         a.setVerbose(false);
         a.start();
         return new AppenderWrapper(a);
@@ -33,21 +34,20 @@ public class AppenderTest {
             this.parFactor = 1;
             this.generator = () -> InfiniteEventIterator.from(generateEvents(10_000, 10)).limited(100_000);
             this.benchmarks = Arrays.asList(
-                Benchmark.of("dummyAppender",
-                    () -> initApp(capacity, defaultToStringEncoder()),
-                    (a, e) -> a.append(e),
-                    a -> a.stop()),
                 Benchmark.of("dummyAppenderWait",
                     () -> initApp(capacity, defaultToStringEncoder()),
-                    (a, e) -> a.appendAndWait(e),
+                    (a, e) -> a.append(e),
+                    a -> a.waitAllAppended(),
                     a -> a.stop()),
                 Benchmark.of("dummyJsonAppenderWait",
                     () -> initApp(capacity, jsonEncoder(false, "singleThreadPerformance")),
-                    (a, e) -> a.appendAndWait(e),
+                    (a, e) -> a.append(e),
+                    a -> a.waitAllAppended(),
                     a -> a.stop()),
                 Benchmark.of("dummyProtobufAppenderWait",
                     () -> initApp(capacity, protobufEncoder(false, "singleThreadPerformance")),
-                    (a, e) -> a.appendAndWait(e),
+                    (a, e) -> a.append(e),
+                    a -> a.waitAllAppended(),
                     a -> a.stop())
             );
         }});
@@ -65,21 +65,20 @@ public class AppenderTest {
             this.parFactor = 2;
             this.generator = () -> InfiniteEventIterator.from(generateEvents(10_000, 10)).limited(100_000);
             this.benchmarks = Arrays.asList(
-                Benchmark.of("dummyAppender",
-                    () -> initApp(capacity, defaultToStringEncoder()),
-                    (a, e) -> a.append(e),
-                    a -> a.stop()),
                 Benchmark.of("dummyAppenderWait",
                     () -> initApp(capacity, defaultToStringEncoder()),
-                    (a, e) -> a.appendAndWait(e),
+                    (a, e) -> a.append(e),
+                    a -> a.waitAllAppended(),
                     a -> a.stop()),
                 Benchmark.of("dummyJsonAppenderWait",
                     () -> initApp(capacity, jsonEncoder(false, "singleThreadPerformance")),
-                    (a, e) -> a.appendAndWait(e),
+                    (a, e) -> a.append(e),
+                    a -> a.waitAllAppended(),
                     a -> a.stop()),
                 Benchmark.of("dummyProtobufAppenderWait",
                     () -> initApp(capacity, protobufEncoder(false, "singleThreadPerformance")),
-                    (a, e) -> a.appendAndWait(e),
+                    (a, e) -> a.append(e),
+                    a -> a.waitAllAppended(),
                     a -> a.stop())
             );
         }});
