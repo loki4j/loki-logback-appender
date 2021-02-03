@@ -129,8 +129,7 @@ public class LokiTestingClient {
         });
         withEncoder(expectedEncoder, encoder -> {
             for (int i = 0; i < events.length; i++) {
-                records[i] = new LogRecord();
-                encoder.eventToRecord(events[i], records[i]);
+                records[i] =  encoder.eventToRecord(events[i]);
             }
             reqStr.set(new String(encoder.encode(records)));
         });

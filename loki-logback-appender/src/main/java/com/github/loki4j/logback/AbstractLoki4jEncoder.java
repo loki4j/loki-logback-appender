@@ -121,15 +121,6 @@ public abstract class AbstractLoki4jEncoder extends EncoderBase<LogRecord[]> imp
         labelPatternLayout.stop();
     }
 
-    public LogRecord eventToRecord(ILoggingEvent e, LogRecord r) {
-        r.timestampMs = e.getTimeStamp();
-        r.nanos = nanoCounter.updateAndGet(i -> i < 999_999 ? i + 1 : 0);
-        r.stream = labelPatternLayout.doLayout(e).intern();
-        r.streamHashCode = r.stream.hashCode();
-        r.message = messagePatternLayout.doLayout(e);
-        return r;
-    }
-
     public LogRecord eventToRecord(ILoggingEvent e) {
         LogRecord r = new LogRecord();
         r.timestampMs = e.getTimeStamp();

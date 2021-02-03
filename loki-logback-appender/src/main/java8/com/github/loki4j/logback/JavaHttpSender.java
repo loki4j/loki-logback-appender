@@ -1,7 +1,5 @@
 package com.github.loki4j.logback;
 
-import java.util.concurrent.CompletableFuture;
-
 import com.github.loki4j.common.LokiResponse;
 
 import ch.qos.logback.core.joran.spi.NoAutoStart;
@@ -24,11 +22,6 @@ public class JavaHttpSender extends AbstractHttpSender {
             "JavaHttpSender is supported only for Java 11+. Please specify <http class=\"" +
             ApacheHttpSender.class.getName() +
             "\"> your logback config");
-    }
-
-    @Override
-    public CompletableFuture<LokiResponse> sendAsync(byte[] batch) {
-        throw new IllegalStateException("Not implemented");
     }
 
     @Override

@@ -23,8 +23,7 @@ public class AbstractLoki4jEncoderTest {
                     "test.TestApp",
                     "thread-1",
                     "Test message",
-                    null),
-                new LogRecord());
+                    null));
             var re1 = LogRecord.create(100L, 1, "level=INFO,app=my-app", "l=INFO c=test.TestApp t=thread-1 | Test message ");
             assertEquals("Simple event", re1, r1);
 
@@ -35,8 +34,7 @@ public class AbstractLoki4jEncoderTest {
                     "com.example.testtesttest.somepackage.TestApp",
                     "thread-2",
                     "Message with error",
-                    ExceptionGenerator.exception("Test exception")),
-                new LogRecord());
+                    ExceptionGenerator.exception("Test exception")));
             // make the message a bit easier to check
             r2.message = r2.message.replaceAll("\r\n", "\n").replaceAll(":\\d+", "");
 

@@ -10,8 +10,6 @@ import ch.qos.logback.core.encoder.Encoder;
  */
 public interface Loki4jEncoder extends Encoder<LogRecord[]> {
     
-    LogRecord eventToRecord(ILoggingEvent e, LogRecord r);
-
     LogRecord eventToRecord(ILoggingEvent e);
 
     String getContentType();
