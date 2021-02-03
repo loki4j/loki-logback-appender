@@ -6,6 +6,7 @@ import java.util.concurrent.Executors;
 import java.util.concurrent.ScheduledExecutorService;
 import java.util.concurrent.TimeUnit;
 import java.util.concurrent.atomic.AtomicBoolean;
+import java.util.concurrent.atomic.AtomicLong;
 import java.util.concurrent.locks.LockSupport;
 import java.util.function.Function;
 import java.util.function.Supplier;
@@ -43,9 +44,9 @@ public final class DefaultPipeline extends ContextAwareBase implements LifeCycle
 
     private volatile boolean started = false;
 
-    private volatile AtomicBoolean drainRequested = new AtomicBoolean(false);
+    private AtomicBoolean drainRequested = new AtomicBoolean(false);
 
-    private volatile long lastSendTimeMs = System.currentTimeMillis();
+    private AtomicLong lastSendTimeMs = new AtomicLong(System.currentTimeMillis());
 
     public DefaultPipeline(
             SoftLimitBuffer<LogRecord> buffer,
@@ -83,7 +84,7 @@ public final class DefaultPipeline extends ContextAwareBase implements LifeCycle
         addInfo("Pipeline is stopping...");
 
         waitSendQueueLessThan(batcher.getCapacity(), 1000);
-        lastSendTimeMs = 0;
+        lastSendTimeMs.set(0);
         drain();
         waitSendQueueIsEmpty(100);
 
@@ -145,7 +146,7 @@ public final class DefaultPipeline extends ContextAwareBase implements LifeCycle
             if (records.length == 0) record = buffer.poll();
         }
         if (records.length == 0 && drainRequested.get())
-            records = batcher.drain(lastSendTimeMs, ZERO_RECORDS);
+            records = batcher.drain(lastSendTimeMs.get(), ZERO_RECORDS);
         drainRequested.set(false);
         if (records.length == 0) return;
 
@@ -170,7 +171,7 @@ public final class DefaultPipeline extends ContextAwareBase implements LifeCycle
         send.apply(batch);
 
         buffer.commit(batch.recordsCount);
-        lastSendTimeMs = System.currentTimeMillis();
+        lastSendTimeMs.set(System.currentTimeMillis());
     }
 
     void waitSendQueueIsEmpty(long timeoutMs) {
