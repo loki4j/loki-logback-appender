@@ -1,4 +1,4 @@
-package com.github.loki4j.common;
+package com.github.loki4j.logback.performance.reg_v110;
 
 import java.util.Arrays;
 import java.util.Objects;

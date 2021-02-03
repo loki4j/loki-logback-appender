@@ -5,7 +5,6 @@ import java.util.concurrent.Executors;
 import java.util.concurrent.ScheduledExecutorService;
 import java.util.concurrent.TimeUnit;
 
-import com.github.loki4j.common.ConcurrentBatchBuffer;
 import com.github.loki4j.common.LogRecord;
 import com.github.loki4j.common.LokiResponse;
 import com.github.loki4j.common.LokiThreadFactory;
