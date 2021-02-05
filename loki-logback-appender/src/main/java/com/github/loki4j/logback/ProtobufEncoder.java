@@ -5,6 +5,7 @@ import java.io.IOException;
 import com.github.loki4j.common.LogRecord;
 import com.grafana.loki.protobuf.Logproto.EntryAdapter;
 import com.grafana.loki.protobuf.Logproto.PushRequest;
+import com.google.protobuf.InvalidProtocolBufferException;
 import com.google.protobuf.Timestamp;
 
 import org.xerial.snappy.Snappy;
@@ -52,6 +53,17 @@ public class ProtobufEncoder extends AbstractLoki4jEncoder {
         return compress(request.build().toByteArray());
     }
 
+    @Override
+    protected byte[] encodeMessage(long timestampMs, int nanos, String message) {
+        return EntryAdapter.newBuilder()
+            .setTimestamp(Timestamp.newBuilder()
+                .setSeconds(timestampMs / 1000)
+                .setNanos((int)(timestampMs % 1000) * 1_000_000 + nanos))
+            .setLine(message)
+            .build()
+            .toByteArray();
+    }
+
     private String labels(String[] labels) {
         var s = new StringBuilder();
         s.append('{');
@@ -71,12 +83,13 @@ public class ProtobufEncoder extends AbstractLoki4jEncoder {
     }
     
     private EntryAdapter entry(LogRecord record) {
-        return EntryAdapter.newBuilder()
-            .setTimestamp(Timestamp.newBuilder()
-                .setSeconds(record.timestampMs / 1000)
-                .setNanos((int)(record.timestampMs % 1000) * 1_000_000 + record.nanos))
-            .setLine(record.message)
-            .build();
+        try {
+            return EntryAdapter.newBuilder()
+                .mergeFrom(record.binMessage)
+                .build();
+        } catch (InvalidProtocolBufferException e) {
+            throw new RuntimeException("Protobuf merge error", e);
+        }
     }
 
     private byte[] compress(byte[] input) {

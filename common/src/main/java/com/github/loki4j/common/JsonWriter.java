@@ -115,10 +115,14 @@ public final class JsonWriter {
     }
 
     private void record(LogRecord record) {
+        writeAscii(record.binMessage);
+    }
+
+    public void record(long timestampMs, int nanos, String message) {
         writeByte(ARRAY_START);
-        writeAsciiString(String.format("%s%06d", record.timestampMs, record.nanos));
+        writeAsciiString(String.format("%s%06d", timestampMs, nanos));
         writeByte(COMMA);
-        writeString(record.message);
+        writeString(message);
         writeByte(ARRAY_END);
     }
 
@@ -377,6 +381,24 @@ public final class JsonWriter {
         position += len;
     }
 
+    /**
+     * Copy bytes into JSON as is.
+     * Provided buffer can't be null.
+     *
+     * @param buf byte buffer to copy
+     */
+    public final void writeAscii(final byte[] buf) {
+        final int len = buf.length;
+        if (position + len >= buffer.length) {
+            enlargeOrFlush(position, len);
+        }
+        final int p = position;
+        final byte[] _result = buffer;
+        for (int i = 0; i < buf.length; i++) {
+            _result[p + i] = buf[i];
+        }
+        position += len;
+    }
 
     /**
      * Content of buffer can be copied to another array of appropriate size.
@@ -387,7 +409,9 @@ public final class JsonWriter {
      * @return copy of the buffer up to the current position
      */
     public final byte[] toByteArray() {
-        return Arrays.copyOf(buffer, position);
+        var r = Arrays.copyOf(buffer, position);
+        reset();
+        return r;
     }
 
 

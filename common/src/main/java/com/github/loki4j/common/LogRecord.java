@@ -8,9 +8,9 @@ public class LogRecord {
 
     public String stream;
 
-    public int streamHashCode;
+    //public String message;
 
-    public String message;
+    public byte[] binMessage;
 
     public static LogRecord create() {
         return new LogRecord();
@@ -20,13 +20,12 @@ public class LogRecord {
             long timestamp,
             int nanos,
             String stream,
-            String message) {
+            byte[] message) {
         var r = new LogRecord();
         r.timestampMs = timestamp;
         r.nanos = nanos;
         r.stream = stream;
-        r.streamHashCode = stream.hashCode();
-        r.message = message;
+        r.binMessage = message;
         return r;
     }
 
@@ -35,17 +34,15 @@ public class LogRecord {
         return "LogRecord [ts=" + timestampMs +
             ", nanos=" + nanos +
             ", stream=" + stream +
-            ", message=" + message + "]";
+            ", message=" + new String(binMessage) + "]";
     }
 
 	@Override
 	public int hashCode() {
 		final int prime = 31;
 		int result = 1;
-		result = prime * result + ((message == null) ? 0 : message.hashCode());
 		result = prime * result + nanos;
 		result = prime * result + ((stream == null) ? 0 : stream.hashCode());
-		result = prime * result + streamHashCode;
 		result = prime * result + (int) (timestampMs ^ (timestampMs >>> 32));
 		return result;
 	}
@@ -59,19 +56,12 @@ public class LogRecord {
 		if (getClass() != obj.getClass())
 			return false;
 		LogRecord other = (LogRecord) obj;
-		if (message == null) {
-			if (other.message != null)
-				return false;
-		} else if (!message.equals(other.message))
-			return false;
 		if (nanos != other.nanos)
 			return false;
 		if (stream == null) {
 			if (other.stream != null)
 				return false;
 		} else if (!stream.equals(other.stream))
-			return false;
-		if (streamHashCode != other.streamHashCode)
 			return false;
 		if (timestampMs != other.timestampMs)
 			return false;

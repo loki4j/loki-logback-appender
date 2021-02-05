@@ -144,6 +144,10 @@ public class Generators {
             protected byte[] encodeDynamicLabels(LogRecord[] batch) {
                 return batchToString(batch).getBytes(charset);
             }
+            @Override
+            protected byte[] encodeMessage(long timestampMs, int nanos, String message) {
+                return message.getBytes();
+            }
         };
         encoder.setLabel(label);
         encoder.setMessage(message);
@@ -266,6 +270,11 @@ public class Generators {
         if (throwable != null)
             e.setThrowableProxy(new ThrowableProxy(throwable));
         return e;
+    }
+
+    public static LogRecord logRecord(long ts, int ns, String stream, String msg, AbstractLoki4jEncoder encoder) {
+        var binmsg = encoder.encodeMessage(ts, ns, msg);
+        return LogRecord.create(ts, ns, stream, binmsg);
     }
 
     public static class AppenderWrapper {

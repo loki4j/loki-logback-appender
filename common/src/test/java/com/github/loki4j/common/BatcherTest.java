@@ -7,6 +7,10 @@ public class BatcherTest {
 
     private final LogRecord[] EMPTY = new LogRecord[0];
 
+    private LogRecord logRecord(long ts) {
+        return LogRecord.create(ts, 0, "stream", ("message" + ts).getBytes());
+    }
+
     @Test 
     public void testAddInt() {
         var cbb = new Batcher(10, 0);
@@ -14,7 +18,7 @@ public class BatcherTest {
         var array2 = new LogRecord[10];
 
         for (int i = 0; i < 19; i++) {
-            var record = LogRecord.create(i, 0, "stream", "message" + i);
+            var record = logRecord(i);
             var buf = cbb.add(record, EMPTY);
             if (i < 10)
                 array1[i] = record;
@@ -29,7 +33,7 @@ public class BatcherTest {
             }
         }
 
-        var record = LogRecord.create(19, 0, "stream", "message" + 19);
+        var record = logRecord(19);
         var buf = cbb.add(record, EMPTY);
         array2[9] = record;
         assertEquals("Batch is ready", 10, buf.length);
@@ -42,7 +46,7 @@ public class BatcherTest {
 
         assertEquals("capacity is correct", 1, cbb.getCapacity());
 
-        var record = LogRecord.create(1, 0, "stream", "message" + 1);;
+        var record = logRecord(1);
         var buf = cbb.add(record, EMPTY);
         assertEquals("Batch is ready", 1, buf.length);
         assertArrayEquals("Correct elements in batch", new LogRecord[] { record }, buf);
@@ -57,7 +61,7 @@ public class BatcherTest {
         assertEquals("Batch is empty", 0, buf.length);
 
         for (int i = 0; i < 7; i++) {
-            var record = LogRecord.create(i, 0, "stream", "message" + i);
+            var record = logRecord(i);
             buf = cbb.add(record, EMPTY);
             array1[i] = record;
             assertEquals("Batch is not ready", 0, buf.length);
@@ -67,7 +71,7 @@ public class BatcherTest {
         assertEquals("Batch is ready", 7, buf.length);
         assertArrayEquals("Correct elements in batch", array1, buf);
 
-        var record = LogRecord.create(1, 0, "stream", "message" + 1);;
+        var record = logRecord(1);
         buf = cbb.add(record, EMPTY);
         assertEquals("Batch is not ready", 0, buf.length);
         buf = cbb.drain(System.currentTimeMillis() + 300, EMPTY);

@@ -11,13 +11,16 @@ import ch.qos.logback.core.joran.spi.NoAutoStart;
 @NoAutoStart
 public class JsonEncoder extends AbstractLoki4jEncoder {
 
+    private static final ThreadLocal<JsonWriter> localWriter =
+        ThreadLocal.withInitial(() -> new JsonWriter());
+
     public String getContentType() {
         return "application/json";
     }
 
     @Override
     protected byte[] encodeStaticLabels(LogRecord[] batch) {
-        var writer = new JsonWriter();
+        var writer = localWriter.get();
         writer.beginStreams(batch[0], extractStreamKVPairs(batch[0].stream));
         for (int i = 1; i < batch.length; i++) {
             writer.nextRecord(batch[i]);
@@ -28,7 +31,7 @@ public class JsonEncoder extends AbstractLoki4jEncoder {
 
     @Override
     protected byte[] encodeDynamicLabels(LogRecord[] batch) {
-        var writer = new JsonWriter();
+        var writer = localWriter.get();
         var currentStream = batch[0].stream;
         writer.beginStreams(batch[0], extractStreamKVPairs(currentStream));
         for (int i = 1; i < batch.length; i++) {
@@ -41,6 +44,13 @@ public class JsonEncoder extends AbstractLoki4jEncoder {
             }
         }
         writer.endStreams();
+        return writer.toByteArray();
+    }
+
+    @Override
+    protected byte[] encodeMessage(long timestampMs, int nanos, String message) {
+        var writer = localWriter.get();
+        writer.record(timestampMs, nanos, message);
         return writer.toByteArray();
     }
 

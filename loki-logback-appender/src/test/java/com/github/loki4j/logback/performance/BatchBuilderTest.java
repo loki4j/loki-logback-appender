@@ -26,8 +26,7 @@ public class BatchBuilderTest {
         r.timestampMs = e.getTimeStamp();
         r.nanos = 0;
         r.stream = "test=dlkjafh";
-        r.streamHashCode = r.stream.hashCode();
-        r.message = e.getMessage();
+        r.binMessage = e.getMessage().getBytes();
         return r;
     }
 

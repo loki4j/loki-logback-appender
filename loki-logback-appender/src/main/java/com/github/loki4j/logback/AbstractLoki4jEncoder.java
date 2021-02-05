@@ -126,10 +126,11 @@ public abstract class AbstractLoki4jEncoder extends EncoderBase<LogRecord[]> imp
         r.timestampMs = e.getTimeStamp();
         r.nanos = nanoCounter.updateAndGet(i -> i < 999_999 ? i + 1 : 0);
         r.stream = labelPatternLayout.doLayout(e).intern();
-        r.streamHashCode = r.stream.hashCode();
-        r.message = messagePatternLayout.doLayout(e);
+        r.binMessage = encodeMessage(r.timestampMs, r.nanos, messagePatternLayout.doLayout(e));
         return r;
     }
+
+    protected abstract byte[] encodeMessage(long timestampMs, int nanos, String message);
 
     @Override
     public byte[] headerBytes() {

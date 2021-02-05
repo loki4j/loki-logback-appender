@@ -10,12 +10,14 @@ import static com.github.loki4j.logback.Generators.*;
 
 public class JsonEncoderTest {
 
-    private LogRecord[] records = new LogRecord[] {
-        LogRecord.create(100L, 1, "level=INFO,app=my-app", "l=INFO c=test.TestApp t=thread-1 | Test message 1"),
-        LogRecord.create(103L, 2, "level=DEBUG,app=my-app", "l=DEBUG c=test.TestApp t=thread-2 | Test message 2"),
-        LogRecord.create(105L, 3, "level=INFO,app=my-app", "l=INFO c=test.TestApp t=thread-1 | Test message 3"),
-        LogRecord.create(102L, 4, "level=INFO,app=my-app", "l=INFO c=test.TestApp t=thread-3 | Test message 4"),
-    };
+    private LogRecord[] records(AbstractLoki4jEncoder e) {
+        return new LogRecord[] {
+            logRecord(100L, 1, "level=INFO,app=my-app", "l=INFO c=test.TestApp t=thread-1 | Test message 1", e),
+            logRecord(103L, 2, "level=DEBUG,app=my-app", "l=DEBUG c=test.TestApp t=thread-2 | Test message 2", e),
+            logRecord(105L, 3, "level=INFO,app=my-app", "l=INFO c=test.TestApp t=thread-1 | Test message 3", e),
+            logRecord(102L, 4, "level=INFO,app=my-app", "l=INFO c=test.TestApp t=thread-3 | Test message 4", e),
+        };
+    }
 
     private static JsonEncoder jsonEncoder(boolean staticLabels) {
         var encoder = new JsonEncoder();
@@ -39,7 +41,7 @@ public class JsonEncoderTest {
                 "['105000003','l=INFO c=test.TestApp t=thread-1 | Test message 3']," +
                 "['102000004','l=INFO c=test.TestApp t=thread-3 | Test message 4']]}]}"
                 ).replace('\'', '"');
-            assertEquals("static labels", expected, new String(encoder.encode(records), encoder.charset));
+            assertEquals("static labels", expected, new String(encoder.encode(records(encoder)), encoder.charset));
         });
     }
 
@@ -54,17 +56,17 @@ public class JsonEncoderTest {
                 "['105000003','l=INFO c=test.TestApp t=thread-1 | Test message 3']," +
                 "['102000004','l=INFO c=test.TestApp t=thread-3 | Test message 4']]}]}"
                 ).replace('\'', '"');
-            assertEquals("dynamic labels", expected, new String(encoder.encode(records), encoder.charset));
+            assertEquals("dynamic labels", expected, new String(encoder.encode(records(encoder)), encoder.charset));
         });
     }
 
     @Test
     public void testEncodeEscapes() {
-        LogRecord[] escRecords = new LogRecord[] {
-            LogRecord.create(100L, 1, "level=INFO,\napp=my-app\r", "l=INFO c=test.TestApp t=thread-1 | Test message 1\nNew line"),
-            LogRecord.create(103L, 2, "level=DEBUG,\r\napp=my-app", "l=DEBUG c=test.TestApp t=thread-2\t|\tTest message 2\r\nNew Line")
-        };
         withEncoder(jsonEncoder(false), encoder -> {
+            LogRecord[] escRecords = new LogRecord[] {
+                logRecord(100L, 1, "level=INFO,\napp=my-app\r", "l=INFO c=test.TestApp t=thread-1 | Test message 1\nNew line", encoder),
+                logRecord(103L, 2, "level=DEBUG,\r\napp=my-app", "l=DEBUG c=test.TestApp t=thread-2\t|\tTest message 2\r\nNew Line", encoder)
+            };
             var expected = (
                 "{'streams':[{'stream':{'level':'DEBUG','\\r\\napp':'my-app'},'values':" +
                 "[['103000002','l=DEBUG c=test.TestApp t=thread-2\\t|\\tTest message 2\\r\\nNew Line']]}," +

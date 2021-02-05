@@ -2,16 +2,20 @@ package com.github.loki4j.common;
 
 import org.junit.Test;
 
-import static com.github.loki4j.common.LogRecord.create;
 import static org.junit.Assert.*;
 
 public class JsonWriterTest {
+
+    private LogRecord logRecord(long ts, int ns, String stream, String msg, JsonWriter writer) {
+        writer.record(ts, ns, msg);
+        return LogRecord.create(ts, ns, stream, writer.toByteArray());
+    }
     
     @Test
     public void testWriteRecord() {
-        var re1 = create(100L, 1, "level=INFO,app=my-app", "l=INFO c=test.TestApp t=thread-1 | Test message");
-
         var writer = new JsonWriter();
+
+        var re1 = logRecord(100L, 1, "level=INFO,app=my-app", "l=INFO c=test.TestApp t=thread-1 | Test message", writer);
         writer.beginStreams(re1, new String[] { "level","INFO","app","my-app" });
         writer.endStreams();
 
@@ -26,9 +30,9 @@ public class JsonWriterTest {
 
     @Test
     public void testWriteSpecialCharsRecord() {
-        var re1 = create(100L, 1, "level=INFO,app=my-app", "спец !@#$%^&*()\" \n\tсимволы <>?/\\№ё:{}[]🏁");
-
         var writer = new JsonWriter();
+
+        var re1 = logRecord(100L, 1, "level=INFO,app=my-app", "спец !@#$%^&*()\" \n\tсимволы <>?/\\№ё:{}[]🏁", writer);
         writer.beginStreams(re1, new String[] { "level","INFO","app","my-app" });
         writer.endStreams();
 
