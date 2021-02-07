@@ -1,12 +1,12 @@
 package com.github.loki4j.logback;
 
 import java.nio.charset.Charset;
-import java.util.Arrays;
 import java.util.Comparator;
 import java.util.concurrent.atomic.AtomicInteger;
 import java.util.regex.Pattern;
 
 import com.github.loki4j.common.LogRecord;
+import com.github.loki4j.common.LogRecordBatch;
 
 import ch.qos.logback.classic.PatternLayout;
 import ch.qos.logback.classic.spi.ILoggingEvent;
@@ -16,7 +16,7 @@ import ch.qos.logback.core.encoder.EncoderBase;
 /**
  * Abstract class that provides basic Loki4j batch encoding functionality
  */
-public abstract class AbstractLoki4jEncoder extends EncoderBase<LogRecord[]> implements Loki4jEncoder {
+public abstract class AbstractLoki4jEncoder extends EncoderBase<LogRecordBatch> implements Loki4jEncoder {
     
     private static final byte[] ZERO_BYTES = new byte[0];
 
@@ -143,26 +143,26 @@ public abstract class AbstractLoki4jEncoder extends EncoderBase<LogRecord[]> imp
     }
 
     @Override
-    public byte[] encode(LogRecord[] batch) {
-        if (batch.length < 1)
+    public byte[] encode(LogRecordBatch batch) {
+        if (batch.isEmpty())
             return ZERO_BYTES;
 
         if (staticLabels) {
             if (sortByTime) 
-                Arrays.sort(batch, byTime);
+                batch.sort(byTime);
 
             return encodeStaticLabels(batch);
         } else {
             var comp = sortByTime ? byStream.thenComparing(byTime) : byStream; 
-            Arrays.sort(batch, comp);
+            batch.sort(comp);
 
             return encodeDynamicLabels(batch);
         }
     }
 
-    protected abstract byte[] encodeStaticLabels(LogRecord[] batch);
+    protected abstract byte[] encodeStaticLabels(LogRecordBatch batch);
 
-    protected abstract byte[] encodeDynamicLabels(LogRecord[] batch);
+    protected abstract byte[] encodeDynamicLabels(LogRecordBatch batch);
 
     private PatternLayout initPatternLayout(String pattern) {
         var patternLayout = new PatternLayout();

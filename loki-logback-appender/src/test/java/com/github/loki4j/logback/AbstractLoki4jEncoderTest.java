@@ -9,6 +9,7 @@ import static org.junit.Assert.*;
 import java.util.function.Function;
 
 import com.github.loki4j.common.LogRecord;
+import com.github.loki4j.common.LogRecordBatch;
 import com.github.loki4j.testkit.dummy.ExceptionGenerator;
 
 import static com.github.loki4j.logback.Generators.*;
@@ -98,18 +99,18 @@ public class AbstractLoki4jEncoderTest {
     public void testEncode() {
         var lcfg = labelCfg("level=%level,app=\"my\"app", ",", "=", true);
         var mcfg = messageCfg("l=%level c=%logger{20} t=%thread | %msg %ex{1}");
-        Function<AbstractLoki4jEncoder, LogRecord[]> rs = enc ->
-            new LogRecord[] {
+        Function<AbstractLoki4jEncoder, LogRecordBatch> rs = enc ->
+            new LogRecordBatch(new LogRecord[] {
                 logRecord(100L, 1, "level=INFO,app=my-app", "l=INFO c=test.TestApp t=thread-1 | Test message 1", enc),
                 logRecord(103L, 2, "level=DEBUG,app=my-app", "l=INFO c=test.TestApp t=thread-2 | Test message 2", enc),
                 logRecord(105L, 3, "level=INFO,app=my-app", "l=INFO c=test.TestApp t=thread-1 | Test message 3", enc),
                 logRecord(104L, 4, "level=WARN,app=my-app", "l=INFO c=test.TestApp t=thread-1 | Test message 4", enc),
                 logRecord(103L, 1, "level=ERROR,app=my-app", "l=INFO c=test.TestApp t=thread-2 | Test message 5", enc),
                 logRecord(110L, 6, "level=INFO,app=my-app", "l=INFO c=test.TestApp t=thread-2 | Test message 6", enc)
-            };
+            });
 
         withEncoder(toStringEncoder(lcfg, mcfg, false, true), encoder -> {
-            assertArrayEquals(new byte[0], encoder.encode(new LogRecord[0]));
+            assertArrayEquals(new byte[0], encoder.encode(new LogRecordBatch(new LogRecord[0])));
             assertEquals("static labels, no sort", batchToString(new LogRecord[] {
                 logRecord(100L, 1, "level=INFO,app=my-app", "l=INFO c=test.TestApp t=thread-1 | Test message 1", encoder),
                 logRecord(103L, 2, "level=DEBUG,app=my-app", "l=INFO c=test.TestApp t=thread-2 | Test message 2", encoder),

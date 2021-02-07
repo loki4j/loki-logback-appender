@@ -1,7 +1,5 @@
 package com.github.loki4j.common;
 
-import java.util.Arrays;
-
 public final class Batcher {
 
     private final long maxTimeoutMs;
@@ -13,25 +11,20 @@ public final class Batcher {
         this.items = new LogRecord[maxItems];
     }
 
-    public LogRecord[] add(LogRecord input, LogRecord[] zeroSizeArray) {
-        LogRecord[] batch = zeroSizeArray;
+    public void add(LogRecord input, LogRecordBatch destination) {
         items[index] = input;
         if (++index == items.length) {
-            batch = Arrays.copyOf(items, items.length, zeroSizeArray.getClass());
+            destination.initFrom(items, items.length);
             index = 0;
         }
-        return batch;
     }
 
-    public LogRecord[] drain(long lastSentMs, LogRecord[] zeroSizeArray) {
-        LogRecord[] batch = zeroSizeArray;
-
+    public void drain(long lastSentMs, LogRecordBatch destination) {
         final long now = System.currentTimeMillis();
         if (index > 0 && now - lastSentMs > maxTimeoutMs) {
-            batch = Arrays.copyOf(items, index, zeroSizeArray.getClass());
+            destination.initFrom(items, index);
             index = 0;
         }
-        return batch;
     }
 
     public int getCapacity() {

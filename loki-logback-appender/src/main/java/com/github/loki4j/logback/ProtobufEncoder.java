@@ -3,8 +3,10 @@ package com.github.loki4j.logback;
 import java.io.IOException;
 
 import com.github.loki4j.common.LogRecord;
+import com.github.loki4j.common.LogRecordBatch;
 import com.grafana.loki.protobuf.Logproto.EntryAdapter;
 import com.grafana.loki.protobuf.Logproto.PushRequest;
+import com.grafana.loki.protobuf.Logproto.StreamAdapter;
 import com.google.protobuf.InvalidProtocolBufferException;
 import com.google.protobuf.Timestamp;
 
@@ -23,32 +25,30 @@ public class ProtobufEncoder extends AbstractLoki4jEncoder {
     }
 
     @Override
-    protected byte[] encodeStaticLabels(LogRecord[] batch) {
+    protected byte[] encodeStaticLabels(LogRecordBatch batch) {
         var request = PushRequest.newBuilder();
         var streamBuilder = request
             .addStreamsBuilder()
-            .setLabels(labels(extractStreamKVPairs(batch[0].stream)));
-        for (int i = 0; i < batch.length; i++) {
-            streamBuilder.addEntries(entry(batch[i]));
+            .setLabels(labels(extractStreamKVPairs(batch.get(0).stream)));
+        for (int i = 0; i < batch.size(); i++) {
+            streamBuilder.addEntries(entry(batch.get(i)));
         }
         return compress(request.build().toByteArray());
     }
 
     @Override
-    protected byte[] encodeDynamicLabels(LogRecord[] batch) {
+    protected byte[] encodeDynamicLabels(LogRecordBatch batch) {
         var request = PushRequest.newBuilder();
-        var currentStream = batch[0].stream;
-        var streamBuilder = request
-            .addStreamsBuilder()
-            .setLabels(labels(extractStreamKVPairs(currentStream)));
-        for (int i = 0; i < batch.length; i++) {
-            if (batch[i].stream != currentStream) {
-                currentStream = batch[i].stream;
+        String currentStream = null;
+        StreamAdapter.Builder streamBuilder = null;
+        for (int i = 0; i < batch.size(); i++) {
+            if (batch.get(i).stream != currentStream) {
+                currentStream = batch.get(i).stream;
                 streamBuilder = request
                     .addStreamsBuilder()
                     .setLabels(labels(extractStreamKVPairs(currentStream)));
             }
-            streamBuilder.addEntries(entry(batch[i]));
+            streamBuilder.addEntries(entry(batch.get(i)));
         }
         return compress(request.build().toByteArray());
     }

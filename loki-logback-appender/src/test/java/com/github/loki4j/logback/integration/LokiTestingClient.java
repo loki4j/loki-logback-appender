@@ -22,6 +22,7 @@ import com.fasterxml.jackson.core.JsonProcessingException;
 import com.fasterxml.jackson.databind.JsonMappingException;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.github.loki4j.common.LogRecord;
+import com.github.loki4j.common.LogRecordBatch;
 import com.github.loki4j.logback.AbstractHttpSender;
 import com.github.loki4j.logback.Loki4jAppender;
 import com.github.loki4j.logback.AbstractLoki4jEncoder;
@@ -131,7 +132,7 @@ public class LokiTestingClient {
             for (int i = 0; i < events.length; i++) {
                 records[i] =  encoder.eventToRecord(events[i]);
             }
-            reqStr.set(new String(encoder.encode(records)));
+            reqStr.set(new String(encoder.encode(new LogRecordBatch(records))));
         });
 
         var req = parseRequest(reqStr.get());

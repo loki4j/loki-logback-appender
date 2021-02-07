@@ -10,8 +10,8 @@ public class BinaryBatch {
 
     public static BinaryBatch fromLogRecordBatch(LogRecordBatch batch, byte[] data) {
         var b = new BinaryBatch();
-        b.batchId = batch.batchId;
-        b.recordsCount = batch.records.length;
+        b.batchId = batch.batchId();
+        b.recordsCount = batch.size();
         b.data = data;
         return b;
     }

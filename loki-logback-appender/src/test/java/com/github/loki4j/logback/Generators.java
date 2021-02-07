@@ -10,6 +10,7 @@ import java.util.function.Function;
 import java.util.stream.StreamSupport;
 
 import com.github.loki4j.common.LogRecord;
+import com.github.loki4j.common.LogRecordBatch;
 import com.github.loki4j.common.LokiResponse;
 import com.github.loki4j.testkit.dummy.ExceptionGenerator;
 import com.github.loki4j.testkit.dummy.LokiHttpServerMock;
@@ -24,13 +25,17 @@ import static com.github.loki4j.testkit.dummy.Generators.genMessage;
 
 public class Generators {
 
-    public static String batchToString(LogRecord[] batch) {
+    public static String batchToString(LogRecordBatch batch) {
         var s = new StringBuilder();
-        for (int i = 0; i < batch.length; i++) {
-            s.append(batch[i]);
+        for (int i = 0; i < batch.size(); i++) {
+            s.append(batch.get(i));
             s.append('\n');
         }
         return s.toString();
+    }
+
+    public static String batchToString(LogRecord[] records) {
+        return batchToString(new LogRecordBatch(records));
     }
 
     public static LokiHttpServerMock lokiMock(int port) {
@@ -137,11 +142,11 @@ public class Generators {
                 return "text/plain";
             }
             @Override
-            protected byte[] encodeStaticLabels(LogRecord[] batch) {
+            protected byte[] encodeStaticLabels(LogRecordBatch batch) {
                 return batchToString(batch).getBytes(charset);
             }
             @Override
-            protected byte[] encodeDynamicLabels(LogRecord[] batch) {
+            protected byte[] encodeDynamicLabels(LogRecordBatch batch) {
                 return batchToString(batch).getBytes(charset);
             }
             @Override

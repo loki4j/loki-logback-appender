@@ -6,6 +6,7 @@ import org.xerial.snappy.Snappy;
 import static org.junit.Assert.*;
 
 import com.github.loki4j.common.LogRecord;
+import com.github.loki4j.common.LogRecordBatch;
 import com.grafana.loki.protobuf.Logproto.EntryAdapter;
 import com.grafana.loki.protobuf.Logproto.PushRequest;
 import com.grafana.loki.protobuf.Logproto.StreamAdapter;
@@ -15,13 +16,13 @@ import static com.github.loki4j.logback.Generators.*;
 
 public class ProtobufEncoderTest {
 
-    private LogRecord[] records(AbstractLoki4jEncoder e) {
-        return new LogRecord[] {
+    private LogRecordBatch records(AbstractLoki4jEncoder e) {
+        return new LogRecordBatch(new LogRecord[] {
             logRecord(100L, 1, "level=INFO,app=my-app", "l=INFO c=test.TestApp t=thread-1 | Test message 1", e),
             logRecord(103L, 2, "level=DEBUG,app=my-app", "l=DEBUG c=test.TestApp t=thread-2 | Test message 2", e),
             logRecord(105L, 3, "level=INFO,app=my-app", "l=INFO c=test.TestApp t=thread-1 | Test message 3", e),
             logRecord(102L, 4, "level=INFO,app=my-app", "l=INFO c=test.TestApp t=thread-3 | Test message 4", e),
-        };
+        });
     }
 
     private static ProtobufEncoder protobufEncoder(boolean staticLabels) {
