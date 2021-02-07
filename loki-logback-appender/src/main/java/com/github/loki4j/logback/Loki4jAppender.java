@@ -23,6 +23,10 @@ public class Loki4jAppender extends UnsynchronizedAppenderBase<ILoggingEvent> {
      */
     private int batchSize = 1000;
     /**
+     * Max number of bytes a single batch can contain
+     */
+    private int batchSizeBytes = 4 * 1024 * 1024;
+    /**
      * Max time in milliseconds to wait before sending a batch to Loki
      */
     private long batchTimeoutMs = 60 * 1000;
@@ -96,7 +100,7 @@ public class Loki4jAppender extends UnsynchronizedAppenderBase<ILoggingEvent> {
         sender.start();
 
         var buffer = new SoftLimitBuffer<LogRecord>(sendQueueSize);
-        var batcher = new Batcher(batchSize, batchTimeoutMs);
+        var batcher = new Batcher(batchSize, batchSizeBytes, batchTimeoutMs);
         pipeline = new DefaultPipeline(buffer, batcher, this::encode, this::send);
         pipeline.setContext(context);
         pipeline.start();
@@ -183,6 +187,9 @@ public class Loki4jAppender extends UnsynchronizedAppenderBase<ILoggingEvent> {
 
     public void setBatchSize(int batchSize) {
         this.batchSize = batchSize;
+    }
+    public void setBatchSizeBytes(int batchSizeBytes) {
+        this.batchSizeBytes = batchSizeBytes;
     }
     public void setBatchTimeoutMs(long batchTimeoutMs) {
         this.batchTimeoutMs = batchTimeoutMs;
