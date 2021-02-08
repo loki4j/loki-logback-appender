@@ -44,6 +44,7 @@ public final class DefaultPipeline extends ContextAwareBase implements LifeCycle
 
     private volatile boolean started = false;
 
+    private AtomicBoolean newEventsArrived = new AtomicBoolean(false);
     private AtomicBoolean drainRequested = new AtomicBoolean(false);
 
     private AtomicLong lastSendTimeMs = new AtomicLong(System.currentTimeMillis());
@@ -96,7 +97,10 @@ public final class DefaultPipeline extends ContextAwareBase implements LifeCycle
     }
 
     public boolean append(Supplier<LogRecord> event) {
-        return buffer.offer(event);
+        var accepted = buffer.offer(event);
+        if (accepted)
+            newEventsArrived.compareAndExchange(false, true);
+        return accepted;
     }
 
     private void drain() {
@@ -142,6 +146,7 @@ public final class DefaultPipeline extends ContextAwareBase implements LifeCycle
             records = batcher.drain(lastSendTimeMs.get(), ZERO_RECORDS);
             addInfo("drained items: " + records.length);
         }
+        newEventsArrived.set(false);
         drainRequested.set(false);
         if (records.length == 0) return;
 
@@ -153,7 +158,7 @@ public final class DefaultPipeline extends ContextAwareBase implements LifeCycle
     }
 
     private boolean noEncodeActions() {
-        return buffer.isEmpty() && !drainRequested.get();
+        return !newEventsArrived.get() && !drainRequested.get();
     }
 
     private void sendStep() throws InterruptedException {
