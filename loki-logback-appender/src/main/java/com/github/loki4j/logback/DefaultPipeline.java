@@ -147,7 +147,7 @@ public final class DefaultPipeline extends ContextAwareBase implements LifeCycle
         }
         if (records.length == 0 && drainRequested.get()) {
             records = batcher.drain(lastSendTimeMs.get(), ZERO_RECORDS);
-            System.out.println("drained items: " + records.length);
+            addInfo("drained items: " + records.length);
         }
         drainRequested.set(false);
         if (records.length == 0) return;
@@ -178,7 +178,7 @@ public final class DefaultPipeline extends ContextAwareBase implements LifeCycle
 
         buffer.commit(batch.recordsCount);
         lastSendTimeMs.set(System.currentTimeMillis());
-        System.out.println("sent items: " + batch.recordsCount);
+        addInfo("sent items: " + batch.recordsCount);
     }
 
     void waitSendQueueIsEmpty(long timeoutMs) {
