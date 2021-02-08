@@ -4,7 +4,7 @@ import java.util.Iterator;
 import java.util.stream.StreamSupport;
 
 public class InfiniteArrayIterator<E> implements Iterator<E> {
-    private E[] es;
+    private final E[] es;
     private int idx = -1;
     public InfiniteArrayIterator(E[] events) {
         this.es = events;
