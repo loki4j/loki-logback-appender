@@ -93,14 +93,6 @@ public final class DefaultPipeline extends ContextAwareBase implements LifeCycle
         scheduler.shutdown();
         encoderThreadPool.shutdown();
         senderThreadPool.shutdown();
-
-        try {
-            scheduler.awaitTermination(500, TimeUnit.MILLISECONDS);
-            encoderThreadPool.awaitTermination(500, TimeUnit.MILLISECONDS);
-            senderThreadPool.awaitTermination(500, TimeUnit.MILLISECONDS);
-        } catch (InterruptedException e) {
-            addInfo("Pipeline was interrupted while stopping");
-        }
     }
 
     public boolean append(Supplier<LogRecord> event) {
@@ -192,6 +184,9 @@ public final class DefaultPipeline extends ContextAwareBase implements LifeCycle
             LockSupport.parkNanos(PARK_NS);
             elapsedNs += PARK_NS;
         }
+        addInfo(String.format(
+            "wait send queue: started=%s, buffer(%s)>=%s, %s ms %s elapsed",
+                started, buffer.size(), size, timeoutMs, elapsedNs < timeoutNs ? "not" : ""));
         if (elapsedNs >= timeoutNs)
             throw new RuntimeException("Not completed within timeout " + timeoutMs + " ms");
     }
