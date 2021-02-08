@@ -387,7 +387,9 @@ public final class JsonWriter {
      * @return copy of the buffer up to the current position
      */
     public final byte[] toByteArray() {
-        return Arrays.copyOf(buffer, position);
+        var r = Arrays.copyOf(buffer, position);
+        reset();
+        return r;
     }
 
 

@@ -50,11 +50,11 @@ compileJava {
 
 test {
     testLogging {
-        events "failed"
-        showExceptions true
-        showCauses true
-        showStackTraces true
-        exceptionFormat "full"
+        showExceptions = true
+        showCauses = true
+        showStackTraces = true
+        exceptionFormat = "full"
+        showStandardStreams = true
     }
     useJUnit {
         excludeCategories 'com.github.loki4j.testkit.categories.SlowTests'
