@@ -49,7 +49,7 @@ public final class DefaultPipeline extends ContextAwareBase implements LifeCycle
 
     private AtomicLong lastSendTimeMs = new AtomicLong(System.currentTimeMillis());
 
-    private boolean traceEnabled = true;
+    private boolean traceEnabled = false;
 
     public DefaultPipeline(
             SoftLimitBuffer<LogRecord> buffer,
