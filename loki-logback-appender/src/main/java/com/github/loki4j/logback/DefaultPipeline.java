@@ -49,6 +49,8 @@ public final class DefaultPipeline extends ContextAwareBase implements LifeCycle
 
     private AtomicLong lastSendTimeMs = new AtomicLong(System.currentTimeMillis());
 
+    private boolean traceEnabled = true;
+
     public DefaultPipeline(
             SoftLimitBuffer<LogRecord> buffer,
             Batcher batcher,
@@ -99,13 +101,13 @@ public final class DefaultPipeline extends ContextAwareBase implements LifeCycle
     public boolean append(Supplier<LogRecord> event) {
         var accepted = buffer.offer(event);
         if (accepted)
-            newEventsArrived.compareAndExchange(false, true);
+            newEventsArrived.set(true);
         return accepted;
     }
 
     private void drain() {
         drainRequested.set(true);
-        addInfo("drain planned");
+        trace("drain planned");
     }
 
     private void runEncodeLoop() {
@@ -135,7 +137,7 @@ public final class DefaultPipeline extends ContextAwareBase implements LifeCycle
             LockSupport.parkNanos(this, PARK_NS);
         }
         if (!started) return;
-        addInfo("check encode actions");
+        trace("check encode actions");
         LogRecord[] records = ZERO_RECORDS;
         LogRecord record = buffer.poll();
         while(record != null && records.length == 0) {
@@ -144,7 +146,7 @@ public final class DefaultPipeline extends ContextAwareBase implements LifeCycle
         }
         if (records.length == 0 && drainRequested.get()) {
             records = batcher.drain(lastSendTimeMs.get(), ZERO_RECORDS);
-            addInfo("drained items: " + records.length);
+            trace("drained items: ", records.length);
         }
         newEventsArrived.set(false);
         drainRequested.set(false);
@@ -176,7 +178,7 @@ public final class DefaultPipeline extends ContextAwareBase implements LifeCycle
 
         buffer.commit(batch.recordsCount);
         lastSendTimeMs.set(System.currentTimeMillis());
-        addInfo("sent items: " + batch.recordsCount);
+        trace("sent items: %s", batch.recordsCount);
     }
 
     void waitSendQueueIsEmpty(long timeoutMs) {
@@ -190,16 +192,24 @@ public final class DefaultPipeline extends ContextAwareBase implements LifeCycle
             LockSupport.parkNanos(PARK_NS);
             elapsedNs += PARK_NS;
         }
-        addInfo(String.format(
-            "wait send queue: started=%s, buffer(%s)>=%s, %s ms %s elapsed",
-                started, buffer.size(), size, timeoutMs, elapsedNs < timeoutNs ? "not" : ""));
+        trace("wait send queue: started=%s, buffer(%s)>=%s, %s ms %s elapsed",
+                started, buffer.size(), size, timeoutMs, elapsedNs < timeoutNs ? "not" : "");
         if (elapsedNs >= timeoutNs)
             throw new RuntimeException("Not completed within timeout " + timeoutMs + " ms");
+    }
+
+    private void trace(String input, Object... args) {
+        if (traceEnabled)
+            addInfo(String.format(input, args));
     }
 
     @Override
     public boolean isStarted() {
         return started;
+    }
+
+    public void setTraceEnabled(boolean traceEnabled) {
+        this.traceEnabled = traceEnabled;
     }
 
 }
