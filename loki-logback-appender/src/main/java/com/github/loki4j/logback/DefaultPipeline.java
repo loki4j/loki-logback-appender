@@ -101,6 +101,7 @@ public final class DefaultPipeline extends ContextAwareBase implements LifeCycle
 
     private void drain() {
         drainRequested.set(true);
+        addInfo("drain planned");
     }
 
     private void runEncodeLoop() {
@@ -130,7 +131,7 @@ public final class DefaultPipeline extends ContextAwareBase implements LifeCycle
             LockSupport.parkNanos(this, PARK_NS);
         }
         if (!started) return;
-
+        addInfo("check encode actions");
         LogRecord[] records = ZERO_RECORDS;
         LogRecord record = buffer.poll();
         while(record != null && records.length == 0) {
