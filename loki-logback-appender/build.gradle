@@ -97,6 +97,13 @@ task perfTests(type: Test) {
     testLogging.showStandardStreams = true
 }
 
+task ciOnlyTests(type: Test) {
+    description = 'Run CI-bound tests'
+    useJUnit {
+        includeCategories 'com.github.loki4j.testkit.categories.CIOnlyTests'
+    }
+}
+
 publishing {
     publications {
         mavenJava(MavenPublication) {

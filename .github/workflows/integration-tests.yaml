@@ -30,7 +30,7 @@ jobs:
             -server.grpc-max-recv-msg-size-bytes=18388608 -auth.enabled=true \
             -distributor.ingestion-rate-limit-mb=16 -distributor.ingestion-burst-size-mb=24
           sleep 5s
-          ./gradlew check integTests
+          ./gradlew check integTests ciOnlyTests
           docker stop loki
           docker stop lokimultitenant
       - name: Pring Log
