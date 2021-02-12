@@ -1,6 +1,6 @@
 package com.github.loki4j.logback.integration;
 
-import com.github.loki4j.testkit.categories.IntegrationTests;
+import com.github.loki4j.testkit.categories.CIOnlyTests;
 import org.junit.AfterClass;
 import org.junit.BeforeClass;
 import org.junit.Test;
@@ -27,9 +27,9 @@ public class MultitenantTenantSendTest {
     }
 
     @Test
-    @Category({IntegrationTests.class})
-    public void testJavaJsonFastSendWithTenant() throws Exception {
-        var label = "testJavaJsonFastSendWithTenant";
+    @Category({CIOnlyTests.class})
+    public void testJavaJsonSendWithTenant() throws Exception {
+        var label = "testJavaJsonSendWithTenant";
         var encoder = jsonEncoder(false, label);
         var sender = javaHttpSender(urlPush);
         sender.setTenantId(tenant);
@@ -39,5 +39,16 @@ public class MultitenantTenantSendTest {
         client.testHttpSend(label, events, appender, jsonEncoder(false, label));
     }
 
+    @Test
+    @Category({CIOnlyTests.class})
+    public void testApacheProtobufSendWithTenant() throws Exception {
+        var label = "testApacheProtobufSendWithTenant";
+        var encoder = protobufEncoder(false, label);
+        var sender = apacheHttpSender(urlPush);
+        sender.setTenantId(tenant);
+        var appender = appender(10, 1000, encoder, sender);
 
+        var events = generateEvents(20, 20);
+        client.testHttpSend(label, events, appender, jsonEncoder(false, label));
+    }
 }

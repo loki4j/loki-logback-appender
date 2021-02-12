@@ -10,6 +10,7 @@ import java.util.concurrent.SynchronousQueue;
 import java.util.concurrent.ThreadPoolExecutor;
 import java.util.concurrent.TimeUnit;
 
+import com.github.loki4j.common.HttpHeaders;
 import com.github.loki4j.common.LokiResponse;
 import com.github.loki4j.common.LokiThreadFactory;
 
@@ -50,12 +51,12 @@ public class JavaHttpSender extends AbstractHttpSender {
             .newBuilder()
             .timeout(Duration.ofMillis(requestTimeoutMs))
             .uri(URI.create(url))
-            .header("Content-Type", contentType);
+            .header(HttpHeaders.CONTENT_TYPE, contentType);
 
         super.start();
 
-        tenantId.ifPresent(tenant -> requestBuilder.setHeader(AbstractHttpSender.X_SCOPE_ORIG_HEADER,tenant));
-        basicAuthToken.ifPresent(token -> requestBuilder.setHeader("Authorization", "Basic " + token));
+        tenantId.ifPresent(tenant -> requestBuilder.setHeader(HttpHeaders.X_SCOPE_ORGID,tenant));
+        basicAuthToken.ifPresent(token -> requestBuilder.setHeader(HttpHeaders.AUTHORIZATION, "Basic " + token));
     }
 
     @Override
