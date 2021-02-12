@@ -18,12 +18,12 @@ What information to include in the bug report:
 - Specify if you use frameworks or application servers that could affect logging lifecycle (e.g. Tomcat, Spring Boot, etc.)
 - Specify if you use hosted Loki (e.g. Grafana Cloud)(if relevant)
 
-There are several advanced things you can do to help with reproducing and fixing the bug (none of these is required to file a bug):
+There are several advanced things you can do to help with reproducing and fixing a bug (none of these is required to file a bug):
 
-- PR a unit- or integration test that reproduces a problem
-- Provide a minimal runnable project that reproduces a problem (shared as a gist, GitHub repo etc.)
+- PR a unit- or integration test that reproduces the problem
+- Provide a minimal runnable project that reproduces the problem (shared as a gist, GitHub repo etc.)
 - Dig into the issue yourself, find the root cause of it, and describe it in the bug report
-- Explicitly specify in you bug report if you would like to prepare a fix or it. It's not recommended to start working on the fix before you bug report is accepted
+- Explicitly specify in your bug report if you would like to prepare a fix for it. It's not recommended to start working on the fix before your bug report is accepted
 
 ## Prepare a pull request
 
