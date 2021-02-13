@@ -29,7 +29,7 @@ jobs:
           sleep 5s
 
           ./gradlew check integTests
-          ./gradlew test --tests *MultitenantSupportTest
+          ./gradlew ciOnlyTests --tests "*MultitenantSupportTest"
 
           docker stop loki
           docker stop lokimultitenant
@@ -56,4 +56,5 @@ jobs:
           GRAFANA_CLOUD_USERNAME: ${{ secrets.GRAFANA_CLOUD_USERNAME }}
           GRAFANA_CLOUD_PASSWORD: ${{ secrets.GRAFANA_CLOUD_PASSWORD }}
         run: |
-          ./gradlew check ciOnlyTests
+          ./gradlew check
+          ./gradlew ciOnlyTests --tests "*GrafanaCloudTest"
