@@ -8,7 +8,7 @@ import org.junit.experimental.categories.Category;
 
 import static com.github.loki4j.logback.Generators.*;
 
-public class MultitenantTenantSendTest {
+public class MultitenantSupportTest {
 
     private static String urlBase = "http://localhost:3110/loki/api/v1";
     private static String urlPush = urlBase + "/push";
