@@ -1,6 +1,5 @@
 package com.github.loki4j.testkit.dummy;
 
-import com.sun.net.httpserver.Headers;
 import com.sun.net.httpserver.HttpServer;
 
 import java.io.ByteArrayOutputStream;
@@ -9,11 +8,12 @@ import java.io.InputStream;
 import java.net.InetSocketAddress;
 import java.util.ArrayList;
 import java.util.List;
+import java.util.Map;
 
 public class LokiHttpServerMock {
     public List<byte[]> batches = new ArrayList<>();
     public volatile byte[] lastBatch;
-    public volatile Headers lastHeaders;
+    public volatile Map<String, List<String>> lastHeaders;
 
     private final HttpServer server;
 

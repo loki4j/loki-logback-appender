@@ -4,15 +4,13 @@ import static com.github.loki4j.logback.Generators.*;
 import static org.junit.Assert.*;
 
 import com.github.loki4j.logback.AbstractHttpSender;
-import com.github.loki4j.testkit.categories.IntegrationTests;
+import com.github.loki4j.testkit.categories.CIOnlyTests;
 
 import org.junit.AfterClass;
 import org.junit.BeforeClass;
-import org.junit.Ignore;
 import org.junit.Test;
 import org.junit.experimental.categories.Category;
 
-@Ignore
 public class GrafanaCloudTest {
 
     private static String urlBase = "https://logs-prod-us-central1.grafana.net/loki/api/v1";
@@ -44,7 +42,7 @@ public class GrafanaCloudTest {
 
 
     @Test
-    @Category({IntegrationTests.class})
+    @Category({CIOnlyTests.class})
     public void testApacheJsonCloud() throws Exception {
         var label = "testApacheJsonCloud";
         var encoder = jsonEncoder(false, label);
@@ -58,7 +56,7 @@ public class GrafanaCloudTest {
     }
 
     @Test
-    @Category({IntegrationTests.class})
+    @Category({CIOnlyTests.class})
     public void testJavaJsonCloud() throws Exception {
         var label = "testJavaJsonCloud";
         var encoder = jsonEncoder(false, label);
@@ -70,7 +68,7 @@ public class GrafanaCloudTest {
     }
 
     @Test
-    @Category({IntegrationTests.class})
+    @Category({CIOnlyTests.class})
     public void testApacheProtobufCloud() throws Exception {
         var label = "testApacheProtobufCloud";
         var encoder = protobufEncoder(false, label);
@@ -82,7 +80,7 @@ public class GrafanaCloudTest {
     }
 
     @Test
-    @Category({IntegrationTests.class})
+    @Category({CIOnlyTests.class})
     public void testJavaProtobufCloud() throws Exception {
         var label = "testJavaProtobufCloud";
         var encoder = protobufEncoder(false, label);

@@ -28,8 +28,6 @@ public abstract class AbstractHttpSender extends ContextAwareBase implements Htt
         }
     }
 
-    public static final String X_SCOPE_ORIG_HEADER = "X-Scope-OrgID";
-
     /**
     * Loki endpoint to be used for sending batches
     */
