@@ -50,11 +50,11 @@ compileJava {
 
 test {
     testLogging {
-        events "failed"
-        showExceptions true
-        showCauses true
-        showStackTraces true
-        exceptionFormat "full"
+        showExceptions = true
+        showCauses = true
+        showStackTraces = true
+        exceptionFormat = "full"
+        showStandardStreams = true
     }
     useJUnit {
         excludeCategories 'com.github.loki4j.testkit.categories.SlowTests'
@@ -85,6 +85,7 @@ task integTests(type: Test) {
     useJUnit {
         includeCategories 'com.github.loki4j.testkit.categories.IntegrationTests'
     }
+    testLogging.showStandardStreams = true
 }
 
 task perfTests(type: Test) {
@@ -94,6 +95,14 @@ task perfTests(type: Test) {
     }
     forkEvery = 1
     maxHeapSize = "3G"
+    testLogging.showStandardStreams = true
+}
+
+task ciOnlyTests(type: Test) {
+    description = 'Run CI-bound tests'
+    useJUnit {
+        includeCategories 'com.github.loki4j.testkit.categories.CIOnlyTests'
+    }
     testLogging.showStandardStreams = true
 }
 

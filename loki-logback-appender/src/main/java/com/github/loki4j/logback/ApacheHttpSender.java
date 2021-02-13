@@ -3,6 +3,7 @@ package com.github.loki4j.logback;
 import java.io.IOException;
 import java.util.function.Function;
 
+import com.github.loki4j.common.HttpHeaders;
 import com.github.loki4j.common.LokiResponse;
 
 import org.apache.http.HttpResponse;
@@ -64,9 +65,9 @@ public class ApacheHttpSender extends AbstractHttpSender {
 
         requestBuilder = (body) -> {
             var request = new HttpPost(url);
-            request.addHeader("Content-Type", contentType);
-            tenantId.ifPresent(tenant -> request.addHeader(AbstractHttpSender.X_SCOPE_ORIG_HEADER, tenant));
-            basicAuthToken.ifPresent(token -> request.setHeader("Authorization", "Basic " + token));
+            request.addHeader(HttpHeaders.CONTENT_TYPE, contentType);
+            tenantId.ifPresent(tenant -> request.addHeader(HttpHeaders.X_SCOPE_ORGID, tenant));
+            basicAuthToken.ifPresent(token -> request.setHeader(HttpHeaders.AUTHORIZATION, "Basic " + token));
 
             request.setEntity(new ByteArrayEntity(body));
             return request;

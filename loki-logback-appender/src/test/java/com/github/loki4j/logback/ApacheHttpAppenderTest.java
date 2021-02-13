@@ -1,8 +1,8 @@
 package com.github.loki4j.logback;
 
-import java.util.ArrayList;
 import java.util.Random;
 
+import com.github.loki4j.common.HttpHeaders;
 import com.github.loki4j.testkit.dummy.LokiHttpServerMock;
 
 import static com.github.loki4j.logback.Generators.*;
@@ -63,7 +63,9 @@ public class ApacheHttpAppenderTest {
             a.append(events);
             a.waitAllAppended();
             assertEquals("http send", expected, new String(mockLoki.lastBatch));
-            assertTrue(mockLoki.lastHeaders.getOrDefault(AbstractHttpSender.X_SCOPE_ORIG_HEADER,new ArrayList<>()).contains("tenant1"));
+            assertTrue(mockLoki.lastHeaders
+                .get(HttpHeaders.X_SCOPE_ORGID)
+                .contains("tenant1"));
             return null;
         });
     }

@@ -42,9 +42,12 @@ public final class DefaultPipeline extends ContextAwareBase implements LifeCycle
 
     private volatile boolean started = false;
 
+    private AtomicBoolean newEventsArrived = new AtomicBoolean(false);
     private AtomicBoolean drainRequested = new AtomicBoolean(false);
 
     private AtomicLong lastSendTimeMs = new AtomicLong(System.currentTimeMillis());
+
+    private boolean traceEnabled = false;
 
     public DefaultPipeline(
             SoftLimitBuffer<LogRecord> buffer,
@@ -91,22 +94,18 @@ public final class DefaultPipeline extends ContextAwareBase implements LifeCycle
         scheduler.shutdown();
         encoderThreadPool.shutdown();
         senderThreadPool.shutdown();
-
-        try {
-            scheduler.awaitTermination(500, TimeUnit.MILLISECONDS);
-            encoderThreadPool.awaitTermination(500, TimeUnit.MILLISECONDS);
-            senderThreadPool.awaitTermination(500, TimeUnit.MILLISECONDS);
-        } catch (InterruptedException e) {
-            addInfo("Pipeline was interrupted while stopping");
-        }
     }
 
     public boolean append(Supplier<LogRecord> event) {
-        return buffer.offer(event);
+        var accepted = buffer.offer(event);
+        if (accepted)
+            newEventsArrived.set(true);
+        return accepted;
     }
 
     private void drain() {
         drainRequested.set(true);
+        trace("drain planned");
     }
 
     private void runEncodeLoop() {
@@ -136,7 +135,7 @@ public final class DefaultPipeline extends ContextAwareBase implements LifeCycle
             LockSupport.parkNanos(this, PARK_NS);
         }
         if (!started) return;
-
+        trace("check encode actions");
         LogRecord record = buffer.poll();
         while(record != null && batch.size() == 0) {
             batcher.add(record, batch);
@@ -144,8 +143,9 @@ public final class DefaultPipeline extends ContextAwareBase implements LifeCycle
         }
         if (batch.size() == 0 && drainRequested.get()) {
             batcher.drain(lastSendTimeMs.get(), batch);
-            //System.out.println("drained items: " + records.length);
+            trace("drained items: ", batch.size());
         }
+        newEventsArrived.set(false);
         drainRequested.set(false);
         if (batch.size() == 0) return;
 
@@ -157,7 +157,7 @@ public final class DefaultPipeline extends ContextAwareBase implements LifeCycle
     }
 
     private boolean noEncodeActions() {
-        return buffer.isEmpty() && !drainRequested.get();
+        return !newEventsArrived.get() && !drainRequested.get();
     }
 
     private void sendStep() throws InterruptedException {
@@ -175,7 +175,7 @@ public final class DefaultPipeline extends ContextAwareBase implements LifeCycle
 
         buffer.commit(batch.recordsCount);
         lastSendTimeMs.set(System.currentTimeMillis());
-        //System.out.println("sent items: " + batch.recordsCount);
+        trace("sent items: %s", batch.recordsCount);
     }
 
     void waitSendQueueIsEmpty(long timeoutMs) {
@@ -189,13 +189,24 @@ public final class DefaultPipeline extends ContextAwareBase implements LifeCycle
             LockSupport.parkNanos(PARK_NS);
             elapsedNs += PARK_NS;
         }
+        trace("wait send queue: started=%s, buffer(%s)>=%s, %s ms %s elapsed",
+                started, buffer.size(), size, timeoutMs, elapsedNs < timeoutNs ? "not" : "");
         if (elapsedNs >= timeoutNs)
             throw new RuntimeException("Not completed within timeout " + timeoutMs + " ms");
+    }
+
+    private void trace(String input, Object... args) {
+        if (traceEnabled)
+            addInfo(String.format(input, args));
     }
 
     @Override
     public boolean isStarted() {
         return started;
+    }
+
+    public void setTraceEnabled(boolean traceEnabled) {
+        this.traceEnabled = traceEnabled;
     }
 
 }
