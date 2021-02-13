@@ -9,6 +9,7 @@ on:
 jobs:
   loki-docker:
     runs-on: ubuntu-latest
+    environment: integ-tests
     strategy:
       matrix:
         loki: [1.6.1, 2.1.0]
@@ -20,15 +21,17 @@ jobs:
         with:
           java-version: 11
       - name: Build and Run Integration Tests
+        with:
+          env:
+            GRAFANA_CLOUD_USERNAME: ${{ secrets.GRAFANA_CLOUD_USERNAME }}
+            GRAFANA_CLOUD_PASSWORD: ${{ secrets.GRAFANA_CLOUD_PASSWORD }}
         run: |
           docker run --name loki -d -p 3100:3100 grafana/loki:${{ matrix.loki }} \
             -config.file=/etc/loki/local-config.yaml \
             -server.grpc-max-recv-msg-size-bytes=18388608 \
             -distributor.ingestion-rate-limit-mb=16 -distributor.ingestion-burst-size-mb=24
           docker run --name lokimultitenant -d -p 3110:3100 grafana/loki:${{ matrix.loki }} \
-            -config.file=/etc/loki/local-config.yaml \
-            -server.grpc-max-recv-msg-size-bytes=18388608 -auth.enabled=true \
-            -distributor.ingestion-rate-limit-mb=16 -distributor.ingestion-burst-size-mb=24
+            -config.file=/etc/loki/local-config.yaml -auth.enabled=true
           sleep 5s
           ./gradlew check integTests ciOnlyTests
           docker stop loki
