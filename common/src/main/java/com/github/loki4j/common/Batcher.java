@@ -39,14 +39,19 @@ public final class Batcher {
         labels.clear();
     }
 
-    public void add(LogRecord input, LogRecordBatch destination) {
+    public boolean checkSize(LogRecord input, LogRecordBatch destination) {
         var recordSizeBytes = calcSizeBytes(input);
+        if (recordSizeBytes > maxSizeBytes)
+            return false;
+
         if (sizeBytes + recordSizeBytes > maxSizeBytes)
             cutBatchAndReset(destination);
+        return true;
+    }
 
+    public void add(LogRecord input, LogRecordBatch destination) {
         items[index] = input;
-        sizeBytes += recordSizeBytes;
-        // TODO: what if capacity is 1?
+        sizeBytes += calcSizeBytes(input);
         if (++index == items.length)
             cutBatchAndReset(destination);
     }

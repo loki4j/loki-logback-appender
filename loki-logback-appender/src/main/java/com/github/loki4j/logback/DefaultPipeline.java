@@ -42,12 +42,11 @@ public final class DefaultPipeline extends ContextAwareBase implements LifeCycle
 
     private volatile boolean started = false;
 
-    private AtomicBoolean newEventsArrived = new AtomicBoolean(false);
     private AtomicBoolean drainRequested = new AtomicBoolean(false);
 
     private AtomicLong lastSendTimeMs = new AtomicLong(System.currentTimeMillis());
 
-    private boolean traceEnabled = false;
+    private boolean traceEnabled = true;
 
     public DefaultPipeline(
             SoftLimitBuffer<LogRecord> buffer,
@@ -97,10 +96,7 @@ public final class DefaultPipeline extends ContextAwareBase implements LifeCycle
     }
 
     public boolean append(Supplier<LogRecord> event) {
-        var accepted = buffer.offer(event);
-        if (accepted)
-            newEventsArrived.set(true);
-        return accepted;
+        return buffer.offer(event);
     }
 
     private void drain() {
@@ -136,18 +132,23 @@ public final class DefaultPipeline extends ContextAwareBase implements LifeCycle
         }
         if (!started) return;
         trace("check encode actions");
-        LogRecord record = buffer.poll();
-        while(record != null && batch.size() == 0) {
-            batcher.add(record, batch);
-            if (batch.size() == 0) record = buffer.poll();
+        LogRecord record = buffer.peek();
+        while(record != null && batch.isEmpty()) {
+            if (!batcher.checkSize(record, batch)) {
+                addWarn("Event is too large..."); // TODO: proper message
+                buffer.remove();
+                record = buffer.peek();
+                continue;
+            }
+            if (batch.isEmpty()) batcher.add(buffer.remove(), batch);
+            if (batch.isEmpty()) record = buffer.peek();
         }
-        if (batch.size() == 0 && drainRequested.get()) {
+        if (batch.isEmpty() && drainRequested.get()) {
             batcher.drain(lastSendTimeMs.get(), batch);
             trace("drained items: ", batch.size());
         }
-        newEventsArrived.set(false);
         drainRequested.set(false);
-        if (batch.size() == 0) return;
+        if (batch.isEmpty()) return;
 
         var binBatch = encode.apply(batch);
         batch.clear();
@@ -157,7 +158,7 @@ public final class DefaultPipeline extends ContextAwareBase implements LifeCycle
     }
 
     private boolean noEncodeActions() {
-        return !newEventsArrived.get() && !drainRequested.get();
+        return !buffer.hasNext() && !drainRequested.get();
     }
 
     private void sendStep() throws InterruptedException {

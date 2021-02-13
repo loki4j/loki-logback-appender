@@ -31,6 +31,11 @@ public final class SoftLimitBuffer<E> extends AbstractQueue<E> {
         size.addAndGet(-count);
     }
 
+    // TODO: remove
+    public boolean hasNext() {
+        return !items.isEmpty();
+    }
+
     @Override
     public boolean offer(E e) {
         return offer(() -> e);

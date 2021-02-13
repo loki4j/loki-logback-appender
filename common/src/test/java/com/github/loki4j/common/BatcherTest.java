@@ -11,7 +11,7 @@ public class BatcherTest {
 
     @Test 
     public void testAdd() {
-        var cbb = new Batcher(10, 0);
+        var cbb = new Batcher(10, 1000, 0);
         var buf = new LogRecordBatch(10);
         var array1 = new LogRecord[10];
         var array2 = new LogRecord[10];
@@ -42,7 +42,7 @@ public class BatcherTest {
 
     @Test
     public void testAddBatch1() {
-        var cbb = new Batcher(1, 0);
+        var cbb = new Batcher(1, 1000, 0);
         var buf = new LogRecordBatch(1);
 
         assertEquals("capacity is correct", 1, cbb.getCapacity());
@@ -55,7 +55,7 @@ public class BatcherTest {
 
     @Test
     public void testDrain() {
-        var cbb = new Batcher(10, 100);
+        var cbb = new Batcher(10, 1000, 100);
         var buf = new LogRecordBatch(10);
         var array1 = new LogRecord[7];
 
