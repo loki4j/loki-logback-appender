@@ -207,7 +207,7 @@ We will need to specify the credentials and increase the request timeout to 15s.
 ```xml
 <appender name="LOKI" class="com.github.loki4j.logback.Loki4jAppender">
     <http>
-        <url>https://logs-prod-us-central1.grafana.net/loki/api/v1</url>
+        <url>https://logs-prod-us-central1.grafana.net/loki/api/v1/push</url>
         <auth>
             <username>example_username</username>
             <password>example_api_token</password>
