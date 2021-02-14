@@ -208,7 +208,7 @@ Check the corresponding <a href="#using-apache-httpclient">configuration section
 We will need to specify the credentials and increase the request timeout to 15s.</p>
 <pre><code class="hljs css language-xml"><span class="hljs-tag">&lt;<span class="hljs-name">appender</span> <span class="hljs-attr">name</span>=<span class="hljs-string">"LOKI"</span> <span class="hljs-attr">class</span>=<span class="hljs-string">"com.github.loki4j.logback.Loki4jAppender"</span>&gt;</span>
     <span class="hljs-tag">&lt;<span class="hljs-name">http</span>&gt;</span>
-        <span class="hljs-tag">&lt;<span class="hljs-name">url</span>&gt;</span>https://logs-prod-us-central1.grafana.net/loki/api/v1<span class="hljs-tag">&lt;/<span class="hljs-name">url</span>&gt;</span>
+        <span class="hljs-tag">&lt;<span class="hljs-name">url</span>&gt;</span>https://logs-prod-us-central1.grafana.net/loki/api/v1/push<span class="hljs-tag">&lt;/<span class="hljs-name">url</span>&gt;</span>
         <span class="hljs-tag">&lt;<span class="hljs-name">auth</span>&gt;</span>
             <span class="hljs-tag">&lt;<span class="hljs-name">username</span>&gt;</span>example_username<span class="hljs-tag">&lt;/<span class="hljs-name">username</span>&gt;</span>
             <span class="hljs-tag">&lt;<span class="hljs-name">password</span>&gt;</span>example_api_token<span class="hljs-tag">&lt;/<span class="hljs-name">password</span>&gt;</span>
