@@ -21,7 +21,7 @@ public class Loki4jAppender extends UnsynchronizedAppenderBase<ILoggingEvent> {
     /**
      * Max number of events to put into single batch and send to Loki
      */
-    private int batchSize = 1000;
+    private int batchSizeItems = 1000;
     /**
      * Max number of bytes a single batch can contain
      */
@@ -74,8 +74,8 @@ public class Loki4jAppender extends UnsynchronizedAppenderBase<ILoggingEvent> {
         }
 
         addInfo(String.format("Starting with " +
-            "batchSize=%s, batchTimeout=%s...",
-            batchSize, batchTimeoutMs));
+            "batchSizeItems=%s, batchSizeBytes=%s, batchTimeout=%s...",
+            batchSizeItems, batchSizeBytes, batchTimeoutMs));
 
         if (encoder == null) {
             addWarn("No encoder specified in the config. Using JsonEncoder with default settings");
@@ -100,7 +100,7 @@ public class Loki4jAppender extends UnsynchronizedAppenderBase<ILoggingEvent> {
         sender.start();
 
         var buffer = new SoftLimitBuffer<LogRecord>(sendQueueSize);
-        var batcher = new Batcher(batchSize, batchSizeBytes, batchTimeoutMs);
+        var batcher = new Batcher(batchSizeItems, batchSizeBytes, batchTimeoutMs);
         pipeline = new DefaultPipeline(buffer, batcher, this::encode, this::send);
         pipeline.setContext(context);
         pipeline.start();
@@ -141,7 +141,7 @@ public class Loki4jAppender extends UnsynchronizedAppenderBase<ILoggingEvent> {
         addInfo(String.format(
             ">>> Batch %s converted to %,d bytes",
                 batch, binBatch.data.length));
-        //try { System.out.write(body); } catch (Exception e) { e.printStackTrace(); }
+        //try { System.out.write(binBatch.data); } catch (Exception e) { e.printStackTrace(); }
         //System.out.println("\n");
         if (metricsEnabled)
             metrics.batchEncoded(startedNs, binBatch.data.length);
@@ -186,7 +186,10 @@ public class Loki4jAppender extends UnsynchronizedAppenderBase<ILoggingEvent> {
     }
 
     public void setBatchSize(int batchSize) {
-        this.batchSize = batchSize;
+        addWarn("Property `batchSize` was replaced with `batchSizeItems`. Please fix your configuration");
+    }
+    public void setBatchSizeItems(int batchSizeItems) {
+        this.batchSizeItems = batchSizeItems;
     }
     public void setBatchSizeBytes(int batchSizeBytes) {
         this.batchSizeBytes = batchSizeBytes;

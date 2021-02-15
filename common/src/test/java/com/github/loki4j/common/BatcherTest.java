@@ -5,8 +5,12 @@ import static org.junit.Assert.*;
 
 public class BatcherTest {
 
-    private LogRecord logRecord(long ts) {
+    private static LogRecord logRecord(long ts) {
         return LogRecord.create(ts, 0, "stream", ("message" + ts).getBytes());
+    }
+
+    private static LogRecord logRecord(long ts, String stream, String message) {
+        return LogRecord.create(ts, 0, stream, message.getBytes());
     }
 
     @Test 
@@ -51,6 +55,43 @@ public class BatcherTest {
         cbb.add(record, buf);
         assertEquals("Batch is ready", 1, buf.size());
         assertArrayEquals("Correct elements in batch", new LogRecord[] { record }, buf.toArray());
+    }
+
+    @Test
+    public void testMessageTooLarge() {
+        var cbb = new Batcher(1, 10, 0);
+        var buf = new LogRecordBatch(1);
+
+        assertEquals("capacity is correct", 1, cbb.getCapacity());
+
+        var record = logRecord(1, "012", "3456789");
+        assertFalse("Size too large", cbb.checkSize(record, buf));
+        assertEquals("Batch is not ready", 0, buf.size());
+    }
+
+    @Test
+    public void testSizeBatching() {
+        var cbb = new Batcher(10, 30, 0);
+        var buf = new LogRecordBatch(10);
+
+        assertEquals("capacity is correct", 10, cbb.getCapacity());
+
+        var r1 = logRecord(1, "012", "3456789");
+        assertTrue("Size is ok", cbb.checkSize(r1, buf));
+        cbb.add(r1, buf);
+        assertEquals("Batch is not ready", 0, buf.size());
+
+        var r2 = logRecord(2, "012", "abcdefghkl");
+        assertTrue("Size is ok", cbb.checkSize(r2, buf));
+        cbb.add(r2, buf);
+        assertEquals("Batch is not ready", 0, buf.size());
+
+        var r3 = logRecord(3, "012", "qwertyuiop");
+        assertTrue("Size is ok", cbb.checkSize(r3, buf));
+        assertEquals("Batch is ready", 2, buf.size());
+        buf.clear();
+        cbb.add(r3, buf);
+        assertEquals("Batch is not ready", 0, buf.size());
     }
 
     @Test

@@ -47,13 +47,13 @@ public class Generators {
     }
 
     public static Loki4jAppender appender(
-            int batchSize,
+            int batchSizeItems,
             long batchTimeoutMs,
             Loki4jEncoder encoder,
             AbstractHttpSender sender) {
         var appender = new Loki4jAppender();
         appender.setContext(new LoggerContext());
-        appender.setBatchSize(batchSize);
+        appender.setBatchSizeItems(batchSizeItems);
         appender.setBatchTimeoutMs(batchTimeoutMs);
         appender.setFormat(encoder);
         appender.setHttp(sender);

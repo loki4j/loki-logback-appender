@@ -137,16 +137,16 @@ public final class DefaultPipeline extends ContextAwareBase implements LifeCycle
             if (!batcher.checkSize(record, batch)) {
                 addWarn("Event is too large..."); // TODO: proper message
                 buffer.remove();
+                buffer.commit(1);
                 record = buffer.peek();
                 continue;
             }
             if (batch.isEmpty()) batcher.add(buffer.remove(), batch);
             if (batch.isEmpty()) record = buffer.peek();
         }
-        if (batch.isEmpty() && drainRequested.get()) {
+
+        if (batch.isEmpty() && drainRequested.get())
             batcher.drain(lastSendTimeMs.get(), batch);
-            trace("drained items: ", batch.size());
-        }
         drainRequested.set(false);
         if (batch.isEmpty()) return;
 
