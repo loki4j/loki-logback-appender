@@ -135,7 +135,8 @@ public final class DefaultPipeline extends ContextAwareBase implements LifeCycle
         LogRecord record = buffer.peek();
         while(record != null && batch.isEmpty()) {
             if (!batcher.checkSize(record, batch)) {
-                addWarn("Event is too large..."); // TODO: proper message
+                addWarn("Dropping the record that exceeds max batch size: " +
+                    record.toString());
                 buffer.remove();
                 buffer.commit(1);
                 record = buffer.peek();
