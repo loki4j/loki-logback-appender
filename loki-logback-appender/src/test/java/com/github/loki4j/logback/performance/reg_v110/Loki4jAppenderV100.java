@@ -7,6 +7,7 @@ import java.util.concurrent.ScheduledExecutorService;
 import java.util.concurrent.TimeUnit;
 
 import com.github.loki4j.common.LogRecord;
+import com.github.loki4j.common.LogRecordBatch;
 import com.github.loki4j.common.LokiResponse;
 import com.github.loki4j.common.LokiThreadFactory;
 import com.github.loki4j.logback.*;
@@ -146,7 +147,7 @@ public class Loki4jAppenderV100 extends UnsynchronizedAppenderBase<ILoggingEvent
     }
 
     protected byte[] encode(LogRecord[] batch) {
-        return encoder.encode(batch);
+        return encoder.encode(new LogRecordBatch(batch));
     }
 
     protected CompletableFuture<LokiResponse> sendAsync(byte[] batch) {

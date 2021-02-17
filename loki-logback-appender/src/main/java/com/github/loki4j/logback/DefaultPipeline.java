@@ -4,6 +4,7 @@ import java.util.concurrent.ArrayBlockingQueue;
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
 import java.util.concurrent.ScheduledExecutorService;
+import java.util.concurrent.ScheduledFuture;
 import java.util.concurrent.TimeUnit;
 import java.util.concurrent.atomic.AtomicBoolean;
 import java.util.concurrent.atomic.AtomicLong;
@@ -40,11 +41,15 @@ public final class DefaultPipeline extends ContextAwareBase implements LifeCycle
 
     private final Function<BinaryBatch, LokiResponse> send;
 
+    private final boolean drainOnStop;
+
     private volatile boolean started = false;
 
     private AtomicBoolean drainRequested = new AtomicBoolean(false);
 
     private AtomicLong lastSendTimeMs = new AtomicLong(System.currentTimeMillis());
+
+    private ScheduledFuture<?> drainScheduledFuture;
 
     private boolean traceEnabled = true;
 
@@ -52,11 +57,13 @@ public final class DefaultPipeline extends ContextAwareBase implements LifeCycle
             SoftLimitBuffer<LogRecord> buffer,
             Batcher batcher,
             Function<LogRecordBatch, BinaryBatch> encode,
-            Function<BinaryBatch, LokiResponse> send) {
+            Function<BinaryBatch, LokiResponse> send,
+            boolean drainOnStop) {
         this.buffer = buffer;
         this.batcher = batcher;
         this.encode = encode;
         this.send = send;
+        this.drainOnStop = drainOnStop;
     }
 
     @Override
@@ -72,7 +79,7 @@ public final class DefaultPipeline extends ContextAwareBase implements LifeCycle
         encoderThreadPool.execute(() -> runEncodeLoop());
 
         scheduler = Executors.newScheduledThreadPool(1, new LokiThreadFactory("loki-scheduler"));
-        scheduler.scheduleAtFixedRate(
+        drainScheduledFuture = scheduler.scheduleAtFixedRate(
             () -> drain(),
             100,
             100,
@@ -81,12 +88,16 @@ public final class DefaultPipeline extends ContextAwareBase implements LifeCycle
 
     @Override
     public void stop() {
-        addInfo("Pipeline is stopping...");
+        drainScheduledFuture.cancel(false);
 
-        waitSendQueueLessThan(batcher.getCapacity(), 1000);
-        lastSendTimeMs.set(0);
-        drain();
-        waitSendQueueIsEmpty(100);
+        if (drainOnStop) {
+            addInfo("Pipeline is draining...");
+            waitSendQueueLessThan(batcher.getCapacity(), Long.MAX_VALUE);
+            lastSendTimeMs.set(0);
+            drain();
+            waitSendQueueIsEmpty(Long.MAX_VALUE);
+            addInfo("Drain completed");
+        }
 
         started = false;
 

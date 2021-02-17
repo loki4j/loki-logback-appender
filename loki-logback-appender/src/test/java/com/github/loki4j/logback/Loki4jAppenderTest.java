@@ -94,6 +94,25 @@ public class Loki4jAppenderTest {
     }
 
     @Test
+    public void testDrainOnStopDisabled() {
+        var encoder = defaultToStringEncoder();
+        var sender = dummySender();
+        var appender = appender(30, 4000L, encoder, sender);
+        appender.setDrainOnStop(false);
+        appender.start();
+        appender.append(events[0]);
+        appender.append(events[1]);
+        appender.append(events[2]);
+        assertTrue("no batches before stop", sender.lastBatch == null);
+
+        try { Thread.sleep(300L); } catch (InterruptedException e1) { }
+        assertTrue("no batches before stop", sender.lastBatch == null);
+
+        appender.stop();
+        assertTrue("no batches after stop", sender.lastBatch == null);
+    }
+
+    @Test
     public void testEncodeEscapes() {
         ILoggingEvent[] escEvents = new ILoggingEvent[] {
             loggingEvent(100L, Level.INFO, "TestApp", "main", "m1-line1\r\nline2\r\n", null),

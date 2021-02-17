@@ -2,7 +2,6 @@ package com.github.loki4j.common;
 
 import java.util.Arrays;
 import java.util.Comparator;
-import java.util.Objects;
 
 public class LogRecordBatch {
 
@@ -51,7 +50,8 @@ public class LogRecordBatch {
     }
 
     public LogRecord get(int index) {
-        Objects.checkIndex(index, len);
+        if (index < 0 || index >= len)
+            throw new IndexOutOfBoundsException("LogRecordBatch: Index out of range: " + index);
         return records[index];
     }
 

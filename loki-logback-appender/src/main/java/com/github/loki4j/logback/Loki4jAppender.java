@@ -48,6 +48,11 @@ public class Loki4jAppender extends UnsynchronizedAppenderBase<ILoggingEvent> {
     private boolean metricsEnabled = false;
 
     /**
+     * Wait util all remaining events are sent before shutdown the appender
+     */
+    private boolean drainOnStop = true;
+
+    /**
      * An encoder to use for converting log record batches to format acceptable by Loki
      */
     private Loki4jEncoder encoder;
@@ -101,7 +106,7 @@ public class Loki4jAppender extends UnsynchronizedAppenderBase<ILoggingEvent> {
 
         var buffer = new SoftLimitBuffer<LogRecord>(sendQueueSize);
         var batcher = new Batcher(batchSizeItems, batchSizeBytes, batchTimeoutMs);
-        pipeline = new DefaultPipeline(buffer, batcher, this::encode, this::send);
+        pipeline = new DefaultPipeline(buffer, batcher, this::encode, this::send, drainOnStop);
         pipeline.setContext(context);
         pipeline.start();
 
@@ -229,6 +234,9 @@ public class Loki4jAppender extends UnsynchronizedAppenderBase<ILoggingEvent> {
     }
     public void setMetricsEnabled(boolean metricsEnabled) {
         this.metricsEnabled = metricsEnabled;
+    }
+    public void setDrainOnStop(boolean drainOnStop) {
+        this.drainOnStop = drainOnStop;
     }
 
 }

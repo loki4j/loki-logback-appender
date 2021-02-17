@@ -6,6 +6,7 @@ import java.util.Arrays;
 import java.util.function.UnaryOperator;
 import java.util.stream.Stream;
 
+import com.github.loki4j.common.BatchCondition;
 import com.github.loki4j.common.LogRecord;
 import com.github.loki4j.common.LogRecordBatch;
 import com.github.loki4j.logback.AbstractLoki4jEncoder;
@@ -27,7 +28,7 @@ public class EncodersTest {
     }
 
     private static byte[] doEnc(AbstractLoki4jEncoder e, LogRecordBatch batch, LogRecord[] records) {
-        batch.initFrom(records, records.length);
+        batch.initFrom(records, records.length, BatchCondition.UNKNOWN, 0);
         var r = e.encode(batch);
         batch.clear();
         return r;
