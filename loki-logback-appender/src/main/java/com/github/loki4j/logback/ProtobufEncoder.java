@@ -1,15 +1,10 @@
 package com.github.loki4j.logback;
 
-import java.io.IOException;
-
-import com.github.loki4j.common.LogRecord;
 import com.github.loki4j.common.LogRecordBatch;
-import com.grafana.loki.protobuf.Logproto.EntryAdapter;
-import com.grafana.loki.protobuf.Logproto.PushRequest;
-import com.grafana.loki.protobuf.Logproto.StreamAdapter;
-import com.google.protobuf.Timestamp;
 
-import org.xerial.snappy.Snappy;
+import static com.github.loki4j.common.ProtobufWriter.*;
+
+import com.grafana.loki.protobuf.Logproto.StreamAdapter;
 
 import ch.qos.logback.core.joran.spi.NoAutoStart;
 
@@ -25,10 +20,8 @@ public class ProtobufEncoder extends AbstractLoki4jEncoder {
 
     @Override
     protected byte[] encodeStaticLabels(LogRecordBatch batch) {
-        var request = PushRequest.newBuilder();
-        var streamBuilder = request
-            .addStreamsBuilder()
-            .setLabels(labels(extractStreamKVPairs(batch.get(0).stream)));
+        var request = request();
+        var streamBuilder = stream(labels(extractStreamKVPairs(batch.get(0).stream)), request);
         for (int i = 0; i < batch.size(); i++) {
             streamBuilder.addEntries(entry(batch.get(i)));
         }
@@ -37,15 +30,13 @@ public class ProtobufEncoder extends AbstractLoki4jEncoder {
 
     @Override
     protected byte[] encodeDynamicLabels(LogRecordBatch batch) {
-        var request = PushRequest.newBuilder();
+        var request = request();
         String currentStream = null;
         StreamAdapter.Builder streamBuilder = null;
         for (int i = 0; i < batch.size(); i++) {
             if (batch.get(i).stream != currentStream) {
                 currentStream = batch.get(i).stream;
-                streamBuilder = request
-                    .addStreamsBuilder()
-                    .setLabels(labels(extractStreamKVPairs(currentStream)));
+                streamBuilder = stream(labels(extractStreamKVPairs(currentStream)), request);
             }
             streamBuilder.addEntries(entry(batch.get(i)));
         }
@@ -70,21 +61,4 @@ public class ProtobufEncoder extends AbstractLoki4jEncoder {
         return s.toString();
     }
     
-    private EntryAdapter entry(LogRecord record) {
-        return EntryAdapter.newBuilder()
-            .setTimestamp(Timestamp.newBuilder()
-                .setSeconds(record.timestampMs / 1000)
-                .setNanos((int)(record.timestampMs % 1000) * 1_000_000 + record.nanos))
-            .setLine(record.message)
-            .build();
-    }
-
-    private byte[] compress(byte[] input) {
-        try {
-            return Snappy.compress(input);
-        } catch (IOException e) {
-            throw new RuntimeException("Snappy compression error", e);
-        }
-    }
-
 }

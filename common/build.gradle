@@ -20,6 +20,7 @@ sourceSets {
 
 dependencies {
     compileOnly 'com.google.protobuf:protobuf-java:3.14.0'
+    compileOnly 'org.xerial.snappy:snappy-java:1.1.8'
 
     testImplementation 'junit:junit:4.13'
 }
