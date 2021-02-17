@@ -47,7 +47,7 @@ public class LogRecordBatch {
 
     public LogRecord get(int index) {
         if (index < 0 || index >= len)
-            throw new IndexOutOfBoundsException(index);
+            throw new IndexOutOfBoundsException("LogRecordBatch: Index out of range: " + index);
         return records[index];
     }
 
