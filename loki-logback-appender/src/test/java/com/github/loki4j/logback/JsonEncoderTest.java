@@ -5,17 +5,18 @@ import org.junit.Test;
 import static org.junit.Assert.*;
 
 import com.github.loki4j.common.LogRecord;
+import com.github.loki4j.common.LogRecordBatch;
 
 import static com.github.loki4j.logback.Generators.*;
 
 public class JsonEncoderTest {
 
-    private LogRecord[] records = new LogRecord[] {
+    private LogRecordBatch records = new LogRecordBatch(new LogRecord[] {
         LogRecord.create(100L, 1, "level=INFO,app=my-app", "l=INFO c=test.TestApp t=thread-1 | Test message 1"),
         LogRecord.create(103L, 2, "level=DEBUG,app=my-app", "l=DEBUG c=test.TestApp t=thread-2 | Test message 2"),
         LogRecord.create(105L, 3, "level=INFO,app=my-app", "l=INFO c=test.TestApp t=thread-1 | Test message 3"),
         LogRecord.create(102L, 4, "level=INFO,app=my-app", "l=INFO c=test.TestApp t=thread-3 | Test message 4"),
-    };
+    });
 
     private static JsonEncoder jsonEncoder(boolean staticLabels) {
         var encoder = new JsonEncoder();
@@ -60,10 +61,10 @@ public class JsonEncoderTest {
 
     @Test
     public void testEncodeEscapes() {
-        LogRecord[] escRecords = new LogRecord[] {
+        var escRecords = new LogRecordBatch(new LogRecord[] {
             LogRecord.create(100L, 1, "level=INFO,\napp=my-app\r", "l=INFO c=test.TestApp t=thread-1 | Test message 1\nNew line"),
             LogRecord.create(103L, 2, "level=DEBUG,\r\napp=my-app", "l=DEBUG c=test.TestApp t=thread-2\t|\tTest message 2\r\nNew Line")
-        };
+        });
         withEncoder(jsonEncoder(false), encoder -> {
             var expected = (
                 "{'streams':[{'stream':{'level':'DEBUG','\\r\\napp':'my-app'},'values':" +

@@ -7,6 +7,7 @@ import java.util.function.UnaryOperator;
 import java.util.stream.Stream;
 
 import com.github.loki4j.common.LogRecord;
+import com.github.loki4j.common.LogRecordBatch;
 import com.github.loki4j.logback.AbstractLoki4jEncoder;
 import com.github.loki4j.testkit.benchmark.Benchmarker;
 import com.github.loki4j.testkit.benchmark.Benchmarker.Benchmark;
@@ -46,19 +47,19 @@ public class EncodersTest {
             this.benchmarks = Arrays.asList(
                 Benchmark.of("defaultEnc",
                     () -> initEnc(defaultToStringEncoder()),
-                    (e, batch) -> e.encode(batch)),
+                    (e, batch) -> e.encode(new LogRecordBatch(batch))),
                 Benchmark.of("jsonEncSta",
                     () -> initEnc(jsonEncoder(true, "testLabel")),
-                    (e, batch) -> e.encode(batch)),
+                    (e, batch) -> e.encode(new LogRecordBatch(batch))),
                 Benchmark.of("jsonEncDyn",
                     () -> initEnc(jsonEncoder(false, "testLabel")),
-                    (e, batch) -> e.encode(batch)),
+                    (e, batch) -> e.encode(new LogRecordBatch(batch))),
                 Benchmark.of("protEncSta",
                     () -> initEnc(protobufEncoder(true, "testLabel")),
-                    (e, batch) -> e.encode(batch)),
+                    (e, batch) -> e.encode(new LogRecordBatch(batch))),
                 Benchmark.of("protEncDyn",
                     () -> initEnc(protobufEncoder(false, "testLabel")),
-                    (e, batch) -> e.encode(batch))
+                    (e, batch) -> e.encode(new LogRecordBatch(batch)))
             );
         }});
 

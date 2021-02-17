@@ -137,12 +137,12 @@ public class Loki4jAppender extends UnsynchronizedAppenderBase<ILoggingEvent> {
 
     protected BinaryBatch encode(LogRecordBatch batch) {
         var startedNs = System.nanoTime();
-        var encoded = encoder.encode(batch.records);
+        var encoded = encoder.encode(batch);
         var binBatch = BinaryBatch.fromLogRecordBatch(batch, encoded);
         addInfo(String.format(
             ">>> Batch %s converted to %,d bytes",
                 batch, binBatch.data.length));
-        //try { System.out.write(body); } catch (Exception e) { e.printStackTrace(); }
+        //try { System.out.write(binBatch.data); } catch (Exception e) { e.printStackTrace(); }
         //System.out.println("\n");
         if (metricsEnabled)
             metrics.batchEncoded(startedNs, binBatch.data.length);

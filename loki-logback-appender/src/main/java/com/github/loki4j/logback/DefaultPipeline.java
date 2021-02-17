@@ -25,8 +25,6 @@ import ch.qos.logback.core.spi.LifeCycle;
 
 public final class DefaultPipeline extends ContextAwareBase implements LifeCycle {
 
-    private static final LogRecord[] ZERO_RECORDS = new LogRecord[0];
-
     private final long PARK_NS = TimeUnit.MILLISECONDS.toNanos(1);
 
     private final SoftLimitBuffer<LogRecord> buffer;
@@ -122,7 +120,7 @@ public final class DefaultPipeline extends ContextAwareBase implements LifeCycle
     }
 
     private void runEncodeLoop() {
-        var batch = new LogRecordBatch();
+        var batch = new LogRecordBatch(batcher.getCapacity());
         while (started) {
             try {
                 encodeStep(batch);
@@ -149,22 +147,19 @@ public final class DefaultPipeline extends ContextAwareBase implements LifeCycle
         }
         if (!started) return;
         trace("check encode actions");
-        LogRecord[] records = ZERO_RECORDS;
         LogRecord record = buffer.poll();
-        while(record != null && records.length == 0) {
-            records = batcher.add(record, ZERO_RECORDS);
-            if (records.length == 0) record = buffer.poll();
+        while(record != null && batch.isEmpty()) {
+            batcher.add(record, batch);
+            if (batch.isEmpty()) record = buffer.poll();
         }
-        if (records.length == 0 && drainRequested.get()) {
-            records = batcher.drain(lastSendTimeMs.get(), ZERO_RECORDS);
-            trace("drained items: ", records.length);
-        }
+        if (batch.isEmpty() && drainRequested.get())
+            batcher.drain(lastSendTimeMs.get(), batch);
         newEventsArrived.set(false);
         drainRequested.set(false);
-        if (records.length == 0) return;
+        if (batch.isEmpty()) return;
 
-        batch.init(records);
         var binBatch = encode.apply(batch);
+        batch.clear();
         var sent = false;
         while(started && !sent)
             sent = senderQueue.offer(binBatch, PARK_NS, TimeUnit.NANOSECONDS);
