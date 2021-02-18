@@ -1,5 +1,7 @@
 package com.github.loki4j.logback;
 
+import java.util.concurrent.atomic.AtomicLong;
+
 import com.github.loki4j.common.Batcher;
 import com.github.loki4j.common.BinaryBatch;
 import com.github.loki4j.common.LogRecord;
@@ -16,7 +18,7 @@ import ch.qos.logback.core.status.Status;
 /**
  * Main appender that provides functionality for sending log record batches to Loki
  */
-public class Loki4jAppender extends UnsynchronizedAppenderBase<ILoggingEvent> {
+public final class Loki4jAppender extends UnsynchronizedAppenderBase<ILoggingEvent> {
 
     /**
      * Max number of events to put into single batch and send to Loki
@@ -64,6 +66,8 @@ public class Loki4jAppender extends UnsynchronizedAppenderBase<ILoggingEvent> {
     private LoggerMetrics metrics;
 
     private DefaultPipeline pipeline;
+
+    private AtomicLong droppedEventsCount = new AtomicLong(0L);
 
     @Override
     public void start() {
@@ -131,8 +135,29 @@ public class Loki4jAppender extends UnsynchronizedAppenderBase<ILoggingEvent> {
     protected void append(ILoggingEvent event) {
         var startedNs = System.nanoTime();
         var appended = pipeline.append(() -> encoder.eventToRecord(event));
+        if (!appended)
+            reportDroppedEvents();
         if (metricsEnabled)
             metrics.eventAppended(startedNs, !appended);
+    }
+
+    private void reportDroppedEvents() {
+        var dropped = droppedEventsCount.incrementAndGet();
+        if (dropped == 1
+                || (dropped <= 90 && dropped % 20 == 0)
+                || (dropped <= 900 && dropped % 100 == 0)
+                || (dropped <= 900_000 && dropped % 1000 == 0)
+                || (dropped <= 9_000_000 && dropped % 10_000 == 0)
+                || (dropped <= 900_000_000 && dropped % 1_000_000 == 0)
+                || dropped > 1_000_000_000) {
+            addWarn(String.format(
+                "Backpressure: %s messages dropped. Check `sendQueueSize` setting", dropped));
+            if (dropped > 1_000_000_000) {
+                addWarn(String.format(
+                    "Resetting dropped message counter from %s to 0", dropped));
+                droppedEventsCount.set(0L);
+            }
+        }
     }
 
     protected BinaryBatch encode(LogRecordBatch batch) {
@@ -180,7 +205,6 @@ public class Loki4jAppender extends UnsynchronizedAppenderBase<ILoggingEvent> {
 
         return r;
     }
-
 
     void waitSendQueueIsEmpty(long timeoutMs) {
         pipeline.waitSendQueueIsEmpty(timeoutMs);
