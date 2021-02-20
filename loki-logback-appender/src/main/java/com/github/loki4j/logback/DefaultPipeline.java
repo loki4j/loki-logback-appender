@@ -1,6 +1,6 @@
 package com.github.loki4j.logback;
 
-import java.util.concurrent.ArrayBlockingQueue;
+import java.util.concurrent.ConcurrentLinkedQueue;
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
 import java.util.concurrent.ScheduledExecutorService;
@@ -12,13 +12,13 @@ import java.util.concurrent.locks.LockSupport;
 import java.util.function.Function;
 import java.util.function.Supplier;
 
+import com.github.loki4j.common.BatchSendQueue;
 import com.github.loki4j.common.Batcher;
 import com.github.loki4j.common.BinaryBatch;
 import com.github.loki4j.common.LogRecord;
 import com.github.loki4j.common.LogRecordBatch;
 import com.github.loki4j.common.LokiResponse;
 import com.github.loki4j.common.LokiThreadFactory;
-import com.github.loki4j.common.SoftLimitBuffer;
 
 import ch.qos.logback.core.spi.ContextAwareBase;
 import ch.qos.logback.core.spi.LifeCycle;
@@ -27,9 +27,9 @@ public final class DefaultPipeline extends ContextAwareBase implements LifeCycle
 
     private final long PARK_NS = TimeUnit.MILLISECONDS.toNanos(1);
 
-    private final SoftLimitBuffer<LogRecord> buffer;
+    private final ConcurrentLinkedQueue<LogRecord> buffer = new ConcurrentLinkedQueue<>();
 
-    private final ArrayBlockingQueue<BinaryBatch> senderQueue = new ArrayBlockingQueue<>(10);
+    private final BatchSendQueue senderQueue;
 
     private final Batcher batcher;
 
@@ -45,7 +45,6 @@ public final class DefaultPipeline extends ContextAwareBase implements LifeCycle
 
     private volatile boolean started = false;
 
-    private AtomicBoolean newEventsArrived = new AtomicBoolean(false);
     private AtomicBoolean drainRequested = new AtomicBoolean(false);
 
     private AtomicLong lastSendTimeMs = new AtomicLong(System.currentTimeMillis());
@@ -55,13 +54,13 @@ public final class DefaultPipeline extends ContextAwareBase implements LifeCycle
     private boolean traceEnabled = false;
 
     public DefaultPipeline(
-            SoftLimitBuffer<LogRecord> buffer,
             Batcher batcher,
+            BatchSendQueue senderQueue,
             Function<LogRecordBatch, BinaryBatch> encode,
             Function<BinaryBatch, LokiResponse> send,
             boolean drainOnStop) {
-        this.buffer = buffer;
         this.batcher = batcher;
+        this.senderQueue = senderQueue;
         this.encode = encode;
         this.send = send;
         this.drainOnStop = drainOnStop;
@@ -108,10 +107,11 @@ public final class DefaultPipeline extends ContextAwareBase implements LifeCycle
     }
 
     public boolean append(Supplier<LogRecord> event) {
-        var accepted = buffer.offer(event);
-        if (accepted)
-            newEventsArrived.set(true);
-        return accepted;
+        if (senderQueue.acceptsBatches()) {
+            buffer.offer(event.get());
+            return true;
+        }
+        return false;
     }
 
     private void drain() {
@@ -131,9 +131,10 @@ public final class DefaultPipeline extends ContextAwareBase implements LifeCycle
     }
 
     private void runSendLoop() {
+        var batch = new BinaryBatch();
         while (started) {
             try {
-                sendStep();
+                sendStep(batch);
             } catch (InterruptedException e) {
                 stop();
             }
@@ -141,11 +142,10 @@ public final class DefaultPipeline extends ContextAwareBase implements LifeCycle
     }
 
     private void encodeStep(LogRecordBatch batch) throws InterruptedException {
-        while (started &&
-                (noEncodeActions() || senderQueue.remainingCapacity() == 0)) {
+        while (started && noEncodeActions())
             LockSupport.parkNanos(this, PARK_NS);
-        }
         if (!started) return;
+
         trace("check encode actions");
         LogRecord record = buffer.poll();
         while(record != null && batch.isEmpty()) {
@@ -154,37 +154,29 @@ public final class DefaultPipeline extends ContextAwareBase implements LifeCycle
         }
         if (batch.isEmpty() && drainRequested.get())
             batcher.drain(lastSendTimeMs.get(), batch);
-        newEventsArrived.set(false);
         drainRequested.set(false);
         if (batch.isEmpty()) return;
 
-        var binBatch = encode.apply(batch);
+        var binBatch = encode.apply(batch); // TODO: !!!
         batch.clear();
-        var sent = false;
-        while(started && !sent)
-            sent = senderQueue.offer(binBatch, PARK_NS, TimeUnit.NANOSECONDS);
+        while(started && !senderQueue.canWrite(binBatch.size()))
+            LockSupport.parkNanos(this, PARK_NS);
+        senderQueue.write(binBatch.batchId(), binBatch.buffer());
     }
 
     private boolean noEncodeActions() {
-        return !newEventsArrived.get() && !drainRequested.get();
+        return buffer.isEmpty() && !drainRequested.get();
     }
 
-    private void sendStep() throws InterruptedException {
-        BinaryBatch batch = null;
-        while(started && batch == null) {
-            if (senderQueue.size() > 0)
-                batch = senderQueue.poll(PARK_NS, TimeUnit.NANOSECONDS);
-            else
-                LockSupport.parkNanos(this, PARK_NS);
-        }
+    private void sendStep(BinaryBatch batch) throws InterruptedException {
+        while(started && !senderQueue.canRead())
+            LockSupport.parkNanos(this, PARK_NS);
         if (!started) return;
 
+        senderQueue.read(batch);
         // TODO: handle exceptions?
         send.apply(batch);
-
-        buffer.commit(batch.recordsCount);
         lastSendTimeMs.set(System.currentTimeMillis());
-        trace("sent items: %s", batch.recordsCount);
     }
 
     void waitSendQueueIsEmpty(long timeoutMs) {
