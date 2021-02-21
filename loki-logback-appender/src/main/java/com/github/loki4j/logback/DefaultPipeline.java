@@ -73,13 +73,13 @@ public final class DefaultPipeline extends ContextAwareBase implements LifeCycle
 
         started = true;
 
-        senderThreadPool = Executors.newFixedThreadPool(1, new LokiThreadFactory("loki-sender"));
+        senderThreadPool = Executors.newFixedThreadPool(1, new LokiThreadFactory("loki4j-sender"));
         senderThreadPool.execute(() -> runSendLoop());
 
-        encoderThreadPool = Executors.newFixedThreadPool(1, new LokiThreadFactory("loki-encoder"));
+        encoderThreadPool = Executors.newFixedThreadPool(1, new LokiThreadFactory("loki4j-encoder"));
         encoderThreadPool.execute(() -> runEncodeLoop());
 
-        scheduler = Executors.newScheduledThreadPool(1, new LokiThreadFactory("loki-scheduler"));
+        scheduler = Executors.newScheduledThreadPool(1, new LokiThreadFactory("loki4j-scheduler"));
         drainScheduledFuture = scheduler.scheduleAtFixedRate(
             () -> drain(),
             100,

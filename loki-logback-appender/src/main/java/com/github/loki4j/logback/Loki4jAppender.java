@@ -31,7 +31,7 @@ public final class Loki4jAppender extends UnsynchronizedAppenderBase<ILoggingEve
 
     /**
      * Max number of events to keep in the send queue.
-     * When the queue id full, incoming log events are dropped
+     * When the queue is full, incoming log events are dropped
      */
     private int sendQueueSize = 50 * 1000;
 
