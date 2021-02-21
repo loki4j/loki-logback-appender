@@ -100,20 +100,20 @@ If you want to use `ProtobufEncoder`, you need to add Protobuf-related dependenc
 <dependency>
     <groupId>com.google.protobuf</groupId>
     <artifactId>protobuf-java</artifactId>
-    <version>3.14.0</version>
+    <version>3.15.1</version>
 </dependency>
 <dependency>
     <groupId>org.xerial.snappy</groupId>
     <artifactId>snappy-java</artifactId>
-    <version>1.1.8</version>
+    <version>1.1.8.4</version>
 </dependency>
 ```
 
 <!--Gradle-->
 
 ```groovy
-compile 'com.google.protobuf:protobuf-java:3.12.4'
-compile 'org.xerial.snappy:snappy-java:1.1.8'
+compile 'com.google.protobuf:protobuf-java:3.15.1'
+compile 'org.xerial.snappy:snappy-java:1.1.8.4'
 ```
 <!--END_DOCUSAURUS_CODE_TABS-->
 
