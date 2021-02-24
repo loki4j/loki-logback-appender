@@ -8,43 +8,60 @@ public class LogRecordBatch {
 
     private static final int TS_OFFSET = 4;
 
-    private final boolean sortByStream;
-
-    private final boolean sortByTime;
+    private final Integer[] itemOffsets;
 
     private long batchId;
-    private Integer[] itemOffsets;
+
+    private int itemIndex;
     private int len;
     private ByteBuffer buf;
     private BatchCondition condition;
     private int estimatedSizeBytes;
 
-    public LogRecordBatch(boolean sortByStream, boolean sortByTime) {
-        this.sortByStream = sortByStream;
-        this.sortByTime = sortByTime;
-
-        condition = BatchCondition.UNKNOWN;
-        // all other fields are initialized with their default values
+    LogRecordBatch(int maxItems, int maxSizeBytes) {
+        this.itemOffsets = new Integer[maxItems];
+        // TODO: buf init
+        clear();
     }
 
-    void initFrom(Integer[] itemOffsets, int len, ByteBuffer buf, BatchCondition condition, int estimatedSizeBytes) {
-        this.itemOffsets = itemOffsets;
-        this.len = len;
-        this.buf = buf;
+    void clear() {
+        batchId = System.nanoTime();
+        itemIndex = 0;
+        len = 0;
+        buf.clear();
+        condition = null;
+        estimatedSizeBytes = 0;
+    }
+
+    int writeStream(byte[] stream) {
+        var streamId = buf.position();
+        buf.putInt(stream.length);
+        buf.put(stream);
+        return streamId;
+    }
+
+    void writeMessage(int streamId, long msgTs, byte[] msg) {
+        itemOffsets[itemIndex] = buf.position();
+        buf.putInt(streamId);
+        buf.putLong(msgTs);
+        buf.putInt(msg.length);
+        buf.put(msg); // TODO: buffer overflow!
+        itemIndex++;
+    }
+
+    void publish(BatchCondition condition, int estimatedSizeBytes) {
         this.condition = condition;
         this.estimatedSizeBytes = estimatedSizeBytes;
-
-        batchId = System.nanoTime();
-        sort();
+        this.len = itemIndex;
     }
 
-    private void sort() {
-        var comp = generateComparator();
+    public void sort(boolean sortByStream, boolean sortByTime) {
+        var comp = generateComparator(sortByStream, sortByTime);
         if (comp != null)
             Arrays.sort(itemOffsets, 0, len, comp);
     }
 
-    private Comparator<Integer> generateComparator() {
+    private Comparator<Integer> generateComparator(boolean sortByStream, boolean sortByTime) {
         if (sortByStream) {
             Comparator<Integer> byStream = (i1, i2) -> 
                 Integer.compare(buf.getInt(i1), buf.getInt(i2));
