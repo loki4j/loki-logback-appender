@@ -23,7 +23,11 @@ public final class Loki4jAppender extends UnsynchronizedAppenderBase<ILoggingEve
     /**
      * Max number of events to put into single batch and send to Loki
      */
-    private int batchSize = 1000;
+    private int batchSizeItems = 1000;
+    /**
+     * Max number of bytes a single batch can contain
+     */
+    private int batchSizeBytes = 4 * 1024 * 1024;
     /**
      * Max time in milliseconds to wait before sending a batch to Loki
      */
@@ -79,8 +83,8 @@ public final class Loki4jAppender extends UnsynchronizedAppenderBase<ILoggingEve
         }
 
         addInfo(String.format("Starting with " +
-            "batchSize=%s, batchTimeout=%s...",
-            batchSize, batchTimeoutMs));
+            "batchSizeItems=%s, batchSizeBytes=%s, batchTimeout=%s...",
+            batchSizeItems, batchSizeBytes, batchTimeoutMs));
 
         if (encoder == null) {
             addWarn("No encoder specified in the config. Using JsonEncoder with default settings");
@@ -105,7 +109,7 @@ public final class Loki4jAppender extends UnsynchronizedAppenderBase<ILoggingEve
         sender.start();
 
         var buffer = new SoftLimitBuffer<LogRecord>(sendQueueSize);
-        var batcher = new Batcher(batchSize, batchTimeoutMs);
+        var batcher = new Batcher(batchSizeItems, batchSizeBytes, batchTimeoutMs);
         pipeline = new DefaultPipeline(buffer, batcher, this::encode, this::send, drainOnStop);
         pipeline.setContext(context);
         pipeline.start();
@@ -211,7 +215,13 @@ public final class Loki4jAppender extends UnsynchronizedAppenderBase<ILoggingEve
     }
 
     public void setBatchSize(int batchSize) {
-        this.batchSize = batchSize;
+        addWarn("Property `batchSize` was replaced with `batchSizeItems`. Please fix your configuration");
+    }
+    public void setBatchSizeItems(int batchSizeItems) {
+        this.batchSizeItems = batchSizeItems;
+    }
+    public void setBatchSizeBytes(int batchSizeBytes) {
+        this.batchSizeBytes = batchSizeBytes;
     }
     public void setBatchTimeoutMs(long batchTimeoutMs) {
         this.batchTimeoutMs = batchTimeoutMs;
