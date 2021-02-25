@@ -10,8 +10,8 @@ Version 1.1.0 introduces several changes to how the appender behaves and how it 
 
 #### Backpressure mechanism added
 
-Before 1.1.0 if the appender sends log batches to Loki slower than they are produced by the application,
-unsent batches are accumulated in the sender's execution queue. This led to unpredictable memory consumption and OOMs.
+Before 1.1.0 if the appender sended log batches to Loki slower than they are produced by the application,
+unsent batches were accumulated in the sender's execution queue. This led to unpredictable memory consumption and OOMs.
 
 Version 1.1.0 introduces an explicit setting for sender's queue size. Now any extra log records arrived being dropped
 without encoding or any other processing. You can change this setting in the `logback.xml`:
