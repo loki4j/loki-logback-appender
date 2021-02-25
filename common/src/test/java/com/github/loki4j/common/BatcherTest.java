@@ -72,7 +72,7 @@ public class BatcherTest {
 
     @Test
     public void testSizeBatching() {
-        var cbb = new Batcher(10, 30, 0);
+        var cbb = new Batcher(10, 100, 0);
         var buf = new LogRecordBatch(10);
 
         assertEquals("capacity is correct", 10, cbb.getCapacity());

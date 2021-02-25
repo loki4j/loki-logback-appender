@@ -21,7 +21,6 @@ public final class Batcher {
     }
 
     private long estimateSizeBytes(LogRecord r, boolean dryRun) {
-        // +4 - message field id in pb
         long size = r.message.getBytes(StandardCharsets.UTF_8).length + 24;
         if (!labels.contains(r.stream)) {
             size += r.stream.getBytes(StandardCharsets.UTF_8).length + 8;
