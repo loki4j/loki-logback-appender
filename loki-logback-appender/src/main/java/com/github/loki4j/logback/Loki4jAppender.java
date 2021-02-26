@@ -21,7 +21,7 @@ import ch.qos.logback.core.status.Status;
 public final class Loki4jAppender extends UnsynchronizedAppenderBase<ILoggingEvent> {
 
     /**
-     * Max number of events to put into single batch and send to Loki
+     * Max number of events to put into a single batch and send to Loki
      */
     private int batchSizeItems = 1000;
     /**
@@ -69,8 +69,14 @@ public final class Loki4jAppender extends UnsynchronizedAppenderBase<ILoggingEve
      */
     private LoggerMetrics metrics;
 
+    /**
+     * A pipeline that does all the heavy lifting log records processing
+     */
     private DefaultPipeline pipeline;
 
+    /**
+     * A counter for events dropped due to backpressure
+     */
     private AtomicLong droppedEventsCount = new AtomicLong(0L);
 
     @Override
@@ -214,6 +220,7 @@ public final class Loki4jAppender extends UnsynchronizedAppenderBase<ILoggingEve
         pipeline.waitSendQueueIsEmpty(timeoutMs);
     }
 
+    @Deprecated
     public void setBatchSize(int batchSize) {
         addWarn("Property `batchSize` was replaced with `batchSizeItems`. Please fix your configuration");
     }

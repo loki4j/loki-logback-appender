@@ -149,7 +149,7 @@ public final class DefaultPipeline extends ContextAwareBase implements LifeCycle
         trace("check encode actions");
         LogRecord record = buffer.peek();
         while(record != null && batch.isEmpty()) {
-            if (!batcher.checkSize(record, batch)) {
+            if (!batcher.checkSizeBeforeAdd(record, batch)) {
                 addWarn("Dropping the record that exceeds max batch size: " +
                     record.toString());
                 buffer.remove();
