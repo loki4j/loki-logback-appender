@@ -67,7 +67,7 @@
 <tr><th>Setting</th><th>Default</th><th>Description</th></tr>
 </thead>
 <tbody>
-<tr><td>batchSize</td><td>1000</td><td>Max number of events to put into single batch and send to Loki</td></tr>
+<tr><td>batchSize</td><td>1000</td><td>Max number of events to put into a single batch and send to Loki</td></tr>
 <tr><td>batchTimeoutMs</td><td>60000</td><td>Max time in milliseconds to wait before sending a batch to Loki</td></tr>
 <tr><td>sendQueueSize</td><td>50000</td><td>Max number of events to keep in the send queue. When the queue is full, incoming log events are dropped</td></tr>
 <tr><td>drainOnStop</td><td>true</td><td>Wait util all remaining events are sent before shutdown the appender</td></tr>
