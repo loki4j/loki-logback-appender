@@ -94,7 +94,7 @@ public class GrafanaCloudTest {
     @Test
     @Category({CIOnlyTests.class})
     public void testApacheJsonMaxBytesSend() throws Exception {
-        var label = "testApacheJsonMaxBytesSend";
+        var label = "testApacheJsonMaxBytesSendCloud";
         var encoder = jsonEncoder(false, label);
         var sender = authorize(apacheHttpSender(urlPush));
         sender.setRequestTimeoutMs(30_000L);
@@ -110,7 +110,7 @@ public class GrafanaCloudTest {
     @Test
     @Category({CIOnlyTests.class})
     public void testJavaProtobufMaxBytesSend() throws Exception {
-        var label = "testJavaProtobufMaxBytesSend";
+        var label = "testJavaProtobufMaxBytesSendCloud";
         var encoder = protobufEncoder(false, label);
         var sender = authorize(javaHttpSender(urlPush));
         sender.setRequestTimeoutMs(30_000L);
