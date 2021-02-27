@@ -85,6 +85,7 @@ task integTests(type: Test) {
     useJUnit {
         includeCategories 'com.github.loki4j.testkit.categories.IntegrationTests'
     }
+    maxHeapSize = "2G"
     testLogging.showStandardStreams = true
 }
 

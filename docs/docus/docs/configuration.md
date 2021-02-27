@@ -12,7 +12,7 @@ Most Loki4j appender settings are optional. These few that are required are mark
 
 Setting|Default|Description
 -------|-------|-----------
-batchSize|1000|Max number of events to put into single batch and send to Loki
+batchSize|1000|Max number of events to put into a single batch and send to Loki
 batchTimeoutMs|60000|Max time in milliseconds to wait before sending a batch to Loki
 sendQueueSize|50000|Max number of events to keep in the send queue. When the queue is full, incoming log events are dropped
 drainOnStop|true|Wait util all remaining events are sent before shutdown the appender

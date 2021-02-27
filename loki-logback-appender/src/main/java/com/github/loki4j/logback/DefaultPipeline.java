@@ -147,11 +147,20 @@ public final class DefaultPipeline extends ContextAwareBase implements LifeCycle
         }
         if (!started) return;
         trace("check encode actions");
-        LogRecord record = buffer.poll();
+        LogRecord record = buffer.peek();
         while(record != null && batch.isEmpty()) {
-            batcher.add(record, batch);
-            if (batch.isEmpty()) record = buffer.poll();
+            if (!batcher.checkSizeBeforeAdd(record, batch)) {
+                addWarn("Dropping the record that exceeds max batch size: " +
+                    record.toString());
+                buffer.remove();
+                buffer.commit(1);
+                record = buffer.peek();
+                continue;
+            }
+            if (batch.isEmpty()) batcher.add(buffer.remove(), batch);
+            if (batch.isEmpty()) record = buffer.peek();
         }
+
         if (batch.isEmpty() && drainRequested.get())
             batcher.drain(lastSendTimeMs.get(), batch);
         newEventsArrived.set(false);
