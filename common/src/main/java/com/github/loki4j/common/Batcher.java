@@ -45,7 +45,7 @@ public final class Batcher {
      * by Loki.
      */
     private long estimateSizeBytes(LogRecord r, boolean dryRun) {
-        long size = StringUtils.utf8Length(r.message) + 24;
+        long size = r.messageUtf8SizeBytes + 24;
         if (!labels.contains(r.stream)) {
             size += StringUtils.utf8Length(r.stream) + 8;
             if (!dryRun) labels.add(r.stream);

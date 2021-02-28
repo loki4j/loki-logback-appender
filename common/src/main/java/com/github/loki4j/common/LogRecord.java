@@ -10,6 +10,8 @@ public class LogRecord {
 
     public String message;
 
+    public int messageUtf8SizeBytes;
+
     public static LogRecord create() {
         return new LogRecord();
     }
@@ -24,6 +26,7 @@ public class LogRecord {
         r.nanos = nanos;
         r.stream = stream;
         r.message = message;
+        r.messageUtf8SizeBytes = StringUtils.utf8Length(message);
         return r;
     }
 
