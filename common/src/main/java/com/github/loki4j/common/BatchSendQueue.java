@@ -9,8 +9,6 @@ public final class BatchSendQueue {
 
     private final ByteBuffer buf;
 
-    private final int maxBatchBytes;
-
     private final ReentrantLock lock;
 
     private volatile int batchesCount;
@@ -19,7 +17,6 @@ public final class BatchSendQueue {
 
     public BatchSendQueue(ByteBuffer buf, int maxBatchBytes) {
         this.buf = buf;
-        this.maxBatchBytes = maxBatchBytes;
 
         this.batchesCount = 0;
         recalcRemaining();
@@ -29,10 +26,6 @@ public final class BatchSendQueue {
 
     public boolean canWrite(int len) {
         return len <= remainingBytes;
-    }
-
-    public boolean acceptsBatches() {
-        return canWrite(maxBatchBytes);
     }
 
     public boolean canRead() {
