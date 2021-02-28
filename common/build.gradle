@@ -19,9 +19,9 @@ sourceSets {
 }
 
 dependencies {
-    compileOnly 'com.google.protobuf:protobuf-java:3.14.0'
+    compileOnly 'com.google.protobuf:protobuf-java:3.15.1'
 
-    testImplementation 'junit:junit:4.13'
+    testImplementation 'junit:junit:4.13.2'
 }
 
 compileJava {
@@ -41,7 +41,7 @@ test {
 
 protobuf {
   protoc {
-    artifact = 'com.google.protobuf:protoc:3.12.4'
+    artifact = 'com.google.protobuf:protoc:3.15.1'
   }
 }
 

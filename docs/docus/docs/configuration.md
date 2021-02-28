@@ -12,9 +12,11 @@ Most Loki4j appender settings are optional. These few that are required are mark
 
 Setting|Default|Description
 -------|-------|-----------
-batchSize|1000|Max number of messages to put into single batch and send to Loki
+batchSize|1000|Max number of events to put into a single batch and send to Loki
 batchTimeoutMs|60000|Max time in milliseconds to wait before sending a batch to Loki
-processingThreads|1|Number of threads to use for log message processing and formatting
+sendQueueSize|50000|Max number of events to keep in the send queue. When the queue is full, incoming log events are dropped
+drainOnStop|true|Wait util all remaining events are sent before shutdown the appender
+metricsEnabled|false|If true, the appender will report its metrics using Micrometer
 verbose|false|If true, the appender will print its own debug logs to stderr
 
 ### HTTP settings
@@ -26,6 +28,8 @@ http.connectionTimeoutMs|30000|Time in milliseconds to wait for HTTP connection 
 http.requestTimeoutMs|5000|Time in milliseconds to wait for HTTP request to Loki to be responded before reporting an error
 http.auth.username||Username to use for basic auth
 http.auth.password||Password to use for basic auth
+http.tenantId||Tenant identifier. It is required only for sending logs directly to Loki operating in multi-tenant mode. Otherwise 
+this setting has no effect
 
 ### Format settings
 
@@ -82,7 +86,6 @@ Setting|Default|Description
 -------|-------|-----------
 http.maxConnections|1|Maximum number of HTTP connections to keep in the pool
 http.connectionKeepAliveMs|120000|A duration of time in milliseconds which the connection can be safely kept idle for later reuse. This value should not be greater than `server.http-idle-timeout` in your Loki config
-http.httpThreads|1|Number of threads to use for sending HTTP requests
 
 ### Switching to Protobuf format
 
@@ -98,20 +101,20 @@ If you want to use `ProtobufEncoder`, you need to add Protobuf-related dependenc
 <dependency>
     <groupId>com.google.protobuf</groupId>
     <artifactId>protobuf-java</artifactId>
-    <version>3.14.0</version>
+    <version>3.15.1</version>
 </dependency>
 <dependency>
     <groupId>org.xerial.snappy</groupId>
     <artifactId>snappy-java</artifactId>
-    <version>1.1.8</version>
+    <version>1.1.8.4</version>
 </dependency>
 ```
 
 <!--Gradle-->
 
 ```groovy
-compile 'com.google.protobuf:protobuf-java:3.12.4'
-compile 'org.xerial.snappy:snappy-java:1.1.8'
+compile 'com.google.protobuf:protobuf-java:3.15.1'
+compile 'org.xerial.snappy:snappy-java:1.1.8.4'
 ```
 <!--END_DOCUSAURUS_CODE_TABS-->
 

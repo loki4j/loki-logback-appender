@@ -58,7 +58,7 @@ public class Generators {
             AbstractHttpSender sender) {
         var appender = new Loki4jAppender();
         appender.setContext(new LoggerContext());
-        appender.setBatchSize(batchSize);
+        appender.setBatchSizeItems(batchSize);
         appender.setBatchTimeoutMs(batchTimeoutMs);
         appender.setFormat(encoder);
         appender.setHttp(sender);
