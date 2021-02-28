@@ -10,7 +10,7 @@ import org.junit.BeforeClass;
 import org.junit.Test;
 import org.junit.experimental.categories.Category;
 
-public class LargeBatchSendTest {
+public class BatchSizeTest {
 
     private static String urlBase = "http://localhost:3100/loki/api/v1";
     private static String urlPush = urlBase + "/push";
@@ -29,14 +29,14 @@ public class LargeBatchSendTest {
 
     @Test
     @Category({IntegrationTests.class})
-    public void testApacheJsonBatchSend() throws Exception {
-        var label = "testApacheJsonBatchSend";
+    public void testApacheJsonMaxBytesSend() throws Exception {
+        var label = "testApacheJsonMaxBytesSend";
         var encoder = jsonEncoder(false, label);
         var sender = apacheHttpSender(urlPush);
         sender.setRequestTimeoutMs(30_000L);
-        var appender = appender(500, 1000, encoder, sender);
+        var appender = appender(5_000, 1000, encoder, sender);
 
-        var events = generateEvents(1000, 2000);
+        var events = generateEvents(5_000, 2000);
         client.testHttpSend(label, events, appender, jsonEncoder(false, label));
 
         assertTrue(true);
@@ -44,14 +44,14 @@ public class LargeBatchSendTest {
 
     @Test
     @Category({IntegrationTests.class})
-    public void testJavaJsonBatchSend() throws Exception {
-        var label = "testJavaJsonBatchSend";
-        var encoder = jsonEncoder(false, label);
+    public void testJavaProtobufMaxBytesSend() throws Exception {
+        var label = "testJavaProtobufMaxBytesSend";
+        var encoder = protobufEncoder(false, label);
         var sender = javaHttpSender(urlPush);
         sender.setRequestTimeoutMs(30_000L);
-        var appender = appender(500, 1000, encoder, sender);
+        var appender = appender(5_000, 1000, encoder, sender);
 
-        var events = generateEvents(1000, 2000);
+        var events = generateEvents(5_000, 2000);
         client.testHttpSend(label, events, appender, jsonEncoder(false, label));
 
         assertTrue(true);

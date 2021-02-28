@@ -82,7 +82,7 @@ public class LoggerMetrics {
 
         droppedEventsCounter = Counter
             .builder("loki4j.drop.events")
-            .description("Number of events dropped because send queue is full")
+            .description("Number of events dropped due to backpressure settings")
             .tags(tags)
             .register(Metrics.globalRegistry);
     }

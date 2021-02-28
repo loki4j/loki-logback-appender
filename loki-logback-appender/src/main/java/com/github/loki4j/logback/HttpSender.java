@@ -30,8 +30,9 @@ public interface HttpSender extends ContextAware, LifeCycle {
     public void setUrl(String url);
 
     /**
-     * Set optional tenantId
-     * @param tenantId
+     * Tenant identifier.
+     * It is required only for sending logs directly to Loki operating in multi-tenant mode.
+     * Otherwise this setting has no effect
      */
     public void setTenantId(String tenantId);
 

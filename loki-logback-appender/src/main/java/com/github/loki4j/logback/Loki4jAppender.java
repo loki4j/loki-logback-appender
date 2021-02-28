@@ -1,5 +1,7 @@
 package com.github.loki4j.logback;
 
+import java.util.concurrent.atomic.AtomicLong;
+
 import com.github.loki4j.common.Batcher;
 import com.github.loki4j.common.BinaryBatch;
 import com.github.loki4j.common.LogRecord;
@@ -16,12 +18,16 @@ import ch.qos.logback.core.status.Status;
 /**
  * Main appender that provides functionality for sending log record batches to Loki
  */
-public class Loki4jAppender extends UnsynchronizedAppenderBase<ILoggingEvent> {
+public final class Loki4jAppender extends UnsynchronizedAppenderBase<ILoggingEvent> {
 
     /**
-     * Max number of events to put into single batch and send to Loki
+     * Max number of events to put into a single batch and send to Loki
      */
-    private int batchSize = 1000;
+    private int batchSizeItems = 1000;
+    /**
+     * Max number of bytes a single batch can contain
+     */
+    private int batchSizeBytes = 4 * 1024 * 1024;
     /**
      * Max time in milliseconds to wait before sending a batch to Loki
      */
@@ -29,7 +35,7 @@ public class Loki4jAppender extends UnsynchronizedAppenderBase<ILoggingEvent> {
 
     /**
      * Max number of events to keep in the send queue.
-     * When the queue id full, incoming log events are dropped
+     * When the queue is full, incoming log events are dropped
      */
     private int sendQueueSize = 50 * 1000;
 
@@ -63,7 +69,15 @@ public class Loki4jAppender extends UnsynchronizedAppenderBase<ILoggingEvent> {
      */
     private LoggerMetrics metrics;
 
+    /**
+     * A pipeline that does all the heavy lifting log records processing
+     */
     private DefaultPipeline pipeline;
+
+    /**
+     * A counter for events dropped due to backpressure
+     */
+    private AtomicLong droppedEventsCount = new AtomicLong(0L);
 
     @Override
     public void start() {
@@ -75,8 +89,8 @@ public class Loki4jAppender extends UnsynchronizedAppenderBase<ILoggingEvent> {
         }
 
         addInfo(String.format("Starting with " +
-            "batchSize=%s, batchTimeout=%s...",
-            batchSize, batchTimeoutMs));
+            "batchSizeItems=%s, batchSizeBytes=%s, batchTimeout=%s...",
+            batchSizeItems, batchSizeBytes, batchTimeoutMs));
 
         if (encoder == null) {
             addWarn("No encoder specified in the config. Using JsonEncoder with default settings");
@@ -101,7 +115,7 @@ public class Loki4jAppender extends UnsynchronizedAppenderBase<ILoggingEvent> {
         sender.start();
 
         var buffer = new SoftLimitBuffer<LogRecord>(sendQueueSize);
-        var batcher = new Batcher(batchSize, batchTimeoutMs);
+        var batcher = new Batcher(batchSizeItems, batchSizeBytes, batchTimeoutMs);
         pipeline = new DefaultPipeline(buffer, batcher, this::encode, this::send, drainOnStop);
         pipeline.setContext(context);
         pipeline.start();
@@ -131,8 +145,29 @@ public class Loki4jAppender extends UnsynchronizedAppenderBase<ILoggingEvent> {
     protected void append(ILoggingEvent event) {
         var startedNs = System.nanoTime();
         var appended = pipeline.append(() -> encoder.eventToRecord(event));
+        if (!appended)
+            reportDroppedEvents();
         if (metricsEnabled)
             metrics.eventAppended(startedNs, !appended);
+    }
+
+    private void reportDroppedEvents() {
+        var dropped = droppedEventsCount.incrementAndGet();
+        if (dropped == 1
+                || (dropped <= 90 && dropped % 20 == 0)
+                || (dropped <= 900 && dropped % 100 == 0)
+                || (dropped <= 900_000 && dropped % 1000 == 0)
+                || (dropped <= 9_000_000 && dropped % 10_000 == 0)
+                || (dropped <= 900_000_000 && dropped % 1_000_000 == 0)
+                || dropped > 1_000_000_000) {
+            addWarn(String.format(
+                "Backpressure: %s messages dropped. Check `sendQueueSize` setting", dropped));
+            if (dropped > 1_000_000_000) {
+                addWarn(String.format(
+                    "Resetting dropped message counter from %s to 0", dropped));
+                droppedEventsCount.set(0L);
+            }
+        }
     }
 
     protected BinaryBatch encode(LogRecordBatch batch) {
@@ -181,13 +216,19 @@ public class Loki4jAppender extends UnsynchronizedAppenderBase<ILoggingEvent> {
         return r;
     }
 
-
     void waitSendQueueIsEmpty(long timeoutMs) {
         pipeline.waitSendQueueIsEmpty(timeoutMs);
     }
 
+    @Deprecated
     public void setBatchSize(int batchSize) {
-        this.batchSize = batchSize;
+        addWarn("Property `batchSize` was replaced with `batchSizeItems`. Please fix your configuration");
+    }
+    public void setBatchSizeItems(int batchSizeItems) {
+        this.batchSizeItems = batchSizeItems;
+    }
+    public void setBatchSizeBytes(int batchSizeBytes) {
+        this.batchSizeBytes = batchSizeBytes;
     }
     public void setBatchTimeoutMs(long batchTimeoutMs) {
         this.batchTimeoutMs = batchTimeoutMs;
