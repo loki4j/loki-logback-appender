@@ -32,7 +32,7 @@ public class ApacheHttpSender extends AbstractHttpSender {
 
     /**
      * A duration of time which the connection can be safely kept
-     * idle for later reuse. This value can not be  greater than
+     * idle for later reuse. This value should not be greater than
      * server.http-idle-timeout in your Loki config
      */
     private long connectionKeepAliveMs = 120_000;
