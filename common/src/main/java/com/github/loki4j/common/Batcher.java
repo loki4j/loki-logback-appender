@@ -1,6 +1,5 @@
 package com.github.loki4j.common;
 
-import java.nio.charset.StandardCharsets;
 import java.util.HashSet;
 
 /**
@@ -15,6 +14,7 @@ import java.util.HashSet;
  * <li> {@code maxTimeoutMs} - if this timeout is passed since the last batch was sended,
  * applies only when {@code drain()} is called
  * </ul>
+ * This class is not thread-safe.
  */
 public final class Batcher {
 
@@ -45,9 +45,9 @@ public final class Batcher {
      * by Loki.
      */
     private long estimateSizeBytes(LogRecord r, boolean dryRun) {
-        long size = r.message.getBytes(StandardCharsets.UTF_8).length + 24;
+        long size = StringUtils.utf8Length(r.message) + 24;
         if (!labels.contains(r.stream)) {
-            size += r.stream.getBytes(StandardCharsets.UTF_8).length + 8;
+            size += StringUtils.utf8Length(r.stream) + 8;
             if (!dryRun) labels.add(r.stream);
         }
         return size;
