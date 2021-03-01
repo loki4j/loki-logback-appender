@@ -1,5 +1,6 @@
 package com.github.loki4j.logback;
 
+import com.github.loki4j.common.ByteBufferFactory;
 import com.github.loki4j.common.JsonWriter;
 import com.github.loki4j.common.LogRecordBatch;
 
@@ -11,7 +12,11 @@ import ch.qos.logback.core.joran.spi.NoAutoStart;
 @NoAutoStart
 public class JsonEncoder extends AbstractLoki4jEncoder {
 
-    private final JsonWriter writer = new JsonWriter();
+    private JsonWriter writer;
+
+    public void initWriter(int capacity, ByteBufferFactory bbFactory) {
+        writer = new JsonWriter(capacity);
+    }
 
     public String getContentType() {
         return "application/json";

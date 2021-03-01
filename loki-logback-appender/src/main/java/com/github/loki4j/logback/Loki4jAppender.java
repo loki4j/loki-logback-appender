@@ -4,6 +4,7 @@ import java.util.concurrent.atomic.AtomicLong;
 
 import com.github.loki4j.common.Batcher;
 import com.github.loki4j.common.BinaryBatch;
+import com.github.loki4j.common.ByteBufferFactory;
 import com.github.loki4j.common.LogRecord;
 import com.github.loki4j.common.LogRecordBatch;
 import com.github.loki4j.common.LokiResponse;
@@ -55,6 +56,11 @@ public final class Loki4jAppender extends UnsynchronizedAppenderBase<ILoggingEve
     private boolean drainOnStop = true;
 
     /**
+     * Use off-heap memory for storing intermediate data
+     */
+    private boolean useDirectBuffers = true;
+
+    /**
      * An encoder to use for converting log record batches to format acceptable by Loki
      */
     private Loki4jEncoder encoder;
@@ -92,10 +98,13 @@ public final class Loki4jAppender extends UnsynchronizedAppenderBase<ILoggingEve
             "batchSizeItems=%s, batchSizeBytes=%s, batchTimeout=%s...",
             batchSizeItems, batchSizeBytes, batchTimeoutMs));
 
+        var bufferFactory = new ByteBufferFactory(useDirectBuffers);
+
         if (encoder == null) {
             addWarn("No encoder specified in the config. Using JsonEncoder with default settings");
             encoder = new JsonEncoder();
         }
+        encoder.initWriter(batchSizeBytes, bufferFactory);
         encoder.setContext(context);
         encoder.start();
 
@@ -268,6 +277,9 @@ public final class Loki4jAppender extends UnsynchronizedAppenderBase<ILoggingEve
     }
     public void setDrainOnStop(boolean drainOnStop) {
         this.drainOnStop = drainOnStop;
+    }
+    public void setUseDirectBuffers(boolean useDirectBuffers) {
+        this.useDirectBuffers = useDirectBuffers;
     }
 
 }

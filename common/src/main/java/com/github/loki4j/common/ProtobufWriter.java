@@ -20,9 +20,9 @@ public final class ProtobufWriter {
     private StreamAdapter.Builder stream;
     private int size = 0;
 
-    public ProtobufWriter(int maxBatchSizeBytes) {
-        this.uncompressed = ByteBuffer.allocateDirect(maxBatchSizeBytes);
-        this.compressed = ByteBuffer.allocateDirect(maxBatchSizeBytes);
+    public ProtobufWriter(int capacity, ByteBufferFactory bbFactory) {
+        this.uncompressed = bbFactory.allocate(capacity);
+        this.compressed = bbFactory.allocate(capacity);
         this.request = PushRequest.newBuilder();
     }
 
@@ -45,7 +45,17 @@ public final class ProtobufWriter {
         request.build().writeTo(writer);
         writer.flush();
         uncompressed.flip();
-        size = Snappy.compress(uncompressed, compressed);
+        if (uncompressed.hasArray()) {
+            size = Snappy.compress(
+                uncompressed.array(),
+                0,
+                uncompressed.limit(),
+                compressed.array(),
+                0);
+            compressed.limit(size());
+        } else {
+            size = Snappy.compress(uncompressed, compressed);
+        }
     }
 
     public int size() {

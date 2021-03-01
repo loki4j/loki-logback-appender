@@ -2,6 +2,7 @@ package com.github.loki4j.logback;
 
 import java.io.IOException;
 
+import com.github.loki4j.common.ByteBufferFactory;
 import com.github.loki4j.common.LogRecordBatch;
 import com.github.loki4j.common.ProtobufWriter;
 
@@ -13,7 +14,11 @@ import ch.qos.logback.core.joran.spi.NoAutoStart;
 @NoAutoStart
 public class ProtobufEncoder extends AbstractLoki4jEncoder {
 
-    private final ProtobufWriter writer = new ProtobufWriter(4 * 1024 * 1024); // TODO: remove hardcoding
+    private ProtobufWriter writer;
+
+    public void initWriter(int capacity, ByteBufferFactory bbFactory) {
+        writer = new ProtobufWriter(capacity, bbFactory);
+    }
 
     public String getContentType() {
         return "application/x-protobuf";

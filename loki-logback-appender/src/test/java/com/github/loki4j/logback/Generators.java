@@ -9,6 +9,7 @@ import java.util.function.Consumer;
 import java.util.function.Function;
 import java.util.stream.StreamSupport;
 
+import com.github.loki4j.common.ByteBufferFactory;
 import com.github.loki4j.common.LogRecord;
 import com.github.loki4j.common.LogRecordBatch;
 import com.github.loki4j.common.LokiResponse;
@@ -127,6 +128,7 @@ public class Generators {
     }
 
     public static void withEncoder(AbstractLoki4jEncoder encoder, Consumer<AbstractLoki4jEncoder> body) {
+        encoder.initWriter(4 * 1024 * 1024, new ByteBufferFactory(false));
         encoder.setContext(new LoggerContext());
         encoder.start();
         try {
@@ -154,6 +156,8 @@ public class Generators {
             protected byte[] encodeDynamicLabels(LogRecordBatch batch) {
                 return batchToString(batch).getBytes(charset);
             }
+            @Override
+            public void initWriter(int capacity, ByteBufferFactory bbFactory) { }
         };
         encoder.setLabel(label);
         encoder.setMessage(message);

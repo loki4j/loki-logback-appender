@@ -11,7 +11,7 @@ public class JsonWriterTest {
     public void testWriteRecord() {
         var re1 = create(100L, 1, "level=INFO,app=my-app", "l=INFO c=test.TestApp t=thread-1 | Test message");
 
-        var writer = new JsonWriter();
+        var writer = new JsonWriter(1000);
         writer.beginStreams(re1, new String[] { "level","INFO","app","my-app" });
         writer.endStreams();
 
@@ -28,7 +28,7 @@ public class JsonWriterTest {
     public void testWriteSpecialCharsRecord() {
         var re1 = create(100L, 1, "level=INFO,app=my-app", "спец !@#$%^&*()\" \n\tсимволы <>?/\\№ё:{}[]🏁");
 
-        var writer = new JsonWriter();
+        var writer = new JsonWriter(1000);
         writer.beginStreams(re1, new String[] { "level","INFO","app","my-app" });
         writer.endStreams();
 
