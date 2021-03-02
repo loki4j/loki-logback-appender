@@ -103,7 +103,7 @@ public class GrafanaCloudTest {
         appender.setVerbose(false);
 
         var events = generateEvents(1000, 100);
-        client.testHttpSend(label, events, appender, jsonEncoder(false, label), events.length, 1L);
+        client.testHttpSend(label, events, appender, jsonEncoder(false, label));
 
         assertTrue(true);
     }
@@ -120,7 +120,7 @@ public class GrafanaCloudTest {
         appender.setVerbose(false);
 
         var events = generateEvents(1000, 1000);
-        client.testHttpSend(label, events, appender, jsonEncoder(false, label), events.length, 1L);
+        client.testHttpSend(label, events, appender, jsonEncoder(false, label));
 
         assertTrue(true);
     }
