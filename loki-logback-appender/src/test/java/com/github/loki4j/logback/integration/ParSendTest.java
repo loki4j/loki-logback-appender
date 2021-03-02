@@ -55,8 +55,7 @@ public class ParSendTest {
                             appender,
                             jsonEncoder(false, label),
                             5,
-                            (parFactor - idx) + 500L,
-                            1000L);
+                            (parFactor - idx) + 500L);
                     } catch (Exception e) {
                         throw new RuntimeException(e);
                     }
@@ -92,8 +91,7 @@ public class ParSendTest {
                             appender,
                             jsonEncoder(false, label),
                             5,
-                            (parFactor - idx) + 500L,
-                            1000L);
+                            (parFactor - idx) + 500L);
                     } catch (Exception e) {
                         throw new RuntimeException(e);
                     }

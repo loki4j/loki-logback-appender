@@ -104,7 +104,7 @@ public class LokiTestingClient {
             ILoggingEvent[] events,
             Loki4jAppender actualAppender,
             AbstractLoki4jEncoder expectedEncoder) throws Exception {
-        testHttpSend(lbl, events, actualAppender, expectedEncoder, events.length, 10L, 1000L);
+        testHttpSend(lbl, events, actualAppender, expectedEncoder, events.length, 10L);
     }
 
     public void testHttpSend(
@@ -113,8 +113,7 @@ public class LokiTestingClient {
             Loki4jAppender actualAppender,
             AbstractLoki4jEncoder expectedEncoder,
             int chunkSize,
-            long chunkDelayMs,
-            long queryDelayMs) throws Exception {
+            long chunkDelayMs) throws Exception {
         var records = new LogRecord[events.length];
         var reqStr = new AtomicReference<String>();
 
@@ -135,8 +134,6 @@ public class LokiTestingClient {
             }
             reqStr.set(new String(encoder.encode(new LogRecordBatch(records))));
         });
-
-        try { Thread.sleep(queryDelayMs); } catch (InterruptedException e) { }
 
         var req = parseRequest(reqStr.get());
         var lastIdx = records.length - 1;
