@@ -33,7 +33,7 @@ import java.util.Arrays;
 public final class JsonWriter {
 
     private int position;
-    private byte[] buffer = new byte[1024];
+    private byte[] buffer;
 
     /**
      * Helper for writing JSON object start: {
@@ -67,6 +67,10 @@ public final class JsonWriter {
      * Helper for writing JSON escape: \\
      */
     public static final byte ESCAPE = '\\';
+
+    public JsonWriter(int capacity) {
+        this.buffer = new byte[capacity];
+    }
 
     public void beginStreams(LogRecord firstRecord, String[] firstLabels) {
         writeByte(OBJECT_START);

@@ -1,4 +1,4 @@
-package com.github.loki4j.logback.performance;
+package com.github.loki4j.logback.performance.reg_v120;
 
 import static com.github.loki4j.logback.Generators.*;
 
@@ -19,11 +19,7 @@ import org.junit.experimental.categories.Category;
 
 import ch.qos.logback.classic.LoggerContext;
 
-public class EncodersTest {
-
-    private static AbstractLoki4jEncoder initEnc(AbstractLoki4jEncoder e) {
-        return initEnc(e, false);
-    }
+public class ProtobufEncodersTest {
 
     private static AbstractLoki4jEncoder initEnc(AbstractLoki4jEncoder e, boolean isDirect) {
         e.setCapacity(4 * 1024 * 1024);
@@ -42,7 +38,7 @@ public class EncodersTest {
             this.runs = 50;
             this.parFactor = 1;
             this.generator = () -> {
-                var jsonEncSta = initEnc(jsonEncoder(true, "testLabel"));
+                var jsonEncSta = initEnc(jsonEncoder(true, "testLabel"), false);
                 return Stream.iterate(
                         Arrays.stream(generateEvents(batchSize, 10))
                             .map(e -> jsonEncSta.eventToRecord(e))
@@ -52,22 +48,18 @@ public class EncodersTest {
                     .iterator();
             };
             this.benchmarks = Arrays.asList(
-                Benchmark.of("defaultEnc",
-                    () -> initEnc(defaultToStringEncoder()),
+                Benchmark.of("oldProtEnc",
+                    () -> {
+                        var encoder = new ProtobufEncoderV110();
+                        encoder.setStaticLabels(false);
+                        encoder.setLabel(labelCfg("test=testLabel,level=%level,app=my-app", ",", "=", true));
+                        return initEnc(encoder, false);
+                    },
                     (e, batch) -> e.encode(new LogRecordBatch(batch))),
-                Benchmark.of("jsonEncSta",
-                    () -> initEnc(jsonEncoder(true, "testLabel")),
+                Benchmark.of("newProtEncOnHeap",
+                    () -> initEnc(protobufEncoder(false, "testLabel"), false),
                     (e, batch) -> e.encode(new LogRecordBatch(batch))),
-                Benchmark.of("jsonEncDyn",
-                    () -> initEnc(jsonEncoder(false, "testLabel")),
-                    (e, batch) -> e.encode(new LogRecordBatch(batch))),
-                Benchmark.of("protEncSta",
-                    () -> initEnc(protobufEncoder(true, "testLabel")),
-                    (e, batch) -> e.encode(new LogRecordBatch(batch))),
-                Benchmark.of("protEncDyn",
-                    () -> initEnc(protobufEncoder(false, "testLabel")),
-                    (e, batch) -> e.encode(new LogRecordBatch(batch))),
-                Benchmark.of("protEncDynOffHeap",
+                Benchmark.of("newProtEncOffHeap",
                     () -> initEnc(protobufEncoder(false, "testLabel"), true),
                     (e, batch) -> e.encode(new LogRecordBatch(batch)))
             );
