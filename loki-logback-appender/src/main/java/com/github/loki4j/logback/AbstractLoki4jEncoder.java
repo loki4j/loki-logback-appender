@@ -128,12 +128,11 @@ public abstract class AbstractLoki4jEncoder extends EncoderBase<LogRecordBatch> 
     }
 
     public LogRecord eventToRecord(ILoggingEvent e) {
-        LogRecord r = new LogRecord();
-        r.timestampMs = e.getTimeStamp();
-        r.nanos = nanoCounter.updateAndGet(i -> i < 999_999 ? i + 1 : 0);
-        r.stream = labelPatternLayout.doLayout(e).intern();
-        r.message = messagePatternLayout.doLayout(e);
-        return r;
+        return LogRecord.create(
+            e.getTimeStamp(),
+            nanoCounter.updateAndGet(i -> i < 999_999 ? i + 1 : 0),
+            labelPatternLayout.doLayout(e).intern(),
+            messagePatternLayout.doLayout(e));
     }
 
     @Override

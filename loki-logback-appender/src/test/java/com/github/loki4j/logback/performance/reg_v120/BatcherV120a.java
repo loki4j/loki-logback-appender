@@ -1,6 +1,11 @@
-package com.github.loki4j.common;
+package com.github.loki4j.logback.performance.reg_v120;
 
+import java.nio.charset.StandardCharsets;
 import java.util.HashSet;
+
+import com.github.loki4j.common.BatchCondition;
+import com.github.loki4j.common.LogRecord;
+import com.github.loki4j.common.LogRecordBatch;
 
 /**
  * A component that is responsible for splitting a stream of log events into batches.
@@ -14,9 +19,8 @@ import java.util.HashSet;
  * <li> {@code maxTimeoutMs} - if this timeout is passed since the last batch was sended,
  * applies only when {@code drain()} is called
  * </ul>
- * This class is not thread-safe.
  */
-public final class Batcher {
+public final class BatcherV120a {
 
     private final int maxSizeBytes;
     private final long maxTimeoutMs;
@@ -27,7 +31,7 @@ public final class Batcher {
     private HashSet<String> labels = new HashSet<>();
 
 
-    public Batcher(int maxItems, int maxSizeBytes, long maxTimeoutMs) {
+    public BatcherV120a(int maxItems, int maxSizeBytes, long maxTimeoutMs) {
         this.maxSizeBytes = maxSizeBytes;
         this.maxTimeoutMs = maxTimeoutMs;
         this.items = new LogRecord[maxItems];
@@ -45,9 +49,9 @@ public final class Batcher {
      * by Loki.
      */
     private long estimateSizeBytes(LogRecord r, boolean dryRun) {
-        long size = r.messageUtf8SizeBytes + 24;
+        long size = r.message.getBytes(StandardCharsets.UTF_8).length + 24;
         if (!labels.contains(r.stream)) {
-            size += StringUtils.utf8Length(r.stream) + 8;
+            size += r.stream.getBytes(StandardCharsets.UTF_8).length + 8;
             if (!dryRun) labels.add(r.stream);
         }
         return size;

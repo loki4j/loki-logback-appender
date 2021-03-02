@@ -10,9 +10,9 @@ public class LogRecord {
 
     public String message;
 
-    public static LogRecord create() {
-        return new LogRecord();
-    }
+    public int messageUtf8SizeBytes;
+
+    private LogRecord() { }
 
     public static LogRecord create(
             long timestamp,
@@ -24,6 +24,7 @@ public class LogRecord {
         r.nanos = nanos;
         r.stream = stream;
         r.message = message;
+        r.messageUtf8SizeBytes = StringUtils.utf8Length(message);
         return r;
     }
 
