@@ -12,9 +12,7 @@ public class LogRecord {
 
     public int messageUtf8SizeBytes;
 
-    public static LogRecord create() {
-        return new LogRecord();
-    }
+    private LogRecord() { }
 
     public static LogRecord create(
             long timestamp,

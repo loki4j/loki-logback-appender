@@ -22,12 +22,12 @@ import ch.qos.logback.classic.spi.ILoggingEvent;
 
 public class BatchBuilderTest {
 
-    public static LogRecord eventToRecord(ILoggingEvent e, LogRecord r) {
-        r.timestampMs = e.getTimeStamp();
-        r.nanos = 0;
-        r.stream = "test=dlkjafh";
-        r.message = e.getMessage();
-        return r;
+    public static LogRecord eventToRecord(ILoggingEvent e) {
+        return LogRecord.create(
+            e.getTimeStamp(),
+            0,
+            "test=dlkjafh",
+            e.getMessage());
     }
 
     @Test
@@ -44,27 +44,27 @@ public class BatchBuilderTest {
                 Benchmark.of("slb",
                     () -> new SoftLimitBuffer<LogRecord>(capacity),
                     (r, e) -> {
-                        r.offer(eventToRecord(e, LogRecord.create()));
+                        r.offer(eventToRecord(e));
                         if (r.size() == capacity)
                             while(r.poll() != null) { }
                     }),
                 Benchmark.of("abq",
                     () -> new ArrayBlockingQueue<LogRecord>(capacity),
                     (r, e) -> {
-                        if (!r.offer(eventToRecord(e, LogRecord.create())))
+                        if (!r.offer(eventToRecord(e)))
                             r.clear();
                     }),
                 Benchmark.of("clq",
                     () -> new ConcurrentLinkedQueue<LogRecord>(),
                     (r, e) -> {
-                        r.offer(eventToRecord(e, LogRecord.create()));
+                        r.offer(eventToRecord(e));
                         if (clqCounter.incrementAndGet() > capacity)
                             r.clear();
                     }),
                 Benchmark.of("sal",
                     () -> new ArrayList<LogRecord>(capacity),
                     (r, e) -> {
-                        r.add(eventToRecord(e, LogRecord.create()));
+                        r.add(eventToRecord(e));
                         if (r.size() > capacity)
                             r.clear();
                     })
@@ -88,27 +88,27 @@ public class BatchBuilderTest {
                 Benchmark.of("slb",
                     () -> new SoftLimitBuffer<LogRecord>(capacity),
                     (r, e) -> {
-                        r.offer(eventToRecord(e, LogRecord.create()));
+                        r.offer(eventToRecord(e));
                         if (r.size() == capacity)
                             while(r.poll() != null) { }
                     }),
                 Benchmark.of("abq",
                     () -> new ArrayBlockingQueue<LogRecord>(capacity),
                     (r, e) -> {
-                        if (!r.offer(eventToRecord(e, LogRecord.create())))
+                        if (!r.offer(eventToRecord(e)))
                             r.clear();
                     }),
                 Benchmark.of("clq",
                     () -> new ConcurrentLinkedQueue<LogRecord>(),
                     (r, e) -> {
-                        r.offer(eventToRecord(e, LogRecord.create()));
+                        r.offer(eventToRecord(e));
                         if (clqCounter.incrementAndGet() > capacity)
                             r.clear();
                     }),
                 Benchmark.of("sal",
                     () -> Collections.synchronizedList(new ArrayList<LogRecord>(capacity)),
                     (r, e) -> {
-                        r.add(eventToRecord(e, LogRecord.create()));
+                        r.add(eventToRecord(e));
                         if (r.size() > capacity)
                             r.clear();
                     })
