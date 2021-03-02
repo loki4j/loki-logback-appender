@@ -2,14 +2,9 @@ package com.github.loki4j.logback;
 
 import java.io.IOException;
 
-import com.github.loki4j.common.LogRecord;
+import com.github.loki4j.common.ByteBufferFactory;
 import com.github.loki4j.common.LogRecordBatch;
-import com.grafana.loki.protobuf.Logproto.EntryAdapter;
-import com.grafana.loki.protobuf.Logproto.PushRequest;
-import com.grafana.loki.protobuf.Logproto.StreamAdapter;
-import com.google.protobuf.Timestamp;
-
-import org.xerial.snappy.Snappy;
+import com.github.loki4j.common.ProtobufWriter;
 
 import ch.qos.logback.core.joran.spi.NoAutoStart;
 
@@ -19,37 +14,46 @@ import ch.qos.logback.core.joran.spi.NoAutoStart;
 @NoAutoStart
 public class ProtobufEncoder extends AbstractLoki4jEncoder {
 
+    private ProtobufWriter writer;
+
+    public void initWriter(int capacity, ByteBufferFactory bbFactory) {
+        writer = new ProtobufWriter(capacity, bbFactory);
+    }
+
     public String getContentType() {
         return "application/x-protobuf";
     }
 
     @Override
     protected byte[] encodeStaticLabels(LogRecordBatch batch) {
-        var request = PushRequest.newBuilder();
-        var streamBuilder = request
-            .addStreamsBuilder()
-            .setLabels(labels(extractStreamKVPairs(batch.get(0).stream)));
+        writer.nextStream(labels(extractStreamKVPairs(batch.get(0).stream)));
         for (int i = 0; i < batch.size(); i++) {
-            streamBuilder.addEntries(entry(batch.get(i)));
+            writer.nextEntry(batch.get(i));
         }
-        return compress(request.build().toByteArray());
+        try {
+            writer.endStreams();
+            return writer.toByteArray();
+        } catch (IOException e) {
+            throw new RuntimeException("Protobuf encoding error", e);
+        }
     }
 
     @Override
     protected byte[] encodeDynamicLabels(LogRecordBatch batch) {
-        var request = PushRequest.newBuilder();
         String currentStream = null;
-        StreamAdapter.Builder streamBuilder = null;
         for (int i = 0; i < batch.size(); i++) {
             if (batch.get(i).stream != currentStream) {
                 currentStream = batch.get(i).stream;
-                streamBuilder = request
-                    .addStreamsBuilder()
-                    .setLabels(labels(extractStreamKVPairs(currentStream)));
+                writer.nextStream(labels(extractStreamKVPairs(currentStream)));
             }
-            streamBuilder.addEntries(entry(batch.get(i)));
+            writer.nextEntry(batch.get(i));
         }
-        return compress(request.build().toByteArray());
+        try {
+            writer.endStreams();
+            return writer.toByteArray();
+        } catch (IOException e) {
+            throw new RuntimeException("Protobuf encoding error", e);
+        }
     }
 
     private String labels(String[] labels) {
@@ -70,21 +74,4 @@ public class ProtobufEncoder extends AbstractLoki4jEncoder {
         return s.toString();
     }
     
-    private EntryAdapter entry(LogRecord record) {
-        return EntryAdapter.newBuilder()
-            .setTimestamp(Timestamp.newBuilder()
-                .setSeconds(record.timestampMs / 1000)
-                .setNanos((int)(record.timestampMs % 1000) * 1_000_000 + record.nanos))
-            .setLine(record.message)
-            .build();
-    }
-
-    private byte[] compress(byte[] input) {
-        try {
-            return Snappy.compress(input);
-        } catch (IOException e) {
-            throw new RuntimeException("Snappy compression error", e);
-        }
-    }
-
 }

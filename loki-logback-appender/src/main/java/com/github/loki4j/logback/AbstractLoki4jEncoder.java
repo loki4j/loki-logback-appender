@@ -5,6 +5,7 @@ import java.util.Comparator;
 import java.util.concurrent.atomic.AtomicInteger;
 import java.util.regex.Pattern;
 
+import com.github.loki4j.common.ByteBufferFactory;
 import com.github.loki4j.common.LogRecord;
 import com.github.loki4j.common.LogRecordBatch;
 
@@ -93,6 +94,9 @@ public abstract class AbstractLoki4jEncoder extends EncoderBase<LogRecordBatch> 
     private PatternLayout labelPatternLayout;
     private PatternLayout messagePatternLayout;
 
+    private int capacity;
+    private ByteBufferFactory bufferFactory;
+
     private final AtomicInteger nanoCounter = new AtomicInteger(0);
 
     public void start() {
@@ -110,6 +114,8 @@ public abstract class AbstractLoki4jEncoder extends EncoderBase<LogRecordBatch> 
 
         messagePatternLayout = initPatternLayout(message.pattern);
         messagePatternLayout.start();
+
+        initWriter(capacity, bufferFactory);
 
         super.start();
     }
@@ -158,6 +164,8 @@ public abstract class AbstractLoki4jEncoder extends EncoderBase<LogRecordBatch> 
         }
     }
 
+    protected abstract void initWriter(int capacity, ByteBufferFactory bufferFactory);
+
     protected abstract byte[] encodeStaticLabels(LogRecordBatch batch);
 
     protected abstract byte[] encodeDynamicLabels(LogRecordBatch batch);
@@ -201,4 +209,13 @@ public abstract class AbstractLoki4jEncoder extends EncoderBase<LogRecordBatch> 
     public void setStaticLabels(boolean staticLabels) {
         this.staticLabels = staticLabels;
     }
+
+    public void setCapacity(int capacity) {
+        this.capacity = capacity;
+    }
+
+    public void setBufferFactory(ByteBufferFactory bufferFactory) {
+        this.bufferFactory = bufferFactory;
+    }
+
 }
