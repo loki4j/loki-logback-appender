@@ -12,10 +12,12 @@ import ch.qos.logback.core.encoder.Encoder;
  */
 public interface Loki4jEncoder extends Encoder<LogRecordBatch> {
 
-    void initWriter(int capacity, ByteBufferFactory bbFactory);
-    
     LogRecord eventToRecord(ILoggingEvent e);
 
     String getContentType();
+
+    void setCapacity(int capacity);
+
+    void setBufferFactory(ByteBufferFactory bufferFactory);
 
 }

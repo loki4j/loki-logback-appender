@@ -104,7 +104,8 @@ public final class Loki4jAppender extends UnsynchronizedAppenderBase<ILoggingEve
             addWarn("No encoder specified in the config. Using JsonEncoder with default settings");
             encoder = new JsonEncoder();
         }
-        encoder.initWriter(batchSizeBytes, bufferFactory);
+        encoder.setCapacity(batchSizeBytes);
+        encoder.setBufferFactory(bufferFactory);
         encoder.setContext(context);
         encoder.start();
 
