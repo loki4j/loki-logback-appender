@@ -20,7 +20,7 @@ import org.junit.experimental.categories.Category;
 
 import ch.qos.logback.classic.spi.ILoggingEvent;
 
-public class BatchBuilderTest {
+public class BatchBufferTest {
 
     public static LogRecord eventToRecord(ILoggingEvent e) {
         return LogRecord.create(
