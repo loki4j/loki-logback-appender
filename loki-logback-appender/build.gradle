@@ -86,7 +86,7 @@ task integTests(type: Test) {
         includeCategories 'com.github.loki4j.testkit.categories.IntegrationTests'
     }
     maxHeapSize = "2G"
-    testLogging.showStandardStreams = true
+    testLogging.exceptionFormat = "full"
 }
 
 task perfTests(type: Test) {
@@ -104,7 +104,7 @@ task ciOnlyTests(type: Test) {
     useJUnit {
         includeCategories 'com.github.loki4j.testkit.categories.CIOnlyTests'
     }
-    testLogging.showStandardStreams = true
+    testLogging.exceptionFormat = "full"
 }
 
 publishing {
