@@ -128,7 +128,8 @@ public class Generators {
     }
 
     public static void withEncoder(AbstractLoki4jEncoder encoder, Consumer<AbstractLoki4jEncoder> body) {
-        encoder.initWriter(4 * 1024 * 1024, new ByteBufferFactory(false));
+        encoder.setCapacity(4 * 1024 * 1024);
+        encoder.setBufferFactory(new ByteBufferFactory(false));
         encoder.setContext(new LoggerContext());
         encoder.start();
         try {
