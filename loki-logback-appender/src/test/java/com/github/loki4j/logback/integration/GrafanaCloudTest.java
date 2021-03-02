@@ -100,6 +100,7 @@ public class GrafanaCloudTest {
         sender.setRequestTimeoutMs(30_000L);
         var appender = appender(5_000, 1000, encoder, sender);
         appender.setBatchSizeBytes(65536);
+        appender.setVerbose(false);
 
         var events = generateEvents(1000, 100);
         client.testHttpSend(label, events, appender, jsonEncoder(false, label));
@@ -116,8 +117,9 @@ public class GrafanaCloudTest {
         sender.setRequestTimeoutMs(30_000L);
         var appender = appender(5_000, 1000, encoder, sender);
         appender.setBatchSizeBytes(65536);
+        appender.setVerbose(false);
 
-        var events = generateEvents(1000, 1000);
+        var events = generateEvents(1000, 100);
         client.testHttpSend(label, events, appender, jsonEncoder(false, label));
 
         assertTrue(true);
