@@ -76,7 +76,7 @@ public class LokiTestingClient {
             var query = URLEncoder.encode("{test=\"" + testLabel + "\"}", "utf-8");
             var url = URI.create(String.format(
                 "%s?query=%s&limit=%s&time=%s&direction=forward", urlQuery, query, limit, time));
-            //System.out.println(url);
+            System.err.println(url);
             var req = requestBuilder.copy()
                 .uri(url)
                 .GET()
