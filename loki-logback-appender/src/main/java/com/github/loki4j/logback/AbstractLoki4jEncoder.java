@@ -8,6 +8,7 @@ import java.util.regex.Pattern;
 import com.github.loki4j.common.ByteBufferFactory;
 import com.github.loki4j.common.LogRecord;
 import com.github.loki4j.common.LogRecordBatch;
+import com.github.loki4j.common.Writer;
 
 import ch.qos.logback.classic.PatternLayout;
 import ch.qos.logback.classic.spi.ILoggingEvent;
@@ -146,10 +147,7 @@ public abstract class AbstractLoki4jEncoder extends EncoderBase<LogRecordBatch> 
     }
 
     @Override
-    public byte[] encode(LogRecordBatch batch) {
-        if (batch.isEmpty())
-            return ZERO_BYTES;
-
+    public Writer encode(LogRecordBatch batch) {
         if (staticLabels) {
             if (sortByTime) 
                 batch.sort(byTime);
@@ -165,9 +163,9 @@ public abstract class AbstractLoki4jEncoder extends EncoderBase<LogRecordBatch> 
 
     protected abstract void initWriter(int capacity, ByteBufferFactory bufferFactory);
 
-    protected abstract byte[] encodeStaticLabels(LogRecordBatch batch);
+    protected abstract Writer encodeStaticLabels(LogRecordBatch batch);
 
-    protected abstract byte[] encodeDynamicLabels(LogRecordBatch batch);
+    protected abstract Writer encodeDynamicLabels(LogRecordBatch batch);
 
     private PatternLayout initPatternLayout(String pattern) {
         var patternLayout = new PatternLayout();

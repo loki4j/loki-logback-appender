@@ -28,9 +28,10 @@
 
 package com.github.loki4j.common;
 
+import java.nio.ByteBuffer;
 import java.util.Arrays;
 
-public final class JsonWriter {
+public final class JsonWriter implements Writer {
 
     private int position;
     private byte[] buffer;
@@ -394,6 +395,11 @@ public final class JsonWriter {
         var r = Arrays.copyOf(buffer, position);
         reset();
         return r;
+    }
+
+    public final void toByteBuffer(ByteBuffer b) {
+        b.put(buffer, 0, position);
+        reset();
     }
 
 

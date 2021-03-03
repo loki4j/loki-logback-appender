@@ -11,7 +11,7 @@ import com.grafana.loki.protobuf.Logproto.StreamAdapter;
 
 import org.xerial.snappy.Snappy;
 
-public final class ProtobufWriter {
+public final class ProtobufWriter implements Writer {
 
     private final ByteBuffer uncompressed;
     private final ByteBuffer compressed;
