@@ -26,10 +26,28 @@ public final class ProtobufWriter {
         this.request = PushRequest.newBuilder();
     }
 
-    public void nextStream(String labels) {
+    public void nextStream(String[] labelSet) {
         stream = request
             .addStreamsBuilder()
-            .setLabels(labels);
+            .setLabels(label(labelSet));
+    }
+
+    static String label(String[] labels) {
+        var s = new StringBuilder();
+        s.append('{');
+        if (labels.length > 0) {
+            for (int i = 0; i < labels.length; i+=2) {
+                s.append(labels[i]);
+                s.append('=');
+                s.append('"');
+                s.append(labels[i + 1].replace("\"", "\\\""));
+                s.append('"');
+                if (i < labels.length - 2)
+                    s.append(',');
+            }
+        }
+        s.append('}');
+        return s.toString();
     }
 
     public void nextEntry(LogRecord record) {

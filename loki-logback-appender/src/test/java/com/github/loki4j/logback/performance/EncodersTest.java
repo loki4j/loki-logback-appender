@@ -42,7 +42,7 @@ public class EncodersTest {
             this.runs = 50;
             this.parFactor = 1;
             this.generator = () -> {
-                var jsonEncSta = initEnc(jsonEncoder(true, "testLabel"));
+                var jsonEncSta = initEnc(jsonEncoder(false, "testLabel"));
                 return Stream.iterate(
                         Arrays.stream(generateEvents(batchSize, 10))
                             .map(e -> jsonEncSta.eventToRecord(e))

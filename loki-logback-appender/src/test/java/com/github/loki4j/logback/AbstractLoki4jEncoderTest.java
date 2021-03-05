@@ -6,6 +6,8 @@ import ch.qos.logback.classic.Level;
 
 import static org.junit.Assert.*;
 
+import java.util.function.Supplier;
+
 import com.github.loki4j.common.LogRecord;
 import com.github.loki4j.common.LogRecordBatch;
 import com.github.loki4j.testkit.dummy.ExceptionGenerator;
@@ -95,7 +97,7 @@ public class AbstractLoki4jEncoderTest {
 
     @Test
     public void testEncode() {
-        var rs = new LogRecordBatch(new LogRecord[] {
+        Supplier<LogRecordBatch> rs = () -> new LogRecordBatch(new LogRecord[] {
             LogRecord.create(100L, 1, "level=INFO,app=my-app", "l=INFO c=test.TestApp t=thread-1 | Test message 1"),
             LogRecord.create(103L, 2, "level=DEBUG,app=my-app", "l=INFO c=test.TestApp t=thread-2 | Test message 2"),
             LogRecord.create(105L, 3, "level=INFO,app=my-app", "l=INFO c=test.TestApp t=thread-1 | Test message 3"),
@@ -110,7 +112,9 @@ public class AbstractLoki4jEncoderTest {
                 false,
                 true), encoder -> {
             assertArrayEquals(new byte[0], encoder.encode(new LogRecordBatch(new LogRecord[0])));
-            assertEquals("static labels, no sort", batchToString(rs), new String(encoder.encode(rs), encoder.charset));
+            var recs = rs.get();
+            encoder.getLogRecordComparator().ifPresent(cmp ->  recs.sort(cmp));
+            assertEquals("static labels, no sort", batchToString(recs), new String(encoder.encode(recs), encoder.charset));
         });
 
         withEncoder(toStringEncoder(
@@ -118,6 +122,8 @@ public class AbstractLoki4jEncoderTest {
                 messageCfg("l=%level c=%logger{20} t=%thread | %msg %ex{1}"),
                 true,
                 true), encoder -> {
+            var recs = rs.get();
+            encoder.getLogRecordComparator().ifPresent(cmp ->  recs.sort(cmp));
             assertEquals("static labels, sort by time", batchToString(new LogRecord[] {
                     LogRecord.create(100L, 1, "level=INFO,app=my-app", "l=INFO c=test.TestApp t=thread-1 | Test message 1"),
                     LogRecord.create(103L, 1, "level=ERROR,app=my-app", "l=INFO c=test.TestApp t=thread-2 | Test message 5"),
@@ -125,7 +131,7 @@ public class AbstractLoki4jEncoderTest {
                     LogRecord.create(104L, 4, "level=WARN,app=my-app", "l=INFO c=test.TestApp t=thread-1 | Test message 4"),
                     LogRecord.create(105L, 3, "level=INFO,app=my-app", "l=INFO c=test.TestApp t=thread-1 | Test message 3"),
                     LogRecord.create(110L, 6, "level=INFO,app=my-app", "l=INFO c=test.TestApp t=thread-2 | Test message 6")
-                }), new String(encoder.encode(rs), encoder.charset));
+                }), new String(encoder.encode(recs), encoder.charset));
         });
 
         withEncoder(toStringEncoder(
@@ -133,6 +139,8 @@ public class AbstractLoki4jEncoderTest {
                 messageCfg("l=%level c=%logger{20} t=%thread | %msg %ex{1}"),
                 false,
                 false), encoder -> {
+            var recs = rs.get();
+            encoder.getLogRecordComparator().ifPresent(cmp ->  recs.sort(cmp));
             assertEquals("dynamic labels, no sort", batchToString(new LogRecord[] {
                     LogRecord.create(103L, 2, "level=DEBUG,app=my-app", "l=INFO c=test.TestApp t=thread-2 | Test message 2"),
                     LogRecord.create(103L, 1, "level=ERROR,app=my-app", "l=INFO c=test.TestApp t=thread-2 | Test message 5"),
@@ -140,7 +148,7 @@ public class AbstractLoki4jEncoderTest {
                     LogRecord.create(105L, 3, "level=INFO,app=my-app", "l=INFO c=test.TestApp t=thread-1 | Test message 3"),
                     LogRecord.create(110L, 6, "level=INFO,app=my-app", "l=INFO c=test.TestApp t=thread-2 | Test message 6"),
                     LogRecord.create(104L, 4, "level=WARN,app=my-app", "l=INFO c=test.TestApp t=thread-1 | Test message 4")
-                }), new String(encoder.encode(rs), encoder.charset));
+                }), new String(encoder.encode(recs), encoder.charset));
         });
 
         withEncoder(toStringEncoder(
@@ -148,6 +156,8 @@ public class AbstractLoki4jEncoderTest {
                 messageCfg("l=%level c=%logger{20} t=%thread | %msg %ex{1}"),
                 true,
                 false), encoder -> {
+            var recs = rs.get();
+            encoder.getLogRecordComparator().ifPresent(cmp ->  recs.sort(cmp));
             assertEquals("dynamic labels, sort by time", batchToString(new LogRecord[] {
                     LogRecord.create(103L, 2, "level=DEBUG,app=my-app", "l=INFO c=test.TestApp t=thread-2 | Test message 2"),
                     LogRecord.create(103L, 1, "level=ERROR,app=my-app", "l=INFO c=test.TestApp t=thread-2 | Test message 5"),
@@ -155,7 +165,7 @@ public class AbstractLoki4jEncoderTest {
                     LogRecord.create(105L, 3, "level=INFO,app=my-app", "l=INFO c=test.TestApp t=thread-1 | Test message 3"),
                     LogRecord.create(110L, 6, "level=INFO,app=my-app", "l=INFO c=test.TestApp t=thread-2 | Test message 6"),
                     LogRecord.create(104L, 4, "level=WARN,app=my-app", "l=INFO c=test.TestApp t=thread-1 | Test message 4")
-                }), new String(encoder.encode(rs), encoder.charset));
+                }), new String(encoder.encode(recs), encoder.charset));
         });
     }
 }

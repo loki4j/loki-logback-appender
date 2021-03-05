@@ -18,11 +18,13 @@ public class ProtobufWriterTest {
     private LogRecord rec1 = create(1000, 0, "a=1,b=2", "TestMsg1");
     private LogRecord rec2 = create(2000, 0, "a=1,b=2", "TestMsg2");
     private LogRecord rec3 = create(3000, 0, "c=3,d=4", "TestMsg3");
+    private String[] stream1 = new String[] { "a", "1", "b", "2"};
+    private String[] stream2 = new String[] { "c", "3", "d", "4"};
 
     private PushRequest genPushRequest() {
         return PushRequest.newBuilder()
             .addStreams(StreamAdapter.newBuilder()
-                .setLabels(rec1.stream)
+                .setLabels(ProtobufWriter.label(stream1))
                 .addEntries(EntryAdapter.newBuilder()
                     .setTimestamp(Timestamp.newBuilder()
                         .setSeconds(rec1.timestampMs / 1000)
@@ -34,7 +36,7 @@ public class ProtobufWriterTest {
                         .setNanos(rec2.nanos))
                     .setLine(rec2.message)))
             .addStreams(StreamAdapter.newBuilder()
-                .setLabels(rec3.stream)
+                .setLabels(ProtobufWriter.label(stream2))
                 .addEntries(EntryAdapter.newBuilder()
                     .setTimestamp(Timestamp.newBuilder()
                         .setSeconds(rec3.timestampMs / 1000)
@@ -50,10 +52,10 @@ public class ProtobufWriterTest {
 
         var writer = new ProtobufWriter(1000, new ByteBufferFactory(false));
         assertEquals("initial size is 0", 0, writer.size());
-        writer.nextStream(rec1.stream);
+        writer.nextStream(stream1);
         writer.nextEntry(rec1);
         writer.nextEntry(rec2);
-        writer.nextStream(rec3.stream);
+        writer.nextStream(stream2);
         writer.nextEntry(rec3);
         assertEquals("size before endStreams is 0", 0, writer.size());
         writer.endStreams();
@@ -75,10 +77,10 @@ public class ProtobufWriterTest {
 
         var writer = new ProtobufWriter(1000, new ByteBufferFactory(true));
         assertEquals("initial size is 0", 0, writer.size());
-        writer.nextStream(rec1.stream);
+        writer.nextStream(stream1);
         writer.nextEntry(rec1);
         writer.nextEntry(rec2);
-        writer.nextStream(rec3.stream);
+        writer.nextStream(stream2);
         writer.nextEntry(rec3);
         assertEquals("size before endStreams is 0", 0, writer.size());
         writer.endStreams();

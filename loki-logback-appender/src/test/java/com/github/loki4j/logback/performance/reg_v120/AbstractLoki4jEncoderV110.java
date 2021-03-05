@@ -1,4 +1,4 @@
-package com.github.loki4j.logback;
+package com.github.loki4j.logback.performance.reg_v120;
 
 import java.nio.charset.Charset;
 import java.util.Comparator;
@@ -9,6 +9,7 @@ import java.util.regex.Pattern;
 import com.github.loki4j.common.ByteBufferFactory;
 import com.github.loki4j.common.LogRecord;
 import com.github.loki4j.common.LogRecordBatch;
+import com.github.loki4j.logback.Loki4jEncoder;
 
 import ch.qos.logback.classic.PatternLayout;
 import ch.qos.logback.classic.spi.ILoggingEvent;
@@ -18,16 +19,16 @@ import ch.qos.logback.core.encoder.EncoderBase;
 /**
  * Abstract class that provides basic Loki4j batch encoding functionality
  */
-public abstract class AbstractLoki4jEncoder extends EncoderBase<LogRecordBatch> implements Loki4jEncoder {
+public abstract class AbstractLoki4jEncoderV110 extends EncoderBase<LogRecordBatch> implements Loki4jEncoder {
     
     private static final byte[] ZERO_BYTES = new byte[0];
 
-    private static final Comparator<LogRecord> byTime = (e1, e2) -> {
+    protected static final Comparator<LogRecord> byTime = (e1, e2) -> {
         var tsCmp = Long.compare(e1.timestampMs, e2.timestampMs);
         return tsCmp == 0 ? Integer.compare(e1.nanos, e2.nanos) : tsCmp;
     };
 
-    private static final Comparator<LogRecord> byStream = (e1, e2) -> {
+    protected static final Comparator<LogRecord> byStream = (e1, e2) -> {
         return String.CASE_INSENSITIVE_ORDER.compare(e1.stream, e2.stream);
     };
 
@@ -79,8 +80,6 @@ public abstract class AbstractLoki4jEncoder extends EncoderBase<LogRecordBatch> 
 
     private MessageCfg message = new MessageCfg();
 
-    private Optional<Comparator<LogRecord>> logRecordComparator;
-
     /**
      * If true, log records in batch are sorted by timestamp.
      * If false, records will be sent to Loki in arrival order.
@@ -92,7 +91,7 @@ public abstract class AbstractLoki4jEncoder extends EncoderBase<LogRecordBatch> 
      * If you use only one label for all log records, you can
      * set this flag to true and save some CPU time on grouping records by label.
      */
-    protected boolean staticLabels = false;
+    private boolean staticLabels = false;
 
     private PatternLayout labelPatternLayout;
     private PatternLayout messagePatternLayout;
@@ -117,16 +116,6 @@ public abstract class AbstractLoki4jEncoder extends EncoderBase<LogRecordBatch> 
 
         messagePatternLayout = initPatternLayout(message.pattern);
         messagePatternLayout.start();
-
-        // prepare the comparator based on sorting settings
-        logRecordComparator = Optional.empty();
-        if (staticLabels) {
-            if (sortByTime)
-                logRecordComparator = Optional.of(byTime);
-        } else {
-            logRecordComparator = Optional.of(
-                sortByTime ? byStream.thenComparing(byTime) : byStream);
-        }
 
         initWriter(capacity, bufferFactory);
 
@@ -158,7 +147,29 @@ public abstract class AbstractLoki4jEncoder extends EncoderBase<LogRecordBatch> 
         return ZERO_BYTES;
     }
 
+    @Override
+    public byte[] encode(LogRecordBatch batch) {
+        if (batch.isEmpty())
+            return ZERO_BYTES;
+
+        if (staticLabels) {
+            if (sortByTime) 
+                batch.sort(byTime);
+
+            return encodeStaticLabels(batch);
+        } else {
+            var comp = sortByTime ? byStream.thenComparing(byTime) : byStream; 
+            batch.sort(comp);
+
+            return encodeDynamicLabels(batch);
+        }
+    }
+
     protected abstract void initWriter(int capacity, ByteBufferFactory bufferFactory);
+
+    protected abstract byte[] encodeStaticLabels(LogRecordBatch batch);
+
+    protected abstract byte[] encodeDynamicLabels(LogRecordBatch batch);
 
     private PatternLayout initPatternLayout(String pattern) {
         var patternLayout = new PatternLayout();
@@ -184,10 +195,6 @@ public abstract class AbstractLoki4jEncoder extends EncoderBase<LogRecordBatch> 
         return result;
     }
 
-    public Optional<Comparator<LogRecord>> getLogRecordComparator() {
-        return logRecordComparator;
-    }
-
     public void setLabel(LabelCfg label) {
         this.label = label;
     }
@@ -211,5 +218,22 @@ public abstract class AbstractLoki4jEncoder extends EncoderBase<LogRecordBatch> 
     public void setBufferFactory(ByteBufferFactory bufferFactory) {
         this.bufferFactory = bufferFactory;
     }
+
+    public Optional<Comparator<LogRecord>> getLogRecordComparator() {
+        return null;
+    }
+
+    public static AbstractLoki4jEncoderV110.LabelCfg labelCfg(
+        String pattern,
+        String pairSeparator,
+        String keyValueSeparator,
+        boolean nopex) {
+    var label = new AbstractLoki4jEncoderV110.LabelCfg();
+    label.setPattern(pattern);
+    label.setPairSeparator(pairSeparator);
+    label.setKeyValueSeparator(keyValueSeparator);
+    label.setNopex(nopex);
+    return label;
+}
 
 }

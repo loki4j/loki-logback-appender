@@ -25,26 +25,13 @@ public class ProtobufEncoder extends AbstractLoki4jEncoder {
     }
 
     @Override
-    protected byte[] encodeStaticLabels(LogRecordBatch batch) {
-        writer.nextStream(labels(extractStreamKVPairs(batch.get(0).stream)));
+    public byte[] encode(LogRecordBatch batch) {
+        String currentStream = batch.get(0).stream;
+        writer.nextStream(extractStreamKVPairs(currentStream));
         for (int i = 0; i < batch.size(); i++) {
-            writer.nextEntry(batch.get(i));
-        }
-        try {
-            writer.endStreams();
-            return writer.toByteArray();
-        } catch (IOException e) {
-            throw new RuntimeException("Protobuf encoding error", e);
-        }
-    }
-
-    @Override
-    protected byte[] encodeDynamicLabels(LogRecordBatch batch) {
-        String currentStream = null;
-        for (int i = 0; i < batch.size(); i++) {
-            if (batch.get(i).stream != currentStream) {
+            if (!staticLabels && batch.get(i).stream != currentStream) {
                 currentStream = batch.get(i).stream;
-                writer.nextStream(labels(extractStreamKVPairs(currentStream)));
+                writer.nextStream(extractStreamKVPairs(currentStream));
             }
             writer.nextEntry(batch.get(i));
         }
@@ -56,22 +43,4 @@ public class ProtobufEncoder extends AbstractLoki4jEncoder {
         }
     }
 
-    private String labels(String[] labels) {
-        var s = new StringBuilder();
-        s.append('{');
-        if (labels.length > 0) {
-            for (int i = 0; i < labels.length; i+=2) {
-                s.append(labels[i]);
-                s.append('=');
-                s.append('"');
-                s.append(labels[i + 1].replace("\"", "\\\""));
-                s.append('"');
-                if (i < labels.length - 2)
-                    s.append(',');
-            }
-        }
-        s.append('}');
-        return s.toString();
-    }
-    
 }

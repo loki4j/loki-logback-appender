@@ -5,7 +5,6 @@ import java.io.IOException;
 import com.github.loki4j.common.ByteBufferFactory;
 import com.github.loki4j.common.LogRecord;
 import com.github.loki4j.common.LogRecordBatch;
-import com.github.loki4j.logback.AbstractLoki4jEncoder;
 import com.google.protobuf.Timestamp;
 import com.grafana.loki.protobuf.Logproto.EntryAdapter;
 import com.grafana.loki.protobuf.Logproto.PushRequest;
@@ -13,7 +12,7 @@ import com.grafana.loki.protobuf.Logproto.StreamAdapter;
 
 import org.xerial.snappy.Snappy;
 
-public class ProtobufEncoderV110 extends AbstractLoki4jEncoder {
+public class ProtobufEncoderV110 extends AbstractLoki4jEncoderV110 {
 
     public String getContentType() {
         return "application/x-protobuf";

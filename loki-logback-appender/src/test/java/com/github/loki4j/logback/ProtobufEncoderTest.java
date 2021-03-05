@@ -16,12 +16,14 @@ import static com.github.loki4j.logback.Generators.*;
 
 public class ProtobufEncoderTest {
 
-    private LogRecordBatch records = new LogRecordBatch(new LogRecord[] {
-        LogRecord.create(100L, 1, "level=INFO,app=my-app", "l=INFO c=test.TestApp t=thread-1 | Test message 1"),
-        LogRecord.create(103L, 2, "level=DEBUG,app=my-app", "l=DEBUG c=test.TestApp t=thread-2 | Test message 2"),
-        LogRecord.create(105L, 3, "level=INFO,app=my-app", "l=INFO c=test.TestApp t=thread-1 | Test message 3"),
-        LogRecord.create(102L, 4, "level=INFO,app=my-app", "l=INFO c=test.TestApp t=thread-3 | Test message 4"),
-    });
+    private LogRecordBatch records() {
+        return new LogRecordBatch(new LogRecord[] {
+            LogRecord.create(100L, 1, "level=INFO,app=my-app", "l=INFO c=test.TestApp t=thread-1 | Test message 1"),
+            LogRecord.create(103L, 2, "level=DEBUG,app=my-app", "l=DEBUG c=test.TestApp t=thread-2 | Test message 2"),
+            LogRecord.create(105L, 3, "level=INFO,app=my-app", "l=INFO c=test.TestApp t=thread-1 | Test message 3"),
+            LogRecord.create(102L, 4, "level=INFO,app=my-app", "l=INFO c=test.TestApp t=thread-3 | Test message 4"),
+        });
+    }
 
     private static ProtobufEncoder protobufEncoder(boolean staticLabels) {
         var encoder = new ProtobufEncoder();
@@ -55,7 +57,9 @@ public class ProtobufEncoderTest {
                         .setLine("l=INFO c=test.TestApp t=thread-3 | Test message 4")))
                 .build();
             try {
-                var actual = PushRequest.parseFrom(Snappy.uncompress(encoder.encode(records)));
+                var recs = records();
+                encoder.getLogRecordComparator().ifPresent(cmp ->  recs.sort(cmp));
+                var actual = PushRequest.parseFrom(Snappy.uncompress(encoder.encode(recs)));
                 assertEquals("static labels", expected, actual);
             } catch (Exception e) {
                 throw new RuntimeException(e);
@@ -85,7 +89,9 @@ public class ProtobufEncoderTest {
                         .setLine("l=INFO c=test.TestApp t=thread-3 | Test message 4")))
                 .build();
             try {
-                var actual = PushRequest.parseFrom(Snappy.uncompress(encoder.encode(records)));
+                var recs = records();
+                encoder.getLogRecordComparator().ifPresent(cmp ->  recs.sort(cmp));
+                var actual = PushRequest.parseFrom(Snappy.uncompress(encoder.encode(recs)));
                 assertEquals("dynamic labels", expected, actual);
             } catch (Exception e) {
                 throw new RuntimeException(e);

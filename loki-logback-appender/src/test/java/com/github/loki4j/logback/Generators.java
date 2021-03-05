@@ -150,11 +150,7 @@ public class Generators {
                 return "text/plain";
             }
             @Override
-            protected byte[] encodeStaticLabels(LogRecordBatch batch) {
-                return batchToString(batch).getBytes(charset);
-            }
-            @Override
-            protected byte[] encodeDynamicLabels(LogRecordBatch batch) {
+            public byte[] encode(LogRecordBatch batch) {
                 return batchToString(batch).getBytes(charset);
             }
             @Override
