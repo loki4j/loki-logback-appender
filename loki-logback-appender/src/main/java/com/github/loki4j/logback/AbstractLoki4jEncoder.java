@@ -154,7 +154,7 @@ public abstract class AbstractLoki4jEncoder extends ContextAwareBase implements 
         return patternLayout;
     }
 
-    private LogRecordStream stream(String input) {
+    LogRecordStream stream(String input) {
         return streams
             .updateAndGet(m -> {
                 if (!staticLabels && !m.containsKey(input)) {
@@ -168,7 +168,7 @@ public abstract class AbstractLoki4jEncoder extends ContextAwareBase implements 
             .get(input);
     }
 
-    private String[] extractStreamKVPairs(String stream) {
+    String[] extractStreamKVPairs(String stream) {
         var pairs = stream.split(Pattern.quote(label.pairSeparator));
         var result = new String[pairs.length * 2];
         for (int i = 0; i < pairs.length; i++) {
