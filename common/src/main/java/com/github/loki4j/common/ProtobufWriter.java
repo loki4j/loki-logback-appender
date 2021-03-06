@@ -11,7 +11,7 @@ import com.grafana.loki.protobuf.Logproto.StreamAdapter;
 
 import org.xerial.snappy.Snappy;
 
-public final class ProtobufWriter {
+public final class ProtobufWriter implements Writer {
 
     private final ByteBuffer uncompressed;
     private final ByteBuffer compressed;
@@ -26,7 +26,24 @@ public final class ProtobufWriter {
         this.request = PushRequest.newBuilder();
     }
 
-    public void nextStream(String[] labelSet) {
+    public void serializeBatch(LogRecordBatch batch) {
+        var currentStream = batch.get(0).stream;
+        nextStream(currentStream.labels);
+        for (int i = 0; i < batch.size(); i++) {
+            if (batch.get(i).stream != currentStream) {
+                currentStream = batch.get(i).stream;
+                nextStream(currentStream.labels);
+            }
+            nextEntry(batch.get(i));
+        }
+        try {
+            endStreams();
+        } catch (IOException e) {
+            throw new RuntimeException("Protobuf encoding error", e);
+        }
+    }
+
+    private void nextStream(String[] labelSet) {
         stream = request
             .addStreamsBuilder()
             .setLabels(label(labelSet));
@@ -50,15 +67,15 @@ public final class ProtobufWriter {
         return s.toString();
     }
 
-    public void nextEntry(LogRecord record) {
+    private void nextEntry(LogRecord record) {
         stream.addEntries(EntryAdapter.newBuilder()
             .setTimestamp(Timestamp.newBuilder()
                 .setSeconds(record.timestampMs / 1000)
-                .setNanos((int)(record.timestampMs % 1000) * 1_000_000 + record.nanos))
+                .setNanos((int)(record.timestampMs % 1000) * 1_000_000 + 0))
             .setLine(record.message));
     }
 
-    public void endStreams() throws IOException {
+    private void endStreams() throws IOException {
         var writer = CodedOutputStream.newInstance(uncompressed);
         request.build().writeTo(writer);
         writer.flush();
@@ -95,7 +112,7 @@ public final class ProtobufWriter {
     /**
      * Resets the writer
      */
-    public final void reset() {
+    private final void reset() {
         this.request = PushRequest.newBuilder();
         stream = null;
         size = 0;

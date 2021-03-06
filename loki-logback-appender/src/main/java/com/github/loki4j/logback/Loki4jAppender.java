@@ -9,6 +9,7 @@ import com.github.loki4j.common.LogRecord;
 import com.github.loki4j.common.LogRecordBatch;
 import com.github.loki4j.common.LokiResponse;
 import com.github.loki4j.common.SoftLimitBuffer;
+import com.github.loki4j.common.Writer;
 
 import ch.qos.logback.classic.spi.ILoggingEvent;
 import ch.qos.logback.core.CoreConstants;
@@ -87,6 +88,8 @@ public final class Loki4jAppender extends UnsynchronizedAppenderBase<ILoggingEve
      */
     private AtomicLong droppedEventsCount = new AtomicLong(0L);
 
+    private Writer writer;
+
     @Override
     public void start() {
         if (getStatusManager() != null && getStatusManager().getCopyOfStatusListenerList().isEmpty()) {
@@ -100,16 +103,15 @@ public final class Loki4jAppender extends UnsynchronizedAppenderBase<ILoggingEve
             "batchSizeItems=%s, batchSizeBytes=%s, batchTimeout=%s...",
             batchSizeItems, batchSizeBytes, batchTimeoutMs));
 
-        var bufferFactory = new ByteBufferFactory(useDirectBuffers);
-
         if (encoder == null) {
             addWarn("No encoder specified in the config. Using JsonEncoder with default settings");
             encoder = new JsonEncoder();
         }
-        encoder.setCapacity(batchSizeBytes);
-        encoder.setBufferFactory(bufferFactory);
         encoder.setContext(context);
         encoder.start();
+
+        var bufferFactory = new ByteBufferFactory(useDirectBuffers);
+        writer = encoder.createWriter(batchSizeBytes, bufferFactory);
 
         if (metricsEnabled) {
             var host = context.getProperty(CoreConstants.HOSTNAME_KEY);
@@ -185,8 +187,8 @@ public final class Loki4jAppender extends UnsynchronizedAppenderBase<ILoggingEve
     protected BinaryBatch encode(LogRecordBatch batch) {
         var startedNs = System.nanoTime();
         encoder.getLogRecordComparator().ifPresent(cmp -> batch.sort(cmp));
-        var encoded = encoder.encode(batch);
-        var binBatch = BinaryBatch.fromLogRecordBatch(batch, encoded);
+        writer.serializeBatch(batch);
+        var binBatch = BinaryBatch.fromLogRecordBatch(batch, writer.toByteArray());
         addInfo(String.format(
             ">>> Batch %s converted to %,d bytes",
                 batch, binBatch.data.length));

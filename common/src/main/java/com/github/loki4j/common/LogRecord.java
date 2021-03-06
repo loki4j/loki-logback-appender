@@ -2,36 +2,34 @@ package com.github.loki4j.common;
 
 public class LogRecord {
 
-    public long timestampMs;
+    public final long timestampMs;
 
-    public int nanos;
+    public final LogRecordStream stream;
 
-    public String stream;
+    public final String message;
 
-    public String message;
+    public final int messageUtf8SizeBytes;
 
-    public int messageUtf8SizeBytes;
-
-    private LogRecord() { }
+    private LogRecord(
+            long timestamp,
+            LogRecordStream stream,
+            String message) {
+        this.timestampMs = timestamp;
+        this.stream = stream;
+        this.message = message;
+        this.messageUtf8SizeBytes = StringUtils.utf8Length(message);
+    }
 
     public static LogRecord create(
             long timestamp,
-            int nanos,
-            String stream,
+            LogRecordStream stream,
             String message) {
-        var r = new LogRecord();
-        r.timestampMs = timestamp;
-        r.nanos = nanos;
-        r.stream = stream;
-        r.message = message;
-        r.messageUtf8SizeBytes = StringUtils.utf8Length(message);
-        return r;
+        return new LogRecord(timestamp, stream, message);
     }
 
     @Override
     public String toString() {
         return "LogRecord [ts=" + timestampMs +
-            ", nanos=" + nanos +
             ", stream=" + stream +
             ", message=" + message + "]";
     }
@@ -41,7 +39,6 @@ public class LogRecord {
 		final int prime = 31;
 		int result = 1;
 		result = prime * result + ((message == null) ? 0 : message.hashCode());
-		result = prime * result + nanos;
 		result = prime * result + ((stream == null) ? 0 : stream.hashCode());
 		result = prime * result + (int) (timestampMs ^ (timestampMs >>> 32));
 		return result;
@@ -60,8 +57,6 @@ public class LogRecord {
 			if (other.message != null)
 				return false;
 		} else if (!message.equals(other.message))
-			return false;
-		if (nanos != other.nanos)
 			return false;
 		if (stream == null) {
 			if (other.stream != null)

@@ -2,34 +2,31 @@ package com.github.loki4j.logback;
 
 import java.nio.charset.Charset;
 import java.util.Comparator;
+import java.util.HashMap;
 import java.util.Optional;
-import java.util.concurrent.atomic.AtomicInteger;
+import java.util.concurrent.atomic.AtomicReference;
 import java.util.regex.Pattern;
 
 import com.github.loki4j.common.ByteBufferFactory;
 import com.github.loki4j.common.LogRecord;
-import com.github.loki4j.common.LogRecordBatch;
+import com.github.loki4j.common.LogRecordStream;
+import com.github.loki4j.common.Writer;
 
 import ch.qos.logback.classic.PatternLayout;
 import ch.qos.logback.classic.spi.ILoggingEvent;
 import ch.qos.logback.core.CoreConstants;
-import ch.qos.logback.core.encoder.EncoderBase;
+import ch.qos.logback.core.spi.ContextAwareBase;
 
 /**
  * Abstract class that provides basic Loki4j batch encoding functionality
  */
-public abstract class AbstractLoki4jEncoder extends EncoderBase<LogRecordBatch> implements Loki4jEncoder {
+public abstract class AbstractLoki4jEncoder extends ContextAwareBase implements Loki4jEncoder {
     
-    private static final byte[] ZERO_BYTES = new byte[0];
+    private static final Comparator<LogRecord> byTime = (e1, e2) ->
+        Long.compare(e1.timestampMs, e2.timestampMs);
 
-    private static final Comparator<LogRecord> byTime = (e1, e2) -> {
-        var tsCmp = Long.compare(e1.timestampMs, e2.timestampMs);
-        return tsCmp == 0 ? Integer.compare(e1.nanos, e2.nanos) : tsCmp;
-    };
-
-    private static final Comparator<LogRecord> byStream = (e1, e2) -> {
-        return String.CASE_INSENSITIVE_ORDER.compare(e1.stream, e2.stream);
-    };
+    private static final Comparator<LogRecord> byStream = (e1, e2) ->
+        Long.compare(e1.stream.id, e2.stream.id);
 
     public static final class LabelCfg {
         /**
@@ -75,6 +72,8 @@ public abstract class AbstractLoki4jEncoder extends EncoderBase<LogRecordBatch> 
 
     protected final Charset charset = Charset.forName("UTF-8");
 
+    private final AtomicReference<HashMap<String, LogRecordStream>> streams = new AtomicReference<>(new HashMap<>());
+
     private LabelCfg label = new LabelCfg();
 
     private MessageCfg message = new MessageCfg();
@@ -92,15 +91,12 @@ public abstract class AbstractLoki4jEncoder extends EncoderBase<LogRecordBatch> 
      * If you use only one label for all log records, you can
      * set this flag to true and save some CPU time on grouping records by label.
      */
-    protected boolean staticLabels = false;
+    private volatile boolean staticLabels = false;
 
     private PatternLayout labelPatternLayout;
     private PatternLayout messagePatternLayout;
 
-    private int capacity;
-    private ByteBufferFactory bufferFactory;
-
-    private final AtomicInteger nanoCounter = new AtomicInteger(0);
+    private boolean started = false;
 
     public void start() {
         // init with default label pattern if not set in config
@@ -128,37 +124,28 @@ public abstract class AbstractLoki4jEncoder extends EncoderBase<LogRecordBatch> 
                 sortByTime ? byStream.thenComparing(byTime) : byStream);
         }
 
-        initWriter(capacity, bufferFactory);
-
-        super.start();
+        this.started = true;
     }
 
     public void stop() {
-        super.stop();
-
+        this.started = false;
         messagePatternLayout.stop();
         labelPatternLayout.stop();
+    }
+
+    @Override
+    public boolean isStarted() {
+        return started;
     }
 
     public LogRecord eventToRecord(ILoggingEvent e) {
         return LogRecord.create(
             e.getTimeStamp(),
-            nanoCounter.updateAndGet(i -> i < 999_999 ? i + 1 : 0),
-            labelPatternLayout.doLayout(e).intern(),
+            stream(labelPatternLayout.doLayout(e).intern()),
             messagePatternLayout.doLayout(e));
     }
 
-    @Override
-    public byte[] headerBytes() {
-        return ZERO_BYTES;
-    }
-
-    @Override
-    public byte[] footerBytes() {
-        return ZERO_BYTES;
-    }
-
-    protected abstract void initWriter(int capacity, ByteBufferFactory bufferFactory);
+    public abstract Writer createWriter(int capacity, ByteBufferFactory bufferFactory);
 
     private PatternLayout initPatternLayout(String pattern) {
         var patternLayout = new PatternLayout();
@@ -167,7 +154,21 @@ public abstract class AbstractLoki4jEncoder extends EncoderBase<LogRecordBatch> 
         return patternLayout;
     }
 
-    protected String[] extractStreamKVPairs(String stream) {
+    private LogRecordStream stream(String input) {
+        return streams
+            .updateAndGet(m -> {
+                if (!staticLabels && !m.containsKey(input)) {
+                    var nm = new HashMap<>(m);
+                    nm.put(input, LogRecordStream.create(extractStreamKVPairs(input)));
+                    return nm;
+                } else {
+                    return m;
+                }
+            })
+            .get(input);
+    }
+
+    private String[] extractStreamKVPairs(String stream) {
         var pairs = stream.split(Pattern.quote(label.pairSeparator));
         var result = new String[pairs.length * 2];
         for (int i = 0; i < pairs.length; i++) {
@@ -202,14 +203,6 @@ public abstract class AbstractLoki4jEncoder extends EncoderBase<LogRecordBatch> 
 
     public void setStaticLabels(boolean staticLabels) {
         this.staticLabels = staticLabels;
-    }
-
-    public void setCapacity(int capacity) {
-        this.capacity = capacity;
-    }
-
-    public void setBufferFactory(ByteBufferFactory bufferFactory) {
-        this.bufferFactory = bufferFactory;
     }
 
 }
