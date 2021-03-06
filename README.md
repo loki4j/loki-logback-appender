@@ -19,9 +19,11 @@ If you are interested in this project, please drop a :star:!
 - Support for both JSON and Protobuf formats
 - Compatibility with Grafana Cloud
 - Optionally order log records before sending to Loki
-- Use Logback patterns for labels and messages formatting
+- Format both labels and messages using Logback patterns
 - Zero-dependency (for Java 11+)
 - Logging performance metrics
+
+More details and links to examples can be found [here](https://loki4j.github.io/loki-logback-appender/#key-features).
 
 ## Contributing
 

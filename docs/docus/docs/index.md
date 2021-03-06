@@ -1,4 +1,4 @@
-Loki4j is the simplest way to store logs from your Java application
+Loki4j is the simplest way to push logs from your Java application
 to [Loki](https://grafana.com/oss/loki/) and to connect them with all other metrics
 using [Grafana](https://grafana.com/oss/grafana/) dashboards.
 No extra tools needed, just add Loki4j appender to your [Logback](http://logback.qos.ch/)
@@ -119,7 +119,7 @@ See the [example](docs/configuration#sending-logs-to-grafana-cloud)...
 In order to prevent log records loss, Loki4j can sort log records by timestamp inside each batch,
 so they will not be rejected by Loki with 'entry out of order' error.
 
-- **Use Logback patterns for labels and messages formatting.**
+- **Format both labels and messages using Logback patterns.**
 Loki4j allows you to use all the power and flexibility of
 [Logback patterns](http://logback.qos.ch/manual/layouts.html#ClassicPatternLayout)
 both for labels and messages.
@@ -128,7 +128,7 @@ so you are probably familiar with the syntax.
 
 - **No JSON library bundled.**
 Instead of bundling with any JSON library (e.g. Jackson),
-Loki4j comes with a small part of JSON rendering functionality it needs embedded.
+Loki4j comes with a small part of JSON rendering functionality borrowed from [DSL-JSON](https://github.com/ngs-doo/dsl-json/).
 
 - **Zero-dependency.**
 Loki4j does not bring any new transitive dependencies to your project,
