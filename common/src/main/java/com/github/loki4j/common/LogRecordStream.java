@@ -1,5 +1,6 @@
 package com.github.loki4j.common;
 
+import java.util.Arrays;
 import java.util.concurrent.atomic.AtomicLong;
 
 public class LogRecordStream {
@@ -48,4 +49,10 @@ public class LogRecordStream {
             return false;
         return true;
     }
+
+    @Override
+    public String toString() {
+        return "Stream [id=" + id + ", labels=" + Arrays.toString(labels) + "]";
+    }
+
 }

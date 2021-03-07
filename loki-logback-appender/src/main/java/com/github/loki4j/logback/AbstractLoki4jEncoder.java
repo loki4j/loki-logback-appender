@@ -21,6 +21,8 @@ import ch.qos.logback.core.spi.ContextAwareBase;
  * Abstract class that provides basic Loki4j batch encoding functionality
  */
 public abstract class AbstractLoki4jEncoder extends ContextAwareBase implements Loki4jEncoder {
+
+    private static final String STATIC_STREAM_KEY = "STATIC_STREAM_KEY";
     
     private static final Comparator<LogRecord> byTime = (e1, e2) ->
         Long.compare(e1.timestampMs, e2.timestampMs);
@@ -154,18 +156,19 @@ public abstract class AbstractLoki4jEncoder extends ContextAwareBase implements 
         return patternLayout;
     }
 
-    LogRecordStream stream(String input) {
+    private LogRecordStream stream(String input) {
+        final var streamKey = staticLabels ? STATIC_STREAM_KEY : input;
         return streams
             .updateAndGet(m -> {
-                if (!staticLabels && !m.containsKey(input)) {
+                if (!staticLabels && !m.containsKey(streamKey)) {
                     var nm = new HashMap<>(m);
-                    nm.put(input, LogRecordStream.create(extractStreamKVPairs(input)));
+                    nm.put(streamKey, LogRecordStream.create(extractStreamKVPairs(streamKey)));
                     return nm;
                 } else {
                     return m;
                 }
             })
-            .get(input);
+            .get(streamKey);
     }
 
     String[] extractStreamKVPairs(String stream) {

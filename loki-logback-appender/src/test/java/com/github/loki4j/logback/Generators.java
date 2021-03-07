@@ -1,6 +1,7 @@
 package com.github.loki4j.logback;
 
 import java.io.IOException;
+import java.nio.ByteBuffer;
 import java.time.Instant;
 import java.util.ArrayList;
 import java.util.Iterator;
@@ -13,6 +14,7 @@ import com.github.loki4j.common.ByteBufferFactory;
 import com.github.loki4j.common.LogRecord;
 import com.github.loki4j.common.LogRecordBatch;
 import com.github.loki4j.common.LokiResponse;
+import com.github.loki4j.common.Writer;
 import com.github.loki4j.testkit.dummy.ExceptionGenerator;
 import com.github.loki4j.testkit.dummy.LokiHttpServerMock;
 
@@ -128,8 +130,6 @@ public class Generators {
     }
 
     public static void withEncoder(AbstractLoki4jEncoder encoder, Consumer<AbstractLoki4jEncoder> body) {
-        encoder.setCapacity(4 * 1024 * 1024);
-        encoder.setBufferFactory(new ByteBufferFactory(false));
         encoder.setContext(new LoggerContext());
         encoder.start();
         try {
@@ -150,11 +150,31 @@ public class Generators {
                 return "text/plain";
             }
             @Override
-            public byte[] encode(LogRecordBatch batch) {
-                return batchToString(batch).getBytes(charset);
+            public Writer createWriter(int capacity, ByteBufferFactory bufferFactory) {
+                return new Writer(){
+                    private ByteBuffer b = bufferFactory.allocate(capacity);
+                    @Override
+                    public void serializeBatch(LogRecordBatch batch) {
+                        b.clear();
+                        b.put(batchToString(batch).getBytes(charset));
+                        b.flip();
+                    }
+                    @Override
+                    public int size() {
+                        return b.remaining();
+                    }
+                    @Override
+                    public void toByteBuffer(ByteBuffer buffer) {
+                        buffer.put(b);
+                    }
+                    @Override
+                    public byte[] toByteArray() {
+                        byte[] r = new byte[b.remaining()];
+                        b.get(r);
+                        return r;
+                    }
+                };
             }
-            @Override
-            public void initWriter(int capacity, ByteBufferFactory bbFactory) { }
         };
         encoder.setLabel(label);
         encoder.setMessage(message);
