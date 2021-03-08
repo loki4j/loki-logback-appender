@@ -2,6 +2,7 @@ package com.github.loki4j.logback;
 
 import java.io.IOException;
 import java.nio.ByteBuffer;
+import java.nio.charset.StandardCharsets;
 import java.time.Instant;
 import java.util.ArrayList;
 import java.util.Iterator;
@@ -37,13 +38,8 @@ public class Generators {
         return s.toString();
     }
 
-    public static String batchToString(LogRecord[] batch) {
-        var s = new StringBuilder();
-        for (int i = 0; i < batch.length; i++) {
-            s.append(batch[i]);
-            s.append('\n');
-        }
-        return s.toString();
+    public static String batchToString(LogRecord[] records) {
+        return batchToString(new LogRecordBatch(records));
     }
 
     public static LokiHttpServerMock lokiMock(int port) {
@@ -139,6 +135,32 @@ public class Generators {
         }
     }
 
+    public static Writer stringWriter(int capacity, ByteBufferFactory bufferFactory) {
+        return new Writer(){
+            private ByteBuffer b = bufferFactory.allocate(capacity);
+            @Override
+            public void serializeBatch(LogRecordBatch batch) {
+                b.clear();
+                b.put(batchToString(batch).getBytes(StandardCharsets.UTF_8));
+                b.flip();
+            }
+            @Override
+            public int size() {
+                return b.remaining();
+            }
+            @Override
+            public void toByteBuffer(ByteBuffer buffer) {
+                buffer.put(b);
+            }
+            @Override
+            public byte[] toByteArray() {
+                byte[] r = new byte[b.remaining()];
+                b.get(r);
+                return r;
+            }
+        };
+    }
+
     public static AbstractLoki4jEncoder toStringEncoder(
         AbstractLoki4jEncoder.LabelCfg label,
         AbstractLoki4jEncoder.MessageCfg message,
@@ -151,29 +173,7 @@ public class Generators {
             }
             @Override
             public Writer createWriter(int capacity, ByteBufferFactory bufferFactory) {
-                return new Writer(){
-                    private ByteBuffer b = bufferFactory.allocate(capacity);
-                    @Override
-                    public void serializeBatch(LogRecordBatch batch) {
-                        b.clear();
-                        b.put(batchToString(batch).getBytes(charset));
-                        b.flip();
-                    }
-                    @Override
-                    public int size() {
-                        return b.remaining();
-                    }
-                    @Override
-                    public void toByteBuffer(ByteBuffer buffer) {
-                        buffer.put(b);
-                    }
-                    @Override
-                    public byte[] toByteArray() {
-                        byte[] r = new byte[b.remaining()];
-                        b.get(r);
-                        return r;
-                    }
-                };
+                return stringWriter(capacity, bufferFactory);
             }
         };
         encoder.setLabel(label);

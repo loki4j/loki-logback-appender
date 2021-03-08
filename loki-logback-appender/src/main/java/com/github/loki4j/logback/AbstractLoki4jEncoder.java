@@ -160,9 +160,9 @@ public abstract class AbstractLoki4jEncoder extends ContextAwareBase implements 
         final var streamKey = staticLabels ? STATIC_STREAM_KEY : input;
         return streams
             .updateAndGet(m -> {
-                if (!staticLabels && !m.containsKey(streamKey)) {
+                if (!m.containsKey(streamKey)) {
                     var nm = new HashMap<>(m);
-                    nm.put(streamKey, LogRecordStream.create(extractStreamKVPairs(streamKey)));
+                    nm.put(streamKey, LogRecordStream.create(extractStreamKVPairs(input)));
                     return nm;
                 } else {
                     return m;
