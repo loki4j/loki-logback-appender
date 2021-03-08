@@ -7,8 +7,8 @@ import static org.junit.Assert.*;
 
 public class JsonWriterTest {
 
-    private LogRecordStream stream1 = LogRecordStream.create("level", "INFO", "app", "my-app");
-    private LogRecordStream stream2 = LogRecordStream.create("level", "DEBUG", "app", "my-app");
+    private LogRecordStream stream1 = LogRecordStream.create(0, "level", "INFO", "app", "my-app");
+    private LogRecordStream stream2 = LogRecordStream.create(1, "level", "DEBUG", "app", "my-app");
     private LogRecordBatch batch = new LogRecordBatch(new LogRecord[] {
         LogRecord.create(3000, stream2, "l=DEBUG c=test.TestApp t=thread-2 | Test message 2"),
         LogRecord.create(1000, stream1, "l=INFO c=test.TestApp t=thread-1 | Test message 1"),
@@ -41,7 +41,7 @@ public class JsonWriterTest {
     public void testWriteRecord() {
         var re1 = create(
             100L,
-            LogRecordStream.create("level", "INFO", "app", "my-app"),
+            LogRecordStream.create(0, "level", "INFO", "app", "my-app"),
             "l=INFO c=test.TestApp t=thread-1 | Test message");
 
         var writer = new JsonWriter(1000);
@@ -60,7 +60,7 @@ public class JsonWriterTest {
     public void testWriteSpecialCharsRecord() {
         var re1 = create(
             100L,
-            LogRecordStream.create("level", "INFO", "app", "my-app"),
+            LogRecordStream.create(0, "level", "INFO", "app", "my-app"),
             "спец !@#$%^&*()\" \n\tсимволы <>?/\\№ё:{}[]🏁");
 
         var writer = new JsonWriter(1000);

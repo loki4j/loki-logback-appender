@@ -1,11 +1,8 @@
 package com.github.loki4j.common;
 
 import java.util.Arrays;
-import java.util.concurrent.atomic.AtomicLong;
 
 public class LogRecordStream {
-
-    private static AtomicLong labelSetIds = new AtomicLong(0L);
 
     public final long id;
 
@@ -13,8 +10,8 @@ public class LogRecordStream {
 
     public final int utf8SizeBytes;
 
-    private LogRecordStream(String[] labels) {
-        this.id = labelSetIds.getAndIncrement();
+    private LogRecordStream(long id, String[] labels) {
+        this.id = id;
         this.labels = labels;
 
         var sizeBytes = 0;
@@ -24,8 +21,8 @@ public class LogRecordStream {
         utf8SizeBytes = sizeBytes;
     }
 
-    public static LogRecordStream create(String... labels) {
-        return new LogRecordStream(labels);
+    public static LogRecordStream create(long id, String... labels) {
+        return new LogRecordStream(id, labels);
     }
 
     @Override

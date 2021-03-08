@@ -162,7 +162,8 @@ public abstract class AbstractLoki4jEncoder extends ContextAwareBase implements 
             .updateAndGet(m -> {
                 if (!m.containsKey(streamKey)) {
                     var nm = new HashMap<>(m);
-                    nm.put(streamKey, LogRecordStream.create(extractStreamKVPairs(input)));
+                    nm.put(streamKey, LogRecordStream.create(
+                        m.size(), extractStreamKVPairs(input)));
                     return nm;
                 } else {
                     return m;

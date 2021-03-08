@@ -67,10 +67,10 @@ public class AbstractLoki4jEncoderTest {
             assertEquals(msg + ": item-" + i, exp.get(i), act.get(i));
     }
 
-    private final static LogRecordStream streamInfo = LogRecordStream.create("level", "INFO", "app", "my-app");
-    private final static LogRecordStream streamDebug = LogRecordStream.create("level", "DEBUG", "app", "my-app");
-    private final static LogRecordStream streamWarn = LogRecordStream.create("level", "WARN", "app", "my-app");
-    private final static LogRecordStream streamError = LogRecordStream.create("level", "ERROR", "app", "my-app");
+    private final static LogRecordStream streamInfo = LogRecordStream.create(0, "level", "INFO", "app", "my-app");
+    private final static LogRecordStream streamDebug = LogRecordStream.create(1, "level", "DEBUG", "app", "my-app");
+    private final static LogRecordStream streamWarn = LogRecordStream.create(2, "level", "WARN", "app", "my-app");
+    private final static LogRecordStream streamError = LogRecordStream.create(3, "level", "ERROR", "app", "my-app");
 
     @Test
     public void testComparator() {

@@ -36,9 +36,9 @@ public class Loki4jAppenderTest {
     };
 
     static String expected =
-            "LogRecord [ts=100, stream=Stream [id=4, labels=[level, INFO, app, my-app]], message=l=INFO c=test.TestApp t=thread-1 | Test message 1 ]\n" +
-            "LogRecord [ts=107, stream=Stream [id=4, labels=[level, INFO, app, my-app]], message=l=INFO c=test.TestApp t=thread-1 | Test message 3 ]\n" +
-            "LogRecord [ts=104, stream=Stream [id=5, labels=[level, WARN, app, my-app]], message=l=WARN c=test.TestApp t=thread-2 | Test message 2 ]\n";
+            "LogRecord [ts=100, stream=Stream [id=0, labels=[level, INFO, app, my-app]], message=l=INFO c=test.TestApp t=thread-1 | Test message 1 ]\n" +
+            "LogRecord [ts=107, stream=Stream [id=0, labels=[level, INFO, app, my-app]], message=l=INFO c=test.TestApp t=thread-1 | Test message 3 ]\n" +
+            "LogRecord [ts=104, stream=Stream [id=1, labels=[level, WARN, app, my-app]], message=l=WARN c=test.TestApp t=thread-2 | Test message 2 ]\n";
 
     @Test
     public void testBatchSize() {
@@ -133,9 +133,9 @@ public class Loki4jAppenderTest {
 
         var expected = (
             "{'streams':[{'stream':{'test':'testEncodeEscapes','level':'INFO','app':'my-app'}," +
-            "'values':[['100000001','l=INFO c=TestApp t=main | m1-line1\\r\\nline2\\r\\n ']," +
-            "['100000002','l=INFO c=TestApp t=main | m2-line1\\nline2\\n ']," +
-            "['100000003','l=INFO c=TestApp t=main | m3-line1\\rline2\\r ']]}]}"
+            "'values':[['100000000','l=INFO c=TestApp t=main | m1-line1\\r\\nline2\\r\\n ']," +
+            "['100000000','l=INFO c=TestApp t=main | m2-line1\\nline2\\n ']," +
+            "['100000000','l=INFO c=TestApp t=main | m3-line1\\rline2\\r ']]}]}"
             ).replace('\'', '"');
 
         assertEquals("batchSize", expected, new String(sender.lastBatch, encoder.charset));
