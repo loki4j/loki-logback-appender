@@ -1,6 +1,8 @@
 package com.github.loki4j.logback;
 
 import java.io.IOException;
+import java.nio.ByteBuffer;
+import java.nio.charset.StandardCharsets;
 import java.time.Instant;
 import java.util.ArrayList;
 import java.util.Iterator;
@@ -13,6 +15,7 @@ import com.github.loki4j.common.ByteBufferFactory;
 import com.github.loki4j.common.LogRecord;
 import com.github.loki4j.common.LogRecordBatch;
 import com.github.loki4j.common.LokiResponse;
+import com.github.loki4j.common.Writer;
 import com.github.loki4j.testkit.dummy.ExceptionGenerator;
 import com.github.loki4j.testkit.dummy.LokiHttpServerMock;
 
@@ -35,13 +38,8 @@ public class Generators {
         return s.toString();
     }
 
-    public static String batchToString(LogRecord[] batch) {
-        var s = new StringBuilder();
-        for (int i = 0; i < batch.length; i++) {
-            s.append(batch[i]);
-            s.append('\n');
-        }
-        return s.toString();
+    public static String batchToString(LogRecord[] records) {
+        return batchToString(new LogRecordBatch(records));
     }
 
     public static LokiHttpServerMock lokiMock(int port) {
@@ -128,8 +126,6 @@ public class Generators {
     }
 
     public static void withEncoder(AbstractLoki4jEncoder encoder, Consumer<AbstractLoki4jEncoder> body) {
-        encoder.setCapacity(4 * 1024 * 1024);
-        encoder.setBufferFactory(new ByteBufferFactory(false));
         encoder.setContext(new LoggerContext());
         encoder.start();
         try {
@@ -137,6 +133,32 @@ public class Generators {
         } finally {
             encoder.stop();
         }
+    }
+
+    public static Writer stringWriter(int capacity, ByteBufferFactory bufferFactory) {
+        return new Writer(){
+            private ByteBuffer b = bufferFactory.allocate(capacity);
+            @Override
+            public void serializeBatch(LogRecordBatch batch) {
+                b.clear();
+                b.put(batchToString(batch).getBytes(StandardCharsets.UTF_8));
+                b.flip();
+            }
+            @Override
+            public int size() {
+                return b.remaining();
+            }
+            @Override
+            public void toByteBuffer(ByteBuffer buffer) {
+                buffer.put(b);
+            }
+            @Override
+            public byte[] toByteArray() {
+                byte[] r = new byte[b.remaining()];
+                b.get(r);
+                return r;
+            }
+        };
     }
 
     public static AbstractLoki4jEncoder toStringEncoder(
@@ -150,15 +172,9 @@ public class Generators {
                 return "text/plain";
             }
             @Override
-            protected byte[] encodeStaticLabels(LogRecordBatch batch) {
-                return batchToString(batch).getBytes(charset);
+            public Writer createWriter(int capacity, ByteBufferFactory bufferFactory) {
+                return stringWriter(capacity, bufferFactory);
             }
-            @Override
-            protected byte[] encodeDynamicLabels(LogRecordBatch batch) {
-                return batchToString(batch).getBytes(charset);
-            }
-            @Override
-            public void initWriter(int capacity, ByteBufferFactory bbFactory) { }
         };
         encoder.setLabel(label);
         encoder.setMessage(message);

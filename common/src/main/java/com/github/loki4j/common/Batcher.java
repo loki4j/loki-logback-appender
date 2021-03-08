@@ -24,7 +24,7 @@ public final class Batcher {
 
     private int index = 0;
     private int sizeBytes = 0;
-    private HashSet<String> labels = new HashSet<>();
+    private HashSet<LogRecordStream> streams = new HashSet<>();
 
 
     public Batcher(int maxItems, int maxSizeBytes, long maxTimeoutMs) {
@@ -46,18 +46,18 @@ public final class Batcher {
      */
     private long estimateSizeBytes(LogRecord r, boolean dryRun) {
         long size = r.messageUtf8SizeBytes + 24;
-        if (!labels.contains(r.stream)) {
-            size += StringUtils.utf8Length(r.stream) + 8;
-            if (!dryRun) labels.add(r.stream);
+        if (!streams.contains(r.stream)) {
+            size += r.stream.utf8SizeBytes + 8;
+            if (!dryRun) streams.add(r.stream);
         }
         return size;
     }
 
     private void cutBatchAndReset(LogRecordBatch destination, BatchCondition condition) {
-        destination.initFrom(items, index, labels.size(), condition, sizeBytes);
+        destination.initFrom(items, index, streams.size(), condition, sizeBytes);
         index = 0;
         sizeBytes = 0;
-        labels.clear();
+        streams.clear();
     }
 
     /**

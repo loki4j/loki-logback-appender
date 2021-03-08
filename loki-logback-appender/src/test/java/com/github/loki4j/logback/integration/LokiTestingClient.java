@@ -12,6 +12,7 @@ import java.net.http.HttpResponse;
 import java.time.Duration;
 import java.util.Arrays;
 import java.util.Base64;
+import java.util.Comparator;
 import java.util.List;
 import java.util.Map;
 import java.util.concurrent.atomic.AtomicReference;
@@ -21,6 +22,7 @@ import com.fasterxml.jackson.annotation.JsonIgnoreProperties;
 import com.fasterxml.jackson.core.JsonProcessingException;
 import com.fasterxml.jackson.databind.JsonMappingException;
 import com.fasterxml.jackson.databind.ObjectMapper;
+import com.github.loki4j.common.ByteBufferFactory;
 import com.github.loki4j.common.HttpHeaders;
 import com.github.loki4j.common.LogRecord;
 import com.github.loki4j.common.LogRecordBatch;
@@ -30,6 +32,12 @@ import com.github.loki4j.logback.AbstractLoki4jEncoder;
 import ch.qos.logback.classic.spi.ILoggingEvent;
 
 public class LokiTestingClient {
+
+    private static Comparator<LogRecord> byStream = (e1, e2) -> String.CASE_INSENSITIVE_ORDER.compare(
+        Arrays.toString(e1.stream.labels), Arrays.toString(e2.stream.labels));
+    private static Comparator<LogRecord> byTime = (e1, e2) ->
+        Long.compare(e1.timestampMs, e2.timestampMs);
+    private static Comparator<LogRecord> lokiLogsSorting = byStream.thenComparing(byTime);
 
     private String urlQuery;
 
@@ -132,12 +140,16 @@ public class LokiTestingClient {
             for (int i = 0; i < events.length; i++) {
                 records[i] =  encoder.eventToRecord(events[i]);
             }
-            reqStr.set(new String(encoder.encode(new LogRecordBatch(records))));
+            var batch = new LogRecordBatch(records);
+            batch.sort(lokiLogsSorting);
+            var writer = encoder.createWriter(4 * 1024 * 1024, new ByteBufferFactory(false));
+            writer.serializeBatch(batch);
+            reqStr.set(new String(writer.toByteArray()));
         });
 
         var req = parseRequest(reqStr.get());
         var lastIdx = records.length - 1;
-        var time = String.format("%s%06d", records[lastIdx].timestampMs + 100, records[lastIdx].nanos);
+        var time = String.format("%s%06d", records[lastIdx].timestampMs + 100, 0);
         var resp = parseResponse(queryRecords(lbl, events.length, time));
         //System.out.println(req + "\n\n");
         //System.out.println(resp);

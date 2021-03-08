@@ -5,7 +5,6 @@ import static com.github.loki4j.logback.Generators.*;
 import java.util.Arrays;
 
 import com.github.loki4j.common.Batcher;
-import com.github.loki4j.common.ByteBufferFactory;
 import com.github.loki4j.common.LogRecord;
 import com.github.loki4j.common.LogRecordBatch;
 import com.github.loki4j.logback.AbstractLoki4jEncoder;
@@ -21,8 +20,6 @@ import ch.qos.logback.classic.LoggerContext;
 public class BatcherTest {
 
     private static AbstractLoki4jEncoder initEnc(AbstractLoki4jEncoder e) {
-        e.setCapacity(4 * 1024 * 1024);
-        e.setBufferFactory(new ByteBufferFactory(false));
         e.setContext(new LoggerContext());
         e.start();
         return e;
