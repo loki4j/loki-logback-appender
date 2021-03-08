@@ -6,6 +6,7 @@ import java.util.HashSet;
 import com.github.loki4j.common.BatchCondition;
 import com.github.loki4j.common.LogRecord;
 import com.github.loki4j.common.LogRecordBatch;
+import com.github.loki4j.common.LogRecordStream;
 
 /**
  * A component that is responsible for splitting a stream of log events into batches.
@@ -28,7 +29,7 @@ public final class BatcherV120a {
 
     private int index = 0;
     private int sizeBytes = 0;
-    private HashSet<String> labels = new HashSet<>();
+    private HashSet<LogRecordStream> labels = new HashSet<>();
 
 
     public BatcherV120a(int maxItems, int maxSizeBytes, long maxTimeoutMs) {
@@ -51,7 +52,7 @@ public final class BatcherV120a {
     private long estimateSizeBytes(LogRecord r, boolean dryRun) {
         long size = r.message.getBytes(StandardCharsets.UTF_8).length + 24;
         if (!labels.contains(r.stream)) {
-            size += r.stream.getBytes(StandardCharsets.UTF_8).length + 8;
+            size += r.stream.utf8SizeBytes + 8;
             if (!dryRun) labels.add(r.stream);
         }
         return size;
