@@ -4,9 +4,9 @@ title: Performance Monitoring
 sidebar_label: Performance Monitoring
 ---
 
-You can monitor Loki4j's performance by enabling instrumentation powered by [Micrometer](https://micrometer.io/).
+You can monitor Loki4j's performance by enabling an instrumentation powered by [Micrometer](https://micrometer.io/).
 
-First you need to make sure that Micrometer dependency added to your project:
+First you need to make sure that Micrometer dependency is added to your project:
 
 <!--DOCUSAURUS_CODE_TABS-->
 <!--Maven-->
@@ -48,6 +48,3 @@ loki4j.send.bytes|Size of batches sent to Loki
 loki4j.send.batches|Number of batches sent to Loki
 loki4j.send.errors|Number of errors occurred while sending batches to Loki
 loki4j.drop.events|Number of events dropped due to backpressure settings
-
-Enable `InstrumentedLoki4jAppender` only if you intend to monitor Loki4j's performance metrics.
-It is not recommended to use instrumentation on regular basis.

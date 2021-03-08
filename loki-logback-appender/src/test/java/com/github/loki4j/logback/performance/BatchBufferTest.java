@@ -10,6 +10,7 @@ import java.util.concurrent.ConcurrentLinkedQueue;
 import java.util.concurrent.atomic.AtomicInteger;
 
 import com.github.loki4j.common.LogRecord;
+import com.github.loki4j.common.LogRecordStream;
 import com.github.loki4j.common.SoftLimitBuffer;
 import com.github.loki4j.testkit.benchmark.Benchmarker;
 import com.github.loki4j.testkit.benchmark.Benchmarker.Benchmark;
@@ -25,8 +26,7 @@ public class BatchBufferTest {
     public static LogRecord eventToRecord(ILoggingEvent e) {
         return LogRecord.create(
             e.getTimeStamp(),
-            0,
-            "test=dlkjafh",
+            LogRecordStream.create(0, "test","dlkjafh"),
             e.getMessage());
     }
 
