@@ -1,5 +1,7 @@
 package com.github.loki4j.logback;
 
+import java.util.Comparator;
+import java.util.Optional;
 import java.util.concurrent.ConcurrentLinkedQueue;
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
@@ -9,7 +11,6 @@ import java.util.concurrent.TimeUnit;
 import java.util.concurrent.atomic.AtomicBoolean;
 import java.util.concurrent.atomic.AtomicLong;
 import java.util.concurrent.locks.LockSupport;
-import java.util.function.Function;
 import java.util.function.Supplier;
 
 import com.github.loki4j.common.Batcher;
@@ -34,13 +35,19 @@ public final class DefaultPipeline extends ContextAwareBase implements LifeCycle
 
     private final Batcher batcher;
 
-    private ScheduledExecutorService scheduler;
-    private ExecutorService encoderThreadPool;
-    private ExecutorService senderThreadPool;
+    private Optional<Comparator<LogRecord>> recordComparator;
 
-    private final Function<LogRecordBatch, Writer> encode;
+    private final Writer writer;
 
-    private final Function<BinaryBatch, LokiResponse> send;
+    /**
+     * A HTTPS sender to use for pushing logs to Loki
+     */
+    private final HttpSender sender;
+
+    /**
+     * A tracker for the appender's metrics (if enabled)
+     */
+    private final LoggerMetrics metrics;
 
     private final boolean drainOnStop;
 
@@ -54,21 +61,29 @@ public final class DefaultPipeline extends ContextAwareBase implements LifeCycle
 
     private AtomicLong unsentEvents = new AtomicLong(0L);
 
+    private ScheduledExecutorService scheduler;
+    private ExecutorService encoderThreadPool;
+    private ExecutorService senderThreadPool;
+
     private ScheduledFuture<?> drainScheduledFuture;
 
     private boolean traceEnabled = false;
 
     public DefaultPipeline(
             Batcher batcher,
+            Optional<Comparator<LogRecord>> recordComparator,
+            Writer writer,
             ByteBufferQueue senderQueue,
-            Function<LogRecordBatch, Writer> encode,
-            Function<BinaryBatch, LokiResponse> send,
-            boolean drainOnStop) {
+            HttpSender sender,
+            boolean drainOnStop,
+            LoggerMetrics metrics) {
         this.batcher = batcher;
+        this.recordComparator = recordComparator;
+        this.writer = writer;
         this.senderQueue = senderQueue;
-        this.encode = encode;
-        this.send = send;
+        this.sender = sender;
         this.drainOnStop = drainOnStop;
+        this.metrics = metrics;
     }
 
     @Override
@@ -171,7 +186,7 @@ public final class DefaultPipeline extends ContextAwareBase implements LifeCycle
         drainRequested.set(false);
         if (batch.isEmpty()) return;
 
-        var writer = encode.apply(batch);
+        writeBatch(batch, writer);
         while(started && 
                 !senderQueue.offer(
                     batch.batchId(),
@@ -184,6 +199,19 @@ public final class DefaultPipeline extends ContextAwareBase implements LifeCycle
         acceptNewEvents.set(true);
     }
 
+    private void writeBatch(LogRecordBatch batch, Writer writer) {
+        var startedNs = System.nanoTime();
+        recordComparator.ifPresent(cmp -> batch.sort(cmp));
+        writer.serializeBatch(batch);
+        addInfo(String.format(
+            ">>> Batch %s converted to %,d bytes",
+                batch, writer.size()));
+        //try { System.out.write(binBatch.data); } catch (Exception e) { e.printStackTrace(); }
+        //System.out.println("\n");
+        if (metrics != null)
+            metrics.batchEncoded(startedNs, writer.size());
+    }
+
     private void sendStep() throws InterruptedException {
         BinaryBatch batch = senderQueue.borrowBuffer();
         while(started && batch == null) {
@@ -192,13 +220,45 @@ public final class DefaultPipeline extends ContextAwareBase implements LifeCycle
         }
         if (!started) return;
         try {
-            send.apply(batch);
+            sendBatch(batch);
             lastSendTimeMs.set(System.currentTimeMillis());
             trace("sent items: %s", batch.sizeItems);
         } finally {
             unsentEvents.addAndGet(-batch.sizeItems);
             senderQueue.returnBuffer(batch);
         }
+    }
+
+    private LokiResponse sendBatch(BinaryBatch batch) {
+        var startedNs = System.nanoTime();
+        LokiResponse r = null;
+        Exception e = null;
+        try {
+            r = sender.send(batch.data);
+        } catch (Exception re) {
+            e = re;
+        }
+
+        if (e != null) {
+            addError(String.format(
+                "Error while sending Batch %s to Loki (%s)",
+                    batch, sender.getUrl()), e);
+        }
+        else {
+            if (r.status < 200 || r.status > 299)
+                addError(String.format(
+                    "Loki responded with non-success status %s on batch %s. Error: %s",
+                    r.status, batch, r.body));
+            else
+                addInfo(String.format(
+                    "<<< Batch %s: Loki responded with status %s",
+                    batch, r.status));
+        }
+
+        if (metrics != null)
+            metrics.batchSent(startedNs, batch.sizeBytes, e != null || r.status > 299);
+
+        return r;
     }
 
     void waitSendQueueIsEmpty(long timeoutMs) {

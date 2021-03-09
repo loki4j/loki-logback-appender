@@ -1,6 +1,7 @@
 package com.github.loki4j.logback;
 
 import java.io.IOException;
+import java.nio.ByteBuffer;
 import java.util.function.Function;
 
 import com.github.loki4j.common.HttpHeaders;
@@ -38,7 +39,7 @@ public class ApacheHttpSender extends AbstractHttpSender {
     private long connectionKeepAliveMs = 120_000;
 
     private CloseableHttpClient client;
-    private Function<byte[], HttpPost> requestBuilder;
+    private Function<ByteBuffer, HttpPost> requestBuilder;
 
     @Override
     public void start() {
@@ -69,7 +70,13 @@ public class ApacheHttpSender extends AbstractHttpSender {
             tenantId.ifPresent(tenant -> request.addHeader(HttpHeaders.X_SCOPE_ORGID, tenant));
             basicAuthToken.ifPresent(token -> request.setHeader(HttpHeaders.AUTHORIZATION, "Basic " + token));
 
-            request.setEntity(new ByteArrayEntity(body));
+            if (body.hasArray()) {
+                request.setEntity(new ByteArrayEntity(body.array(), 0, body.limit()));
+            } else {
+                byte[] buf = new byte[body.remaining()];
+                body.get(buf);
+                request.setEntity(new ByteArrayEntity(buf));
+            }
             return request;
         };
 
@@ -87,7 +94,7 @@ public class ApacheHttpSender extends AbstractHttpSender {
     }
 
     @Override
-    public LokiResponse send(byte[] batch) {
+    public LokiResponse send(ByteBuffer batch) {
         try {
             var r = client.execute(requestBuilder.apply(batch));
             var entity = r.getEntity();

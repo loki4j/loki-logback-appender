@@ -5,6 +5,7 @@ import java.util.concurrent.atomic.AtomicLong;
 import com.github.loki4j.common.Batcher;
 import com.github.loki4j.common.BinaryBatch;
 import com.github.loki4j.common.ByteBufferFactory;
+import com.github.loki4j.common.ByteBufferQueue;
 import com.github.loki4j.common.LogRecord;
 import com.github.loki4j.common.LogRecordBatch;
 import com.github.loki4j.common.LokiResponse;
@@ -69,16 +70,6 @@ public final class Loki4jAppender extends UnsynchronizedAppenderBase<ILoggingEve
     private Loki4jEncoder encoder;
 
     /**
-     * A HTTPS sender to use for pushing logs to Loki
-     */
-    private HttpSender sender;
-
-    /**
-     * A tracker for the appender's metrics (if enabled)
-     */
-    private LoggerMetrics metrics;
-
-    /**
      * A pipeline that does all the heavy lifting log records processing
      */
     private DefaultPipeline pipeline;
@@ -87,8 +78,6 @@ public final class Loki4jAppender extends UnsynchronizedAppenderBase<ILoggingEve
      * A counter for events dropped due to backpressure
      */
     private AtomicLong droppedEventsCount = new AtomicLong(0L);
-
-    private Writer writer;
 
     @Override
     public void start() {
@@ -184,18 +173,17 @@ public final class Loki4jAppender extends UnsynchronizedAppenderBase<ILoggingEve
         }
     }
 
-    protected BinaryBatch encode(LogRecordBatch batch) {
+    protected boolean write(LogRecordBatch batch, ByteBufferQueue queue) {
         var startedNs = System.nanoTime();
         encoder.getLogRecordComparator().ifPresent(cmp -> batch.sort(cmp));
         writer.serializeBatch(batch);
-        var binBatch = BinaryBatch.fromLogRecordBatch(batch, writer.toByteArray());
         addInfo(String.format(
             ">>> Batch %s converted to %,d bytes",
-                batch, binBatch.data.length));
+                batch, writer.size()));
         //try { System.out.write(binBatch.data); } catch (Exception e) { e.printStackTrace(); }
         //System.out.println("\n");
         if (metricsEnabled)
-            metrics.batchEncoded(startedNs, binBatch.data.length);
+            metrics.batchEncoded(startedNs, writer.size());
         return binBatch;
     }
 

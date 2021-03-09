@@ -1,5 +1,7 @@
 package com.github.loki4j.logback;
 
+import java.nio.ByteBuffer;
+
 import com.github.loki4j.common.LokiResponse;
 
 import ch.qos.logback.core.spi.ContextAware;
@@ -17,7 +19,7 @@ public interface HttpSender extends ContextAware, LifeCycle {
      *
      * @return A response from Loki
      */
-    public LokiResponse send(byte[] batch);
+    public LokiResponse send(ByteBuffer batch);
 
     /**
      * Get Loki target URL
