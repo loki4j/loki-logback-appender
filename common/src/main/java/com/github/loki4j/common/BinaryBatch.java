@@ -17,7 +17,7 @@ public class BinaryBatch {
     @Override
     public String toString() {
         return String.format(
-            "#%x (%,d bytes)", batchId, data.remaining());
+            "#%x (%,d bytes)", batchId, sizeBytes);
     }
 
 }

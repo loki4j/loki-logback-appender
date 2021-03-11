@@ -151,6 +151,7 @@ public class Generators {
             @Override
             public void toByteBuffer(ByteBuffer buffer) {
                 buffer.put(b);
+                buffer.flip();
             }
             @Override
             public byte[] toByteArray() {
