@@ -57,7 +57,7 @@ public class EncodersTest {
                 var jsonEncSta = initEnc(jsonEncoder(true, "testLabel"));
                 return Stream.iterate(
                         Arrays.stream(generateEvents(batchSize, 10))
-                            .map(e -> jsonEncSta.eventToRecord(e))
+                            .map(e -> eventToRecord(e, jsonEncSta))
                             .toArray(LogRecord[]::new),
                         UnaryOperator.identity())
                     .map(rs -> new LogRecordBatch(rs))
@@ -87,7 +87,7 @@ public class EncodersTest {
                 var jsonEncDyn = initEnc(jsonEncoder(false, "testLabel"));
                 return Stream.iterate(
                         Arrays.stream(generateEvents(batchSize, 10))
-                            .map(e -> jsonEncDyn.eventToRecord(e))
+                            .map(e -> eventToRecord(e, jsonEncDyn))
                             .toArray(LogRecord[]::new),
                         UnaryOperator.identity())
                     .map(rs -> new LogRecordBatch(rs))

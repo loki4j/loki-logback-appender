@@ -140,11 +140,12 @@ public abstract class AbstractLoki4jEncoder extends ContextAwareBase implements 
         return started;
     }
 
-    public LogRecord eventToRecord(ILoggingEvent e) {
-        return LogRecord.create(
-            e.getTimeStamp(),
-            stream(labelPatternLayout.doLayout(e).intern()),
-            messagePatternLayout.doLayout(e));
+    public LogRecordStream eventToStream(ILoggingEvent e) {
+        return stream(labelPatternLayout.doLayout(e).intern());
+    }
+
+    public String eventToMessage(ILoggingEvent e) {
+        return messagePatternLayout.doLayout(e);
     }
 
     public abstract Writer createWriter(int capacity, ByteBufferFactory bufferFactory);

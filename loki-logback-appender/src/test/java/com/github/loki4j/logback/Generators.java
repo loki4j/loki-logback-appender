@@ -299,6 +299,13 @@ public class Generators {
         return e;
     }
 
+    public static LogRecord eventToRecord(ILoggingEvent e, Loki4jEncoder enc) {
+        return LogRecord.create(
+            e.getTimeStamp(),
+            enc.eventToStream(e),
+            enc.eventToMessage(e));
+    }
+
     public static class AppenderWrapper {
         private Loki4jAppender appender;
         public AppenderWrapper(Loki4jAppender appender) {
@@ -324,8 +331,9 @@ public class Generators {
         public byte[] lastBatch;
 
         @Override
-        public LokiResponse send(byte[] batch) {
-            lastBatch = batch;
+        public LokiResponse send(ByteBuffer batch) {
+            lastBatch = new byte[batch.remaining()];
+            batch.get(lastBatch);
             return new LokiResponse(204, "");
         }
 

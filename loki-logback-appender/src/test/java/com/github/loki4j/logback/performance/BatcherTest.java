@@ -38,7 +38,7 @@ public class BatcherTest {
                 var jsonEncSta = initEnc(jsonEncoder(true, "testLabel"));
                 return Arrays
                     .stream(generateEvents(100_000, 10))
-                    .map(e -> jsonEncSta.eventToRecord(e))
+                    .map(e -> eventToRecord(e, jsonEncSta))
                     .iterator();
             };
             this.benchmarks = Arrays.asList(

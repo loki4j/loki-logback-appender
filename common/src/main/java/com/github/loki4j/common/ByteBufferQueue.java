@@ -43,7 +43,8 @@ public class ByteBufferQueue {
 
     public BinaryBatch borrowBuffer() {
         var batch = items.poll();
-        sizeBytes.addAndGet(-batch.sizeBytes);
+        if (batch != null)
+            sizeBytes.addAndGet(-batch.sizeBytes);
         return batch;
     }
 

@@ -138,7 +138,11 @@ public class LokiTestingClient {
         });
         withEncoder(expectedEncoder, encoder -> {
             for (int i = 0; i < events.length; i++) {
-                records[i] =  encoder.eventToRecord(events[i]);
+                final var idx = i;
+                records[i] = LogRecord.create(
+                    events[i].getTimeStamp(),
+                    encoder.eventToStream(events[idx]),
+                    encoder.eventToMessage(events[idx]));
             }
             var batch = new LogRecordBatch(records);
             batch.sort(lokiLogsSorting);

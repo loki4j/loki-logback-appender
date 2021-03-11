@@ -18,7 +18,7 @@ public class AppenderTest {
 
     private static AppenderWrapper initApp(int capacity, Loki4jEncoder e) {
         var a = appender(capacity, 60_000L, e, dummySender());
-        a.setSendQueueSize(Integer.MAX_VALUE);
+        a.setSendQueueSizeBytes(Long.MAX_VALUE);
         a.setVerbose(false);
         a.start();
         return new AppenderWrapper(a);

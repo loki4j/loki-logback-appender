@@ -3,14 +3,8 @@ package com.github.loki4j.logback;
 import java.util.concurrent.atomic.AtomicLong;
 
 import com.github.loki4j.common.Batcher;
-import com.github.loki4j.common.BinaryBatch;
 import com.github.loki4j.common.ByteBufferFactory;
 import com.github.loki4j.common.ByteBufferQueue;
-import com.github.loki4j.common.LogRecord;
-import com.github.loki4j.common.LogRecordBatch;
-import com.github.loki4j.common.LokiResponse;
-import com.github.loki4j.common.SoftLimitBuffer;
-import com.github.loki4j.common.Writer;
 
 import ch.qos.logback.classic.spi.ILoggingEvent;
 import ch.qos.logback.core.CoreConstants;
@@ -39,10 +33,10 @@ public final class Loki4jAppender extends UnsynchronizedAppenderBase<ILoggingEve
     private long batchTimeoutMs = 60 * 1000;
 
     /**
-     * Max number of events to keep in the send queue.
+     * Max number of bytes to keep in the send queue.
      * When the queue is full, incoming log events are dropped
      */
-    private int sendQueueSize = 50 * 1000;
+    private long sendQueueSizeBytes = 20 * 1024 * 1024;
 
     /**
      * If true, the appender will print its own debug logs to stderr
@@ -68,6 +62,11 @@ public final class Loki4jAppender extends UnsynchronizedAppenderBase<ILoggingEve
      * An encoder to use for converting log record batches to format acceptable by Loki
      */
     private Loki4jEncoder encoder;
+
+    /**
+     * A HTTPS sender to use for pushing logs to Loki
+     */
+    private HttpSender sender;
 
     /**
      * A pipeline that does all the heavy lifting log records processing
@@ -100,8 +99,9 @@ public final class Loki4jAppender extends UnsynchronizedAppenderBase<ILoggingEve
         encoder.start();
 
         var bufferFactory = new ByteBufferFactory(useDirectBuffers);
-        writer = encoder.createWriter(batchSizeBytes, bufferFactory);
+        var writer = encoder.createWriter(batchSizeBytes, bufferFactory);
 
+        LoggerMetrics metrics = null;
         if (metricsEnabled) {
             var host = context.getProperty(CoreConstants.HOSTNAME_KEY);
             metrics = new LoggerMetrics(
@@ -117,9 +117,16 @@ public final class Loki4jAppender extends UnsynchronizedAppenderBase<ILoggingEve
         sender.setContentType(encoder.getContentType());
         sender.start();
 
-        var buffer = new SoftLimitBuffer<LogRecord>(sendQueueSize);
+        var sendQueue = new ByteBufferQueue(sendQueueSizeBytes, bufferFactory);
         var batcher = new Batcher(batchSizeItems, batchSizeBytes, batchTimeoutMs);
-        pipeline = new DefaultPipeline(buffer, batcher, this::encode, this::send, drainOnStop);
+        pipeline = new DefaultPipeline(
+            batcher,
+            encoder.getLogRecordComparator(),
+            writer,
+            sendQueue,
+            sender,
+            metrics,
+            drainOnStop);
         pipeline.setContext(context);
         pipeline.start();
 
@@ -146,12 +153,13 @@ public final class Loki4jAppender extends UnsynchronizedAppenderBase<ILoggingEve
 
     @Override
     protected void append(ILoggingEvent event) {
-        var startedNs = System.nanoTime();
-        var appended = pipeline.append(() -> encoder.eventToRecord(event));
+        var appended = pipeline.append(
+            event.getTimeStamp(),
+            () -> encoder.eventToStream(event),
+            () -> encoder.eventToMessage(event));
+
         if (!appended)
             reportDroppedEvents();
-        if (metricsEnabled)
-            metrics.eventAppended(startedNs, !appended);
     }
 
     private void reportDroppedEvents() {
@@ -173,52 +181,6 @@ public final class Loki4jAppender extends UnsynchronizedAppenderBase<ILoggingEve
         }
     }
 
-    protected boolean write(LogRecordBatch batch, ByteBufferQueue queue) {
-        var startedNs = System.nanoTime();
-        encoder.getLogRecordComparator().ifPresent(cmp -> batch.sort(cmp));
-        writer.serializeBatch(batch);
-        addInfo(String.format(
-            ">>> Batch %s converted to %,d bytes",
-                batch, writer.size()));
-        //try { System.out.write(binBatch.data); } catch (Exception e) { e.printStackTrace(); }
-        //System.out.println("\n");
-        if (metricsEnabled)
-            metrics.batchEncoded(startedNs, writer.size());
-        return binBatch;
-    }
-
-    protected LokiResponse send(BinaryBatch batch) {
-        var startedNs = System.nanoTime();
-        LokiResponse r = null;
-        Exception e = null;
-        try {
-            r = sender.send(batch.data);
-        } catch (Exception re) {
-            e = re;
-        }
-
-        if (e != null) {
-            addError(String.format(
-                "Error while sending Batch %s to Loki (%s)",
-                    batch, sender.getUrl()), e);
-        }
-        else {
-            if (r.status < 200 || r.status > 299)
-                addError(String.format(
-                    "Loki responded with non-success status %s on batch %s. Error: %s",
-                    r.status, batch, r.body));
-            else
-                addInfo(String.format(
-                    "<<< Batch %s: Loki responded with status %s",
-                    batch, r.status));
-        }
-
-        if (metricsEnabled)
-            metrics.batchSent(startedNs, batch.data.length, e != null || r.status > 299);
-
-        return r;
-    }
-
     void waitSendQueueIsEmpty(long timeoutMs) {
         pipeline.waitSendQueueIsEmpty(timeoutMs);
     }
@@ -236,8 +198,8 @@ public final class Loki4jAppender extends UnsynchronizedAppenderBase<ILoggingEve
     public void setBatchTimeoutMs(long batchTimeoutMs) {
         this.batchTimeoutMs = batchTimeoutMs;
     }
-    public void setSendQueueSize(int sendQueueSize) {
-        this.sendQueueSize = sendQueueSize;
+    public void setSendQueueSizeBytes(long sendQueueSizeBytes) {
+        this.sendQueueSizeBytes = sendQueueSizeBytes;
     }
 
     /**

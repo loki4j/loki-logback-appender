@@ -18,6 +18,7 @@ import com.github.loki4j.common.BinaryBatch;
 import com.github.loki4j.common.ByteBufferQueue;
 import com.github.loki4j.common.LogRecord;
 import com.github.loki4j.common.LogRecordBatch;
+import com.github.loki4j.common.LogRecordStream;
 import com.github.loki4j.common.LokiResponse;
 import com.github.loki4j.common.LokiThreadFactory;
 import com.github.loki4j.common.Writer;
@@ -75,8 +76,8 @@ public final class DefaultPipeline extends ContextAwareBase implements LifeCycle
             Writer writer,
             ByteBufferQueue senderQueue,
             HttpSender sender,
-            boolean drainOnStop,
-            LoggerMetrics metrics) {
+            LoggerMetrics metrics,
+            boolean drainOnStop) {
         this.batcher = batcher;
         this.recordComparator = recordComparator;
         this.writer = writer;
@@ -126,13 +127,17 @@ public final class DefaultPipeline extends ContextAwareBase implements LifeCycle
         senderThreadPool.shutdown();
     }
 
-    public boolean append(Supplier<LogRecord> event) {
+    public boolean append(long timestamp, Supplier<LogRecordStream> stream, Supplier<String> message) {
+        var startedNs = System.nanoTime();
+        boolean accepted = false;
         if (acceptNewEvents.get()) {
-            buffer.offer(event.get());
+            buffer.offer(LogRecord.create(timestamp, stream.get(), message.get()));
             unsentEvents.incrementAndGet();
-            return true; 
+            accepted = true;
         }
-        return false;
+        if (metrics != null)
+            metrics.eventAppended(startedNs, !accepted);
+        return accepted;
     }
 
     private void drain() {
