@@ -201,6 +201,7 @@ public final class DefaultPipeline extends ContextAwareBase implements LifeCycle
             acceptNewEvents.set(false);
             LockSupport.parkNanos(this, PARK_NS);
         }
+        batch.clear();
         acceptNewEvents.set(true);
     }
 
