@@ -71,7 +71,7 @@ public class ApacheHttpSender extends AbstractHttpSender {
             basicAuthToken.ifPresent(token -> request.setHeader(HttpHeaders.AUTHORIZATION, "Basic " + token));
 
             if (body.hasArray()) {
-                request.setEntity(new ByteArrayEntity(body.array(), 0, body.limit()));
+                request.setEntity(new ByteArrayEntity(body.array(), body.position(), body.remaining()));
             } else {
                 byte[] buf = new byte[body.remaining()];
                 body.get(buf);

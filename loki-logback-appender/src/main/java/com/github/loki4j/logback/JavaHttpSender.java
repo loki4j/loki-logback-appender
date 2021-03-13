@@ -76,7 +76,6 @@ public class JavaHttpSender extends AbstractHttpSender {
                 .copy()
                 .POST(HttpRequest.BodyPublishers.fromPublisher(new BatchPublisher(batch), batch.remaining()))
                 .build();
-
             var response = client.send(request, HttpResponse.BodyHandlers.ofString());
             return new LokiResponse(response.statusCode(), response.body());
         } catch (Exception e) {
@@ -104,6 +103,7 @@ public class JavaHttpSender extends AbstractHttpSender {
         private final ByteBuffer body;
         private final Subscriber<? super ByteBuffer> subscriber;
         private volatile boolean cancelled = false;
+        private volatile boolean finished = false;
 
         public BatchSubscription(ByteBuffer body, Subscriber<? super ByteBuffer> subscriber) {
             this.body = body;
@@ -111,12 +111,13 @@ public class JavaHttpSender extends AbstractHttpSender {
         }
         @Override
         public void request(long n) {
-            if (cancelled)
+            if (cancelled || finished)
                 return;  // no-op
 
             if (n <= 0) {
                 subscriber.onError(new IllegalArgumentException("illegal non-positive request:" + n));
             } else {
+                finished = true;
                 subscriber.onNext(body);
                 subscriber.onComplete();
             }
