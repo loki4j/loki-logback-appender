@@ -1,5 +1,7 @@
 package com.github.loki4j.logback;
 
+import java.nio.ByteBuffer;
+
 import com.github.loki4j.common.LokiResponse;
 
 import ch.qos.logback.core.joran.spi.NoAutoStart;
@@ -25,7 +27,7 @@ public class JavaHttpSender extends AbstractHttpSender {
     }
 
     @Override
-    public LokiResponse send(byte[] batch) {
+    public LokiResponse send(ByteBuffer batch) {
         throw new IllegalStateException("Not implemented");
     }
 }
