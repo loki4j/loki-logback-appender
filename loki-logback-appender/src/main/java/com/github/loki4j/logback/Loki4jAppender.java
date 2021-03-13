@@ -36,7 +36,7 @@ public final class Loki4jAppender extends UnsynchronizedAppenderBase<ILoggingEve
      * Max number of bytes to keep in the send queue.
      * When the queue is full, incoming log events are dropped
      */
-    private long sendQueueSizeBytes = 20 * 1024 * 1024;
+    private long sendQueueSizeBytes = 40 * 1024 * 1024;
 
     /**
      * If true, the appender will print its own debug logs to stderr
