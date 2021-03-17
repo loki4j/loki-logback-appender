@@ -172,7 +172,7 @@ public final class Loki4jAppender extends UnsynchronizedAppenderBase<ILoggingEve
                 || (dropped <= 900_000_000 && dropped % 1_000_000 == 0)
                 || dropped > 1_000_000_000) {
             addWarn(String.format(
-                "Backpressure: %s messages dropped. Check `sendQueueSize` setting", dropped));
+                "Backpressure: %s messages dropped. Check `sendQueueSizeBytes` setting", dropped));
             if (dropped > 1_000_000_000) {
                 addWarn(String.format(
                     "Resetting dropped message counter from %s to 0", dropped));
@@ -183,6 +183,10 @@ public final class Loki4jAppender extends UnsynchronizedAppenderBase<ILoggingEve
 
     void waitSendQueueIsEmpty(long timeoutMs) {
         pipeline.waitSendQueueIsEmpty(timeoutMs);
+    }
+
+    long droppedEventsCount() {
+        return droppedEventsCount.get();
     }
 
     @Deprecated

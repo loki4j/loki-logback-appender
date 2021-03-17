@@ -57,4 +57,8 @@ public class ByteBufferQueue {
     public long getSizeBytes() {
         return sizeBytes.get();
     }
+
+    int poolSize() {
+        return pool.size();
+    }
 }
