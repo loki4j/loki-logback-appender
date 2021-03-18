@@ -35,6 +35,7 @@ public class BatchSizeTest {
         var sender = apacheHttpSender(urlPush);
         sender.setRequestTimeoutMs(30_000L);
         var appender = appender(5_000, 1000, encoder, sender);
+        appender.setSendQueueSizeBytes(100 * 1024 * 1024);
 
         var events = generateEvents(5_000, 2000);
         client.testHttpSend(label, events, appender, jsonEncoder(false, label));
@@ -50,6 +51,7 @@ public class BatchSizeTest {
         var sender = javaHttpSender(urlPush);
         sender.setRequestTimeoutMs(30_000L);
         var appender = appender(5_000, 1000, encoder, sender);
+        appender.setSendQueueSizeBytes(100 * 1024 * 1024);
 
         var events = generateEvents(5_000, 2000);
         client.testHttpSend(label, events, appender, jsonEncoder(false, label));

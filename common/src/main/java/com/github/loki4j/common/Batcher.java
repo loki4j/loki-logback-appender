@@ -34,6 +34,15 @@ public final class Batcher {
     }
 
     /**
+     * Checks if the given message is less or equal to max allowed size for a batch.
+     * This method doesn't affect the internal state of the Batcher.
+     * This method is thread-safe.
+     */
+    public boolean validateLogRecordSize(LogRecord r) {
+        return (r.messageUtf8SizeBytes + 24 + r.stream.utf8SizeBytes + 8) <= maxSizeBytes;
+    }
+
+    /**
      * Loki limits max message size in bytes by comparing its size in uncompressed
      * protobuf format to a value of setting {@code grpc_server_max_recv_msg_size}.
      * <p>
@@ -65,9 +74,6 @@ public final class Batcher {
      * Note that this method never adds an input record to the batch, you must call {@code add()}
      * for this purpose.
      * <p>
-     * If the size of the record itself is more than max bytes limit (i.e. record is invalid)
-     * this method returns {@code false} without further processing.
-     * <p>
      * If a valid record can not be added to batch without exceeding max bytes limit, batcher
      * returns a completed batch without this record.
      * <p>
@@ -76,14 +82,10 @@ public final class Batcher {
      * @param destination Resulting batch (if ready)
      * @return Whether the input record is valid (i.e. it's size is not more than max bytes)
      */
-    public boolean checkSizeBeforeAdd(LogRecord input, LogRecordBatch destination) {
+    public void checkSizeBeforeAdd(LogRecord input, LogRecordBatch destination) {
         var recordSizeBytes = estimateSizeBytes(input, true);
-        if (recordSizeBytes > maxSizeBytes)
-            return false;
-
         if (sizeBytes + recordSizeBytes > maxSizeBytes)
             cutBatchAndReset(destination, BatchCondition.MAX_BYTES);
-        return true;
     }
 
     /**

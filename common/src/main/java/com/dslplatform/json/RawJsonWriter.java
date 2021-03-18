@@ -338,6 +338,7 @@ public class RawJsonWriter {
 
     public void toByteBuffer(ByteBuffer b) {
         b.put(buffer, 0, position);
+        b.flip();
         reset();
     }
 

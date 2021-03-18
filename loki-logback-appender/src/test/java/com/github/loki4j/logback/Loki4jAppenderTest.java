@@ -7,6 +7,12 @@ import ch.qos.logback.classic.spi.ILoggingEvent;
 
 import static org.junit.Assert.*;
 
+import java.nio.ByteBuffer;
+import java.util.concurrent.atomic.AtomicBoolean;
+import java.util.concurrent.locks.LockSupport;
+
+import com.github.loki4j.common.LokiResponse;
+
 import static com.github.loki4j.logback.Generators.*;
 
 public class Loki4jAppenderTest {
@@ -140,5 +146,82 @@ public class Loki4jAppenderTest {
 
         assertEquals("batchSize", expected, new String(sender.lastBatch, encoder.charset));
         appender.stop();
+    }
+
+    @Test
+    public void testTooLargeEventDropped() {
+        var longStr =
+            "123456789012345678901234567890123456789012345678901234567890123456789012345678901234567890" +
+            "123456789012345678901234567890123456789012345678901234567890123456789012345678901234567890" +
+            "123456789012345678901234567890123456789012345678901234567890123456789012345678901234567890" +
+            "123456789012345678901234567890123456789012345678901234567890123456789012345678901234567890" +
+            "123456789012345678901234567890123456789012345678901234567890123456789012345678901234567890" +
+            "123456789012345678901234567890123456789012345678901234567890123456789012345678901234567890" +
+            "123456789012345678901234567890123456789012345678901234567890123456789012345678901234567890" +
+            "123456789012345678901234567890123456789012345678901234567890123456789012345678901234567890";
+
+        var encoder = defaultToStringEncoder();
+        var sender = dummySender();
+        var appender = appender(3, 4000L, encoder, sender);
+        appender.setBatchSizeBytes(500);
+        appender.start();
+        appender.append(events[0]);
+        appender.append(loggingEvent(100L, Level.INFO, "TestApp", "main", longStr, null));
+        appender.append(events[1]);
+        appender.append(events[2]);
+
+        try { Thread.sleep(100L); } catch (InterruptedException e1) { }
+        assertEquals("batchSize", expected, new String(sender.lastBatch, encoder.charset));
+
+        appender.stop();
+    }
+
+    @Test
+    public void testBackpressure() {
+        var sender = new StoppableSender();
+        var encoder = defaultToStringEncoder();
+        var appender = appender(1, 4000L, encoder, sender);
+        appender.setSendQueueSizeBytes(150);
+        appender.start();
+
+        sender.wait.set(true);
+        // hanging sender
+        appender.append(events[0]);
+        try { Thread.sleep(100L); } catch (InterruptedException e1) { }
+        // sender queue
+        appender.append(events[1]);
+        try { Thread.sleep(100L); } catch (InterruptedException e1) { }
+        // batcher buffer
+        appender.append(events[2]);
+        try { Thread.sleep(100L); } catch (InterruptedException e1) { }
+
+
+        appender.append(events[0]);
+        try { Thread.sleep(100L); } catch (InterruptedException e1) { }
+        appender.append(events[1]);
+        try { Thread.sleep(100L); } catch (InterruptedException e1) { }
+        appender.append(events[2]);
+        try { Thread.sleep(100L); } catch (InterruptedException e1) { }
+
+        sender.wait.set(false);
+        try { Thread.sleep(100L); } catch (InterruptedException e1) { }
+
+        assertEquals("some events dropped", 3, appender.droppedEventsCount());
+
+        appender.stop();
+    }
+
+    private static class StoppableSender extends AbstractHttpSender {
+        public AtomicBoolean wait = new AtomicBoolean(false);
+        public byte[] lastBatch;
+
+        @Override
+        public LokiResponse send(ByteBuffer batch) {
+            while(wait.get())
+                LockSupport.parkNanos(1000);
+            lastBatch = new byte[batch.remaining()];
+            batch.get(lastBatch);
+            return new LokiResponse(204, "");
+        }
     }
 }

@@ -99,6 +99,7 @@ public final class ProtobufWriter implements Writer {
 
     public void toByteBuffer(ByteBuffer buffer) {
         buffer.put(compressed);
+        buffer.flip();
         reset();
     }
 

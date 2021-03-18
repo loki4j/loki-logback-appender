@@ -1,24 +1,23 @@
 package com.github.loki4j.common;
 
+import java.nio.ByteBuffer;
+
 public class BinaryBatch {
     
     public long batchId;
 
-    public int recordsCount;
+    public int sizeItems;
 
-    public byte[] data;
+    public int sizeBytes;
 
-    public static BinaryBatch fromLogRecordBatch(LogRecordBatch batch, byte[] data) {
-        var b = new BinaryBatch();
-        b.batchId = batch.batchId();
-        b.recordsCount = batch.size();
-        b.data = data;
-        return b;
-    }
+    public ByteBuffer data;
+
+    BinaryBatch() { }
 
     @Override
     public String toString() {
         return String.format(
-            "#%x (%s records, %,d bytes)", batchId, recordsCount, data.length);
+            "#%x (%,d bytes)", batchId, sizeBytes);
     }
+
 }
