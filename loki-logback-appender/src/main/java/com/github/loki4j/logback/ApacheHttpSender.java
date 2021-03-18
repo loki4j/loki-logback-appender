@@ -101,7 +101,7 @@ public class ApacheHttpSender extends AbstractHttpSender {
                 var len = batch.remaining();
                 if (len > bodyBuffer.length)
                     bodyBuffer = new byte[len];
-                batch.get(bodyBuffer);
+                batch.get(bodyBuffer, 0, len);
                 request.setEntity(new ByteArrayEntity(bodyBuffer, 0, len));
             }
 
