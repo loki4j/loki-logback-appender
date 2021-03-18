@@ -89,10 +89,20 @@ public final class JsonWriter implements Writer {
 
     private void record(LogRecord record) {
         raw.writeByte(ARRAY_START);
-        raw.writeAsciiString("" + record.timestampMs + "000000");
+        raw.writeAsciiString("" + record.timestampMs + nanosToStr(record.nanos));
         raw.writeByte(COMMA);
         raw.writeString(record.message);
         raw.writeByte(ARRAY_END);
+    }
+
+    private String nanosToStr(int nanos) {
+        var c = new char[6];
+        var rem = nanos;
+        for (int i = c.length - 1; i >= 0 ; i--) {
+            c[i] = (char)('0' + rem % 10);
+            rem = rem / 10;
+        }
+        return new String(c);
     }
 
     private void endStreams() {

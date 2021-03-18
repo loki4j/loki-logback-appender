@@ -4,6 +4,7 @@ import java.nio.charset.Charset;
 import java.util.Comparator;
 import java.util.HashMap;
 import java.util.Optional;
+import java.util.concurrent.atomic.AtomicInteger;
 import java.util.concurrent.atomic.AtomicReference;
 import java.util.regex.Pattern;
 
@@ -76,6 +77,8 @@ public abstract class AbstractLoki4jEncoder extends ContextAwareBase implements 
 
     private final AtomicReference<HashMap<String, LogRecordStream>> streams = new AtomicReference<>(new HashMap<>());
 
+    private final AtomicInteger nanoCounter = new AtomicInteger(0);
+
     private LabelCfg label = new LabelCfg();
 
     private MessageCfg message = new MessageCfg();
@@ -146,6 +149,29 @@ public abstract class AbstractLoki4jEncoder extends ContextAwareBase implements 
 
     public String eventToMessage(ILoggingEvent e) {
         return messagePatternLayout.doLayout(e);
+    }
+
+    public int timestampToNanos(long timestampMs) {
+        return nanoCounter.updateAndGet(i -> { // counter structure: i=ccc_xxx
+            int curMs = i / 1000;   // curMs=ccc
+            long nextMs = timestampMs % 1000; // nextMs=nnn
+            if (curMs == nextMs) {
+                var curNs = i % 1000;
+                if (curNs < 999)
+                    // ccc_xxx+1 - next event in current millisecond
+                    return i + 1;
+                else
+                    // ccc_999 - 999 events already passed
+                    // can not track the order of events for the current millisecond anymore
+                    return i;
+            } else if (curMs > nextMs) {
+                // ccc_xxx - can not track the order of events for the previous milliseconds
+                return i;
+            } else {
+                // nnn_000 - advance the counter to the next millisecond
+                return (int)nextMs * 1000;
+            }
+        });
     }
 
     public abstract Writer createWriter(int capacity, ByteBufferFactory bufferFactory);

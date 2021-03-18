@@ -127,11 +127,11 @@ public final class DefaultPipeline extends ContextAwareBase implements LifeCycle
         senderThreadPool.shutdown();
     }
 
-    public boolean append(long timestamp, Supplier<LogRecordStream> stream, Supplier<String> message) {
+    public boolean append(long timestamp, int nanos, Supplier<LogRecordStream> stream, Supplier<String> message) {
         var startedNs = System.nanoTime();
         boolean accepted = false;
         if (acceptNewEvents.get()) {
-            var record = LogRecord.create(timestamp, stream.get(), message.get());
+            var record = LogRecord.create(timestamp, nanos, stream.get(), message.get());
             if (batcher.validateLogRecordSize(record)) {
                 buffer.offer(record);
                 unsentEvents.incrementAndGet();

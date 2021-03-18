@@ -6,11 +6,11 @@ import static org.junit.Assert.*;
 public class BatcherTest {
 
     private static LogRecord logRecord(long ts) {
-        return LogRecord.create(ts, LogRecordStream.create(0, "testkey", "testval"), ("message" + ts));
+        return LogRecord.create(ts, 0, LogRecordStream.create(0, "testkey", "testval"), ("message" + ts));
     }
 
     private static LogRecord logRecord(long ts, LogRecordStream stream, String message) {
-        return LogRecord.create(ts, stream, message);
+        return LogRecord.create(ts, 0, stream, message);
     }
 
     @Test 

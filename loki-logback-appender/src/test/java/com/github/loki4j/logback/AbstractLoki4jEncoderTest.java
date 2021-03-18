@@ -148,4 +148,29 @@ public class AbstractLoki4jEncoderTest {
                     ars);
         });
     }
+
+
+    @Test
+    public void testNanoCounter() {
+        var enc = toStringEncoder(
+            labelCfg("app=my-app", ",", "=", true),
+            messageCfg("l=%level c=%logger{20} t=%thread | %msg"),
+            true,
+            false);
+
+        assertEquals(123000, enc.timestampToNanos(1123));
+        assertEquals(123001, enc.timestampToNanos(1123));
+        assertEquals(123002, enc.timestampToNanos(1123));
+        assertEquals(123003, enc.timestampToNanos(1123));
+
+        assertEquals(123003, enc.timestampToNanos(1122));
+
+        assertEquals(124000, enc.timestampToNanos(1124));
+        for (int i = 0; i < 997; i++)
+            enc.timestampToNanos(1124);
+        assertEquals(124998, enc.timestampToNanos(1124));
+        assertEquals(124999, enc.timestampToNanos(1124));
+        assertEquals(124999, enc.timestampToNanos(1124));
+        assertEquals(124999, enc.timestampToNanos(1124));
+    }
 }
