@@ -2,7 +2,7 @@ package com.github.loki4j.logback;
 
 import java.io.IOException;
 import java.nio.ByteBuffer;
-import java.util.function.Function;
+import java.util.function.Supplier;
 
 import com.github.loki4j.common.HttpHeaders;
 import com.github.loki4j.common.LokiResponse;
@@ -39,7 +39,13 @@ public class ApacheHttpSender extends AbstractHttpSender {
     private long connectionKeepAliveMs = 120_000;
 
     private CloseableHttpClient client;
-    private Function<ByteBuffer, HttpPost> requestBuilder;
+    private Supplier<HttpPost> requestBuilder;
+
+    /**
+     * Buffer is needed for turning ByteBuffer into byte array
+     * only if direct ByteBuffer arrived.
+     */
+    private byte[] bodyBuffer = new byte[0];
 
     @Override
     public void start() {
@@ -64,19 +70,11 @@ public class ApacheHttpSender extends AbstractHttpSender {
                 .build())
             .build();
 
-        requestBuilder = (body) -> {
+        requestBuilder = () -> {
             var request = new HttpPost(url);
             request.addHeader(HttpHeaders.CONTENT_TYPE, contentType);
             tenantId.ifPresent(tenant -> request.addHeader(HttpHeaders.X_SCOPE_ORGID, tenant));
             basicAuthToken.ifPresent(token -> request.setHeader(HttpHeaders.AUTHORIZATION, "Basic " + token));
-
-            if (body.hasArray()) {
-                request.setEntity(new ByteArrayEntity(body.array(), body.position(), body.remaining()));
-            } else {
-                byte[] buf = new byte[body.remaining()];
-                body.get(buf);
-                request.setEntity(new ByteArrayEntity(buf));
-            }
             return request;
         };
 
@@ -96,7 +94,18 @@ public class ApacheHttpSender extends AbstractHttpSender {
     @Override
     public LokiResponse send(ByteBuffer batch) {
         try {
-            var r = client.execute(requestBuilder.apply(batch));
+            var request = requestBuilder.get();
+            if (batch.hasArray()) {
+                request.setEntity(new ByteArrayEntity(batch.array(), batch.position(), batch.remaining()));
+            } else {
+                var len = batch.remaining();
+                if (len > bodyBuffer.length)
+                    bodyBuffer = new byte[len];
+                batch.get(bodyBuffer);
+                request.setEntity(new ByteArrayEntity(bodyBuffer, 0, len));
+            }
+
+            var r = client.execute(request);
             var entity = r.getEntity();
             return new LokiResponse(
                 r.getStatusLine().getStatusCode(),
