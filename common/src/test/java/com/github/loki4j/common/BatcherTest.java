@@ -66,7 +66,7 @@ public class BatcherTest {
         assertEquals("capacity is correct", 1, cbb.getCapacity());
 
         var record = logRecord(1, LogRecordStream.create(0, "a", "b"), "3456789");
-        assertFalse("Size too large", cbb.checkSizeBeforeAdd(record, buf));
+        assertFalse("Size too large", cbb.validateLogRecordSize(record));
         assertEquals("Batch is not ready", 0, buf.size());
     }
 
@@ -80,17 +80,20 @@ public class BatcherTest {
         var stream = LogRecordStream.create(0, "a", "b");
 
         var r1 = logRecord(1, stream, "123");
-        assertTrue("Size is ok", cbb.checkSizeBeforeAdd(r1, buf));
+        assertTrue("Size is ok", cbb.validateLogRecordSize(r1));
+        cbb.checkSizeBeforeAdd(r1, buf);
         cbb.add(r1, buf);
         assertEquals("Batch is not ready", 0, buf.size());
 
         var r2 = logRecord(2, stream, "abcdefghkl");
-        assertTrue("Size is ok", cbb.checkSizeBeforeAdd(r2, buf));
+        assertTrue("Size is ok", cbb.validateLogRecordSize(r2));
+        cbb.checkSizeBeforeAdd(r2, buf);
         cbb.add(r2, buf);
         assertEquals("Batch is not ready", 0, buf.size());
 
         var r3 = logRecord(3, stream, "qwertyuiop");
-        assertTrue("Size is ok", cbb.checkSizeBeforeAdd(r3, buf));
+        assertTrue("Size is ok", cbb.validateLogRecordSize(r3));
+        cbb.checkSizeBeforeAdd(r3, buf);
         assertEquals("Batch is ready", 2, buf.size());
         assertEquals("Correct batch condition", BatchCondition.MAX_BYTES, buf.getCondition());
         assertArrayEquals("Correct elements in batch", new LogRecord[]{r1, r2}, buf.toArray());

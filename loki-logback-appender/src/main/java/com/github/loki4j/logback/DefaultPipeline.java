@@ -131,9 +131,14 @@ public final class DefaultPipeline extends ContextAwareBase implements LifeCycle
         var startedNs = System.nanoTime();
         boolean accepted = false;
         if (acceptNewEvents.get()) {
-            buffer.offer(LogRecord.create(timestamp, stream.get(), message.get()));
-            unsentEvents.incrementAndGet();
-            accepted = true;
+            var record = LogRecord.create(timestamp, stream.get(), message.get());
+            if (batcher.validateLogRecordSize(record)) {
+                buffer.offer(record);
+                unsentEvents.incrementAndGet();
+                accepted = true;
+            } else {
+                addWarn("Dropping the record that exceeds max batch size: " + record.toString());
+            }
         }
         if (metrics != null)
             metrics.eventAppended(startedNs, !accepted);
@@ -174,14 +179,7 @@ public final class DefaultPipeline extends ContextAwareBase implements LifeCycle
         trace("check encode actions");
         LogRecord record = buffer.peek();
         while(record != null && batch.isEmpty()) {
-            if (!batcher.checkSizeBeforeAdd(record, batch)) {
-                addWarn("Dropping the record that exceeds max batch size: " +
-                    record.toString());
-                buffer.remove();
-                unsentEvents.decrementAndGet();
-                record = buffer.peek();
-                continue;
-            }
+            batcher.checkSizeBeforeAdd(record, batch);
             if (batch.isEmpty()) batcher.add(buffer.remove(), batch);
             if (batch.isEmpty()) record = buffer.peek();
         }
