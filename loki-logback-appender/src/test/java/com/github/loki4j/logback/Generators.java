@@ -303,6 +303,7 @@ public class Generators {
     public static LogRecord eventToRecord(ILoggingEvent e, Loki4jEncoder enc) {
         return LogRecord.create(
             e.getTimeStamp(),
+            0,
             enc.eventToStream(e),
             enc.eventToMessage(e));
     }

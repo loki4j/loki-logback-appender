@@ -25,6 +25,7 @@ public class BatchBufferTest {
     public static LogRecord eventToRecord(ILoggingEvent e) {
         return LogRecord.create(
             e.getTimeStamp(),
+            0,
             LogRecordStream.create(0, "test","dlkjafh"),
             e.getMessage());
     }

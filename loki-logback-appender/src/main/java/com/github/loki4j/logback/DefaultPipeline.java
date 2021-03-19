@@ -210,7 +210,7 @@ public final class DefaultPipeline extends ContextAwareBase implements LifeCycle
         addInfo(String.format(
             ">>> Batch %s converted to %,d bytes",
                 batch, writer.size()));
-        //try { System.out.write(binBatch.data); } catch (Exception e) { e.printStackTrace(); }
+        //try { System.out.write(batch); } catch (Exception e) { e.printStackTrace(); }
         //System.out.println("\n");
         if (metrics != null)
             metrics.batchEncoded(startedNs, writer.size());
