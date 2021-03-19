@@ -75,12 +75,12 @@ public class AbstractLoki4jEncoderTest {
     @Test
     public void testComparator() {
         Supplier<LogRecordBatch> rs = () -> new LogRecordBatch(new LogRecord[] {
-            LogRecord.create(100L, streamInfo, "l=INFO c=test.TestApp t=thread-1 | Test message 1"),
-            LogRecord.create(103L, streamDebug, "l=INFO c=test.TestApp t=thread-2 | Test message 2"),
-            LogRecord.create(105L, streamInfo, "l=INFO c=test.TestApp t=thread-1 | Test message 3"),
-            LogRecord.create(104L, streamWarn, "l=INFO c=test.TestApp t=thread-1 | Test message 4"),
-            LogRecord.create(103L, streamError, "l=INFO c=test.TestApp t=thread-2 | Test message 5"),
-            LogRecord.create(110L, streamInfo, "l=INFO c=test.TestApp t=thread-2 | Test message 6")
+            LogRecord.create(100L, 0, streamInfo, "l=INFO c=test.TestApp t=thread-1 | Test message 1"),
+            LogRecord.create(103L, 0, streamDebug, "l=INFO c=test.TestApp t=thread-2 | Test message 2"),
+            LogRecord.create(105L, 0, streamInfo, "l=INFO c=test.TestApp t=thread-1 | Test message 3"),
+            LogRecord.create(104L, 0, streamWarn, "l=INFO c=test.TestApp t=thread-1 | Test message 4"),
+            LogRecord.create(103L, 0, streamError, "l=INFO c=test.TestApp t=thread-2 | Test message 5"),
+            LogRecord.create(110L, 0, streamInfo, "l=INFO c=test.TestApp t=thread-2 | Test message 6")
         });
 
         withEncoder(toStringEncoder(
@@ -100,12 +100,12 @@ public class AbstractLoki4jEncoderTest {
                 ars.sort(e.getLogRecordComparator().get());
                 assertBatchesEqual("static labels, sort by time",
                     new LogRecordBatch(new LogRecord[] {
-                        LogRecord.create(100L, streamInfo, "l=INFO c=test.TestApp t=thread-1 | Test message 1"),
-                        LogRecord.create(103L, streamDebug, "l=INFO c=test.TestApp t=thread-2 | Test message 2"),
-                        LogRecord.create(103L, streamError, "l=INFO c=test.TestApp t=thread-2 | Test message 5"),
-                        LogRecord.create(104L, streamWarn, "l=INFO c=test.TestApp t=thread-1 | Test message 4"),
-                        LogRecord.create(105L, streamInfo, "l=INFO c=test.TestApp t=thread-1 | Test message 3"),
-                        LogRecord.create(110L, streamInfo, "l=INFO c=test.TestApp t=thread-2 | Test message 6")
+                        LogRecord.create(100L, 0, streamInfo, "l=INFO c=test.TestApp t=thread-1 | Test message 1"),
+                        LogRecord.create(103L, 0, streamDebug, "l=INFO c=test.TestApp t=thread-2 | Test message 2"),
+                        LogRecord.create(103L, 0, streamError, "l=INFO c=test.TestApp t=thread-2 | Test message 5"),
+                        LogRecord.create(104L, 0, streamWarn, "l=INFO c=test.TestApp t=thread-1 | Test message 4"),
+                        LogRecord.create(105L, 0, streamInfo, "l=INFO c=test.TestApp t=thread-1 | Test message 3"),
+                        LogRecord.create(110L, 0, streamInfo, "l=INFO c=test.TestApp t=thread-2 | Test message 6")
                     }),
                     ars);
         });
@@ -119,12 +119,12 @@ public class AbstractLoki4jEncoderTest {
                 ars.sort(e.getLogRecordComparator().get());
                 assertBatchesEqual("dynamic labels, no sort",
                     new LogRecordBatch(new LogRecord[] {
-                        LogRecord.create(100L, streamInfo, "l=INFO c=test.TestApp t=thread-1 | Test message 1"),
-                        LogRecord.create(105L, streamInfo, "l=INFO c=test.TestApp t=thread-1 | Test message 3"),
-                        LogRecord.create(110L, streamInfo, "l=INFO c=test.TestApp t=thread-2 | Test message 6"),
-                        LogRecord.create(103L, streamDebug, "l=INFO c=test.TestApp t=thread-2 | Test message 2"),
-                        LogRecord.create(104L, streamWarn, "l=INFO c=test.TestApp t=thread-1 | Test message 4"),
-                        LogRecord.create(103L, streamError, "l=INFO c=test.TestApp t=thread-2 | Test message 5")
+                        LogRecord.create(100L, 0, streamInfo, "l=INFO c=test.TestApp t=thread-1 | Test message 1"),
+                        LogRecord.create(105L, 0, streamInfo, "l=INFO c=test.TestApp t=thread-1 | Test message 3"),
+                        LogRecord.create(110L, 0, streamInfo, "l=INFO c=test.TestApp t=thread-2 | Test message 6"),
+                        LogRecord.create(103L, 0, streamDebug, "l=INFO c=test.TestApp t=thread-2 | Test message 2"),
+                        LogRecord.create(104L, 0, streamWarn, "l=INFO c=test.TestApp t=thread-1 | Test message 4"),
+                        LogRecord.create(103L, 0, streamError, "l=INFO c=test.TestApp t=thread-2 | Test message 5")
                     }),
                     ars);
         });
@@ -138,14 +138,39 @@ public class AbstractLoki4jEncoderTest {
                 ars.sort(e.getLogRecordComparator().get());
                 assertBatchesEqual("dynamic labels, sort by time",
                     new LogRecordBatch(new LogRecord[] {
-                        LogRecord.create(100L, streamInfo, "l=INFO c=test.TestApp t=thread-1 | Test message 1"),
-                        LogRecord.create(105L, streamInfo, "l=INFO c=test.TestApp t=thread-1 | Test message 3"),
-                        LogRecord.create(110L, streamInfo, "l=INFO c=test.TestApp t=thread-2 | Test message 6"),
-                        LogRecord.create(103L, streamDebug, "l=INFO c=test.TestApp t=thread-2 | Test message 2"),
-                        LogRecord.create(104L, streamWarn, "l=INFO c=test.TestApp t=thread-1 | Test message 4"),
-                        LogRecord.create(103L, streamError, "l=INFO c=test.TestApp t=thread-2 | Test message 5")
+                        LogRecord.create(100L, 0, streamInfo, "l=INFO c=test.TestApp t=thread-1 | Test message 1"),
+                        LogRecord.create(105L, 0, streamInfo, "l=INFO c=test.TestApp t=thread-1 | Test message 3"),
+                        LogRecord.create(110L, 0, streamInfo, "l=INFO c=test.TestApp t=thread-2 | Test message 6"),
+                        LogRecord.create(103L, 0, streamDebug, "l=INFO c=test.TestApp t=thread-2 | Test message 2"),
+                        LogRecord.create(104L, 0, streamWarn, "l=INFO c=test.TestApp t=thread-1 | Test message 4"),
+                        LogRecord.create(103L, 0, streamError, "l=INFO c=test.TestApp t=thread-2 | Test message 5")
                     }),
                     ars);
         });
+    }
+
+
+    @Test
+    public void testNanoCounter() {
+        var enc = toStringEncoder(
+            labelCfg("app=my-app", ",", "=", true),
+            messageCfg("l=%level c=%logger{20} t=%thread | %msg"),
+            true,
+            false);
+
+        assertEquals(123000, enc.timestampToNanos(1123));
+        assertEquals(123001, enc.timestampToNanos(1123));
+        assertEquals(123002, enc.timestampToNanos(1123));
+        assertEquals(123003, enc.timestampToNanos(1123));
+
+        assertEquals(122999, enc.timestampToNanos(1122));
+
+        assertEquals(124000, enc.timestampToNanos(1124));
+        for (int i = 0; i < 997; i++)
+            enc.timestampToNanos(1124);
+        assertEquals(124998, enc.timestampToNanos(1124));
+        assertEquals(124999, enc.timestampToNanos(1124));
+        assertEquals(124999, enc.timestampToNanos(1124));
+        assertEquals(124999, enc.timestampToNanos(1124));
     }
 }

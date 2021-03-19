@@ -139,9 +139,9 @@ public class Loki4jAppenderTest {
 
         var expected = (
             "{'streams':[{'stream':{'test':'testEncodeEscapes','level':'INFO','app':'my-app'}," +
-            "'values':[['100000000','l=INFO c=TestApp t=main | m1-line1\\r\\nline2\\r\\n ']," +
-            "['100000000','l=INFO c=TestApp t=main | m2-line1\\nline2\\n ']," +
-            "['100000000','l=INFO c=TestApp t=main | m3-line1\\rline2\\r ']]}]}"
+            "'values':[['100100000','l=INFO c=TestApp t=main | m1-line1\\r\\nline2\\r\\n ']," +
+            "['100100001','l=INFO c=TestApp t=main | m2-line1\\nline2\\n ']," +
+            "['100100002','l=INFO c=TestApp t=main | m3-line1\\rline2\\r ']]}]}"
             ).replace('\'', '"');
 
         assertEquals("batchSize", expected, new String(sender.lastBatch, encoder.charset));

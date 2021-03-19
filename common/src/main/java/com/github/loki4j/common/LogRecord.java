@@ -4,6 +4,8 @@ public class LogRecord {
 
     public final long timestampMs;
 
+    public int nanos;
+
     public final LogRecordStream stream;
 
     public final String message;
@@ -12,9 +14,11 @@ public class LogRecord {
 
     private LogRecord(
             long timestamp,
+            int nanos,
             LogRecordStream stream,
             String message) {
         this.timestampMs = timestamp;
+        this.nanos = nanos;
         this.stream = stream;
         this.message = message;
         this.messageUtf8SizeBytes = StringUtils.utf8Length(message);
@@ -22,9 +26,10 @@ public class LogRecord {
 
     public static LogRecord create(
             long timestamp,
+            int nanos,
             LogRecordStream stream,
             String message) {
-        return new LogRecord(timestamp, stream, message);
+        return new LogRecord(timestamp, nanos, stream, message);
     }
 
     @Override

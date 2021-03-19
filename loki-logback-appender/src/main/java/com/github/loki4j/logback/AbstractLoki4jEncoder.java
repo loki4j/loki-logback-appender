@@ -4,6 +4,7 @@ import java.nio.charset.Charset;
 import java.util.Comparator;
 import java.util.HashMap;
 import java.util.Optional;
+import java.util.concurrent.atomic.AtomicInteger;
 import java.util.concurrent.atomic.AtomicReference;
 import java.util.regex.Pattern;
 
@@ -24,11 +25,14 @@ public abstract class AbstractLoki4jEncoder extends ContextAwareBase implements 
 
     private static final String STATIC_STREAM_KEY = "STATIC_STREAM_KEY";
     
-    private static final Comparator<LogRecord> byTime = (e1, e2) ->
-        Long.compare(e1.timestampMs, e2.timestampMs);
+    private static final Comparator<LogRecord> byTime = (e1, e2) -> {
+        var tsCmp = Long.compare(e1.timestampMs, e2.timestampMs);
+        return tsCmp == 0 ? Integer.compare(e1.nanos, e2.nanos) : tsCmp;
+    };
 
     private static final Comparator<LogRecord> byStream = (e1, e2) ->
         Long.compare(e1.stream.id, e2.stream.id);
+
 
     public static final class LabelCfg {
         /**
@@ -76,6 +80,8 @@ public abstract class AbstractLoki4jEncoder extends ContextAwareBase implements 
 
     private final AtomicReference<HashMap<String, LogRecordStream>> streams = new AtomicReference<>(new HashMap<>());
 
+    private final AtomicInteger nanoCounter = new AtomicInteger(0);
+
     private LabelCfg label = new LabelCfg();
 
     private MessageCfg message = new MessageCfg();
@@ -94,6 +100,13 @@ public abstract class AbstractLoki4jEncoder extends ContextAwareBase implements 
      * set this flag to true and save some CPU time on grouping records by label.
      */
     private volatile boolean staticLabels = false;
+
+    /**
+     * Max seen timestamp at the moment.
+     * We can not send an event with timestamp less than this,
+     * just to avoid 'out of order' from Loki.
+     */
+    private volatile long maxTimestampMs = 0;
 
     private PatternLayout labelPatternLayout;
     private PatternLayout messagePatternLayout;
@@ -146,6 +159,32 @@ public abstract class AbstractLoki4jEncoder extends ContextAwareBase implements 
 
     public String eventToMessage(ILoggingEvent e) {
         return messagePatternLayout.doLayout(e);
+    }
+
+    public int timestampToNanos(long timestampMs) {
+        final long nextMs = timestampMs % 1000; // nextMs=nnn
+
+        if (maxTimestampMs > timestampMs)
+            // nnn_999 - can not track the order of events for the previous milliseconds
+            return (int)nextMs * 1000 + 999;
+
+        var nanos = nanoCounter.updateAndGet(i -> { // counter structure: i=ccc_xxx
+            if (maxTimestampMs == timestampMs) {
+                if (i % 1000 < 999)
+                    // ccc_xxx+1 - next event in current millisecond
+                    return i + 1;
+                else
+                    // ccc_999 - 999 events already passed
+                    // can not track the order of events for the current millisecond anymore
+                    return i;
+            } else {
+                // nnn_000 - advance the counter to the next millisecond
+                return (int)nextMs * 1000;
+            }
+        });
+        maxTimestampMs = timestampMs;
+        //System.out.println("ts: " + timestampMs + ", ns: " + x);
+        return nanos;
     }
 
     public abstract Writer createWriter(int capacity, ByteBufferFactory bufferFactory);

@@ -10,19 +10,19 @@ public class JsonWriterTest {
     private LogRecordStream stream1 = LogRecordStream.create(0, "level", "INFO", "app", "my-app");
     private LogRecordStream stream2 = LogRecordStream.create(1, "level", "DEBUG", "app", "my-app");
     private LogRecordBatch batch = new LogRecordBatch(new LogRecord[] {
-        LogRecord.create(3000, stream2, "l=DEBUG c=test.TestApp t=thread-2 | Test message 2"),
-        LogRecord.create(1000, stream1, "l=INFO c=test.TestApp t=thread-1 | Test message 1"),
-        LogRecord.create(2000, stream1, "l=INFO c=test.TestApp t=thread-3 | Test message 4"),
-        LogRecord.create(5000, stream1, "l=INFO c=test.TestApp t=thread-1 | Test message 3"),
+        LogRecord.create(3000, 1, stream2, "l=DEBUG c=test.TestApp t=thread-2 | Test message 2"),
+        LogRecord.create(1000, 2, stream1, "l=INFO c=test.TestApp t=thread-1 | Test message 1"),
+        LogRecord.create(2000, 3, stream1, "l=INFO c=test.TestApp t=thread-3 | Test message 4"),
+        LogRecord.create(5000, 4, stream1, "l=INFO c=test.TestApp t=thread-1 | Test message 3"),
     });
 
     private String expectedJson = (
         "{'streams':[{'stream':{'level':'DEBUG','app':'my-app'},'values':" +
-        "[['3000000000','l=DEBUG c=test.TestApp t=thread-2 | Test message 2']]}," +
+        "[['3000000001','l=DEBUG c=test.TestApp t=thread-2 | Test message 2']]}," +
         "{'stream':{'level':'INFO','app':'my-app'},'values':" +
-        "[['1000000000','l=INFO c=test.TestApp t=thread-1 | Test message 1']," +
-        "['2000000000','l=INFO c=test.TestApp t=thread-3 | Test message 4']," +
-        "['5000000000','l=INFO c=test.TestApp t=thread-1 | Test message 3']]}]}"
+        "[['1000000002','l=INFO c=test.TestApp t=thread-1 | Test message 1']," +
+        "['2000000003','l=INFO c=test.TestApp t=thread-3 | Test message 4']," +
+        "['5000000004','l=INFO c=test.TestApp t=thread-1 | Test message 3']]}]}"
         ).replace('\'', '"');
 
     @Test
@@ -41,6 +41,7 @@ public class JsonWriterTest {
     public void testWriteRecord() {
         var re1 = create(
             100L,
+            0,
             LogRecordStream.create(0, "level", "INFO", "app", "my-app"),
             "l=INFO c=test.TestApp t=thread-1 | Test message");
 
@@ -60,6 +61,7 @@ public class JsonWriterTest {
     public void testWriteSpecialCharsRecord() {
         var re1 = create(
             100L,
+            0,
             LogRecordStream.create(0, "level", "INFO", "app", "my-app"),
             "спец !@#$%^&*()\" \n\tсимволы <>?/\\№ё:{}[]🏁");
 

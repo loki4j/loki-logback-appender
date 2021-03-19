@@ -127,11 +127,11 @@ public final class DefaultPipeline extends ContextAwareBase implements LifeCycle
         senderThreadPool.shutdown();
     }
 
-    public boolean append(long timestamp, Supplier<LogRecordStream> stream, Supplier<String> message) {
+    public boolean append(long timestamp, int nanos, Supplier<LogRecordStream> stream, Supplier<String> message) {
         var startedNs = System.nanoTime();
         boolean accepted = false;
         if (acceptNewEvents.get()) {
-            var record = LogRecord.create(timestamp, stream.get(), message.get());
+            var record = LogRecord.create(timestamp, nanos, stream.get(), message.get());
             if (batcher.validateLogRecordSize(record)) {
                 buffer.offer(record);
                 unsentEvents.incrementAndGet();
@@ -210,7 +210,7 @@ public final class DefaultPipeline extends ContextAwareBase implements LifeCycle
         addInfo(String.format(
             ">>> Batch %s converted to %,d bytes",
                 batch, writer.size()));
-        //try { System.out.write(binBatch.data); } catch (Exception e) { e.printStackTrace(); }
+        //try { System.out.write(batch); } catch (Exception e) { e.printStackTrace(); }
         //System.out.println("\n");
         if (metrics != null)
             metrics.batchEncoded(startedNs, writer.size());

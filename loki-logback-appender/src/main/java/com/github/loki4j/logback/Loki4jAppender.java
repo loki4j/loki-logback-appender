@@ -155,6 +155,7 @@ public final class Loki4jAppender extends UnsynchronizedAppenderBase<ILoggingEve
     protected void append(ILoggingEvent event) {
         var appended = pipeline.append(
             event.getTimeStamp(),
+            encoder.timestampToNanos(event.getTimeStamp()),
             () -> encoder.eventToStream(event),
             () -> encoder.eventToMessage(event));
 
