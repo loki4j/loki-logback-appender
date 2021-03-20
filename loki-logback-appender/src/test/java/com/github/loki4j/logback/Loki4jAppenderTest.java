@@ -163,7 +163,7 @@ public class Loki4jAppenderTest {
         var encoder = defaultToStringEncoder();
         var sender = dummySender();
         var appender = appender(3, 4000L, encoder, sender);
-        appender.setBatchSizeBytes(500);
+        appender.setBatchMaxBytes(500);
         appender.start();
         appender.append(events[0]);
         appender.append(loggingEvent(100L, Level.INFO, "TestApp", "main", longStr, null));
@@ -181,7 +181,7 @@ public class Loki4jAppenderTest {
         var sender = new StoppableSender();
         var encoder = defaultToStringEncoder();
         var appender = appender(1, 4000L, encoder, sender);
-        appender.setSendQueueSizeBytes(150);
+        appender.setSendQueueMaxBytes(150);
         appender.start();
 
         sender.wait.set(true);
