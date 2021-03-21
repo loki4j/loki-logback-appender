@@ -141,7 +141,10 @@ public class Generators {
             @Override
             public void serializeBatch(LogRecordBatch batch) {
                 b.clear();
-                b.put(batchToString(batch).getBytes(StandardCharsets.UTF_8));
+                var data = batchToString(batch).getBytes(StandardCharsets.UTF_8);
+                if (b.capacity() < data.length)
+                b = bufferFactory.allocate(data.length);
+                b.put(data);
                 b.flip();
             }
             @Override

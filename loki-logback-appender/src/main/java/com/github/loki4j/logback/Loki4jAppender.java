@@ -36,7 +36,7 @@ public final class Loki4jAppender extends UnsynchronizedAppenderBase<ILoggingEve
      * Max number of bytes to keep in the send queue.
      * When the queue is full, incoming log events are dropped
      */
-    private long sendQueueMaxBytes = 40 * 1024 * 1024;
+    private long sendQueueMaxBytes = batchMaxBytes * 10;
 
     /**
      * If true, the appender will print its own debug logs to stderr
@@ -88,8 +88,8 @@ public final class Loki4jAppender extends UnsynchronizedAppenderBase<ILoggingEve
         }
 
         addInfo(String.format("Starting with " +
-            "batchMaxItems=%s, batchMaxBytes=%s, batchTimeout=%s...",
-            batchMaxItems, batchMaxBytes, batchTimeoutMs));
+            "batchMaxItems=%s, batchMaxBytes=%s, batchTimeout=%s, sendQueueMaxBytes=%s...",
+            batchMaxItems, batchMaxBytes, batchTimeoutMs, sendQueueMaxBytes));
 
         if (encoder == null) {
             addWarn("No encoder specified in the config. Using JsonEncoder with default settings");
