@@ -163,7 +163,7 @@ public class Loki4jAppenderTest {
         var encoder = defaultToStringEncoder();
         var sender = dummySender();
         var appender = appender(3, 4000L, encoder, sender);
-        appender.setBatchSizeBytes(500);
+        appender.setBatchMaxBytes(500);
         appender.start();
         appender.append(events[0]);
         appender.append(loggingEvent(100L, Level.INFO, "TestApp", "main", longStr, null));
@@ -181,20 +181,22 @@ public class Loki4jAppenderTest {
         var sender = new StoppableSender();
         var encoder = defaultToStringEncoder();
         var appender = appender(1, 4000L, encoder, sender);
-        appender.setSendQueueSizeBytes(150);
+        appender.setBatchMaxBytes(120);
+        appender.setSendQueueMaxBytes(150);
         appender.start();
 
         sender.wait.set(true);
         // hanging sender
         appender.append(events[0]);
         try { Thread.sleep(100L); } catch (InterruptedException e1) { }
-        // sender queue
-        appender.append(events[1]);
-        try { Thread.sleep(100L); } catch (InterruptedException e1) { }
         // batcher buffer
         appender.append(events[2]);
         try { Thread.sleep(100L); } catch (InterruptedException e1) { }
-
+        // sender queue
+        for (int i = 0; i < 4; i++) {
+            appender.append(events[0]);
+            try { Thread.sleep(100L); } catch (InterruptedException e1) { }
+        }
 
         appender.append(events[0]);
         try { Thread.sleep(100L); } catch (InterruptedException e1) { }

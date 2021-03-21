@@ -20,13 +20,13 @@ public final class Loki4jAppender extends UnsynchronizedAppenderBase<ILoggingEve
     /**
      * Max number of events to put into a single batch and send to Loki
      */
-    private int batchSizeItems = 1000;
+    private int batchMaxItems = 1000;
     /**
      * Max number of bytes a single batch (as encoded by Loki) can contain.
      * This value should not be greater than server.grpc_server_max_recv_msg_size
      * in your Loki config
      */
-    private int batchSizeBytes = 4 * 1024 * 1024;
+    private int batchMaxBytes = 4 * 1024 * 1024;
     /**
      * Max time in milliseconds to wait before sending a batch to Loki
      */
@@ -36,7 +36,7 @@ public final class Loki4jAppender extends UnsynchronizedAppenderBase<ILoggingEve
      * Max number of bytes to keep in the send queue.
      * When the queue is full, incoming log events are dropped
      */
-    private long sendQueueSizeBytes = 40 * 1024 * 1024;
+    private long sendQueueMaxBytes = batchMaxBytes * 10;
 
     /**
      * If true, the appender will print its own debug logs to stderr
@@ -88,8 +88,8 @@ public final class Loki4jAppender extends UnsynchronizedAppenderBase<ILoggingEve
         }
 
         addInfo(String.format("Starting with " +
-            "batchSizeItems=%s, batchSizeBytes=%s, batchTimeout=%s...",
-            batchSizeItems, batchSizeBytes, batchTimeoutMs));
+            "batchMaxItems=%s, batchMaxBytes=%s, batchTimeout=%s, sendQueueMaxBytes=%s...",
+            batchMaxItems, batchMaxBytes, batchTimeoutMs, sendQueueMaxBytes));
 
         if (encoder == null) {
             addWarn("No encoder specified in the config. Using JsonEncoder with default settings");
@@ -99,7 +99,7 @@ public final class Loki4jAppender extends UnsynchronizedAppenderBase<ILoggingEve
         encoder.start();
 
         var bufferFactory = new ByteBufferFactory(useDirectBuffers);
-        var writer = encoder.createWriter(batchSizeBytes, bufferFactory);
+        var writer = encoder.createWriter(batchMaxBytes, bufferFactory);
 
         LoggerMetrics metrics = null;
         if (metricsEnabled) {
@@ -117,8 +117,12 @@ public final class Loki4jAppender extends UnsynchronizedAppenderBase<ILoggingEve
         sender.setContentType(encoder.getContentType());
         sender.start();
 
-        var sendQueue = new ByteBufferQueue(sendQueueSizeBytes, bufferFactory);
-        var batcher = new Batcher(batchSizeItems, batchSizeBytes, batchTimeoutMs);
+        if (sendQueueMaxBytes < batchMaxBytes * 5) {
+            addWarn("Configured value sendQueueMaxBytes=" + sendQueueMaxBytes + " is less than `batchMaxBytes * 5`");
+            sendQueueMaxBytes = batchMaxBytes * 5;
+        }
+        var sendQueue = new ByteBufferQueue(sendQueueMaxBytes, bufferFactory);
+        var batcher = new Batcher(batchMaxItems, batchMaxBytes, batchTimeoutMs);
         pipeline = new DefaultPipeline(
             batcher,
             encoder.getLogRecordComparator(),
@@ -192,19 +196,19 @@ public final class Loki4jAppender extends UnsynchronizedAppenderBase<ILoggingEve
 
     @Deprecated
     public void setBatchSize(int batchSize) {
-        addWarn("Property `batchSize` was replaced with `batchSizeItems`. Please fix your configuration");
+        addWarn("Property `batchSize` was replaced with `batchMaxItems`. Please fix your configuration");
     }
-    public void setBatchSizeItems(int batchSizeItems) {
-        this.batchSizeItems = batchSizeItems;
+    public void setBatchMaxItems(int batchMaxItems) {
+        this.batchMaxItems = batchMaxItems;
     }
-    public void setBatchSizeBytes(int batchSizeBytes) {
-        this.batchSizeBytes = batchSizeBytes;
+    public void setBatchMaxBytes(int batchMaxBytes) {
+        this.batchMaxBytes = batchMaxBytes;
     }
     public void setBatchTimeoutMs(long batchTimeoutMs) {
         this.batchTimeoutMs = batchTimeoutMs;
     }
-    public void setSendQueueSizeBytes(long sendQueueSizeBytes) {
-        this.sendQueueSizeBytes = sendQueueSizeBytes;
+    public void setSendQueueMaxBytes(long sendQueueMaxBytes) {
+        this.sendQueueMaxBytes = sendQueueMaxBytes;
     }
 
     /**
