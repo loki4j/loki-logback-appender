@@ -143,7 +143,7 @@ Finally, we want to see Loki4j debug output.
 
 ```xml
 <appender name="LOKI" class="com.github.loki4j.logback.Loki4jAppender">
-    <batchSize>100</batchSize>
+    <batchMaxItems>100</batchMaxItems>
     <batchTimeoutMs>10000</batchTimeoutMs>
     <verbose>true</verbose>
     <http class="com.github.loki4j.logback.ApacheHttpSender">
