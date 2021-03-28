@@ -9,10 +9,10 @@ sidebar_label: Migration Guide
 The development for version 1.2.0 was mostly concentrated around performance and memory usage.
 Let's discuss how these changes affect the configuration in `logback.xml`.
 
-#### Limitation for batch size in bytes added
+#### Limitation for a batch length (in bytes) added
 
 Previously there was no option to limit a batch size in bytes, and in case of large log messages this could
-lead to `grpc: received message larger than max` error from Loki followed by the drop of the whole batch.
+lead to `grpc: received message larger than max` error from Loki followed by the drop of this entire batch.
 
 In 1.2.0 you can control the batch size using a new property `batchMaxBytes`:
 
@@ -23,17 +23,16 @@ In 1.2.0 you can control the batch size using a new property `batchMaxBytes`:
 </appender>
 ```
 
-The important thing to needs to be understood about this property is that Loki limits
-max message size in bytes by comparing its size in uncompressed Protobuf format to a
+Important note.
+Loki limits max message size in bytes by comparing its size in uncompressed Protobuf format to a
 value of setting `grpc_server_max_recv_msg_size`. That's why Loki4j's `batchMaxBytes`
-setting should be less or equal than Loki's `grpc_server_max_recv_msg_size`.
+setting should be less or equal than Loki's `grpc_server_max_recv_msg_size` setting.
 
 The above statement also means that Loki4j batching based on `batchMaxBytes` does not depend
-on the format Loki4j sends a batch in (JSON, compressed Protobuf).
-Loki4j tries to estimate the size of the batch as it was in uncompressed Protobuf format
-without actually encoding it. For the batching purposes we only need this approximate size
-never to be less that real size as counted by Loki, otherwise the message will be dropped
-by Loki.
+on the format Loki4j sends a batch in (JSON, compressed Protobuf). The _real_ size of HTTP body
+can vary. Loki4j only tries to estimate the size of the batch as if it was in uncompressed Protobuf
+format (without actually encoding it), and make sure this approximate size never to be less than
+an actual size as counted by Loki.
 
 #### `batchSize` property renamed to `batchMaxItems`
 
@@ -46,11 +45,11 @@ you've change it to `batchMaxItems` while upgrading to 1.2.0.
 #### Switch to non-blocking and non-allocating send queue
 
 In version 1.1.0 the backpressure mechanism was introduced. Sender queue was based on `ArrayBlockingQueue` and it
-could be limited only by max number of batches in queue via `sendQueueSize` setting.
+could be limited only by max number of batches in the queue using `sendQueueSize` setting.
 
 In 1.2.0 this implementation was replaced by non-blocking `ConcurrentLinkedQueue` of `ByteBuffers`.
 Now the sender queue could be limited by max size in bytes, so you now can control the memory consumption
-more precisely. `sendQueueSize` is replaced with `sendQueueMaxBytes`:
+more precisely. `sendQueueSize` setting is replaced with `sendQueueMaxBytes`:
 
 ```xml
 <appender name="LOKI" class="com.github.loki4j.logback.Loki4jAppender">
