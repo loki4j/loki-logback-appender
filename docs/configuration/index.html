@@ -68,7 +68,7 @@
 </thead>
 <tbody>
 <tr><td>batchMaxItems</td><td>1000</td><td>Max number of events to put into a single batch and send to Loki</td></tr>
-<tr><td>batchMaxBytes</td><td>4194304</td><td>Max number of bytes a single batch (as encoded by Loki) can contain. This value should not be greater than <code>server.grpc_server_max_recv_msg_size</code> in your Loki config</td></tr>
+<tr><td>batchMaxBytes</td><td>4194304</td><td>Max number of bytes a single batch (as counted by Loki) can contain. This value should not be greater than <code>server.grpc_server_max_recv_msg_size</code> in your Loki config</td></tr>
 <tr><td>batchTimeoutMs</td><td>60000</td><td>Max time in milliseconds to wait before sending a batch to Loki</td></tr>
 <tr><td>sendQueueMaxBytes</td><td>41943040</td><td>Max number of bytes to keep in the send queue. When the queue is full, incoming log events are dropped</td></tr>
 <tr><td>useDirectBuffers</td><td>true</td><td>Use off-heap memory for storing intermediate data</td></tr>
@@ -88,10 +88,9 @@
 <tr><td>http.requestTimeoutMs</td><td>5000</td><td>Time in milliseconds to wait for HTTP request to Loki to be responded before reporting an error</td></tr>
 <tr><td>http.auth.username</td><td></td><td>Username to use for basic auth</td></tr>
 <tr><td>http.auth.password</td><td></td><td>Password to use for basic auth</td></tr>
-<tr><td>http.tenantId</td><td></td><td>Tenant identifier. It is required only for sending logs directly to Loki operating in multi-tenant mode. Otherwise</td></tr>
+<tr><td>http.tenantId</td><td></td><td>Tenant identifier. It is required only for sending logs directly to Loki operating in multi-tenant mode. Otherwise this setting has no effect</td></tr>
 </tbody>
 </table>
-<p>this setting has no effect</p>
 <h3><a class="anchor" aria-hidden="true" id="format-settings"></a><a href="#format-settings" aria-hidden="true" class="hash-link"><svg class="hash-link-icon" aria-hidden="true" height="16" version="1.1" viewBox="0 0 16 16" width="16"><path fill-rule="evenodd" d="M4 9h1v1H4c-1.5 0-3-1.69-3-3.5S2.55 3 4 3h4c1.45 0 3 1.69 3 3.5 0 1.41-.91 2.72-2 3.25V8.59c.58-.45 1-1.27 1-2.09C10 5.22 8.98 4 8 4H4c-.98 0-2 1.22-2 2.5S3 9 4 9zm9-3h-1v1h1c1 0 2 1.22 2 2.5S13.98 12 13 12H9c-.98 0-2-1.22-2-2.5 0-.83.42-1.64 1-2.09V6.25c-1.09.53-2 1.84-2 3.25C6 11.31 7.55 13 9 13h4c1.45 0 3-1.69 3-3.5S14.5 6 13 6z"></path></svg></a>Format settings</h3>
 <table>
 <thead>

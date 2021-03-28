@@ -74,7 +74,7 @@ lead to <code>grpc: received message larger than max</code> error from Loki foll
 <p>Important note.
 Loki limits max message size in bytes by comparing its size in uncompressed Protobuf format to a
 value of setting <code>grpc_server_max_recv_msg_size</code>. That's why Loki4j's <code>batchMaxBytes</code>
-setting should be less or equal than Loki's <code>grpc_server_max_recv_msg_size</code> setting.</p>
+setting should be less or equal than Loki's <code>grpc_server_max_recv_msg_size</code> setting (by default it's 4 MB).</p>
 <p>The above statement also means that Loki4j batching based on <code>batchMaxBytes</code> does not depend
 on the format Loki4j sends a batch in (JSON, compressed Protobuf). The <em>real</em> size of HTTP body
 can vary. Loki4j only tries to estimate the size of the batch as if it was in uncompressed Protobuf
