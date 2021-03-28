@@ -102,7 +102,7 @@ Then add Loki appender to your `logback.xml`:
 
 For more details, please refer to [Docs](docs/configuration).
 
-Migrating from v0.0.4? Read the [Migration Guide](docs/migration).
+Migrating from the previous version? Read the [Migration Guide](docs/migration).
 
 ### Key Features:
 

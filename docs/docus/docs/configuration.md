@@ -12,9 +12,13 @@ Most Loki4j appender settings are optional. These few that are required are mark
 
 Setting|Default|Description
 -------|-------|-----------
-batchSize|1000|Max number of events to put into a single batch and send to Loki
+batchMaxItems|1000|Max number of events to put into a single batch and send to Loki
+batchMaxBytes|4194304|Max number of bytes a single batch (as encoded by Loki) can contain.
+This value should not be greater than `server.grpc_server_max_recv_msg_size`
+in your Loki config
 batchTimeoutMs|60000|Max time in milliseconds to wait before sending a batch to Loki
-sendQueueSize|50000|Max number of events to keep in the send queue. When the queue is full, incoming log events are dropped
+sendQueueMaxBytes|41943040|Max number of bytes to keep in the send queue. When the queue is full, incoming log events are dropped
+useDirectBuffers|true|Use off-heap memory for storing intermediate data
 drainOnStop|true|Wait util all remaining events are sent before shutdown the appender
 metricsEnabled|false|If true, the appender will report its metrics using Micrometer
 verbose|false|If true, the appender will print its own debug logs to stderr
@@ -139,7 +143,7 @@ Finally, we want to see Loki4j debug output.
 
 ```xml
 <appender name="LOKI" class="com.github.loki4j.logback.Loki4jAppender">
-    <batchSize>100</batchSize>
+    <batchMaxItems>100</batchMaxItems>
     <batchTimeoutMs>10000</batchTimeoutMs>
     <verbose>true</verbose>
     <http class="com.github.loki4j.logback.ApacheHttpSender">
@@ -206,9 +210,12 @@ Check the corresponding [configuration section](#using-apache-httpclient) for de
 
 In this example we will see how to send log records to hosted Loki service (e.g. Grafana Cloud).
 We will need to specify the credentials and increase the request timeout to 15s.
+Also, Grafana Cloud limit for batch length is 65536 bytes, while for standalone Loki it's 4 MB by default,
+so we need to specify this explicitly.
 
 ```xml
 <appender name="LOKI" class="com.github.loki4j.logback.Loki4jAppender">
+    <batchMaxBytes>65536</batchMaxBytes>
     <http>
         <url>https://logs-prod-us-central1.grafana.net/loki/api/v1/push</url>
         <auth>
