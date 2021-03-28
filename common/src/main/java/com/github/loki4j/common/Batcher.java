@@ -80,7 +80,6 @@ public final class Batcher {
      * Otherwise, no action is performed.
      * @param input Log record to check
      * @param destination Resulting batch (if ready)
-     * @return Whether the input record is valid (i.e. it's size is not more than max bytes)
      */
     public void checkSizeBeforeAdd(LogRecord input, LogRecordBatch destination) {
         var recordSizeBytes = estimateSizeBytes(input, true);
