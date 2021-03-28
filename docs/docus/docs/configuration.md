@@ -13,7 +13,7 @@ Most Loki4j appender settings are optional. These few that are required are mark
 Setting|Default|Description
 -------|-------|-----------
 batchMaxItems|1000|Max number of events to put into a single batch and send to Loki
-batchMaxBytes|4194304|Max number of bytes a single batch (as encoded by Loki) can contain. This value should not be greater than `server.grpc_server_max_recv_msg_size` in your Loki config
+batchMaxBytes|4194304|Max number of bytes a single batch (as counted by Loki) can contain. This value should not be greater than `server.grpc_server_max_recv_msg_size` in your Loki config
 batchTimeoutMs|60000|Max time in milliseconds to wait before sending a batch to Loki
 sendQueueMaxBytes|41943040|Max number of bytes to keep in the send queue. When the queue is full, incoming log events are dropped
 useDirectBuffers|true|Use off-heap memory for storing intermediate data
@@ -30,8 +30,7 @@ http.connectionTimeoutMs|30000|Time in milliseconds to wait for HTTP connection 
 http.requestTimeoutMs|5000|Time in milliseconds to wait for HTTP request to Loki to be responded before reporting an error
 http.auth.username||Username to use for basic auth
 http.auth.password||Password to use for basic auth
-http.tenantId||Tenant identifier. It is required only for sending logs directly to Loki operating in multi-tenant mode. Otherwise 
-this setting has no effect
+http.tenantId||Tenant identifier. It is required only for sending logs directly to Loki operating in multi-tenant mode. Otherwise this setting has no effect
 
 ### Format settings
 

@@ -26,7 +26,7 @@ In 1.2.0 you can control the batch size using a new property `batchMaxBytes`:
 Important note.
 Loki limits max message size in bytes by comparing its size in uncompressed Protobuf format to a
 value of setting `grpc_server_max_recv_msg_size`. That's why Loki4j's `batchMaxBytes`
-setting should be less or equal than Loki's `grpc_server_max_recv_msg_size` setting.
+setting should be less or equal than Loki's `grpc_server_max_recv_msg_size` setting (by default it's 4 MB).
 
 The above statement also means that Loki4j batching based on `batchMaxBytes` does not depend
 on the format Loki4j sends a batch in (JSON, compressed Protobuf). The _real_ size of HTTP body

@@ -22,7 +22,7 @@ public final class Loki4jAppender extends UnsynchronizedAppenderBase<ILoggingEve
      */
     private int batchMaxItems = 1000;
     /**
-     * Max number of bytes a single batch (as encoded by Loki) can contain.
+     * Max number of bytes a single batch (as counted by Loki) can contain.
      * This value should not be greater than server.grpc_server_max_recv_msg_size
      * in your Loki config
      */
