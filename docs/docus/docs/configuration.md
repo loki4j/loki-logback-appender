@@ -210,9 +210,12 @@ Check the corresponding [configuration section](#using-apache-httpclient) for de
 
 In this example we will see how to send log records to hosted Loki service (e.g. Grafana Cloud).
 We will need to specify the credentials and increase the request timeout to 15s.
+Also, Grafana Cloud limit for batch length is 65536 bytes, while for standalone Loki it's 4 MB by default,
+so we need to specify this explicitly.
 
 ```xml
 <appender name="LOKI" class="com.github.loki4j.logback.Loki4jAppender">
+    <batchMaxBytes>65536</batchMaxBytes>
     <http>
         <url>https://logs-prod-us-central1.grafana.net/loki/api/v1/push</url>
         <auth>
