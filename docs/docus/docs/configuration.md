@@ -131,35 +131,6 @@ Then you can explicitly specify `ProtobufEncoder` by setting `class` attribute f
 
 ## Examples
 
-### Overriding the default settings
-
-In this example we would like to change max batch size to 100 records, batch timeout to 10s, label key-value separator to `:`,
-and sort log records by time before sending them to Loki.
-Also we would like to use [Apache HTTP sender](#using-apache-httpclient) with a pool of 10 connections and [Protobuf API](#switching-to-protobuf-format).
-Finally, we want to see Loki4j debug output.
-
-```xml
-<appender name="LOKI" class="com.github.loki4j.logback.Loki4jAppender">
-    <batchMaxItems>100</batchMaxItems>
-    <batchTimeoutMs>10000</batchTimeoutMs>
-    <verbose>true</verbose>
-    <http class="com.github.loki4j.logback.ApacheHttpSender">
-        <url>http://localhost:3100/loki/api/v1/push</url>
-        <maxConnections>10</maxConnections>
-    </http>
-    <format class="com.github.loki4j.logback.ProtobufEncoder">
-        <label>
-            <pattern>app:my-app,host:${HOSTNAME}</pattern>
-            <keyValueSeparator>:</keyValueSeparator>
-        </label>
-        <message>
-            <pattern>l=%level c=%logger{20} t=%thread | %msg %ex</pattern>
-        </message>
-        <sortByTime>true</sortByTime>
-    </format>
-</appender>
-```
-
 ### Minimalistic zero-dependency configuration
 
 In Java 11 and later we can use standard HTTP client and Loki JSON API.
@@ -199,6 +170,35 @@ Check the corresponding [configuration section](#using-apache-httpclient) for de
         <message>
             <pattern>l=%level h=${HOSTNAME} c=%logger{20} t=%thread | %msg %ex</pattern>
         </message>
+    </format>
+</appender>
+```
+
+### Overriding the default settings
+
+In this example we would like to change max batch size to 100 records, batch timeout to 10s, label key-value separator to `:`,
+and sort log records by time before sending them to Loki.
+Also we would like to use [Apache HTTP sender](#using-apache-httpclient) with a pool of 10 connections and [Protobuf API](#switching-to-protobuf-format).
+Finally, we want to see Loki4j debug output.
+
+```xml
+<appender name="LOKI" class="com.github.loki4j.logback.Loki4jAppender">
+    <batchMaxItems>100</batchMaxItems>
+    <batchTimeoutMs>10000</batchTimeoutMs>
+    <verbose>true</verbose>
+    <http class="com.github.loki4j.logback.ApacheHttpSender">
+        <url>http://localhost:3100/loki/api/v1/push</url>
+        <maxConnections>10</maxConnections>
+    </http>
+    <format class="com.github.loki4j.logback.ProtobufEncoder">
+        <label>
+            <pattern>app:my-app,host:${HOSTNAME}</pattern>
+            <keyValueSeparator>:</keyValueSeparator>
+        </label>
+        <message>
+            <pattern>l=%level c=%logger{20} t=%thread | %msg %ex</pattern>
+        </message>
+        <sortByTime>true</sortByTime>
     </format>
 </appender>
 ```
