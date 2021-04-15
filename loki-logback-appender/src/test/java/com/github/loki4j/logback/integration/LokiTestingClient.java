@@ -16,6 +16,7 @@ import java.util.Comparator;
 import java.util.HashSet;
 import java.util.List;
 import java.util.Map;
+import java.util.TreeMap;
 import java.util.concurrent.atomic.AtomicReference;
 import java.util.stream.Collectors;
 
@@ -189,7 +190,7 @@ public class LokiTestingClient {
         @Override
         public String toString() {
             return String.format("Stream [stream=\n%s,values=\n\t%s]",
-                stream,
+                new TreeMap<>(stream),
                 String.join("\n\t", values.stream().map(x -> x.toString()).collect(Collectors.toList())));
         }
         @Override
