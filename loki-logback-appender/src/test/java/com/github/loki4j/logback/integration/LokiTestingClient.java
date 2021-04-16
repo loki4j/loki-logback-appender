@@ -9,11 +9,12 @@ import java.net.URLEncoder;
 import java.net.http.HttpClient;
 import java.net.http.HttpRequest;
 import java.net.http.HttpResponse;
+import java.nio.file.Files;
+import java.nio.file.Path;
 import java.time.Duration;
 import java.util.Arrays;
 import java.util.Base64;
 import java.util.Comparator;
-import java.util.HashSet;
 import java.util.List;
 import java.util.Map;
 import java.util.TreeMap;
@@ -166,22 +167,20 @@ public class LokiTestingClient {
         assertEquals(lbl + " event count",
             req.streams.stream().mapToInt(s -> s.values.size()).sum(),
             resp.data.result.stream().mapToInt(s -> s.values.size()).sum());
-        diffRecords(req.streams, resp.data.result);
+        diffRecords(lbl, req.streams, resp.data.result);
         assertEquals(lbl + " content", req.streams, resp.data.result);
     }
 
-    static void diffRecords(List<Stream> req, List<Stream> res) {
-        var reqs = new HashSet<>(req);
-        reqs.removeAll(res);
-        if (!reqs.isEmpty())
-            System.out.println("request -- response:\n" +
-                String.join("\n", reqs.stream().map(x -> x.toString()).collect(Collectors.toList())));
+    static void diffRecords(String lbl, List<Stream> req, List<Stream> res) {
+        try {
+            Files.writeString(Path.of(lbl + "-req"),
+                String.join("\n", req.stream().map(x -> x.toString()).collect(Collectors.toList())));
 
-        var ress = new HashSet<>(res);
-        ress.removeAll(req);
-        if (!ress.isEmpty())
-        System.out.println("response -- request:\n" +
-            String.join("\n", ress.stream().map(x -> x.toString()).collect(Collectors.toList())));
+            Files.writeString(Path.of(lbl + "-res"),
+                String.join("\n", res.stream().map(x -> x.toString()).collect(Collectors.toList())));
+        } catch (IOException e) {
+            e.printStackTrace();
+        }
     }
 
     public static class Stream {

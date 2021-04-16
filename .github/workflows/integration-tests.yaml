@@ -57,3 +57,7 @@ jobs:
         run: |
           ./gradlew check
           ./gradlew ciOnlyTests --tests "*GrafanaCloudTest"
+      - uses: actions/upload-artifact@v2
+        with:
+          name: diffs
+          path: loki-logback-appender/testJavaProtobufMaxBytesCloud*
