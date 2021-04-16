@@ -17,7 +17,7 @@ public class Generators {
                     : (char)('a' + rnd.nextInt('z' - 'a')));
             }
             msg.append(rnd.nextFloat() < 0.05
-                ? '\n'
+                ? '-'
                 : ' ');
         }
         return msg.toString();
