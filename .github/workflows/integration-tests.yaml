@@ -61,4 +61,4 @@ jobs:
         if: ${{ failure() }}
         with:
           name: diffs
-          path: loki-logback-appender/testJavaProtobufMaxBytesCloud*
+          path: loki-logback-appender/testJava*MaxBytesCloud*
