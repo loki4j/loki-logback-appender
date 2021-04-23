@@ -100,6 +100,7 @@ public class GrafanaCloudTest {
         sender.setRequestTimeoutMs(30_000L);
         var appender = appender(5_000, 1000, encoder, sender);
         appender.setBatchMaxBytes(65536);
+        appender.setSendQueueMaxBytes(100 * 1024 * 1024);
         //appender.setVerbose(false);
 
         var events = generateEvents(1000, 1000);
@@ -117,6 +118,7 @@ public class GrafanaCloudTest {
         sender.setRequestTimeoutMs(30_000L);
         var appender = appender(5_000, 100, encoder, sender);
         appender.setBatchMaxBytes(65536);
+        appender.setSendQueueMaxBytes(100 * 1024 * 1024);
         //appender.setVerbose(false);
 
         var events = generateEvents(1000, 1000);
