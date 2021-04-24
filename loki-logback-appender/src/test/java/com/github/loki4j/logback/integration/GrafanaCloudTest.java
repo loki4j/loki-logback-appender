@@ -98,7 +98,7 @@ public class GrafanaCloudTest {
         var encoder = protobufEncoder(false, label);
         var sender = authorize(apacheHttpSender(urlPush));
         sender.setRequestTimeoutMs(30_000L);
-        var appender = appender(5_000, 1000, encoder, sender);
+        var appender = appender(5_000, 100, encoder, sender);
         appender.setBatchMaxBytes(65536);
         appender.setSendQueueMaxBytes(100 * 1024 * 1024);
         //appender.setVerbose(false);
@@ -113,7 +113,7 @@ public class GrafanaCloudTest {
     @Category({CIOnlyTests.class})
     public void testJavaProtobufMaxBytesSend() throws Exception {
         var label = "testJavaProtobufMaxBytesCloud-" + System.currentTimeMillis();
-        var encoder = jsonEncoder(false, label);
+        var encoder = protobufEncoder(false, label);
         var sender = authorize(javaHttpSender(urlPush));
         sender.setRequestTimeoutMs(30_000L);
         var appender = appender(5_000, 100, encoder, sender);
