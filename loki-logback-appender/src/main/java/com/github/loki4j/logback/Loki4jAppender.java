@@ -18,7 +18,7 @@ import ch.qos.logback.core.status.Status;
 public final class Loki4jAppender extends UnsynchronizedAppenderBase<ILoggingEvent> {
 
     /**
-     * Max number of events to put into a single batch and send to Loki
+     * Max number of events to put into a single batch before sending it to Loki
      */
     private int batchMaxItems = 1000;
     /**
@@ -28,7 +28,8 @@ public final class Loki4jAppender extends UnsynchronizedAppenderBase<ILoggingEve
      */
     private int batchMaxBytes = 4 * 1024 * 1024;
     /**
-     * Max time in milliseconds to wait before sending a batch to Loki
+     * Max time in milliseconds to wait before sending a batch to Loki, even if that
+     * batch isn't full
      */
     private long batchTimeoutMs = 60 * 1000;
 
