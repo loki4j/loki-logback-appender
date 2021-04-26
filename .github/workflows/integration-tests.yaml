@@ -7,40 +7,6 @@ on:
       - 'docs/**'
 
 jobs:
-  loki-docker:
-    runs-on: ubuntu-latest
-    strategy:
-      matrix:
-        loki: [1.6.1, 2.2.0]
-    steps:
-      - uses: actions/checkout@v2
-      - name: Set up JDK
-        uses: actions/setup-java@v1
-        with:
-          java-version: 11
-      - name: Build and Run Integration Tests
-        run: |
-          docker run --name loki -d -p 3100:3100 grafana/loki:${{ matrix.loki }} \
-            -config.file=/etc/loki/local-config.yaml \
-            -distributor.ingestion-rate-limit-mb=160 -distributor.ingestion-burst-size-mb=240
-          docker run --name lokimultitenant -d -p 3110:3100 grafana/loki:${{ matrix.loki }} \
-            -config.file=/etc/loki/local-config.yaml -auth.enabled=true
-          sleep 5s
-
-          ./gradlew check integTests
-          ./gradlew ciOnlyTests --tests "*MultitenantSupportTest"
-
-          docker stop loki
-          docker stop lokimultitenant
-      - name: Pring Log
-        if: ${{ failure() }}
-        run: |
-          docker logs loki
-          docker stop loki
-          docker logs lokimultitenant
-          docker stop lokimultitenant
-
-
   grafana-cloud:
     runs-on: ubuntu-latest
     environment: integ-tests
@@ -55,8 +21,8 @@ jobs:
           GRAFANA_CLOUD_USERNAME: ${{ secrets.GRAFANA_CLOUD_USERNAME }}
           GRAFANA_CLOUD_PASSWORD: ${{ secrets.GRAFANA_CLOUD_PASSWORD }}
         run: |
-          ./gradlew check
-          ./gradlew ciOnlyTests --tests "*GrafanaCloudTest"
+          ./gradlew java
+          ./gradlew ciOnlyTests --tests "*GrafanaCloudTest.testJavaProtobufMaxBytesSend"
       - uses: actions/upload-artifact@v2
         if: ${{ failure() }}
         with:
