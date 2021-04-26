@@ -41,6 +41,10 @@ public final class JsonWriter implements Writer {
         return raw.toByteArray();
     }
 
+    public final void reset() {
+        raw.reset();
+    }
+
     private void beginStreams(LogRecord firstRecord, String[] firstLabels) {
         raw.writeByte(OBJECT_START);
         raw.writeAsciiString("streams");

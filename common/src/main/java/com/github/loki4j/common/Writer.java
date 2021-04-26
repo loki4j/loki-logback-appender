@@ -8,7 +8,13 @@ public interface Writer {
 
     int size();
 
+    default boolean isEmpty() {
+        return size() == 0;
+    }
+
     void toByteBuffer(ByteBuffer buffer);
 
     byte[] toByteArray();
+
+    void reset();
 }
