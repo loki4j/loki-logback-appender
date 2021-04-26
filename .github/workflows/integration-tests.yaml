@@ -22,7 +22,7 @@ jobs:
           GRAFANA_CLOUD_PASSWORD: ${{ secrets.GRAFANA_CLOUD_PASSWORD }}
         run: |
           ./gradlew java
-          ./gradlew ciOnlyTests --tests "*GrafanaCloudTest.testJavaProtobufMaxBytesSend"
+          ./gradlew ciOnlyTests --tests "*GrafanaCloudTest"
       - uses: actions/upload-artifact@v2
         if: ${{ failure() }}
         with:
