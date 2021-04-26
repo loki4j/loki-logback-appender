@@ -113,7 +113,7 @@ public final class ProtobufWriter implements Writer {
     /**
      * Resets the writer
      */
-    private final void reset() {
+    public final void reset() {
         this.request = PushRequest.newBuilder();
         stream = null;
         size = 0;

@@ -190,6 +190,7 @@ public final class DefaultPipeline extends ContextAwareBase implements LifeCycle
         if (batch.isEmpty()) return;
 
         writeBatch(batch, writer);
+        if (writer.isEmpty()) return;
         while(started && 
                 !senderQueue.offer(
                     batch.batchId(),
@@ -206,14 +207,19 @@ public final class DefaultPipeline extends ContextAwareBase implements LifeCycle
     private void writeBatch(LogRecordBatch batch, Writer writer) {
         var startedNs = System.nanoTime();
         recordComparator.ifPresent(cmp -> batch.sort(cmp));
-        writer.serializeBatch(batch);
-        addInfo(String.format(
-            ">>> Batch %s converted to %,d bytes",
-                batch, writer.size()));
-        //try { System.out.write(batch); } catch (Exception e) { e.printStackTrace(); }
-        //System.out.println("\n");
-        if (metrics != null)
-            metrics.batchEncoded(startedNs, writer.size());
+        try {
+            writer.serializeBatch(batch);
+            addInfo(String.format(
+                ">>> Batch %s converted to %,d bytes",
+                    batch, writer.size()));
+            //try { System.out.write(batch); } catch (Exception e) { e.printStackTrace(); }
+            //System.out.println("\n");
+            if (metrics != null)
+                metrics.batchEncoded(startedNs, writer.size());
+        } catch (Exception e) {
+            addError("Error occurred while serializing batch " + batch, e);
+            writer.reset();
+        }
     }
 
     private void sendStep() throws InterruptedException {

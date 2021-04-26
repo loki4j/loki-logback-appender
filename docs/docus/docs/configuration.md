@@ -12,9 +12,9 @@ Most Loki4j appender settings are optional. These few that are required are mark
 
 Setting|Default|Description
 -------|-------|-----------
-batchMaxItems|1000|Max number of events to put into a single batch and send to Loki
+batchMaxItems|1000|Max number of events to put into a single batch before sending it to Loki
 batchMaxBytes|4194304|Max number of bytes a single batch (as counted by Loki) can contain. This value should not be greater than `server.grpc_server_max_recv_msg_size` in your Loki config
-batchTimeoutMs|60000|Max time in milliseconds to wait before sending a batch to Loki
+batchTimeoutMs|60000|Max time in milliseconds to wait before sending a batch to Loki, even if that batch isn't full
 sendQueueMaxBytes|41943040|Max number of bytes to keep in the send queue. When the queue is full, incoming log events are dropped
 useDirectBuffers|true|Use off-heap memory for storing intermediate data
 drainOnStop|true|Wait util all remaining events are sent before shutdown the appender
@@ -135,6 +135,7 @@ Then you can explicitly specify `ProtobufEncoder` by setting `class` attribute f
 
 In Java 11 and later we can use standard HTTP client and Loki JSON API.
 This setup is supported natively by Loki4j and does not require any extra dependencies.
+We need to define only required settings, leaving optional settings with their default values.
 
 ```xml
 <appender name="LOKI" class="com.github.loki4j.logback.Loki4jAppender">
@@ -154,7 +155,7 @@ This setup is supported natively by Loki4j and does not require any extra depend
 
 ### Minimalistic configuration compatible with Java 8
 
-In this example we would like to define only required settings.
+For Java 8 we would need to modify the previous example a bit.
 We would have to use Apache HTTP sender because the default Java HTTP sender works only for Java 11+.
 Check the corresponding [configuration section](#using-apache-httpclient) for details.
 
