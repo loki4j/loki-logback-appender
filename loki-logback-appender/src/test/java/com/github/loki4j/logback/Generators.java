@@ -162,6 +162,10 @@ public class Generators {
                 b.get(r);
                 return r;
             }
+            @Override
+            public void reset() {
+                b.clear();
+            }
         };
     }
 
