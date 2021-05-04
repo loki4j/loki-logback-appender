@@ -35,7 +35,7 @@ Please make sure the following software is installed on you machine
 so you can build and test the project:
 
 - Java 11 or later
-- Gradle 6.7 or later
+- Gradle 7.0 or later
 
 Check out the project to the directory on you local machine and run:
 
