@@ -22,7 +22,9 @@ public final class ProtobufWriter implements Writer {
 
     public ProtobufWriter(int capacity, ByteBufferFactory bbFactory) {
         this.uncompressed = bbFactory.allocate(capacity);
-        this.compressed = bbFactory.allocate(capacity);
+        // allocating x1.5 for compressed buffer, as compressed size
+        // may be larger than uncompressed
+        this.compressed = bbFactory.allocate(capacity + capacity / 2);
         this.request = PushRequest.newBuilder();
     }
 
