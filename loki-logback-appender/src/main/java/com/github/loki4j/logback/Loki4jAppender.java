@@ -3,8 +3,8 @@ package com.github.loki4j.logback;
 import java.util.concurrent.atomic.AtomicLong;
 
 import com.github.loki4j.common.Batcher;
-import com.github.loki4j.common.ByteBufferFactory;
 import com.github.loki4j.common.ByteBufferQueue;
+import com.github.loki4j.common.util.ByteBufferFactory;
 
 import ch.qos.logback.classic.spi.ILoggingEvent;
 import ch.qos.logback.core.CoreConstants;

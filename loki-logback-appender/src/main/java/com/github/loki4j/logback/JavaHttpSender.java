@@ -16,7 +16,7 @@ import java.util.concurrent.TimeUnit;
 
 import com.github.loki4j.common.HttpHeaders;
 import com.github.loki4j.common.LokiResponse;
-import com.github.loki4j.common.LokiThreadFactory;
+import com.github.loki4j.common.util.LokiThreadFactory;
 
 import ch.qos.logback.core.joran.spi.NoAutoStart;
 
@@ -59,7 +59,7 @@ public class JavaHttpSender extends AbstractHttpSender {
 
         super.start();
 
-        tenantId.ifPresent(tenant -> requestBuilder.setHeader(HttpHeaders.X_SCOPE_ORGID,tenant));
+        tenantId.ifPresent(tenant -> requestBuilder.setHeader(HttpHeaders.X_SCOPE_ORGID, tenant));
         basicAuthToken.ifPresent(token -> requestBuilder.setHeader(HttpHeaders.AUTHORIZATION, "Basic " + token));
     }
 

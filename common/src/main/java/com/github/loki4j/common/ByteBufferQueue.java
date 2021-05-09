@@ -5,6 +5,8 @@ import java.util.concurrent.ConcurrentLinkedQueue;
 import java.util.concurrent.atomic.AtomicLong;
 import java.util.function.Consumer;
 
+import com.github.loki4j.common.util.ByteBufferFactory;
+
 public class ByteBufferQueue {
 
     private final ConcurrentLinkedQueue<BinaryBatch> pool = new ConcurrentLinkedQueue<>();

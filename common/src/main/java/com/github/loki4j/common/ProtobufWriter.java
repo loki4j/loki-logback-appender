@@ -3,6 +3,7 @@ package com.github.loki4j.common;
 import java.io.IOException;
 import java.nio.ByteBuffer;
 
+import com.github.loki4j.common.util.ByteBufferFactory;
 import com.google.protobuf.CodedOutputStream;
 import com.google.protobuf.Timestamp;
 import com.grafana.loki.protobuf.Logproto.EntryAdapter;

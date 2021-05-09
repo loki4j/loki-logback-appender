@@ -7,6 +7,7 @@ import static org.junit.Assert.*;
 
 import java.io.IOException;
 
+import com.github.loki4j.common.util.ByteBufferFactory;
 import com.google.protobuf.Timestamp;
 import com.grafana.loki.protobuf.Logproto.EntryAdapter;
 import com.grafana.loki.protobuf.Logproto.PushRequest;
