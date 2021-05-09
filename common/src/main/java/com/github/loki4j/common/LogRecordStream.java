@@ -2,6 +2,8 @@ package com.github.loki4j.common;
 
 import java.util.Arrays;
 
+import com.github.loki4j.common.util.StringUtils;
+
 public class LogRecordStream {
 
     public final long id;

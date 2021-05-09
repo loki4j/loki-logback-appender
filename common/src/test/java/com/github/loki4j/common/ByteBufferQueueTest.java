@@ -6,6 +6,8 @@ import static org.junit.Assert.*;
 
 import java.nio.ByteBuffer;
 
+import com.github.loki4j.common.util.ByteBufferFactory;
+
 public class ByteBufferQueueTest {
 
     private static byte[] read(BinaryBatch bb) {

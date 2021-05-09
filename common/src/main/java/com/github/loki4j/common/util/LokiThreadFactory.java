@@ -1,4 +1,4 @@
-package com.github.loki4j.common;
+package com.github.loki4j.common.util;
 
 import java.util.concurrent.ThreadFactory;
 import java.util.concurrent.atomic.AtomicInteger;

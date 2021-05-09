@@ -1,5 +1,7 @@
 package com.github.loki4j.common;
 
+import com.github.loki4j.common.util.StringUtils;
+
 public class LogRecord {
 
     public final long timestampMs;
