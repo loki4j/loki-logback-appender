@@ -11,7 +11,7 @@ import java.nio.ByteBuffer;
 import java.util.concurrent.atomic.AtomicBoolean;
 import java.util.concurrent.locks.LockSupport;
 
-import com.github.loki4j.common.LokiResponse;
+import com.github.loki4j.common.http.LokiResponse;
 
 import static com.github.loki4j.logback.Generators.*;
 

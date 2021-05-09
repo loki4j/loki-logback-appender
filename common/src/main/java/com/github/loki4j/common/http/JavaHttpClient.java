@@ -1,4 +1,4 @@
-package com.github.loki4j.logback;
+package com.github.loki4j.common.http;
 
 import java.net.URI;
 import java.net.http.HttpClient;
@@ -7,25 +7,20 @@ import java.net.http.HttpResponse;
 import java.nio.ByteBuffer;
 import java.time.Duration;
 import java.util.concurrent.ExecutorService;
-import java.util.concurrent.Flow.Publisher;
-import java.util.concurrent.Flow.Subscriber;
-import java.util.concurrent.Flow.Subscription;
 import java.util.concurrent.SynchronousQueue;
 import java.util.concurrent.ThreadPoolExecutor;
 import java.util.concurrent.TimeUnit;
+import java.util.concurrent.Flow.Publisher;
+import java.util.concurrent.Flow.Subscriber;
+import java.util.concurrent.Flow.Subscription;
 
-import com.github.loki4j.common.http.HttpHeaders;
-import com.github.loki4j.common.http.LokiResponse;
 import com.github.loki4j.common.util.LokiThreadFactory;
 
-import ch.qos.logback.core.joran.spi.NoAutoStart;
-
 /**
- * Loki sender that is backed by Java standard {@link java.net.http.HttpClient HttpClient}
+ * Loki client that is backed by Java standard {@link java.net.http.HttpClient HttpClient}
  */
-@NoAutoStart
-public class JavaHttpSender extends AbstractHttpSender {
-
+public class JavaHttpClient implements Loki4jHttpClient {
+    
     /**
      * Maximum time that excess idle threads will wait for new
      * tasks before terminating inner HTTP threads
@@ -37,8 +32,7 @@ public class JavaHttpSender extends AbstractHttpSender {
 
     private ExecutorService internalHttpThreadPool;
 
-    @Override
-    public void start() {
+    public JavaHttpClient(HttpConfig conf, String contentType) {
         internalHttpThreadPool = new ThreadPoolExecutor(
             0, Integer.MAX_VALUE,
             innerThreadsExpirationMs, TimeUnit.MILLISECONDS, // expire unused threads after 5 batch intervals
@@ -47,25 +41,22 @@ public class JavaHttpSender extends AbstractHttpSender {
 
         client = HttpClient
             .newBuilder()
-            .connectTimeout(Duration.ofMillis(connectionTimeoutMs))
+            .connectTimeout(Duration.ofMillis(conf.connectionTimeoutMs))
             .executor(internalHttpThreadPool)
             .build();
 
         requestBuilder = HttpRequest
             .newBuilder()
-            .timeout(Duration.ofMillis(requestTimeoutMs))
-            .uri(URI.create(url))
+            .timeout(Duration.ofMillis(conf.requestTimeoutMs))
+            .uri(URI.create(conf.pushUrl))
             .header(HttpHeaders.CONTENT_TYPE, contentType);
 
-        super.start();
-
-        tenantId.ifPresent(tenant -> requestBuilder.setHeader(HttpHeaders.X_SCOPE_ORGID, tenant));
-        basicAuthToken.ifPresent(token -> requestBuilder.setHeader(HttpHeaders.AUTHORIZATION, "Basic " + token));
+        conf.tenantId.ifPresent(tenant -> requestBuilder.setHeader(HttpHeaders.X_SCOPE_ORGID, tenant));
+        conf.basicAuthToken().ifPresent(token -> requestBuilder.setHeader(HttpHeaders.AUTHORIZATION, "Basic " + token));
     }
 
     @Override
-    public void stop() {
-        super.stop();
+    public void close() throws Exception {
         internalHttpThreadPool.shutdown();
     }
 
@@ -81,10 +72,6 @@ public class JavaHttpSender extends AbstractHttpSender {
         } catch (Exception e) {
             throw new RuntimeException("Error while sending batch to Loki", e);
         }
-    }
-
-    public void setInnerThreadsExpirationMs(long innerThreadsExpirationMs) {
-        this.innerThreadsExpirationMs = innerThreadsExpirationMs;
     }
 
     static class BatchPublisher implements Publisher<ByteBuffer> {

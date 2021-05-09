@@ -2,7 +2,7 @@ package com.github.loki4j.logback;
 
 import java.nio.ByteBuffer;
 
-import com.github.loki4j.common.LokiResponse;
+import com.github.loki4j.common.http.LokiResponse;
 
 import ch.qos.logback.core.spi.ContextAware;
 import ch.qos.logback.core.spi.LifeCycle;

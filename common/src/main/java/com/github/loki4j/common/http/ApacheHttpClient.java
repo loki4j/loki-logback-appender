@@ -1,11 +1,7 @@
-package com.github.loki4j.logback;
+package com.github.loki4j.common.http;
 
-import java.io.IOException;
 import java.nio.ByteBuffer;
 import java.util.function.Supplier;
-
-import com.github.loki4j.common.http.HttpHeaders;
-import com.github.loki4j.common.http.LokiResponse;
 
 import org.apache.http.HttpResponse;
 import org.apache.http.client.config.RequestConfig;
@@ -18,13 +14,10 @@ import org.apache.http.impl.conn.PoolingHttpClientConnectionManager;
 import org.apache.http.protocol.HttpContext;
 import org.apache.http.util.EntityUtils;
 
-import ch.qos.logback.core.joran.spi.NoAutoStart;
-
 /**
  * Loki sender that is backed by Apache {@link org.apache.http.client.HttpClient HttpClient}
  */
-@NoAutoStart
-public class ApacheHttpSender extends AbstractHttpSender {
+public class ApacheHttpClient implements Loki4jHttpClient {
 
     /**
      * Maximum number of HTTP connections setting for HttpClient
@@ -47,8 +40,7 @@ public class ApacheHttpSender extends AbstractHttpSender {
      */
     private byte[] bodyBuffer = new byte[0];
 
-    @Override
-    public void start() {
+    public ApacheHttpClient(HttpConfig conf, String contentType) {
         var cm = new PoolingHttpClientConnectionManager();
         cm.setMaxTotal(maxConnections);
         cm.setDefaultMaxPerRoute(maxConnections);
@@ -56,7 +48,7 @@ public class ApacheHttpSender extends AbstractHttpSender {
         client = HttpClients
             .custom()
             .setConnectionManager(cm)
-            .setKeepAliveStrategy(new ConnectionKeepAliveStrategy(){
+            .setKeepAliveStrategy(new ConnectionKeepAliveStrategy() {
                 @Override
                 public long getKeepAliveDuration(HttpResponse response, HttpContext context) {
                     return connectionKeepAliveMs;
@@ -64,31 +56,24 @@ public class ApacheHttpSender extends AbstractHttpSender {
             })
             .setDefaultRequestConfig(RequestConfig
                 .custom()
-                .setSocketTimeout((int)connectionTimeoutMs)
-                .setConnectTimeout((int)connectionTimeoutMs)
-                .setConnectionRequestTimeout((int)requestTimeoutMs)
+                .setSocketTimeout((int)conf.connectionTimeoutMs)
+                .setConnectTimeout((int)conf.connectionTimeoutMs)
+                .setConnectionRequestTimeout((int)conf.requestTimeoutMs)
                 .build())
             .build();
 
         requestBuilder = () -> {
-            var request = new HttpPost(url);
+            var request = new HttpPost(conf.pushUrl);
             request.addHeader(HttpHeaders.CONTENT_TYPE, contentType);
-            tenantId.ifPresent(tenant -> request.addHeader(HttpHeaders.X_SCOPE_ORGID, tenant));
-            basicAuthToken.ifPresent(token -> request.setHeader(HttpHeaders.AUTHORIZATION, "Basic " + token));
+            conf.tenantId.ifPresent(tenant -> request.addHeader(HttpHeaders.X_SCOPE_ORGID, tenant));
+            conf.basicAuthToken().ifPresent(token -> request.setHeader(HttpHeaders.AUTHORIZATION, "Basic " + token));
             return request;
         };
-
-        super.start();
     }
 
     @Override
-    public void stop() {
-        super.stop();
-        try {
-            client.close();
-        } catch (IOException e) {
-            addWarn("Error while closing Apache HttpClient", e);
-        }
+    public void close() throws Exception {
+        client.close();
     }
 
     @Override
@@ -114,13 +99,4 @@ public class ApacheHttpSender extends AbstractHttpSender {
             throw new RuntimeException("Error while sending batch to Loki", e);
         }
     }
-
-    public void setMaxConnections(int maxConnections) {
-        this.maxConnections = maxConnections;
-    }
-
-    public void setConnectionKeepAliveMs(long connectionKeepAliveMs) {
-        this.connectionKeepAliveMs = connectionKeepAliveMs;
-    }
-
 }
