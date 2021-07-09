@@ -18,8 +18,8 @@ If you are interested in this project, please drop a :star:!
 
 - Support for both JSON and Protobuf formats
 - Compatibility with Grafana Cloud
-- Optionally order log records before sending to Loki
-- Format both labels and messages using Logback patterns
+- Optional sorting of log records by timestamp before sending them to Loki
+- Logback formatting patterns are used for both labels and messages
 - Zero-dependency (for Java 11+)
 - Logging performance metrics
 
@@ -43,9 +43,9 @@ Check out the project to the directory on you local machine and run:
 gradle check
 ```
 
-## Production readiness
+## Project status
 
-This project is in active development stage.
-In rare cases breaking changes (config format, class locations, etc.) might be introduced in minor versions.
-Such cases will be explicitly documented for each release.
-Please check [Releases](https://github.com/loki4j/loki-logback-appender/releases) page before you upgrade.
+At the moment all the main logging features are implemented and stabilized.
+
+Further development will be concentrated on bug fixes (if any), keeping up with new versions of Loki, and
+improving the codebase so it's easier to maintain.
