@@ -32,10 +32,10 @@ With Loki4j you can try out both JSON and Protobuf API for sending log records t
 Loki4j supports HTTP basic authentication, so you can use it for hosted Loki services (e.g. Grafana Cloud)
 as well as for on-premise Loki instances.
 See the <a href="docs/configuration#sending-logs-to-grafana-cloud">example</a>...</p></li>
-<li><p><strong>Optionally sort log records before sending to Loki.</strong>
+<li><p><strong>Optional sorting of log records by timestamp before sending them to Loki.</strong>
 In order to prevent log records loss, Loki4j can sort log records by timestamp inside each batch,
 so they will not be rejected by Loki with 'entry out of order' error.</p></li>
-<li><p><strong>Format both labels and messages using Logback patterns.</strong>
+<li><p><strong>Logback formatting patterns are used for both labels and messages.</strong>
 Loki4j allows you to use all the power and flexibility of
 <a href="http://logback.qos.ch/manual/layouts.html#ClassicPatternLayout">Logback patterns</a>
 both for labels and messages.
@@ -54,9 +54,8 @@ by enabling instrumentation powered by <a href="https://micrometer.io/">Micromet
 <a href="docs/performance">Learn more...</a></p></li>
 </ul>
 <h3><a class="anchor" aria-hidden="true" id="project-status"></a><a href="#project-status" aria-hidden="true" class="hash-link"><svg class="hash-link-icon" aria-hidden="true" height="16" version="1.1" viewBox="0 0 16 16" width="16"><path fill-rule="evenodd" d="M4 9h1v1H4c-1.5 0-3-1.69-3-3.5S2.55 3 4 3h4c1.45 0 3 1.69 3 3.5 0 1.41-.91 2.72-2 3.25V8.59c.58-.45 1-1.27 1-2.09C10 5.22 8.98 4 8 4H4c-.98 0-2 1.22-2 2.5S3 9 4 9zm9-3h-1v1h1c1 0 2 1.22 2 2.5S13.98 12 13 12H9c-.98 0-2-1.22-2-2.5 0-.83.42-1.64 1-2.09V6.25c-1.09.53-2 1.84-2 3.25C6 11.31 7.55 13 9 13h4c1.45 0 3-1.69 3-3.5S14.5 6 13 6z"></path></svg></a>Project Status</h3>
-<p>This project is in active development stage.
-In rare cases breaking changes (config format, class locations, etc.) might be introduced in minor versions.
-Such cases will be explicitly documented for each release.
-Please check <a href="https://github.com/loki4j/loki-logback-appender/releases">Releases</a> page before you upgrade.</p>
+<p>At the moment all the main logging features are implemented and stabilized.</p>
+<p>Further development will be concentrated on bug fixes (if any), keeping up with new versions of Loki, and
+improving the codebase so it's easier to maintain.</p>
 <p>If you are interested in this project, please drop a ☆ on <a href="https://github.com/loki4j/loki-logback-appender">GitHub</a>.</p>
 </span></div></article></div><div class="docs-prevnext"></div></div></div><nav class="onPageNav"></nav></div><footer class="nav-footer" id="footer"><section class="sitemap"><a href="/loki-logback-appender/" class="nav-home"><img src="/loki-logback-appender/img/logo.svg" alt="Loki4j Logback" width="66" height="58"/></a><div><h5>Docs</h5><a href="/loki-logback-appender/docs/configuration">Reference</a></div><div><h5>Community</h5><a class="github-button" href="https://github.com/loki4j/loki-logback-appender" data-icon="octicon-star" data-count-href="/loki4j/loki-logback-appender/stargazers" data-show-count="true" data-count-aria-label="# stargazers on GitHub" aria-label="Star this project on GitHub">Loki4j GitHub</a><div class="social"><a href="https://twitter.com/arnehaev" class="twitter-follow-button">Follow @arnehaev</a></div><a href="https://stackoverflow.com/questions/tagged/loki4j" target="_blank" rel="noreferrer noopener">Stack Overflow</a></div><div><h5>More</h5><a href="https://docusaurus.io/">Powered by Docusaurus</a></div></section><section class="copyright">Copyright © 2021 Anton Nehaev</section></footer></div><script>window.twttr=(function(d,s, id){var js,fjs=d.getElementsByTagName(s)[0],t=window.twttr||{};if(d.getElementById(id))return t;js=d.createElement(s);js.id=id;js.src='https://platform.twitter.com/widgets.js';fjs.parentNode.insertBefore(js, fjs);t._e = [];t.ready = function(f) {t._e.push(f);};return t;}(document, 'script', 'twitter-wjs'));</script></body></html>
