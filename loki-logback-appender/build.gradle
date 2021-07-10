@@ -162,7 +162,9 @@ signing {
     sign publishing.publications.mavenJava
 }
 
-apply from: '../gradle/java8.gradle'
+if (rootProject.hasProperty('java8')) {
+    apply from: '../gradle/java8.gradle'
+}
 
 tasks.withType(GenerateModuleMetadata) {
     enabled = false
