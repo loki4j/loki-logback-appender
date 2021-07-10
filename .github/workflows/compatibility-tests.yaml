@@ -38,9 +38,9 @@ jobs:
           architecture: x64
           targets: 'JDK_11'
       - name: Compile on Java 11
-        run: JAVA_HOME="${JDK_11}" ./gradlew check compileJava8TestJava
+        run: JAVA_HOME="${JDK_11}" ./gradlew -Pjava8 check compileJava8TestJava
       - name: Test on Java 8
-        run: JAVA_HOME="${JDK_8}" ./gradlew --info java8Test -x compileJava8TestJava -x compileJava8Java
+        run: JAVA_HOME="${JDK_8}" ./gradlew -Pjava8 --info java8Test -x compileJava8TestJava -x compileJava8Java
 
   java8-windows-tests:
     runs-on: windows-latest
@@ -59,6 +59,6 @@ jobs:
           architecture: x64
           targets: 'JDK_11'
       - name: Compile on Java 11
-        run: ./gradlew.bat "-Dorg.gradle.java.home=$env:JDK_11" check compileJava8TestJava
+        run: ./gradlew.bat "-Dorg.gradle.java.home=$env:JDK_11" -Pjava8 check compileJava8TestJava
       - name: Test on Java 8
-        run: ./gradlew.bat "-Dorg.gradle.java.home=$env:JDK_8" --info java8Test -x compileJava8TestJava -x compileJava8Java
+        run: ./gradlew.bat "-Dorg.gradle.java.home=$env:JDK_8" -Pjava8 --info java8Test -x compileJava8TestJava -x compileJava8Java
