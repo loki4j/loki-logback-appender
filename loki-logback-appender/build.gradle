@@ -30,17 +30,17 @@ sourceSets {
 dependencies {
     api 'ch.qos.logback:logback-classic:1.2.3'
 
-    compileOnly 'com.google.protobuf:protobuf-java:3.15.1'
+    compileOnly 'com.google.protobuf:protobuf-java:3.15.8'
     compileOnly 'org.xerial.snappy:snappy-java:1.1.8.4'
     compileOnly 'org.apache.httpcomponents:httpclient:4.5.13'
-    compileOnly 'io.micrometer:micrometer-core:1.6.5'
+    compileOnly 'io.micrometer:micrometer-core:1.6.8'
 
     testImplementation 'junit:junit:4.13.2'
-    testImplementation 'com.google.protobuf:protobuf-java:3.15.1'
+    testImplementation 'com.google.protobuf:protobuf-java:3.15.8'
     testImplementation 'org.xerial.snappy:snappy-java:1.1.8.4'
     testImplementation 'org.apache.httpcomponents:httpclient:4.5.13'
-    testImplementation 'com.fasterxml.jackson.core:jackson-databind:2.10.0'
-    testImplementation 'io.micrometer:micrometer-core:1.6.5'
+    testImplementation 'com.fasterxml.jackson.core:jackson-databind:2.12.4'
+    testImplementation 'io.micrometer:micrometer-core:1.6.8'
 }
 
 compileJava {
