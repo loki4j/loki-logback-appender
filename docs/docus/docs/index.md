@@ -115,11 +115,11 @@ Loki4j supports HTTP basic authentication, so you can use it for hosted Loki ser
 as well as for on-premise Loki instances.
 See the [example](docs/configuration#sending-logs-to-grafana-cloud)...
 
-- **Optionally sort log records before sending to Loki.**
+- **Optional sorting of log records by timestamp before sending them to Loki.**
 In order to prevent log records loss, Loki4j can sort log records by timestamp inside each batch,
 so they will not be rejected by Loki with 'entry out of order' error.
 
-- **Format both labels and messages using Logback patterns.**
+- **Logback formatting patterns are used for both labels and messages.**
 Loki4j allows you to use all the power and flexibility of
 [Logback patterns](http://logback.qos.ch/manual/layouts.html#ClassicPatternLayout)
 both for labels and messages.
@@ -142,9 +142,9 @@ by enabling instrumentation powered by [Micrometer](https://micrometer.io/).
 
 ### Project Status
 
-This project is in active development stage.
-In rare cases breaking changes (config format, class locations, etc.) might be introduced in minor versions.
-Such cases will be explicitly documented for each release.
-Please check [Releases](https://github.com/loki4j/loki-logback-appender/releases) page before you upgrade.
+At the moment all the main logging features are implemented and stabilized.
+
+Further development will be concentrated on bug fixes (if any), keeping up with new versions of Loki, and
+improving the codebase so it's easier to maintain.
 
 If you are interested in this project, please drop a ☆ on [GitHub](https://github.com/loki4j/loki-logback-appender).
