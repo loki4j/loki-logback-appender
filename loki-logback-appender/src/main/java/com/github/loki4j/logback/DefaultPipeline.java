@@ -20,6 +20,7 @@ import com.github.loki4j.common.LogRecord;
 import com.github.loki4j.common.LogRecordBatch;
 import com.github.loki4j.common.LogRecordStream;
 import com.github.loki4j.common.Writer;
+import com.github.loki4j.common.http.Loki4jHttpClient;
 import com.github.loki4j.common.http.LokiResponse;
 import com.github.loki4j.common.util.LokiThreadFactory;
 
@@ -43,7 +44,7 @@ public final class DefaultPipeline extends ContextAwareBase implements LifeCycle
     /**
      * A HTTPS sender to use for pushing logs to Loki
      */
-    private final HttpSender sender;
+    private final Loki4jHttpClient sender;
 
     /**
      * A tracker for the appender's metrics (if enabled)
@@ -75,7 +76,7 @@ public final class DefaultPipeline extends ContextAwareBase implements LifeCycle
             Optional<Comparator<LogRecord>> recordComparator,
             Writer writer,
             ByteBufferQueue senderQueue,
-            HttpSender sender,
+            Loki4jHttpClient sender,
             LoggerMetrics metrics,
             boolean drainOnStop) {
         this.batcher = batcher;

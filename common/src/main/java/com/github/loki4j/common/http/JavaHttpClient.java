@@ -21,21 +21,15 @@ import com.github.loki4j.common.util.LokiThreadFactory;
  */
 public class JavaHttpClient implements Loki4jHttpClient {
     
-    /**
-     * Maximum time that excess idle threads will wait for new
-     * tasks before terminating inner HTTP threads
-     */
-    private long innerThreadsExpirationMs = 5 * 60_000;
-
     private HttpClient client;
     private HttpRequest.Builder requestBuilder;
 
     private ExecutorService internalHttpThreadPool;
 
-    public JavaHttpClient(HttpConfig conf, String contentType) {
+    public JavaHttpClient(HttpConfig conf) {
         internalHttpThreadPool = new ThreadPoolExecutor(
             0, Integer.MAX_VALUE,
-            innerThreadsExpirationMs, TimeUnit.MILLISECONDS, // expire unused threads after 5 batch intervals
+            conf.java.innerThreadsExpirationMs, TimeUnit.MILLISECONDS, // expire unused threads after 5 batch intervals
             new SynchronousQueue<Runnable>(),
             new LokiThreadFactory("loki-java-http-internal"));
 
@@ -49,7 +43,7 @@ public class JavaHttpClient implements Loki4jHttpClient {
             .newBuilder()
             .timeout(Duration.ofMillis(conf.requestTimeoutMs))
             .uri(URI.create(conf.pushUrl))
-            .header(HttpHeaders.CONTENT_TYPE, contentType);
+            .header(HttpHeaders.CONTENT_TYPE, conf.contentType);
 
         conf.tenantId.ifPresent(tenant -> requestBuilder.setHeader(HttpHeaders.X_SCOPE_ORGID, tenant));
         conf.basicAuthToken().ifPresent(token -> requestBuilder.setHeader(HttpHeaders.AUTHORIZATION, "Basic " + token));
@@ -61,17 +55,13 @@ public class JavaHttpClient implements Loki4jHttpClient {
     }
 
     @Override
-    public LokiResponse send(ByteBuffer batch) {
-        try {
-            var request = requestBuilder
-                .copy()
-                .POST(HttpRequest.BodyPublishers.fromPublisher(new BatchPublisher(batch), batch.remaining()))
-                .build();
-            var response = client.send(request, HttpResponse.BodyHandlers.ofString());
-            return new LokiResponse(response.statusCode(), response.body());
-        } catch (Exception e) {
-            throw new RuntimeException("Error while sending batch to Loki", e);
-        }
+    public LokiResponse send(ByteBuffer batch) throws Exception {
+        var request = requestBuilder
+            .copy()
+            .POST(HttpRequest.BodyPublishers.fromPublisher(new BatchPublisher(batch), batch.remaining()))
+            .build();
+        var response = client.send(request, HttpResponse.BodyHandlers.ofString());
+        return new LokiResponse(response.statusCode(), response.body());
     }
 
     static class BatchPublisher implements Publisher<ByteBuffer> {

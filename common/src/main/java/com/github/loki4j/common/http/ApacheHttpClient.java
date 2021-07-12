@@ -19,18 +19,6 @@ import org.apache.http.util.EntityUtils;
  */
 public class ApacheHttpClient implements Loki4jHttpClient {
 
-    /**
-     * Maximum number of HTTP connections setting for HttpClient
-     */
-    private int maxConnections = 1;
-
-    /**
-     * A duration of time which the connection can be safely kept
-     * idle for later reuse. This value should not be greater than
-     * server.http-idle-timeout in your Loki config
-     */
-    private long connectionKeepAliveMs = 120_000;
-
     private CloseableHttpClient client;
     private Supplier<HttpPost> requestBuilder;
 
@@ -40,10 +28,10 @@ public class ApacheHttpClient implements Loki4jHttpClient {
      */
     private byte[] bodyBuffer = new byte[0];
 
-    public ApacheHttpClient(HttpConfig conf, String contentType) {
+    public ApacheHttpClient(HttpConfig conf) {
         var cm = new PoolingHttpClientConnectionManager();
-        cm.setMaxTotal(maxConnections);
-        cm.setDefaultMaxPerRoute(maxConnections);
+        cm.setMaxTotal(conf.apache.maxConnections);
+        cm.setDefaultMaxPerRoute(conf.apache.maxConnections);
 
         client = HttpClients
             .custom()
@@ -51,7 +39,7 @@ public class ApacheHttpClient implements Loki4jHttpClient {
             .setKeepAliveStrategy(new ConnectionKeepAliveStrategy() {
                 @Override
                 public long getKeepAliveDuration(HttpResponse response, HttpContext context) {
-                    return connectionKeepAliveMs;
+                    return conf.apache.connectionKeepAliveMs;
                 }
             })
             .setDefaultRequestConfig(RequestConfig
@@ -64,7 +52,7 @@ public class ApacheHttpClient implements Loki4jHttpClient {
 
         requestBuilder = () -> {
             var request = new HttpPost(conf.pushUrl);
-            request.addHeader(HttpHeaders.CONTENT_TYPE, contentType);
+            request.addHeader(HttpHeaders.CONTENT_TYPE, conf.contentType);
             conf.tenantId.ifPresent(tenant -> request.addHeader(HttpHeaders.X_SCOPE_ORGID, tenant));
             conf.basicAuthToken().ifPresent(token -> request.setHeader(HttpHeaders.AUTHORIZATION, "Basic " + token));
             return request;
@@ -77,26 +65,22 @@ public class ApacheHttpClient implements Loki4jHttpClient {
     }
 
     @Override
-    public LokiResponse send(ByteBuffer batch) {
-        try {
-            var request = requestBuilder.get();
-            if (batch.hasArray()) {
-                request.setEntity(new ByteArrayEntity(batch.array(), batch.position(), batch.remaining()));
-            } else {
-                var len = batch.remaining();
-                if (len > bodyBuffer.length)
-                    bodyBuffer = new byte[len];
-                batch.get(bodyBuffer, 0, len);
-                request.setEntity(new ByteArrayEntity(bodyBuffer, 0, len));
-            }
-
-            var r = client.execute(request);
-            var entity = r.getEntity();
-            return new LokiResponse(
-                r.getStatusLine().getStatusCode(),
-                entity != null ? EntityUtils.toString(entity) : "");
-        } catch (Exception e) {
-            throw new RuntimeException("Error while sending batch to Loki", e);
+    public LokiResponse send(ByteBuffer batch) throws Exception {
+        var request = requestBuilder.get();
+        if (batch.hasArray()) {
+            request.setEntity(new ByteArrayEntity(batch.array(), batch.position(), batch.remaining()));
+        } else {
+            var len = batch.remaining();
+            if (len > bodyBuffer.length)
+                bodyBuffer = new byte[len];
+            batch.get(bodyBuffer, 0, len);
+            request.setEntity(new ByteArrayEntity(bodyBuffer, 0, len));
         }
+
+        var r = client.execute(request);
+        var entity = r.getEntity();
+        return new LokiResponse(
+            r.getStatusLine().getStatusCode(),
+            entity != null ? EntityUtils.toString(entity) : "");
     }
 }

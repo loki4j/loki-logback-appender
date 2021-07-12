@@ -1,15 +1,14 @@
 package com.github.loki4j.logback;
 
-import java.util.Base64;
 import java.util.Optional;
 
-import ch.qos.logback.core.spi.ContextAwareBase;
+import com.github.loki4j.common.http.HttpConfig;
 
 /**
  * Abstract class that implements a common logic shared between standard
- * HTTP sender implementations
+ * HTTP sender configurators.
  */
-public abstract class AbstractHttpSender extends ContextAwareBase implements HttpSender {
+public abstract class AbstractHttpSender implements HttpSender {
 
     public static final class BasicAuth {
         /**
@@ -31,63 +30,40 @@ public abstract class AbstractHttpSender extends ContextAwareBase implements Htt
     /**
     * Loki endpoint to be used for sending batches
     */
-    protected String url = "http://localhost:3100/loki/api/v1/push";
+    private String url = "http://localhost:3100/loki/api/v1/push";
 
     /**
      * Tenant identifier.
      * It is required only for sending logs directly to Loki operating in multi-tenant mode.
      * Otherwise this setting has no effect
      */
-    protected Optional<String> tenantId = Optional.empty();
-
-    /**
-     * Content-type header to send to Loki
-     */
-    protected String contentType;
+    private Optional<String> tenantId = Optional.empty();
 
     /**
      * Time in milliseconds to wait for HTTP connection to Loki to be established
      * before reporting an error
      */
-    protected long connectionTimeoutMs = 30_000;
+    private long connectionTimeoutMs = 30_000;
 
     /**
      * Time in milliseconds to wait for HTTP request to Loki to be responded
      * before reporting an error
      */
-    protected long requestTimeoutMs = 5_000;
+    private long requestTimeoutMs = 5_000;
 
     /**
      * Optional creds for basic HTTP auth
      */
     private BasicAuth auth;
 
-    /**
-     * Token to pass to HTTP server if basic auth is enabled
-     */
-    protected Optional<String> basicAuthToken = Optional.empty();
-
-    private boolean started = false;
-
-    public void start() {
-        if (auth != null) {
-            // calculate auth token
-            basicAuthToken = Optional.of(
-                Base64
-                    .getEncoder()
-                    .encodeToString((auth.username + ":" + auth.password).getBytes())
-            );
-        }
-
-        this.started = true;
-    }
-
-    public void stop() {
-        this.started = false;
-    }
-
-    public boolean isStarted() {
-        return started;
+    protected void fillHttpConfig(HttpConfig.Builder builder) {
+        builder
+            .setPushUrl(url)
+            .setTenantId(tenantId)
+            .setConnectionTimeoutMs(connectionTimeoutMs)
+            .setRequestTimeoutMs(requestTimeoutMs)
+            .setUsername(Optional.ofNullable(auth).map(a -> a.username))
+            .setPassword(Optional.ofNullable(auth).map(a -> a.password));
     }
 
     public void setConnectionTimeoutMs(long connectionTimeoutMs) {
@@ -110,11 +86,6 @@ public abstract class AbstractHttpSender extends ContextAwareBase implements Htt
         this.auth = auth;
     }
 
-    public void setContentType(String contentType) {
-        this.contentType = contentType;
-    }
-
-    @Override
     public void setTenantId(String tenant) {
         this.tenantId = Optional.ofNullable(tenant);
     }
