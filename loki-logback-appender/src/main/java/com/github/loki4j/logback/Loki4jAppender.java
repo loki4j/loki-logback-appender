@@ -4,6 +4,7 @@ import java.util.concurrent.atomic.AtomicLong;
 
 import com.github.loki4j.common.Batcher;
 import com.github.loki4j.common.ByteBufferQueue;
+import com.github.loki4j.common.http.Loki4jHttpClient;
 import com.github.loki4j.common.util.ByteBufferFactory;
 
 import ch.qos.logback.classic.spi.ILoggingEvent;
@@ -65,9 +66,14 @@ public final class Loki4jAppender extends UnsynchronizedAppenderBase<ILoggingEve
     private Loki4jEncoder encoder;
 
     /**
-     * A HTTPS sender to use for pushing logs to Loki
+     * A configurator for HTTP sender
      */
     private HttpSender sender;
+
+    /**
+     * HTTP sender to use for pushing logs to Loki
+     */
+    private Loki4jHttpClient httpClient;
 
     /**
      * A pipeline that does all the heavy lifting log records processing
@@ -114,9 +120,8 @@ public final class Loki4jAppender extends UnsynchronizedAppenderBase<ILoggingEve
             addWarn("No sender specified in the config. Trying to use JavaHttpSender with default settings");
             sender = new JavaHttpSender();
         }
-        sender.setContext(context);
-        sender.setContentType(encoder.getContentType());
-        sender.start();
+        var httpConfig = sender.getConfig(encoder.getContentType());
+        httpClient = sender.createHttpClient(httpConfig);
 
         if (sendQueueMaxBytes < batchMaxBytes * 5) {
             addWarn("Configured value sendQueueMaxBytes=" + sendQueueMaxBytes + " is less than `batchMaxBytes * 5`");
@@ -129,7 +134,7 @@ public final class Loki4jAppender extends UnsynchronizedAppenderBase<ILoggingEve
             encoder.getLogRecordComparator(),
             writer,
             sendQueue,
-            sender,
+            httpClient,
             metrics,
             drainOnStop);
         pipeline.setContext(context);
@@ -151,7 +156,11 @@ public final class Loki4jAppender extends UnsynchronizedAppenderBase<ILoggingEve
 
         pipeline.stop();
         encoder.stop();
-        sender.stop();
+        try {
+            httpClient.close();
+        } catch (Exception e) {
+            addWarn("Error while closing HttpClient", e);
+        }
 
         addInfo("Successfully stopped");
     }

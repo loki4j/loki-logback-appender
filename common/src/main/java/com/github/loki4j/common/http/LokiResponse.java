@@ -1,8 +1,8 @@
-package com.github.loki4j.common;
+package com.github.loki4j.common.http;
 
 public final class LokiResponse {
-    public int status;
-    public String body;
+    public final int status;
+    public final String body;
     
     public LokiResponse(int status, String body) {
         this.status = status;
