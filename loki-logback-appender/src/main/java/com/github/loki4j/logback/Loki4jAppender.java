@@ -134,7 +134,7 @@ public final class Loki4jAppender extends UnsynchronizedAppenderBase<ILoggingEve
             encoder.getLogRecordComparator(),
             writer,
             sendQueue,
-            sender,
+            httpClient,
             metrics,
             drainOnStop);
         pipeline.setContext(context);
@@ -156,7 +156,11 @@ public final class Loki4jAppender extends UnsynchronizedAppenderBase<ILoggingEve
 
         pipeline.stop();
         encoder.stop();
-        httpClient.close();
+        try {
+            httpClient.close();
+        } catch (Exception e) {
+            addWarn("Error while closing HttpClient", e);
+        }
 
         addInfo("Successfully stopped");
     }

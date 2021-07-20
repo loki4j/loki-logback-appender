@@ -19,14 +19,17 @@ import com.github.loki4j.common.util.LokiThreadFactory;
 /**
  * Loki client that is backed by Java standard {@link java.net.http.HttpClient HttpClient}
  */
-public class JavaHttpClient implements Loki4jHttpClient {
-    
-    private HttpClient client;
-    private HttpRequest.Builder requestBuilder;
+public final class JavaHttpClient implements Loki4jHttpClient {
+
+    private final HttpConfig conf;
+    private final HttpClient client;
+    private final HttpRequest.Builder requestBuilder;
 
     private ExecutorService internalHttpThreadPool;
 
     public JavaHttpClient(HttpConfig conf) {
+        this.conf = conf;
+
         internalHttpThreadPool = new ThreadPoolExecutor(
             0, Integer.MAX_VALUE,
             conf.java.innerThreadsExpirationMs, TimeUnit.MILLISECONDS, // expire unused threads after 5 batch intervals
@@ -104,5 +107,10 @@ public class JavaHttpClient implements Loki4jHttpClient {
         public void cancel() {
             cancelled = true;
         }
+    }
+
+    @Override
+    public HttpConfig getConfig() {
+        return conf;
     }
 }

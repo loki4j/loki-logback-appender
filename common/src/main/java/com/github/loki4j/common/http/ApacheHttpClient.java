@@ -17,10 +17,11 @@ import org.apache.http.util.EntityUtils;
 /**
  * Loki sender that is backed by Apache {@link org.apache.http.client.HttpClient HttpClient}
  */
-public class ApacheHttpClient implements Loki4jHttpClient {
+public final class ApacheHttpClient implements Loki4jHttpClient {
 
-    private CloseableHttpClient client;
-    private Supplier<HttpPost> requestBuilder;
+    private final HttpConfig conf;
+    private final CloseableHttpClient client;
+    private final Supplier<HttpPost> requestBuilder;
 
     /**
      * Buffer is needed for turning ByteBuffer into byte array
@@ -29,6 +30,8 @@ public class ApacheHttpClient implements Loki4jHttpClient {
     private byte[] bodyBuffer = new byte[0];
 
     public ApacheHttpClient(HttpConfig conf) {
+        this.conf = conf;
+
         var cm = new PoolingHttpClientConnectionManager();
         cm.setMaxTotal(conf.apache.maxConnections);
         cm.setDefaultMaxPerRoute(conf.apache.maxConnections);
@@ -82,5 +85,10 @@ public class ApacheHttpClient implements Loki4jHttpClient {
         return new LokiResponse(
             r.getStatusLine().getStatusCode(),
             entity != null ? EntityUtils.toString(entity) : "");
+    }
+
+    @Override
+    public HttpConfig getConfig() {
+        return conf;
     }
 }

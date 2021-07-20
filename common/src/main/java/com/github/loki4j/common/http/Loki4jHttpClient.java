@@ -8,6 +8,11 @@ import java.nio.ByteBuffer;
 public interface Loki4jHttpClient extends AutoCloseable {
 
     /**
+     * Get HTTP configuration for this client
+     */
+    public HttpConfig getConfig();
+
+    /**
      * Send a batch to Loki
      *
      * @return A response from Loki

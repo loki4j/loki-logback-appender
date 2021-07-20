@@ -253,7 +253,7 @@ public final class DefaultPipeline extends ContextAwareBase implements LifeCycle
         if (e != null) {
             addError(String.format(
                 "Error while sending Batch %s to Loki (%s)",
-                    batch, sender.getUrl()), e);
+                    batch, sender.getConfig().pushUrl), e);
         }
         else {
             if (r.status < 200 || r.status > 299)
