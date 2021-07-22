@@ -361,9 +361,7 @@ public class Generators {
         public byte[] lastBatch;
 
         @Override
-        public void close() throws Exception {
-            lastBatch = null;
-        }
+        public void close() throws Exception { }
 
         @Override
         public HttpConfig getConfig() {
