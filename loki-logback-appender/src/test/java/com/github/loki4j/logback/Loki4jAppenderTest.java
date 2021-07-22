@@ -11,6 +11,8 @@ import java.nio.ByteBuffer;
 import java.util.concurrent.atomic.AtomicBoolean;
 import java.util.concurrent.locks.LockSupport;
 
+import com.github.loki4j.common.http.HttpConfig;
+import com.github.loki4j.common.http.Loki4jHttpClient;
 import com.github.loki4j.common.http.LokiResponse;
 
 import static com.github.loki4j.logback.Generators.*;
@@ -53,11 +55,11 @@ public class Loki4jAppenderTest {
         withAppender(appender(3, 1000L, encoder, sender), appender -> {
             appender.append(events[0]);
             appender.append(events[1]);
-            assertTrue("no batches before batchSize reached", sender.lastBatch == null);
+            assertTrue("no batches before batchSize reached", sender.lastBatch() == null);
 
             appender.append(events[2]);
             appender.waitAllAppended();
-            assertEquals("batchSize", expected, new String(sender.lastBatch, encoder.charset));
+            assertEquals("batchSize", expected, new String(sender.lastBatch(), encoder.charset));
             return null;
         });
     }
@@ -70,13 +72,13 @@ public class Loki4jAppenderTest {
             appender.append(events[0]);
             appender.append(events[1]);
             appender.append(events[2]);
-            assertTrue("no batches before batchTimeout reached", sender.lastBatch == null);
+            assertTrue("no batches before batchTimeout reached", sender.lastBatch() == null);
 
             try { Thread.sleep(300L); } catch (InterruptedException e1) { }
-            assertTrue("no batches before batchTimeout reached", sender.lastBatch == null);
+            assertTrue("no batches before batchTimeout reached", sender.lastBatch() == null);
         
             try { Thread.sleep(300L); } catch (InterruptedException e1) { }
-            assertEquals("batchTimeout", expected, new String(sender.lastBatch, encoder.charset));
+            assertEquals("batchTimeout", expected, new String(sender.lastBatch(), encoder.charset));
             return null;
         });
     }
@@ -90,13 +92,13 @@ public class Loki4jAppenderTest {
         appender.append(events[0]);
         appender.append(events[1]);
         appender.append(events[2]);
-        assertTrue("no batches before stop", sender.lastBatch == null);
+        assertTrue("no batches before stop", sender.lastBatch() == null);
 
         try { Thread.sleep(300L); } catch (InterruptedException e1) { }
-        assertTrue("no batches before stop", sender.lastBatch == null);
+        assertTrue("no batches before stop", sender.lastBatch() == null);
         
         appender.stop();
-        assertEquals("batchTimeout", expected, new String(sender.lastBatch, encoder.charset));
+        assertEquals("batchTimeout", expected, new String(sender.lastBatch(), encoder.charset));
     }
 
     @Test
@@ -109,13 +111,13 @@ public class Loki4jAppenderTest {
         appender.append(events[0]);
         appender.append(events[1]);
         appender.append(events[2]);
-        assertTrue("no batches before stop", sender.lastBatch == null);
+        assertTrue("no batches before stop", sender.lastBatch() == null);
 
         try { Thread.sleep(300L); } catch (InterruptedException e1) { }
-        assertTrue("no batches before stop", sender.lastBatch == null);
+        assertTrue("no batches before stop", sender.lastBatch() == null);
 
         appender.stop();
-        assertTrue("no batches after stop", sender.lastBatch == null);
+        assertTrue("no batches after stop", sender.lastBatch() == null);
     }
 
     @Test
@@ -144,7 +146,7 @@ public class Loki4jAppenderTest {
             "['100100002','l=INFO c=TestApp t=main | m3-line1\\rline2\\r ']]}]}"
             ).replace('\'', '"');
 
-        assertEquals("batchSize", expected, new String(sender.lastBatch, encoder.charset));
+        assertEquals("batchSize", expected, new String(sender.lastBatch(), encoder.charset));
         appender.stop();
     }
 
@@ -171,21 +173,21 @@ public class Loki4jAppenderTest {
         appender.append(events[2]);
 
         try { Thread.sleep(100L); } catch (InterruptedException e1) { }
-        assertEquals("batchSize", expected, new String(sender.lastBatch, encoder.charset));
+        assertEquals("batchSize", expected, new String(sender.lastBatch(), encoder.charset));
 
         appender.stop();
     }
 
     @Test
     public void testBackpressure() {
-        var sender = new StoppableSender();
+        var sender = new StoppableHttpSender();
         var encoder = defaultToStringEncoder();
         var appender = appender(1, 4000L, encoder, sender);
         appender.setBatchMaxBytes(120);
         appender.setSendQueueMaxBytes(150);
         appender.start();
 
-        sender.wait.set(true);
+        sender.client.wait.set(true);
         // hanging sender
         appender.append(events[0]);
         try { Thread.sleep(100L); } catch (InterruptedException e1) { }
@@ -205,7 +207,7 @@ public class Loki4jAppenderTest {
         appender.append(events[2]);
         try { Thread.sleep(100L); } catch (InterruptedException e1) { }
 
-        sender.wait.set(false);
+        sender.client.wait.set(false);
         try { Thread.sleep(100L); } catch (InterruptedException e1) { }
 
         assertEquals("some events dropped", 3, appender.droppedEventsCount());
@@ -213,7 +215,7 @@ public class Loki4jAppenderTest {
         appender.stop();
     }
 
-    private static class StoppableSender extends AbstractHttpSender {
+    private static class StoppableHttpClient implements Loki4jHttpClient {
         public AtomicBoolean wait = new AtomicBoolean(false);
         public byte[] lastBatch;
 
@@ -224,6 +226,30 @@ public class Loki4jAppenderTest {
             lastBatch = new byte[batch.remaining()];
             batch.get(lastBatch);
             return new LokiResponse(204, "");
+        }
+
+        @Override
+        public void close() throws Exception {
+            lastBatch = null;
+        }
+
+        @Override
+        public HttpConfig getConfig() {
+            return defaultHttpConfig;
+        }
+    }
+
+    private static class StoppableHttpSender extends AbstractHttpSender {
+        public final StoppableHttpClient client = new StoppableHttpClient();
+
+        @Override
+        public HttpConfig getConfig(String contentType) {
+            return defaultHttpConfig;
+        }
+
+        @Override
+        public Loki4jHttpClient createHttpClient(HttpConfig config) {
+            return client;
         }
     }
 }
