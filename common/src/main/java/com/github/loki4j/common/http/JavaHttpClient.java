@@ -67,6 +67,11 @@ public final class JavaHttpClient implements Loki4jHttpClient {
         return new LokiResponse(response.statusCode(), response.body());
     }
 
+    @Override
+    public HttpConfig getConfig() {
+        return conf;
+    }
+
     static class BatchPublisher implements Publisher<ByteBuffer> {
         private final ByteBuffer body;
 
@@ -109,8 +114,4 @@ public final class JavaHttpClient implements Loki4jHttpClient {
         }
     }
 
-    @Override
-    public HttpConfig getConfig() {
-        return conf;
-    }
 }

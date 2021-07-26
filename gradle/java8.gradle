@@ -6,7 +6,7 @@ sourceSets {
         compileClasspath = sourceSets.main.compileClasspath
         java {
             srcDirs = sourceSets.main.java.srcDirs
-            exclude '**/JavaHttpSender.java'
+            exclude '**/JavaHttpClient.java'
         }
     }
     java8Test {
