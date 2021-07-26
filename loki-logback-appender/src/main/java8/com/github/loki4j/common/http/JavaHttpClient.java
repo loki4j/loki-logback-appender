@@ -1,24 +1,24 @@
-package com.github.loki4j.logback;
+package com.github.loki4j.common.http;
 
 import java.nio.ByteBuffer;
 
-import com.github.loki4j.common.LokiResponse;
+import com.github.loki4j.logback.ApacheHttpSender;
 
 import ch.qos.logback.core.joran.spi.NoAutoStart;
 
 /**
  * A stub class for Java 8 that should fail on constructor.
  * 
- * JavaHttpSender is not implemented for Java 8,
+ * JavaHttpClient is not implemented for Java 8,
  * only {@link com.github.loki4j.logback.ApacheHttpSender} should be used.
  * 
  * If this code is called, it means the configuration is incorrect,
  * so we throw an exception with a meaningful message here.
  */
 @NoAutoStart
-public class JavaHttpSender extends AbstractHttpSender {
+public class JavaHttpClient implements Loki4jHttpClient {
 
-    public JavaHttpSender() {
+    public JavaHttpClient(HttpConfig conf) {
         // only possible when running under Java 8
         throw new RuntimeException(
             "JavaHttpSender is supported only for Java 11+. Please specify <http class=\"" +
@@ -27,7 +27,17 @@ public class JavaHttpSender extends AbstractHttpSender {
     }
 
     @Override
-    public LokiResponse send(ByteBuffer batch) {
+    public void close() throws Exception {
+        throw new IllegalStateException("Not implemented");
+    }
+
+    @Override
+    public LokiResponse send(ByteBuffer batch) throws Exception {
+        throw new IllegalStateException("Not implemented");
+    }
+
+    @Override
+    public HttpConfig getConfig() {
         throw new IllegalStateException("Not implemented");
     }
 }

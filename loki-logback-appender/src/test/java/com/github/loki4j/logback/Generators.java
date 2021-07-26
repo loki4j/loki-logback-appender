@@ -13,8 +13,10 @@ import java.util.stream.StreamSupport;
 
 import com.github.loki4j.common.LogRecord;
 import com.github.loki4j.common.LogRecordBatch;
-import com.github.loki4j.common.LokiResponse;
 import com.github.loki4j.common.Writer;
+import com.github.loki4j.common.http.HttpConfig;
+import com.github.loki4j.common.http.Loki4jHttpClient;
+import com.github.loki4j.common.http.LokiResponse;
 import com.github.loki4j.common.util.ByteBufferFactory;
 import com.github.loki4j.testkit.dummy.ExceptionGenerator;
 import com.github.loki4j.testkit.dummy.LokiHttpServerMock;
@@ -28,6 +30,8 @@ import ch.qos.logback.classic.spi.ThrowableProxy;
 import static com.github.loki4j.testkit.dummy.Generators.genMessage;
 
 public class Generators {
+
+    static HttpConfig defaultHttpConfig = HttpConfig.builder("test").build();
 
     public static String batchToString(LogRecordBatch batch) {
         var s = new StringBuilder();
@@ -86,8 +90,7 @@ public class Generators {
     }
 
     public static DummyHttpSender dummySender() {
-        var sender = new DummyHttpSender();
-        return sender;
+        return new DummyHttpSender();
     }
 
     public static JsonEncoder jsonEncoder(boolean staticLabels, String testLabel) {
@@ -337,15 +340,40 @@ public class Generators {
     }
 
     public static class DummyHttpSender extends AbstractHttpSender {
+        private final DummyHttpClient client = new DummyHttpClient();
+
+        public byte[] lastBatch() {
+            return client.lastBatch;
+        }
+
+        @Override
+        public HttpConfig getConfig(String contentType) {
+            return defaultHttpConfig;
+        }
+
+        @Override
+        public Loki4jHttpClient createHttpClient(HttpConfig config) {
+            return client;
+        }
+    }
+
+    public static class DummyHttpClient implements Loki4jHttpClient {
         public byte[] lastBatch;
 
         @Override
-        public LokiResponse send(ByteBuffer batch) {
+        public void close() throws Exception { }
+
+        @Override
+        public HttpConfig getConfig() {
+            return defaultHttpConfig;
+        }
+
+        @Override
+        public LokiResponse send(ByteBuffer batch) throws Exception {
             lastBatch = new byte[batch.remaining()];
             batch.get(lastBatch);
             return new LokiResponse(204, "");
         }
-
     }
 
 }
