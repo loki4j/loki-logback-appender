@@ -1,9 +1,13 @@
-package com.github.loki4j.common;
+package com.github.loki4j.common.writer;
 
 import org.junit.Test;
 
 import static com.github.loki4j.common.LogRecord.create;
 import static org.junit.Assert.*;
+
+import com.github.loki4j.common.LogRecord;
+import com.github.loki4j.common.LogRecordBatch;
+import com.github.loki4j.common.LogRecordStream;
 
 public class JsonWriterTest {
 

@@ -1,8 +1,8 @@
 package com.github.loki4j.logback;
 
-import com.github.loki4j.common.ProtobufWriter;
-import com.github.loki4j.common.Writer;
 import com.github.loki4j.common.util.ByteBufferFactory;
+import com.github.loki4j.common.writer.ProtobufWriter;
+import com.github.loki4j.common.writer.Writer;
 
 import ch.qos.logback.core.joran.spi.NoAutoStart;
 

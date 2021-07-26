@@ -1,8 +1,10 @@
-package com.github.loki4j.common;
+package com.github.loki4j.common.writer;
 
 import java.nio.ByteBuffer;
 
 import com.dslplatform.json.RawJsonWriter;
+import com.github.loki4j.common.LogRecord;
+import com.github.loki4j.common.LogRecordBatch;
 
 import static com.dslplatform.json.RawJsonWriter.*;
 

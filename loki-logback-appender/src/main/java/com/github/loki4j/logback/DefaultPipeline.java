@@ -19,10 +19,10 @@ import com.github.loki4j.common.ByteBufferQueue;
 import com.github.loki4j.common.LogRecord;
 import com.github.loki4j.common.LogRecordBatch;
 import com.github.loki4j.common.LogRecordStream;
-import com.github.loki4j.common.Writer;
 import com.github.loki4j.common.http.Loki4jHttpClient;
 import com.github.loki4j.common.http.LokiResponse;
 import com.github.loki4j.common.util.LokiThreadFactory;
+import com.github.loki4j.common.writer.Writer;
 
 import ch.qos.logback.core.spi.ContextAwareBase;
 import ch.qos.logback.core.spi.LifeCycle;
