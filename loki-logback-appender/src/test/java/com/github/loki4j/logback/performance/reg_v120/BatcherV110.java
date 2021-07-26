@@ -1,8 +1,8 @@
 package com.github.loki4j.logback.performance.reg_v120;
 
-import com.github.loki4j.common.BatchCondition;
-import com.github.loki4j.common.LogRecord;
-import com.github.loki4j.common.LogRecordBatch;
+import com.github.loki4j.common.batch.BatchCondition;
+import com.github.loki4j.common.batch.LogRecord;
+import com.github.loki4j.common.batch.LogRecordBatch;
 
 public final class BatcherV110 {
 

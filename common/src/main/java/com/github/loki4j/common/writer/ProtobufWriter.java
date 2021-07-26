@@ -3,8 +3,8 @@ package com.github.loki4j.common.writer;
 import java.io.IOException;
 import java.nio.ByteBuffer;
 
-import com.github.loki4j.common.LogRecord;
-import com.github.loki4j.common.LogRecordBatch;
+import com.github.loki4j.common.batch.LogRecord;
+import com.github.loki4j.common.batch.LogRecordBatch;
 import com.github.loki4j.common.util.ByteBufferFactory;
 import com.google.protobuf.CodedOutputStream;
 import com.google.protobuf.Timestamp;

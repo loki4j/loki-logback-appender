@@ -3,8 +3,8 @@ package com.github.loki4j.logback;
 import java.util.Comparator;
 import java.util.Optional;
 
-import com.github.loki4j.common.LogRecord;
-import com.github.loki4j.common.LogRecordStream;
+import com.github.loki4j.common.batch.LogRecord;
+import com.github.loki4j.common.batch.LogRecordStream;
 import com.github.loki4j.common.util.ByteBufferFactory;
 import com.github.loki4j.common.writer.Writer;
 

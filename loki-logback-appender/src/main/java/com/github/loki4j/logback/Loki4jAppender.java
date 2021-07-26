@@ -2,8 +2,8 @@ package com.github.loki4j.logback;
 
 import java.util.concurrent.atomic.AtomicLong;
 
-import com.github.loki4j.common.Batcher;
-import com.github.loki4j.common.ByteBufferQueue;
+import com.github.loki4j.common.batch.Batcher;
+import com.github.loki4j.common.batch.ByteBufferQueue;
 import com.github.loki4j.common.http.Loki4jHttpClient;
 import com.github.loki4j.common.util.ByteBufferFactory;
 

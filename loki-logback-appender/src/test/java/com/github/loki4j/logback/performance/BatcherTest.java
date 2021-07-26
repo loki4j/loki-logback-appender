@@ -4,9 +4,9 @@ import static com.github.loki4j.logback.Generators.*;
 
 import java.util.Arrays;
 
-import com.github.loki4j.common.Batcher;
-import com.github.loki4j.common.LogRecord;
-import com.github.loki4j.common.LogRecordBatch;
+import com.github.loki4j.common.batch.Batcher;
+import com.github.loki4j.common.batch.LogRecord;
+import com.github.loki4j.common.batch.LogRecordBatch;
 import com.github.loki4j.logback.AbstractLoki4jEncoder;
 import com.github.loki4j.testkit.benchmark.Benchmarker;
 import com.github.loki4j.testkit.benchmark.Benchmarker.Benchmark;

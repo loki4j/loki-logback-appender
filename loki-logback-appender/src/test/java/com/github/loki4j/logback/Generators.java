@@ -11,8 +11,8 @@ import java.util.function.Consumer;
 import java.util.function.Function;
 import java.util.stream.StreamSupport;
 
-import com.github.loki4j.common.LogRecord;
-import com.github.loki4j.common.LogRecordBatch;
+import com.github.loki4j.common.batch.LogRecord;
+import com.github.loki4j.common.batch.LogRecordBatch;
 import com.github.loki4j.common.http.HttpConfig;
 import com.github.loki4j.common.http.Loki4jHttpClient;
 import com.github.loki4j.common.http.LokiResponse;

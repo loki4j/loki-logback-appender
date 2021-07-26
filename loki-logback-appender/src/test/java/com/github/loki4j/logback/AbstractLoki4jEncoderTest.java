@@ -7,9 +7,9 @@ import static org.junit.Assert.*;
 import java.util.Optional;
 import java.util.function.Supplier;
 
-import com.github.loki4j.common.LogRecord;
-import com.github.loki4j.common.LogRecordBatch;
-import com.github.loki4j.common.LogRecordStream;
+import com.github.loki4j.common.batch.LogRecord;
+import com.github.loki4j.common.batch.LogRecordBatch;
+import com.github.loki4j.common.batch.LogRecordStream;
 
 import static com.github.loki4j.logback.Generators.*;
 
