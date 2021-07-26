@@ -5,7 +5,7 @@ sidebar_label: Old Docs
 ---
 
 We strongly encourage you to upgrade to the latest version of Lok4j.
-It should not take much time, just follow the [Migration Guide](docs/migration).
+It should not take much time, just follow the [Migration Guide](migration).
 
 However, the docs for previous Loki4j versions are still available in GitHub:
 
