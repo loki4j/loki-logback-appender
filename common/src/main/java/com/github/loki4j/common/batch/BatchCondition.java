@@ -1,4 +1,4 @@
-package com.github.loki4j.common;
+package com.github.loki4j.common.batch;
 
 public enum BatchCondition {
     MAX_BYTES,

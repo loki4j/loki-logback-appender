@@ -7,8 +7,8 @@ import java.util.Arrays;
 import java.util.function.UnaryOperator;
 import java.util.stream.Stream;
 
-import com.github.loki4j.common.LogRecord;
-import com.github.loki4j.common.LogRecordBatch;
+import com.github.loki4j.common.batch.LogRecord;
+import com.github.loki4j.common.batch.LogRecordBatch;
 import com.github.loki4j.common.util.ByteBufferFactory;
 import com.github.loki4j.common.writer.JsonWriter;
 import com.github.loki4j.common.writer.ProtobufWriter;

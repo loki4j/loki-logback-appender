@@ -9,8 +9,8 @@ import java.util.concurrent.ArrayBlockingQueue;
 import java.util.concurrent.ConcurrentLinkedQueue;
 import java.util.concurrent.atomic.AtomicInteger;
 
-import com.github.loki4j.common.LogRecord;
-import com.github.loki4j.common.LogRecordStream;
+import com.github.loki4j.common.batch.LogRecord;
+import com.github.loki4j.common.batch.LogRecordStream;
 import com.github.loki4j.testkit.benchmark.Benchmarker;
 import com.github.loki4j.testkit.benchmark.Benchmarker.Benchmark;
 import com.github.loki4j.testkit.categories.PerformanceTests;

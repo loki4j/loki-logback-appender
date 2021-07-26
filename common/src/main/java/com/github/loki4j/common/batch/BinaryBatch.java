@@ -1,4 +1,4 @@
-package com.github.loki4j.common;
+package com.github.loki4j.common.batch;
 
 import java.nio.ByteBuffer;
 

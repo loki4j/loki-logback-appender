@@ -8,8 +8,8 @@ import java.util.concurrent.atomic.AtomicInteger;
 import java.util.concurrent.atomic.AtomicReference;
 import java.util.regex.Pattern;
 
-import com.github.loki4j.common.LogRecord;
-import com.github.loki4j.common.LogRecordStream;
+import com.github.loki4j.common.batch.LogRecord;
+import com.github.loki4j.common.batch.LogRecordStream;
 import com.github.loki4j.common.util.ByteBufferFactory;
 import com.github.loki4j.common.writer.Writer;
 

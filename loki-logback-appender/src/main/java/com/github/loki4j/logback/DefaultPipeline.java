@@ -13,12 +13,12 @@ import java.util.concurrent.atomic.AtomicLong;
 import java.util.concurrent.locks.LockSupport;
 import java.util.function.Supplier;
 
-import com.github.loki4j.common.Batcher;
-import com.github.loki4j.common.BinaryBatch;
-import com.github.loki4j.common.ByteBufferQueue;
-import com.github.loki4j.common.LogRecord;
-import com.github.loki4j.common.LogRecordBatch;
-import com.github.loki4j.common.LogRecordStream;
+import com.github.loki4j.common.batch.Batcher;
+import com.github.loki4j.common.batch.BinaryBatch;
+import com.github.loki4j.common.batch.ByteBufferQueue;
+import com.github.loki4j.common.batch.LogRecord;
+import com.github.loki4j.common.batch.LogRecordBatch;
+import com.github.loki4j.common.batch.LogRecordStream;
 import com.github.loki4j.common.http.Loki4jHttpClient;
 import com.github.loki4j.common.http.LokiResponse;
 import com.github.loki4j.common.util.LokiThreadFactory;
