@@ -5,8 +5,8 @@ import java.util.Optional;
 
 import com.github.loki4j.common.LogRecord;
 import com.github.loki4j.common.LogRecordStream;
-import com.github.loki4j.common.Writer;
 import com.github.loki4j.common.util.ByteBufferFactory;
+import com.github.loki4j.common.writer.Writer;
 
 import ch.qos.logback.classic.spi.ILoggingEvent;
 import ch.qos.logback.core.spi.ContextAware;

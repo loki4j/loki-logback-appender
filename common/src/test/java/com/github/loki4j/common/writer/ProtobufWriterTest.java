@@ -1,4 +1,4 @@
-package com.github.loki4j.common;
+package com.github.loki4j.common.writer;
 
 import org.junit.Test;
 import org.xerial.snappy.Snappy;
@@ -7,6 +7,9 @@ import static org.junit.Assert.*;
 
 import java.io.IOException;
 
+import com.github.loki4j.common.LogRecord;
+import com.github.loki4j.common.LogRecordBatch;
+import com.github.loki4j.common.LogRecordStream;
 import com.github.loki4j.common.util.ByteBufferFactory;
 import com.google.protobuf.Timestamp;
 import com.grafana.loki.protobuf.Logproto.EntryAdapter;

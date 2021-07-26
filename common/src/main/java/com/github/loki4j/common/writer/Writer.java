@@ -1,6 +1,8 @@
-package com.github.loki4j.common;
+package com.github.loki4j.common.writer;
 
 import java.nio.ByteBuffer;
+
+import com.github.loki4j.common.LogRecordBatch;
 
 public interface Writer {
 
