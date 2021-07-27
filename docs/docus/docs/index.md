@@ -147,4 +147,4 @@ At the moment all the main logging features are implemented and stabilized.
 Further development will be concentrated on bug fixes (if any), keeping up with new versions of Loki, and
 improving the codebase so it's easier to maintain.
 
-If you are interested in this project, please drop a ☆ on [GitHub](https://github.com/loki4j/loki-logback-appender).
+If you have found this project helpful, please drop a ☆ on [GitHub](https://github.com/loki4j/loki-logback-appender).
