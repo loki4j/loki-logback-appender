@@ -25,15 +25,6 @@ public abstract class AbstractLoki4jEncoder extends ContextAwareBase implements 
 
     private static final String STATIC_STREAM_KEY = "STATIC_STREAM_KEY";
     
-    private static final Comparator<LogRecord> byTime = (e1, e2) -> {
-        var tsCmp = Long.compare(e1.timestampMs, e2.timestampMs);
-        return tsCmp == 0 ? Integer.compare(e1.nanos, e2.nanos) : tsCmp;
-    };
-
-    private static final Comparator<LogRecord> byStream = (e1, e2) ->
-        Long.compare(e1.stream.id, e2.stream.id);
-
-
     public static final class LabelCfg {
         /**
          * Logback pattern to use for log record's label

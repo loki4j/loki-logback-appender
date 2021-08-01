@@ -3,13 +3,13 @@ package com.github.loki4j.common.util;
 import java.util.concurrent.ThreadFactory;
 import java.util.concurrent.atomic.AtomicInteger;
 
-public class LokiThreadFactory implements ThreadFactory {
+public class Loki4jThreadFactory implements ThreadFactory {
 
     private String namePrefix;
 
     private AtomicInteger counter;
 
-    public LokiThreadFactory(String namePrefix) {
+    public Loki4jThreadFactory(String namePrefix) {
         this.namePrefix = namePrefix;
         this.counter = new AtomicInteger(0);
     }

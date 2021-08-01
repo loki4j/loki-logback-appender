@@ -5,6 +5,8 @@ import java.util.concurrent.atomic.AtomicLong;
 import com.github.loki4j.common.batch.Batcher;
 import com.github.loki4j.common.batch.ByteBufferQueue;
 import com.github.loki4j.common.http.Loki4jHttpClient;
+import com.github.loki4j.common.pipeline.DefaultPipeline;
+import com.github.loki4j.common.pipeline.LoggerMetrics;
 import com.github.loki4j.common.util.ByteBufferFactory;
 
 import ch.qos.logback.classic.spi.ILoggingEvent;

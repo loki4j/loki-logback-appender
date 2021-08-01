@@ -1,4 +1,4 @@
-package com.github.loki4j.logback;
+package com.github.loki4j.common.pipeline;
 
 import java.util.Comparator;
 import java.util.Optional;
@@ -21,13 +21,22 @@ import com.github.loki4j.common.batch.LogRecordBatch;
 import com.github.loki4j.common.batch.LogRecordStream;
 import com.github.loki4j.common.http.Loki4jHttpClient;
 import com.github.loki4j.common.http.LokiResponse;
-import com.github.loki4j.common.util.LokiThreadFactory;
+import com.github.loki4j.common.util.ByteBufferFactory;
+import com.github.loki4j.common.util.Loki4jLogger;
+import com.github.loki4j.common.util.Loki4jThreadFactory;
 import com.github.loki4j.common.writer.Writer;
 
-import ch.qos.logback.core.spi.ContextAwareBase;
 import ch.qos.logback.core.spi.LifeCycle;
 
-public final class DefaultPipeline extends ContextAwareBase implements LifeCycle {
+public final class DefaultPipeline implements LifeCycle {
+
+    private static final Comparator<LogRecord> compareByTime = (e1, e2) -> {
+        var tsCmp = Long.compare(e1.timestampMs, e2.timestampMs);
+        return tsCmp == 0 ? Integer.compare(e1.nanos, e2.nanos) : tsCmp;
+    };
+
+    private static final Comparator<LogRecord> compareByStream = (e1, e2) ->
+        Long.compare(e1.stream.id, e2.stream.id);
 
     private final long PARK_NS = TimeUnit.MILLISECONDS.toNanos(1);
 
@@ -37,7 +46,7 @@ public final class DefaultPipeline extends ContextAwareBase implements LifeCycle
 
     private final Batcher batcher;
 
-    private Optional<Comparator<LogRecord>> recordComparator;
+    private final Optional<Comparator<LogRecord>> recordComparator;
 
     private final Writer writer;
 
@@ -47,9 +56,11 @@ public final class DefaultPipeline extends ContextAwareBase implements LifeCycle
     private final Loki4jHttpClient sender;
 
     /**
-     * A tracker for the appender's metrics (if enabled)
+     * A tracker for the performance metrics (if enabled)
      */
-    private final LoggerMetrics metrics;
+    private final Loki4jMetrics metrics;
+
+    private final Loki4jLogger log;
 
     private final boolean drainOnStop;
 
@@ -69,15 +80,14 @@ public final class DefaultPipeline extends ContextAwareBase implements LifeCycle
 
     private ScheduledFuture<?> drainScheduledFuture;
 
-    private boolean traceEnabled = false;
-
     public DefaultPipeline(
             Batcher batcher,
             Optional<Comparator<LogRecord>> recordComparator,
             Writer writer,
             ByteBufferQueue senderQueue,
             Loki4jHttpClient sender,
-            LoggerMetrics metrics,
+            Loki4jMetrics metrics,
+            Loki4jLogger log,
             boolean drainOnStop) {
         this.batcher = batcher;
         this.recordComparator = recordComparator;
@@ -86,21 +96,43 @@ public final class DefaultPipeline extends ContextAwareBase implements LifeCycle
         this.sender = sender;
         this.drainOnStop = drainOnStop;
         this.metrics = metrics;
+        this.log = log;
+    }
+
+    public DefaultPipeline(PipelineConfig conf, Loki4jLogger log, Loki4jMetrics metrics) {
+        Optional<Comparator<LogRecord>> logRecordComparator = Optional.empty();
+        if (conf.staticLabels) {
+            if (conf.sortByTime)
+                logRecordComparator = Optional.of(compareByTime);
+        } else {
+            logRecordComparator = Optional.of(
+                conf.sortByTime ? compareByStream.thenComparing(compareByTime) : compareByStream);
+        }
+        ByteBufferFactory bufferFactory = new ByteBufferFactory(conf.useDirectBuffers);
+
+        batcher = new Batcher(conf.batchMaxItems, conf.batchMaxBytes, conf.batchTimeoutMs);
+        recordComparator = logRecordComparator;
+        //this.writer = 
+        senderQueue = new ByteBufferQueue(conf.sendQueueMaxBytes, bufferFactory);
+        //this.sender = 
+        this.log = log;
+        this.metrics = metrics;
+        drainOnStop = conf.drainOnStop;
     }
 
     @Override
     public void start() {
-        addInfo("Pipeline is starting...");
+        log.info("Pipeline is starting...");
 
         started = true;
 
-        senderThreadPool = Executors.newFixedThreadPool(1, new LokiThreadFactory("loki4j-sender"));
+        senderThreadPool = Executors.newFixedThreadPool(1, new Loki4jThreadFactory("loki4j-sender"));
         senderThreadPool.execute(() -> runSendLoop());
 
-        encoderThreadPool = Executors.newFixedThreadPool(1, new LokiThreadFactory("loki4j-encoder"));
+        encoderThreadPool = Executors.newFixedThreadPool(1, new Loki4jThreadFactory("loki4j-encoder"));
         encoderThreadPool.execute(() -> runEncodeLoop());
 
-        scheduler = Executors.newScheduledThreadPool(1, new LokiThreadFactory("loki4j-scheduler"));
+        scheduler = Executors.newScheduledThreadPool(1, new Loki4jThreadFactory("loki4j-scheduler"));
         drainScheduledFuture = scheduler.scheduleAtFixedRate(
             () -> drain(),
             100,
@@ -113,12 +145,12 @@ public final class DefaultPipeline extends ContextAwareBase implements LifeCycle
         drainScheduledFuture.cancel(false);
 
         if (drainOnStop) {
-            addInfo("Pipeline is draining...");
+            log.info("Pipeline is draining...");
             waitSendQueueLessThan(batcher.getCapacity(), Long.MAX_VALUE);
             lastSendTimeMs.set(0);
             drain();
             waitSendQueueIsEmpty(Long.MAX_VALUE);
-            addInfo("Drain completed");
+            log.info("Drain completed");
         }
 
         started = false;
@@ -138,7 +170,7 @@ public final class DefaultPipeline extends ContextAwareBase implements LifeCycle
                 unsentEvents.incrementAndGet();
                 accepted = true;
             } else {
-                addWarn("Dropping the record that exceeds max batch size: " + record.toString());
+                log.warn("Dropping the record that exceeds max batch size: " + record.toString());
             }
         }
         if (metrics != null)
@@ -148,7 +180,7 @@ public final class DefaultPipeline extends ContextAwareBase implements LifeCycle
 
     private void drain() {
         drainRequested.set(true);
-        trace("drain planned");
+        log.trace("drain planned");
     }
 
     private void runEncodeLoop() {
@@ -177,7 +209,7 @@ public final class DefaultPipeline extends ContextAwareBase implements LifeCycle
             LockSupport.parkNanos(this, PARK_NS);
         }
         if (!started) return;
-        trace("check encode actions");
+        log.trace("check encode actions");
         LogRecord record = buffer.peek();
         while(record != null && batch.isEmpty()) {
             batcher.checkSizeBeforeAdd(record, batch);
@@ -210,15 +242,15 @@ public final class DefaultPipeline extends ContextAwareBase implements LifeCycle
         recordComparator.ifPresent(cmp -> batch.sort(cmp));
         try {
             writer.serializeBatch(batch);
-            addInfo(String.format(
+            log.info(
                 ">>> Batch %s converted to %,d bytes",
-                    batch, writer.size()));
+                    batch, writer.size());
             //try { System.out.write(batch); } catch (Exception e) { e.printStackTrace(); }
             //System.out.println("\n");
             if (metrics != null)
                 metrics.batchEncoded(startedNs, writer.size());
         } catch (Exception e) {
-            addError("Error occurred while serializing batch " + batch, e);
+            log.error("Error occurred while serializing batch " + batch, e);
             writer.reset();
         }
     }
@@ -233,7 +265,7 @@ public final class DefaultPipeline extends ContextAwareBase implements LifeCycle
         try {
             sendBatch(batch);
             lastSendTimeMs.set(System.currentTimeMillis());
-            trace("sent items: %s", batch.sizeItems);
+            log.trace("sent items: %s", batch.sizeItems);
         } finally {
             unsentEvents.addAndGet(-batch.sizeItems);
             senderQueue.returnBuffer(batch);
@@ -251,19 +283,19 @@ public final class DefaultPipeline extends ContextAwareBase implements LifeCycle
         }
 
         if (e != null) {
-            addError(String.format(
+            log.error(e,
                 "Error while sending Batch %s to Loki (%s)",
-                    batch, sender.getConfig().pushUrl), e);
+                    batch, sender.getConfig().pushUrl);
         }
         else {
             if (r.status < 200 || r.status > 299)
-                addError(String.format(
+                log.error(
                     "Loki responded with non-success status %s on batch %s. Error: %s",
-                    r.status, batch, r.body));
+                    r.status, batch, r.body);
             else
-                addInfo(String.format(
+                log.info(
                     "<<< Batch %s: Loki responded with status %s",
-                    batch, r.status));
+                    batch, r.status);
         }
 
         if (metrics != null)
@@ -283,24 +315,16 @@ public final class DefaultPipeline extends ContextAwareBase implements LifeCycle
             LockSupport.parkNanos(PARK_NS);
             elapsedNs += PARK_NS;
         }
-        trace("wait send queue: started=%s, buffer(%s)>=%s, %s ms %s elapsed",
+        log.trace("wait send queue: started=%s, buffer(%s)>=%s, %s ms %s elapsed",
                 started, unsentEvents.get(), size, timeoutMs, elapsedNs < timeoutNs ? "not" : "");
         if (elapsedNs >= timeoutNs)
             throw new RuntimeException("Not completed within timeout " + timeoutMs + " ms");
     }
 
-    private void trace(String input, Object... args) {
-        if (traceEnabled)
-            addInfo(String.format(input, args));
-    }
 
     @Override
     public boolean isStarted() {
         return started;
-    }
-
-    public void setTraceEnabled(boolean traceEnabled) {
-        this.traceEnabled = traceEnabled;
     }
 
 }
