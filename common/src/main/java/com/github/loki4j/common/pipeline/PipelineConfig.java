@@ -60,8 +60,29 @@ public class PipelineConfig {
     public final boolean drainOnStop;
 
     /**
+     * If true, Protobuf format is used instead of JSON
+    */
+    public final boolean useProtobuf;
+
+    /**
      * Configuration properties for HTTP senders
      */
     public final HttpConfig httpConfig;
+
+    public PipelineConfig(String name, int batchMaxItems, int batchMaxBytes, long batchTimeoutMs, boolean sortByTime,
+            boolean staticLabels, long sendQueueMaxBytes, boolean useDirectBuffers, boolean drainOnStop,
+            boolean useProtobuf, HttpConfig httpConfig) {
+        this.name = name;
+        this.batchMaxItems = batchMaxItems;
+        this.batchMaxBytes = batchMaxBytes;
+        this.batchTimeoutMs = batchTimeoutMs;
+        this.sortByTime = sortByTime;
+        this.staticLabels = staticLabels;
+        this.sendQueueMaxBytes = sendQueueMaxBytes;
+        this.useDirectBuffers = useDirectBuffers;
+        this.drainOnStop = drainOnStop;
+        this.useProtobuf = useProtobuf;
+        this.httpConfig = httpConfig;
+    }
 
 }

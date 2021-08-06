@@ -24,6 +24,8 @@ import com.github.loki4j.common.http.LokiResponse;
 import com.github.loki4j.common.util.ByteBufferFactory;
 import com.github.loki4j.common.util.Loki4jLogger;
 import com.github.loki4j.common.util.Loki4jThreadFactory;
+import com.github.loki4j.common.writer.JsonWriter;
+import com.github.loki4j.common.writer.ProtobufWriter;
 import com.github.loki4j.common.writer.Writer;
 
 import ch.qos.logback.core.spi.LifeCycle;
@@ -112,12 +114,14 @@ public final class DefaultPipeline implements LifeCycle {
 
         batcher = new Batcher(conf.batchMaxItems, conf.batchMaxBytes, conf.batchTimeoutMs);
         recordComparator = logRecordComparator;
-        //this.writer = 
+        writer = conf.useProtobuf
+            ? new ProtobufWriter(conf.batchMaxBytes, bufferFactory)
+            : new JsonWriter(conf.batchMaxBytes);
         senderQueue = new ByteBufferQueue(conf.sendQueueMaxBytes, bufferFactory);
-        //this.sender = 
+        //sender =
+        drainOnStop = conf.drainOnStop;
         this.log = log;
         this.metrics = metrics;
-        drainOnStop = conf.drainOnStop;
     }
 
     @Override
