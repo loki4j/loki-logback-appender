@@ -24,13 +24,9 @@ import com.github.loki4j.common.http.LokiResponse;
 import com.github.loki4j.common.util.ByteBufferFactory;
 import com.github.loki4j.common.util.Loki4jLogger;
 import com.github.loki4j.common.util.Loki4jThreadFactory;
-import com.github.loki4j.common.writer.JsonWriter;
-import com.github.loki4j.common.writer.ProtobufWriter;
 import com.github.loki4j.common.writer.Writer;
 
-import ch.qos.logback.core.spi.LifeCycle;
-
-public final class DefaultPipeline implements LifeCycle {
+public final class DefaultPipeline {
 
     private static final Comparator<LogRecord> compareByTime = (e1, e2) -> {
         var tsCmp = Long.compare(e1.timestampMs, e2.timestampMs);
@@ -114,17 +110,14 @@ public final class DefaultPipeline implements LifeCycle {
 
         batcher = new Batcher(conf.batchMaxItems, conf.batchMaxBytes, conf.batchTimeoutMs);
         recordComparator = logRecordComparator;
-        writer = conf.useProtobuf
-            ? new ProtobufWriter(conf.batchMaxBytes, bufferFactory)
-            : new JsonWriter(conf.batchMaxBytes);
+        writer = conf.writerFactory.factory.apply(conf.batchMaxBytes, bufferFactory);
         senderQueue = new ByteBufferQueue(conf.sendQueueMaxBytes, bufferFactory);
-        //sender =
+        sender = conf.senderFactory.apply(conf.httpConfig);
         drainOnStop = conf.drainOnStop;
         this.log = log;
         this.metrics = metrics;
     }
 
-    @Override
     public void start() {
         log.info("Pipeline is starting...");
 
@@ -144,7 +137,6 @@ public final class DefaultPipeline implements LifeCycle {
             TimeUnit.MILLISECONDS);
     }
 
-    @Override
     public void stop() {
         drainScheduledFuture.cancel(false);
 
@@ -323,12 +315,6 @@ public final class DefaultPipeline implements LifeCycle {
                 started, unsentEvents.get(), size, timeoutMs, elapsedNs < timeoutNs ? "not" : "");
         if (elapsedNs >= timeoutNs)
             throw new RuntimeException("Not completed within timeout " + timeoutMs + " ms");
-    }
-
-
-    @Override
-    public boolean isStarted() {
-        return started;
     }
 
 }
