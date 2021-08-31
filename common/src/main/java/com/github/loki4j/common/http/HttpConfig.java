@@ -99,15 +99,13 @@ public class HttpConfig {
         this.clientSpecific = clientSpecific;
     }
 
-    public static Builder builder(String contentType) {
-        return new Builder(contentType);
+    public static Builder builder() {
+        return new Builder();
     }
 
     public static class Builder {
         public static final ApacheHttpConfig apache = new ApacheHttpConfig(1, 120_000);
         public static final JavaHttpConfig java = new JavaHttpConfig(5 * 60_000);
-
-        private String contentType;
 
         private String pushUrl = "http://localhost:3100/loki/api/v1/push";
         private long connectionTimeoutMs = 30_000;
@@ -117,11 +115,7 @@ public class HttpConfig {
         private Optional<String> password = Optional.empty();
         private ClientSpecificConfig clientSpecific = java;
 
-        public Builder(String contentType) {
-            this.contentType = contentType;
-        }
-
-        public HttpConfig build() {
+        public HttpConfig build(String contentType) {
             return new HttpConfig(
                 pushUrl,
                 connectionTimeoutMs,

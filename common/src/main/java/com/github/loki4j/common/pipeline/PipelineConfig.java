@@ -3,15 +3,37 @@ package com.github.loki4j.common.pipeline;
 import java.util.function.BiFunction;
 import java.util.function.Function;
 
+import com.github.loki4j.common.http.ApacheHttpClient;
 import com.github.loki4j.common.http.HttpConfig;
+import com.github.loki4j.common.http.JavaHttpClient;
 import com.github.loki4j.common.http.Loki4jHttpClient;
 import com.github.loki4j.common.util.ByteBufferFactory;
+import com.github.loki4j.common.writer.JsonWriter;
+import com.github.loki4j.common.writer.ProtobufWriter;
 import com.github.loki4j.common.writer.Writer;
 
 /**
  * Configuration properties for Loki4j pipeline
  */
 public class PipelineConfig {
+
+    public static final WriterFactory json = new WriterFactory(
+        (capacity, bufferFactory) -> new JsonWriter(capacity),
+        "application/json");
+
+    public static final WriterFactory protobuf = new WriterFactory(
+        (capacity, bbFactory) -> new ProtobufWriter(capacity, bbFactory),
+        "application/x-protobuf");
+
+    public static HttpConfig.Builder apache(int maxConnections, long connectionKeepAliveMs) {
+        return HttpConfig.builder()
+            .setClientConfig(new HttpConfig.ApacheHttpConfig(maxConnections, connectionKeepAliveMs));
+    }
+
+    public static HttpConfig.Builder java(long innerThreadsExpirationMs) {
+        return HttpConfig.builder()
+            .setClientConfig(new HttpConfig.JavaHttpConfig(innerThreadsExpirationMs));
+    }
 
     /**
      * Name of this pipeline
@@ -97,6 +119,101 @@ public class PipelineConfig {
         this.senderFactory = senderFactory;
     }
 
+    public static class Builder {
+
+        private String name = "loki4j";
+        private int batchMaxItems = 1000;
+        private int batchMaxBytes = 4 * 1024 * 1024;
+        private long batchTimeoutMs = 60 * 1000;
+        private boolean sortByTime = false;
+        private boolean staticLabels = false;
+        private long sendQueueMaxBytes = batchMaxBytes * 10;
+        private boolean useDirectBuffers = true;
+        private boolean drainOnStop = true;
+        private WriterFactory writer = json;
+        private HttpConfig.Builder httpClient = java(5 * 60_000);
+        private Function<HttpConfig, Loki4jHttpClient> senderFactory = cfg ->
+            (cfg.clientSpecific instanceof HttpConfig.JavaHttpConfig)
+            ? new JavaHttpClient(cfg)
+            : new ApacheHttpClient(cfg);
+
+        public PipelineConfig build() {
+            return new PipelineConfig(
+                name,
+                batchMaxItems,
+                batchMaxBytes,
+                batchTimeoutMs,
+                sortByTime,
+                staticLabels,
+                sendQueueMaxBytes,
+                useDirectBuffers,
+                drainOnStop,
+                writer,
+                httpClient.build(writer.contentType),
+                senderFactory);
+        }
+
+        public Builder setName(String name) {
+            this.name = name;
+            return this;
+        }
+
+        public Builder setBatchMaxItems(int batchMaxItems) {
+            this.batchMaxItems = batchMaxItems;
+            return this;
+        }
+
+        public Builder setBatchMaxBytes(int batchMaxBytes) {
+            this.batchMaxBytes = batchMaxBytes;
+            return this;
+        }
+
+        public Builder setBatchTimeoutMs(long batchTimeoutMs) {
+            this.batchTimeoutMs = batchTimeoutMs;
+            return this;
+        }
+
+        public Builder setSortByTime(boolean sortByTime) {
+            this.sortByTime = sortByTime;
+            return this;
+        }
+
+        public Builder setStaticLabels(boolean staticLabels) {
+            this.staticLabels = staticLabels;
+            return this;
+        }
+
+        public Builder setSendQueueMaxBytes(long sendQueueMaxBytes) {
+            this.sendQueueMaxBytes = sendQueueMaxBytes;
+            return this;
+        }
+
+        public Builder setUseDirectBuffers(boolean useDirectBuffers) {
+            this.useDirectBuffers = useDirectBuffers;
+            return this;
+        }
+
+        public Builder setDrainOnStop(boolean drainOnStop) {
+            this.drainOnStop = drainOnStop;
+            return this;
+        }
+
+        public Builder setWriter(WriterFactory writer) {
+            this.writer = writer;
+            return this;
+        }
+
+        public Builder setHttpClient(HttpConfig.Builder httpClient) {
+            this.httpClient = httpClient;
+            return this;
+        }
+
+        public Builder setSenderFactory(Function<HttpConfig, Loki4jHttpClient> senderFactory) {
+            this.senderFactory = senderFactory;
+            return this;
+        }
+
+    }
 
     /**
      * A factory for Writer

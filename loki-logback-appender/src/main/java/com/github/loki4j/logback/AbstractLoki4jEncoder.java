@@ -120,16 +120,6 @@ public abstract class AbstractLoki4jEncoder extends ContextAwareBase implements 
         messagePatternLayout = initPatternLayout(message.pattern);
         messagePatternLayout.start();
 
-        // prepare the comparator based on sorting settings
-        logRecordComparator = Optional.empty();
-        if (staticLabels) {
-            if (sortByTime)
-                logRecordComparator = Optional.of(byTime);
-        } else {
-            logRecordComparator = Optional.of(
-                sortByTime ? byStream.thenComparing(byTime) : byStream);
-        }
-
         this.started = true;
     }
 
