@@ -119,6 +119,10 @@ public class PipelineConfig {
         this.senderFactory = senderFactory;
     }
 
+    public static final Builder builder() {
+        return new Builder();
+    }
+
     public static class Builder {
 
         private String name = "loki4j";

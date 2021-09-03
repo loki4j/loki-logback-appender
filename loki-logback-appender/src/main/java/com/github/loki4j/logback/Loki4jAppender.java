@@ -2,12 +2,11 @@ package com.github.loki4j.logback;
 
 import java.util.concurrent.atomic.AtomicLong;
 
-import com.github.loki4j.common.batch.Batcher;
-import com.github.loki4j.common.batch.ByteBufferQueue;
 import com.github.loki4j.common.http.Loki4jHttpClient;
 import com.github.loki4j.common.pipeline.DefaultPipeline;
 import com.github.loki4j.common.pipeline.Loki4jMetrics;
-import com.github.loki4j.common.util.ByteBufferFactory;
+import com.github.loki4j.common.pipeline.PipelineConfig;
+import com.github.loki4j.common.util.Loki4jLogger;
 
 import ch.qos.logback.classic.spi.ILoggingEvent;
 import ch.qos.logback.core.CoreConstants;
@@ -100,6 +99,11 @@ public final class Loki4jAppender extends UnsynchronizedAppenderBase<ILoggingEve
             "batchMaxItems=%s, batchMaxBytes=%s, batchTimeout=%s, sendQueueMaxBytes=%s...",
             batchMaxItems, batchMaxBytes, batchTimeoutMs, sendQueueMaxBytes));
 
+        if (sendQueueMaxBytes < batchMaxBytes * 5) {
+            addWarn("Configured value sendQueueMaxBytes=" + sendQueueMaxBytes + " is less than `batchMaxBytes * 5`");
+            sendQueueMaxBytes = batchMaxBytes * 5;
+        }
+
         if (encoder == null) {
             addWarn("No encoder specified in the config. Using JsonEncoder with default settings");
             encoder = new JsonEncoder();
@@ -107,8 +111,24 @@ public final class Loki4jAppender extends UnsynchronizedAppenderBase<ILoggingEve
         encoder.setContext(context);
         encoder.start();
 
-        var bufferFactory = new ByteBufferFactory(useDirectBuffers);
-        var writer = encoder.createWriter(batchMaxBytes, bufferFactory);
+        if (sender == null) {
+            addWarn("No sender specified in the config. Trying to use JavaHttpSender with default settings");
+            sender = new JavaHttpSender();
+        }
+
+        PipelineConfig pipelineConf = PipelineConfig.builder()
+            .setName(this.getName())
+            .setBatchMaxItems(batchMaxItems)
+            .setBatchMaxBytes(batchMaxBytes)
+            .setBatchTimeoutMs(batchTimeoutMs)
+            .setSortByTime(encoder.getSortByTime())
+            .setStaticLabels(encoder.getStaticLabels())
+            .setSendQueueMaxBytes(sendQueueMaxBytes)
+            .setUseDirectBuffers(useDirectBuffers)
+            .setDrainOnStop(drainOnStop)
+            .setWriter(encoder.getWriterFactory())
+            .setHttpClient(sender.getConfig())
+            .build();
 
         Loki4jMetrics metrics = null;
         if (metricsEnabled) {
@@ -118,28 +138,10 @@ public final class Loki4jAppender extends UnsynchronizedAppenderBase<ILoggingEve
                 host == null ? "unknown" : host);
         }
 
-        if (sender == null) {
-            addWarn("No sender specified in the config. Trying to use JavaHttpSender with default settings");
-            sender = new JavaHttpSender();
-        }
-        var httpConfig = sender.getConfig(encoder.getContentType());
-        httpClient = sender.createHttpClient(httpConfig);
-
-        if (sendQueueMaxBytes < batchMaxBytes * 5) {
-            addWarn("Configured value sendQueueMaxBytes=" + sendQueueMaxBytes + " is less than `batchMaxBytes * 5`");
-            sendQueueMaxBytes = batchMaxBytes * 5;
-        }
-        var sendQueue = new ByteBufferQueue(sendQueueMaxBytes, bufferFactory);
-        var batcher = new Batcher(batchMaxItems, batchMaxBytes, batchTimeoutMs);
         pipeline = new DefaultPipeline(
-            batcher,
-            encoder.getLogRecordComparator(),
-            writer,
-            sendQueue,
-            httpClient,
-            metrics,
-            drainOnStop);
-        pipeline.setContext(context);
+            pipelineConf,
+            new InternalLogger(),
+            metrics);
         pipeline.start();
 
         super.start();
@@ -195,6 +197,29 @@ public final class Loki4jAppender extends UnsynchronizedAppenderBase<ILoggingEve
                     "Resetting dropped message counter from %s to 0", dropped));
                 droppedEventsCount.set(0L);
             }
+        }
+    }
+
+    private class InternalLogger implements Loki4jLogger {
+        @Override
+        public void trace(String msg, Object... args) {
+           addInfo(String.format(msg, args));
+        }
+        @Override
+        public void info(String msg, Object... args) {
+            addInfo(String.format(msg, args));
+        }
+        @Override
+        public void warn(String msg, Object... args) {
+            addWarn(String.format(msg, args));
+        }
+        @Override
+        public void error(String msg, Object... args) {
+            addError(String.format(msg, args));
+        }
+        @Override
+        public void error(Throwable ex, String msg, Object... args) {
+            addError(String.format(msg, args), ex);
         }
     }
 

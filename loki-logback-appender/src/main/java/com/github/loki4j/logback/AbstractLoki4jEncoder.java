@@ -1,17 +1,12 @@
 package com.github.loki4j.logback;
 
 import java.nio.charset.Charset;
-import java.util.Comparator;
 import java.util.HashMap;
-import java.util.Optional;
 import java.util.concurrent.atomic.AtomicInteger;
 import java.util.concurrent.atomic.AtomicReference;
 import java.util.regex.Pattern;
 
-import com.github.loki4j.common.batch.LogRecord;
 import com.github.loki4j.common.batch.LogRecordStream;
-import com.github.loki4j.common.util.ByteBufferFactory;
-import com.github.loki4j.common.writer.Writer;
 
 import ch.qos.logback.classic.PatternLayout;
 import ch.qos.logback.classic.spi.ILoggingEvent;
@@ -76,8 +71,6 @@ public abstract class AbstractLoki4jEncoder extends ContextAwareBase implements 
     private LabelCfg label = new LabelCfg();
 
     private MessageCfg message = new MessageCfg();
-
-    private Optional<Comparator<LogRecord>> logRecordComparator;
 
     /**
      * If true, log records in batch are sorted by timestamp.
@@ -168,8 +161,6 @@ public abstract class AbstractLoki4jEncoder extends ContextAwareBase implements 
         return nanos;
     }
 
-    public abstract Writer createWriter(int capacity, ByteBufferFactory bufferFactory);
-
     private PatternLayout initPatternLayout(String pattern) {
         var patternLayout = new PatternLayout();
         patternLayout.setContext(context);
@@ -210,10 +201,6 @@ public abstract class AbstractLoki4jEncoder extends ContextAwareBase implements 
         return result;
     }
 
-    public Optional<Comparator<LogRecord>> getLogRecordComparator() {
-        return logRecordComparator;
-    }
-
     public void setLabel(LabelCfg label) {
         this.label = label;
     }
@@ -222,10 +209,16 @@ public abstract class AbstractLoki4jEncoder extends ContextAwareBase implements 
         this.message = message;
     }
 
+    public boolean getSortByTime() {
+        return sortByTime;
+    }
     public void setSortByTime(boolean sortByTime) {
         this.sortByTime = sortByTime;
     }
 
+    public boolean getStaticLabels() {
+        return staticLabels;
+    }
     public void setStaticLabels(boolean staticLabels) {
         this.staticLabels = staticLabels;
     }

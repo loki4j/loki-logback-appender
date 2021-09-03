@@ -300,7 +300,7 @@ public final class DefaultPipeline {
         return r;
     }
 
-    void waitSendQueueIsEmpty(long timeoutMs) {
+    public void waitSendQueueIsEmpty(long timeoutMs) {
         waitSendQueueLessThan(1, timeoutMs);
     }
 

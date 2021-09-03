@@ -1,9 +1,7 @@
 package com.github.loki4j.logback;
 
 import com.github.loki4j.common.http.HttpConfig;
-import com.github.loki4j.common.http.JavaHttpClient;
-import com.github.loki4j.common.http.HttpConfig.JavaHttpConfig;
-import com.github.loki4j.common.http.Loki4jHttpClient;
+import com.github.loki4j.common.pipeline.PipelineConfig;
 
 /**
  * A configurator for {@link com.github.loki4j.common.http.JavaHttpClient JavaHttpClient}
@@ -21,16 +19,10 @@ public class JavaHttpSender extends AbstractHttpSender {
     }
 
     @Override
-    public HttpConfig getConfig(String contentType) {
-        return HttpConfig
-            .builder(contentType)
-            .fill(this::fillHttpConfig)
-            .setJava(new JavaHttpConfig(innerThreadsExpirationMs))
-            .build();
+    public HttpConfig.Builder getConfig() {
+        return PipelineConfig
+            .java(innerThreadsExpirationMs)
+            .fill(this::fillHttpConfig);
     }
 
-    @Override
-    public Loki4jHttpClient createHttpClient(HttpConfig config) {
-        return new JavaHttpClient(config);
-    }
 }

@@ -1,8 +1,6 @@
 package com.github.loki4j.logback;
 
-import com.github.loki4j.common.util.ByteBufferFactory;
-import com.github.loki4j.common.writer.JsonWriter;
-import com.github.loki4j.common.writer.Writer;
+import com.github.loki4j.common.pipeline.PipelineConfig;
 
 import ch.qos.logback.core.joran.spi.NoAutoStart;
 
@@ -12,12 +10,9 @@ import ch.qos.logback.core.joran.spi.NoAutoStart;
 @NoAutoStart
 public class JsonEncoder extends AbstractLoki4jEncoder {
 
-    public Writer createWriter(int capacity, ByteBufferFactory bbFactory) {
-        return new JsonWriter(capacity);
-    }
-
-    public String getContentType() {
-        return "application/json";
+    @Override
+    public PipelineConfig.WriterFactory getWriterFactory() {
+        return PipelineConfig.json;
     }
 
 }
