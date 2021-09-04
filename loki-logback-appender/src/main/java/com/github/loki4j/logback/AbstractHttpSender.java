@@ -1,8 +1,11 @@
 package com.github.loki4j.logback;
 
 import java.util.Optional;
+import java.util.function.Function;
 
 import com.github.loki4j.common.http.HttpConfig;
+import com.github.loki4j.common.http.Loki4jHttpClient;
+import com.github.loki4j.common.pipeline.PipelineConfig;
 
 /**
  * Abstract class that implements a common logic shared between standard
@@ -64,6 +67,11 @@ public abstract class AbstractHttpSender implements HttpSender {
             .setRequestTimeoutMs(requestTimeoutMs)
             .setUsername(Optional.ofNullable(auth).map(a -> a.username))
             .setPassword(Optional.ofNullable(auth).map(a -> a.password));
+    }
+
+    @Override
+    public Function<HttpConfig, Loki4jHttpClient> getSenderFactory() {
+        return PipelineConfig.defaultSenderFactory;
     }
 
     public void setConnectionTimeoutMs(long connectionTimeoutMs) {

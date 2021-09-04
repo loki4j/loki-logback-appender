@@ -149,7 +149,6 @@ public class AbstractLoki4jEncoderTest {
         });
     }
 
-
     @Test
     public void testNanoCounter() {
         var enc = toStringEncoder(

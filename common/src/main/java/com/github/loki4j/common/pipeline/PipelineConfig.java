@@ -25,6 +25,11 @@ public class PipelineConfig {
         (capacity, bbFactory) -> new ProtobufWriter(capacity, bbFactory),
         "application/x-protobuf");
 
+    public static final Function<HttpConfig, Loki4jHttpClient> defaultSenderFactory = cfg ->
+        (cfg.clientSpecific instanceof HttpConfig.JavaHttpConfig)
+        ? new JavaHttpClient(cfg)
+        : new ApacheHttpClient(cfg);
+
     public static HttpConfig.Builder apache(int maxConnections, long connectionKeepAliveMs) {
         return HttpConfig.builder()
             .setClientConfig(new HttpConfig.ApacheHttpConfig(maxConnections, connectionKeepAliveMs));
@@ -136,10 +141,7 @@ public class PipelineConfig {
         private boolean drainOnStop = true;
         private WriterFactory writer = json;
         private HttpConfig.Builder httpClient = java(5 * 60_000);
-        private Function<HttpConfig, Loki4jHttpClient> senderFactory = cfg ->
-            (cfg.clientSpecific instanceof HttpConfig.JavaHttpConfig)
-            ? new JavaHttpClient(cfg)
-            : new ApacheHttpClient(cfg);
+        private Function<HttpConfig, Loki4jHttpClient> senderFactory = defaultSenderFactory;
 
         public PipelineConfig build() {
             return new PipelineConfig(
@@ -234,7 +236,7 @@ public class PipelineConfig {
          */
         public final String contentType;
 
-        WriterFactory(BiFunction<Integer, ByteBufferFactory, Writer> factory, String contentType) {
+        public WriterFactory(BiFunction<Integer, ByteBufferFactory, Writer> factory, String contentType) {
             this.factory = factory;
             this.contentType = contentType;
         }

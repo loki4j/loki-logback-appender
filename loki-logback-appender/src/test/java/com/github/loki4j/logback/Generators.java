@@ -16,6 +16,7 @@ import com.github.loki4j.common.batch.LogRecordBatch;
 import com.github.loki4j.common.http.HttpConfig;
 import com.github.loki4j.common.http.Loki4jHttpClient;
 import com.github.loki4j.common.http.LokiResponse;
+import com.github.loki4j.common.pipeline.PipelineConfig;
 import com.github.loki4j.common.util.ByteBufferFactory;
 import com.github.loki4j.common.writer.Writer;
 import com.github.loki4j.testkit.dummy.ExceptionGenerator;
@@ -31,7 +32,7 @@ import static com.github.loki4j.testkit.dummy.Generators.genMessage;
 
 public class Generators {
 
-    static HttpConfig defaultHttpConfig = HttpConfig.builder("test").build();
+    static HttpConfig.Builder defaultHttpConfig = HttpConfig.builder();
 
     public static String batchToString(LogRecordBatch batch) {
         var s = new StringBuilder();
@@ -179,12 +180,10 @@ public class Generators {
         boolean staticLabels) {
         var encoder = new AbstractLoki4jEncoder() {
             @Override
-            public String getContentType() {
-                return "text/plain";
-            }
-            @Override
-            public Writer createWriter(int capacity, ByteBufferFactory bufferFactory) {
-                return stringWriter(capacity, bufferFactory);
+            public PipelineConfig.WriterFactory getWriterFactory() {
+                return new PipelineConfig.WriterFactory(
+                    (capacity, bufferFactory) -> stringWriter(capacity, bufferFactory),
+                    "text/plain");
             }
         };
         encoder.setLabel(label);
@@ -347,13 +346,13 @@ public class Generators {
         }
 
         @Override
-        public HttpConfig getConfig(String contentType) {
+        public HttpConfig.Builder getConfig() {
             return defaultHttpConfig;
         }
 
         @Override
-        public Loki4jHttpClient createHttpClient(HttpConfig config) {
-            return client;
+        public Function<HttpConfig, Loki4jHttpClient> getSenderFactory() {
+            return cfg -> client;
         }
     }
 
@@ -365,7 +364,7 @@ public class Generators {
 
         @Override
         public HttpConfig getConfig() {
-            return defaultHttpConfig;
+            return defaultHttpConfig.build("test");
         }
 
         @Override

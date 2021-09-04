@@ -10,6 +10,7 @@ import static org.junit.Assert.*;
 import java.nio.ByteBuffer;
 import java.util.concurrent.atomic.AtomicBoolean;
 import java.util.concurrent.locks.LockSupport;
+import java.util.function.Function;
 
 import com.github.loki4j.common.http.HttpConfig;
 import com.github.loki4j.common.http.Loki4jHttpClient;
@@ -235,7 +236,7 @@ public class Loki4jAppenderTest {
 
         @Override
         public HttpConfig getConfig() {
-            return defaultHttpConfig;
+            return defaultHttpConfig.build("test");
         }
     }
 
@@ -243,13 +244,13 @@ public class Loki4jAppenderTest {
         public final StoppableHttpClient client = new StoppableHttpClient();
 
         @Override
-        public HttpConfig getConfig(String contentType) {
+        public HttpConfig.Builder getConfig() {
             return defaultHttpConfig;
         }
 
         @Override
-        public Loki4jHttpClient createHttpClient(HttpConfig config) {
-            return client;
+        public Function<HttpConfig, Loki4jHttpClient> getSenderFactory() {
+            return cfg -> client;
         }
     }
 }

@@ -78,25 +78,6 @@ public final class DefaultPipeline {
 
     private ScheduledFuture<?> drainScheduledFuture;
 
-    public DefaultPipeline(
-            Batcher batcher,
-            Optional<Comparator<LogRecord>> recordComparator,
-            Writer writer,
-            ByteBufferQueue senderQueue,
-            Loki4jHttpClient sender,
-            Loki4jMetrics metrics,
-            Loki4jLogger log,
-            boolean drainOnStop) {
-        this.batcher = batcher;
-        this.recordComparator = recordComparator;
-        this.writer = writer;
-        this.senderQueue = senderQueue;
-        this.sender = sender;
-        this.drainOnStop = drainOnStop;
-        this.metrics = metrics;
-        this.log = log;
-    }
-
     public DefaultPipeline(PipelineConfig conf, Loki4jLogger log, Loki4jMetrics metrics) {
         Optional<Comparator<LogRecord>> logRecordComparator = Optional.empty();
         if (conf.staticLabels) {

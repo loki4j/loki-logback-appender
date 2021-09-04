@@ -2,7 +2,6 @@ package com.github.loki4j.logback;
 
 import java.util.concurrent.atomic.AtomicLong;
 
-import com.github.loki4j.common.http.Loki4jHttpClient;
 import com.github.loki4j.common.pipeline.DefaultPipeline;
 import com.github.loki4j.common.pipeline.Loki4jMetrics;
 import com.github.loki4j.common.pipeline.PipelineConfig;
@@ -72,11 +71,6 @@ public final class Loki4jAppender extends UnsynchronizedAppenderBase<ILoggingEve
     private HttpSender sender;
 
     /**
-     * HTTP sender to use for pushing logs to Loki
-     */
-    private Loki4jHttpClient httpClient;
-
-    /**
      * A pipeline that does all the heavy lifting log records processing
      */
     private DefaultPipeline pipeline;
@@ -128,6 +122,7 @@ public final class Loki4jAppender extends UnsynchronizedAppenderBase<ILoggingEve
             .setDrainOnStop(drainOnStop)
             .setWriter(encoder.getWriterFactory())
             .setHttpClient(sender.getConfig())
+            .setSenderFactory(sender.getSenderFactory())
             .build();
 
         Loki4jMetrics metrics = null;
@@ -160,11 +155,6 @@ public final class Loki4jAppender extends UnsynchronizedAppenderBase<ILoggingEve
 
         pipeline.stop();
         encoder.stop();
-        try {
-            httpClient.close();
-        } catch (Exception e) {
-            addWarn("Error while closing HttpClient", e);
-        }
 
         addInfo("Successfully stopped");
     }
