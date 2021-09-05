@@ -22,7 +22,8 @@ public class InternalLogger implements Loki4jLogger {
     
     @Override
     public void trace(String msg, Object... args) {
-        logger.addStatus(new InfoStatus(String.format(msg, args), source));
+        if (isTraceEnabled(source))
+            logger.addStatus(new InfoStatus(String.format(msg, args), source));
     }
     @Override
     public void info(String msg, Object... args) {
