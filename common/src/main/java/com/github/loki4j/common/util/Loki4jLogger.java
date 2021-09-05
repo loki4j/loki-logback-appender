@@ -1,5 +1,8 @@
 package com.github.loki4j.common.util;
 
+/**
+ * A lightweight framework-agnostic interface for internal logging
+ */
 public interface Loki4jLogger {
 
     void trace(String msg, Object... args);
@@ -11,4 +14,5 @@ public interface Loki4jLogger {
     void error(String msg, Object... args);
 
     void error(Throwable ex, String msg, Object... args);
+
 }
