@@ -31,13 +31,13 @@ Please start with the [Contribution guidelines](CONTRIBUTING.md).
 
 ## Building and testing the project
 
-Please make sure the following software is installed on you machine
+Please make sure the following software is installed on your machine
 so you can build and test the project:
 
 - Java 11 or later
 - Gradle 7.0 or later
 
-Check out the project to the directory on you local machine and run:
+Check out the project to the directory on your local machine and run:
 
 ```sh
 gradle check
