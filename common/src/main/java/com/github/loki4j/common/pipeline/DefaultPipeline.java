@@ -78,7 +78,7 @@ public final class DefaultPipeline {
 
     private ScheduledFuture<?> drainScheduledFuture;
 
-    public DefaultPipeline(PipelineConfig conf, Loki4jLogger log, Loki4jMetrics metrics) {
+    public DefaultPipeline(PipelineConfig conf, Loki4jMetrics metrics) {
         Optional<Comparator<LogRecord>> logRecordComparator = Optional.empty();
         if (conf.staticLabels) {
             if (conf.sortByTime)
@@ -95,7 +95,7 @@ public final class DefaultPipeline {
         senderQueue = new ByteBufferQueue(conf.sendQueueMaxBytes, bufferFactory);
         sender = conf.senderFactory.apply(conf.httpConfig);
         drainOnStop = conf.drainOnStop;
-        this.log = log;
+        this.log = conf.internalLoggingFactory.apply(this);
         this.metrics = metrics;
     }
 

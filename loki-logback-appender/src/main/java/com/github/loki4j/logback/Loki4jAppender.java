@@ -5,7 +5,6 @@ import java.util.concurrent.atomic.AtomicLong;
 import com.github.loki4j.common.pipeline.DefaultPipeline;
 import com.github.loki4j.common.pipeline.Loki4jMetrics;
 import com.github.loki4j.common.pipeline.PipelineConfig;
-import com.github.loki4j.common.util.Loki4jLogger;
 
 import ch.qos.logback.classic.spi.ILoggingEvent;
 import ch.qos.logback.core.CoreConstants;
@@ -123,6 +122,7 @@ public final class Loki4jAppender extends UnsynchronizedAppenderBase<ILoggingEve
             .setWriter(encoder.getWriterFactory())
             .setHttpClient(sender.getConfig())
             .setSenderFactory(sender.getSenderFactory())
+            .setInternalLoggingFactory(source -> new InternalLogger(source, this))
             .build();
 
         Loki4jMetrics metrics = null;
@@ -135,7 +135,6 @@ public final class Loki4jAppender extends UnsynchronizedAppenderBase<ILoggingEve
 
         pipeline = new DefaultPipeline(
             pipelineConf,
-            new InternalLogger(),
             metrics);
         pipeline.start();
 
@@ -187,29 +186,6 @@ public final class Loki4jAppender extends UnsynchronizedAppenderBase<ILoggingEve
                     "Resetting dropped message counter from %s to 0", dropped));
                 droppedEventsCount.set(0L);
             }
-        }
-    }
-
-    private class InternalLogger implements Loki4jLogger {
-        @Override
-        public void trace(String msg, Object... args) {
-           addInfo(String.format(msg, args));
-        }
-        @Override
-        public void info(String msg, Object... args) {
-            addInfo(String.format(msg, args));
-        }
-        @Override
-        public void warn(String msg, Object... args) {
-            addWarn(String.format(msg, args));
-        }
-        @Override
-        public void error(String msg, Object... args) {
-            addError(String.format(msg, args));
-        }
-        @Override
-        public void error(Throwable ex, String msg, Object... args) {
-            addError(String.format(msg, args), ex);
         }
     }
 
