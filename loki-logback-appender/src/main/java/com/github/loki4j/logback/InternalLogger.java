@@ -42,4 +42,3 @@ public class InternalLogger implements Loki4jLogger {
         logger.addStatus(new ErrorStatus(String.format(msg, args), source, ex));
     }
 }
-    
