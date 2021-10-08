@@ -40,7 +40,7 @@ public final class DefaultPipeline {
 
     private final ConcurrentLinkedQueue<LogRecord> buffer = new ConcurrentLinkedQueue<>();
 
-    private final ByteBufferQueue senderQueue;
+    private final ByteBufferQueue sendQueue;
 
     private final Batcher batcher;
 
@@ -49,9 +49,9 @@ public final class DefaultPipeline {
     private final Writer writer;
 
     /**
-     * A HTTPS sender to use for pushing logs to Loki
+     * A HTTP client to use for pushing logs to Loki
      */
-    private final Loki4jHttpClient sender;
+    private final Loki4jHttpClient httpClient;
 
     /**
      * A tracker for the performance metrics (if enabled)
@@ -92,8 +92,8 @@ public final class DefaultPipeline {
         batcher = new Batcher(conf.batchMaxItems, conf.batchMaxBytes, conf.batchTimeoutMs);
         recordComparator = logRecordComparator;
         writer = conf.writerFactory.factory.apply(conf.batchMaxBytes, bufferFactory);
-        senderQueue = new ByteBufferQueue(conf.sendQueueMaxBytes, bufferFactory);
-        sender = conf.senderFactory.apply(conf.httpConfig);
+        sendQueue = new ByteBufferQueue(conf.sendQueueMaxBytes, bufferFactory);
+        httpClient = conf.httpClientFactory.apply(conf.httpConfig);
         drainOnStop = conf.drainOnStop;
         this.log = conf.internalLoggingFactory.apply(this);
         this.metrics = metrics;
@@ -202,7 +202,7 @@ public final class DefaultPipeline {
         writeBatch(batch, writer);
         if (writer.isEmpty()) return;
         while(started && 
-                !senderQueue.offer(
+                !sendQueue.offer(
                     batch.batchId(),
                     batch.size(),
                     writer.size(),
@@ -233,10 +233,10 @@ public final class DefaultPipeline {
     }
 
     private void sendStep() throws InterruptedException {
-        BinaryBatch batch = senderQueue.borrowBuffer();
+        BinaryBatch batch = sendQueue.borrowBuffer();
         while(started && batch == null) {
             LockSupport.parkNanos(this, PARK_NS);
-            batch = senderQueue.borrowBuffer();
+            batch = sendQueue.borrowBuffer();
         }
         if (!started) return;
         try {
@@ -245,7 +245,7 @@ public final class DefaultPipeline {
             log.trace("sent items: %s", batch.sizeItems);
         } finally {
             unsentEvents.addAndGet(-batch.sizeItems);
-            senderQueue.returnBuffer(batch);
+            sendQueue.returnBuffer(batch);
         }
     }
 
@@ -254,7 +254,7 @@ public final class DefaultPipeline {
         LokiResponse r = null;
         Exception e = null;
         try {
-            r = sender.send(batch.data);
+            r = httpClient.send(batch.data);
         } catch (Exception re) {
             e = re;
         }
@@ -262,7 +262,7 @@ public final class DefaultPipeline {
         if (e != null) {
             log.error(e,
                 "Error while sending Batch %s to Loki (%s)",
-                    batch, sender.getConfig().pushUrl);
+                    batch, httpClient.getConfig().pushUrl);
         }
         else {
             if (r.status < 200 || r.status > 299)

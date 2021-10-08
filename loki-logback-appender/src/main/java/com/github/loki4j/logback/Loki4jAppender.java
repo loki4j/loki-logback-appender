@@ -120,8 +120,8 @@ public final class Loki4jAppender extends UnsynchronizedAppenderBase<ILoggingEve
             .setUseDirectBuffers(useDirectBuffers)
             .setDrainOnStop(drainOnStop)
             .setWriter(encoder.getWriterFactory())
-            .setHttpClient(sender.getConfig())
-            .setSenderFactory(sender.getSenderFactory())
+            .setHttpConfig(sender.getConfig())
+            .setHttpClientFactory(sender.getHttpClientFactory())
             .setInternalLoggingFactory(source -> new InternalLogger(source, this))
             .build();
 

@@ -70,8 +70,8 @@ public abstract class AbstractHttpSender implements HttpSender {
     }
 
     @Override
-    public Function<HttpConfig, Loki4jHttpClient> getSenderFactory() {
-        return PipelineConfig.defaultSenderFactory;
+    public Function<HttpConfig, Loki4jHttpClient> getHttpClientFactory() {
+        return PipelineConfig.defaultHttpClientFactory;
     }
 
     public void setConnectionTimeoutMs(long connectionTimeoutMs) {

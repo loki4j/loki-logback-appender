@@ -249,7 +249,7 @@ public class Loki4jAppenderTest {
         }
 
         @Override
-        public Function<HttpConfig, Loki4jHttpClient> getSenderFactory() {
+        public Function<HttpConfig, Loki4jHttpClient> getHttpClientFactory() {
             return cfg -> client;
         }
     }

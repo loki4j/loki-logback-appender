@@ -26,7 +26,7 @@ public class PipelineConfig {
         (capacity, bbFactory) -> new ProtobufWriter(capacity, bbFactory),
         "application/x-protobuf");
 
-    public static final Function<HttpConfig, Loki4jHttpClient> defaultSenderFactory = cfg ->
+    public static final Function<HttpConfig, Loki4jHttpClient> defaultHttpClientFactory = cfg ->
         (cfg.clientSpecific instanceof HttpConfig.JavaHttpConfig)
         ? new JavaHttpClient(cfg)
         : new ApacheHttpClient(cfg);
@@ -99,15 +99,15 @@ public class PipelineConfig {
     public final WriterFactory writerFactory;
 
     /**
-     * Configuration properties for HTTP senders
+     * Configuration properties for HTTP clients
      */
     public final HttpConfig httpConfig;
 
     /**
-     * A factory for Sender.
+     * A factory for HTTP client for sending logs to Loki.
      * Argument is a config required for constructing an HTTP client
      */
-    public final Function<HttpConfig, Loki4jHttpClient> senderFactory;
+    public final Function<HttpConfig, Loki4jHttpClient> httpClientFactory;
 
     /**
      * A factory for an internal logger.
@@ -117,7 +117,7 @@ public class PipelineConfig {
 
     public PipelineConfig(String name, int batchMaxItems, int batchMaxBytes, long batchTimeoutMs, boolean sortByTime,
             boolean staticLabels, long sendQueueMaxBytes, boolean useDirectBuffers, boolean drainOnStop,
-            WriterFactory writerFactory, HttpConfig httpConfig, Function<HttpConfig, Loki4jHttpClient> senderFactory,
+            WriterFactory writerFactory, HttpConfig httpConfig, Function<HttpConfig, Loki4jHttpClient> httpClientFactory,
             Function<Object, Loki4jLogger> internalLoggingFactory) {
         this.name = name;
         this.batchMaxItems = batchMaxItems;
@@ -130,7 +130,7 @@ public class PipelineConfig {
         this.drainOnStop = drainOnStop;
         this.writerFactory = writerFactory;
         this.httpConfig = httpConfig;
-        this.senderFactory = senderFactory;
+        this.httpClientFactory = httpClientFactory;
         this.internalLoggingFactory = internalLoggingFactory;
     }
 
@@ -150,8 +150,8 @@ public class PipelineConfig {
         private boolean useDirectBuffers = true;
         private boolean drainOnStop = true;
         private WriterFactory writer = json;
-        private HttpConfig.Builder httpClient = java(5 * 60_000);
-        private Function<HttpConfig, Loki4jHttpClient> senderFactory = defaultSenderFactory;
+        private HttpConfig.Builder httpConfigBuilder = java(5 * 60_000);
+        private Function<HttpConfig, Loki4jHttpClient> httpClientFactory = defaultHttpClientFactory;
         private Function<Object, Loki4jLogger> internalLoggingFactory;
 
         public PipelineConfig build() {
@@ -166,8 +166,8 @@ public class PipelineConfig {
                 useDirectBuffers,
                 drainOnStop,
                 writer,
-                httpClient.build(writer.contentType),
-                senderFactory,
+                httpConfigBuilder.build(writer.contentType),
+                httpClientFactory,
                 internalLoggingFactory);
         }
 
@@ -221,13 +221,13 @@ public class PipelineConfig {
             return this;
         }
 
-        public Builder setHttpClient(HttpConfig.Builder httpClient) {
-            this.httpClient = httpClient;
+        public Builder setHttpConfig(HttpConfig.Builder httpConfigBuilder) {
+            this.httpConfigBuilder = httpConfigBuilder;
             return this;
         }
 
-        public Builder setSenderFactory(Function<HttpConfig, Loki4jHttpClient> senderFactory) {
-            this.senderFactory = senderFactory;
+        public Builder setHttpClientFactory(Function<HttpConfig, Loki4jHttpClient> httpClientFactory) {
+            this.httpClientFactory = httpClientFactory;
             return this;
         }
 

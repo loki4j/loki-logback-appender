@@ -12,6 +12,6 @@ public interface HttpSender {
 
     HttpConfig.Builder getConfig();
 
-    Function<HttpConfig, Loki4jHttpClient> getSenderFactory();
+    Function<HttpConfig, Loki4jHttpClient> getHttpClientFactory();
 
 }
