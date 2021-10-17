@@ -7,12 +7,12 @@ import java.util.Arrays;
 import java.util.function.UnaryOperator;
 import java.util.stream.Stream;
 
-import com.github.loki4j.common.batch.LogRecord;
-import com.github.loki4j.common.batch.LogRecordBatch;
-import com.github.loki4j.common.util.ByteBufferFactory;
-import com.github.loki4j.common.writer.JsonWriter;
-import com.github.loki4j.common.writer.ProtobufWriter;
-import com.github.loki4j.common.writer.Writer;
+import com.github.loki4j.client.batch.LogRecord;
+import com.github.loki4j.client.batch.LogRecordBatch;
+import com.github.loki4j.client.util.ByteBufferFactory;
+import com.github.loki4j.client.writer.JsonWriter;
+import com.github.loki4j.client.writer.ProtobufWriter;
+import com.github.loki4j.client.writer.Writer;
 import com.github.loki4j.logback.AbstractLoki4jEncoder;
 import com.github.loki4j.testkit.benchmark.Benchmarker;
 import com.github.loki4j.testkit.benchmark.Benchmarker.Benchmark;

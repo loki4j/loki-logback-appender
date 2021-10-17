@@ -3,10 +3,10 @@ package com.github.loki4j.logback.performance.reg_v120;
 import java.nio.charset.StandardCharsets;
 import java.util.HashSet;
 
-import com.github.loki4j.common.batch.BatchCondition;
-import com.github.loki4j.common.batch.LogRecord;
-import com.github.loki4j.common.batch.LogRecordBatch;
-import com.github.loki4j.common.batch.LogRecordStream;
+import com.github.loki4j.client.batch.BatchCondition;
+import com.github.loki4j.client.batch.LogRecord;
+import com.github.loki4j.client.batch.LogRecordBatch;
+import com.github.loki4j.client.batch.LogRecordStream;
 
 /**
  * A component that is responsible for splitting a stream of log events into batches.

@@ -17,7 +17,7 @@ repositories {
 sourceSets {
     main {
         java {
-            srcDirs += [files(project(":common").sourceSets.main.java.srcDirs)]
+            srcDirs += [files(project(":loki-client").sourceSets.main.java.srcDirs)]
         }
     }
     test {
@@ -44,6 +44,8 @@ dependencies {
 }
 
 compileJava {
+    dependsOn ':loki-client:generateProto'
+    
     sourceCompatibility = 11
     targetCompatibility = 11
 }

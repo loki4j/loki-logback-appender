@@ -2,7 +2,7 @@ package com.github.loki4j.logback;
 
 import java.util.Random;
 
-import com.github.loki4j.common.http.HttpHeaders;
+import com.github.loki4j.client.http.HttpHeaders;
 import com.github.loki4j.testkit.dummy.LokiHttpServerMock;
 
 import static com.github.loki4j.logback.Generators.*;

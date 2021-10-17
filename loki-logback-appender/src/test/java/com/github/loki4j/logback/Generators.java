@@ -11,14 +11,14 @@ import java.util.function.Consumer;
 import java.util.function.Function;
 import java.util.stream.StreamSupport;
 
-import com.github.loki4j.common.batch.LogRecord;
-import com.github.loki4j.common.batch.LogRecordBatch;
-import com.github.loki4j.common.http.HttpConfig;
-import com.github.loki4j.common.http.Loki4jHttpClient;
-import com.github.loki4j.common.http.LokiResponse;
-import com.github.loki4j.common.pipeline.PipelineConfig;
-import com.github.loki4j.common.util.ByteBufferFactory;
-import com.github.loki4j.common.writer.Writer;
+import com.github.loki4j.client.batch.LogRecord;
+import com.github.loki4j.client.batch.LogRecordBatch;
+import com.github.loki4j.client.http.HttpConfig;
+import com.github.loki4j.client.http.Loki4jHttpClient;
+import com.github.loki4j.client.http.LokiResponse;
+import com.github.loki4j.client.pipeline.PipelineConfig;
+import com.github.loki4j.client.util.ByteBufferFactory;
+import com.github.loki4j.client.writer.Writer;
 import com.github.loki4j.testkit.dummy.ExceptionGenerator;
 import com.github.loki4j.testkit.dummy.LokiHttpServerMock;
 

@@ -1,4 +1,4 @@
-package com.github.loki4j.common.http;
+package com.github.loki4j.client.http;
 
 import java.nio.ByteBuffer;
 

@@ -3,9 +3,9 @@ package com.github.loki4j.logback;
 import java.util.Optional;
 import java.util.function.Function;
 
-import com.github.loki4j.common.http.HttpConfig;
-import com.github.loki4j.common.http.Loki4jHttpClient;
-import com.github.loki4j.common.pipeline.PipelineConfig;
+import com.github.loki4j.client.http.HttpConfig;
+import com.github.loki4j.client.http.Loki4jHttpClient;
+import com.github.loki4j.client.pipeline.PipelineConfig;
 
 /**
  * Abstract class that implements a common logic shared between standard

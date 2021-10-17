@@ -2,9 +2,9 @@ package com.github.loki4j.logback;
 
 import java.util.concurrent.atomic.AtomicLong;
 
-import com.github.loki4j.common.pipeline.DefaultPipeline;
-import com.github.loki4j.common.pipeline.Loki4jMetrics;
-import com.github.loki4j.common.pipeline.PipelineConfig;
+import com.github.loki4j.client.pipeline.DefaultPipeline;
+import com.github.loki4j.client.pipeline.Loki4jMetrics;
+import com.github.loki4j.client.pipeline.PipelineConfig;
 
 import ch.qos.logback.classic.spi.ILoggingEvent;
 import ch.qos.logback.core.CoreConstants;

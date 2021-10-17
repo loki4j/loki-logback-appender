@@ -1,10 +1,10 @@
 package com.github.loki4j.logback;
 
-import com.github.loki4j.common.http.HttpConfig;
-import com.github.loki4j.common.pipeline.PipelineConfig;
+import com.github.loki4j.client.http.HttpConfig;
+import com.github.loki4j.client.pipeline.PipelineConfig;
 
 /**
- * A configurator for {@link com.github.loki4j.common.http.ApacheHttpClient ApacheHttpClient}
+ * A configurator for {@link com.github.loki4j.client.http.ApacheHttpClient ApacheHttpClient}
  */
 public class ApacheHttpSender extends AbstractHttpSender {
 

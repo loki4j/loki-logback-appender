@@ -1,7 +1,7 @@
 package com.github.loki4j.logback;
 
-import com.github.loki4j.common.batch.LogRecordStream;
-import com.github.loki4j.common.pipeline.PipelineConfig.WriterFactory;
+import com.github.loki4j.client.batch.LogRecordStream;
+import com.github.loki4j.client.pipeline.PipelineConfig.WriterFactory;
 
 import ch.qos.logback.classic.spi.ILoggingEvent;
 import ch.qos.logback.core.spi.ContextAware;
