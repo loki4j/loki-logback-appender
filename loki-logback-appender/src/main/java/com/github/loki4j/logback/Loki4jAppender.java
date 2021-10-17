@@ -2,10 +2,9 @@ package com.github.loki4j.logback;
 
 import java.util.concurrent.atomic.AtomicLong;
 
-import com.github.loki4j.common.batch.Batcher;
-import com.github.loki4j.common.batch.ByteBufferQueue;
-import com.github.loki4j.common.http.Loki4jHttpClient;
-import com.github.loki4j.common.util.ByteBufferFactory;
+import com.github.loki4j.common.pipeline.DefaultPipeline;
+import com.github.loki4j.common.pipeline.Loki4jMetrics;
+import com.github.loki4j.common.pipeline.PipelineConfig;
 
 import ch.qos.logback.classic.spi.ILoggingEvent;
 import ch.qos.logback.core.CoreConstants;
@@ -71,11 +70,6 @@ public final class Loki4jAppender extends UnsynchronizedAppenderBase<ILoggingEve
     private HttpSender sender;
 
     /**
-     * HTTP sender to use for pushing logs to Loki
-     */
-    private Loki4jHttpClient httpClient;
-
-    /**
      * A pipeline that does all the heavy lifting log records processing
      */
     private DefaultPipeline pipeline;
@@ -98,6 +92,11 @@ public final class Loki4jAppender extends UnsynchronizedAppenderBase<ILoggingEve
             "batchMaxItems=%s, batchMaxBytes=%s, batchTimeout=%s, sendQueueMaxBytes=%s...",
             batchMaxItems, batchMaxBytes, batchTimeoutMs, sendQueueMaxBytes));
 
+        if (sendQueueMaxBytes < batchMaxBytes * 5) {
+            addWarn("Configured value sendQueueMaxBytes=" + sendQueueMaxBytes + " is less than `batchMaxBytes * 5`");
+            sendQueueMaxBytes = batchMaxBytes * 5;
+        }
+
         if (encoder == null) {
             addWarn("No encoder specified in the config. Using JsonEncoder with default settings");
             encoder = new JsonEncoder();
@@ -105,39 +104,38 @@ public final class Loki4jAppender extends UnsynchronizedAppenderBase<ILoggingEve
         encoder.setContext(context);
         encoder.start();
 
-        var bufferFactory = new ByteBufferFactory(useDirectBuffers);
-        var writer = encoder.createWriter(batchMaxBytes, bufferFactory);
-
-        LoggerMetrics metrics = null;
-        if (metricsEnabled) {
-            var host = context.getProperty(CoreConstants.HOSTNAME_KEY);
-            metrics = new LoggerMetrics(
-                this.getName() == null ? "none" : this.getName(),
-                host == null ? "unknown" : host);
-        }
-
         if (sender == null) {
             addWarn("No sender specified in the config. Trying to use JavaHttpSender with default settings");
             sender = new JavaHttpSender();
         }
-        var httpConfig = sender.getConfig(encoder.getContentType());
-        httpClient = sender.createHttpClient(httpConfig);
 
-        if (sendQueueMaxBytes < batchMaxBytes * 5) {
-            addWarn("Configured value sendQueueMaxBytes=" + sendQueueMaxBytes + " is less than `batchMaxBytes * 5`");
-            sendQueueMaxBytes = batchMaxBytes * 5;
+        PipelineConfig pipelineConf = PipelineConfig.builder()
+            .setName(this.getName())
+            .setBatchMaxItems(batchMaxItems)
+            .setBatchMaxBytes(batchMaxBytes)
+            .setBatchTimeoutMs(batchTimeoutMs)
+            .setSortByTime(encoder.getSortByTime())
+            .setStaticLabels(encoder.getStaticLabels())
+            .setSendQueueMaxBytes(sendQueueMaxBytes)
+            .setUseDirectBuffers(useDirectBuffers)
+            .setDrainOnStop(drainOnStop)
+            .setWriter(encoder.getWriterFactory())
+            .setHttpConfig(sender.getConfig())
+            .setHttpClientFactory(sender.getHttpClientFactory())
+            .setInternalLoggingFactory(source -> new InternalLogger(source, this))
+            .build();
+
+        Loki4jMetrics metrics = null;
+        if (metricsEnabled) {
+            var host = context.getProperty(CoreConstants.HOSTNAME_KEY);
+            metrics = new Loki4jMetrics(
+                this.getName() == null ? "none" : this.getName(),
+                host == null ? "unknown" : host);
         }
-        var sendQueue = new ByteBufferQueue(sendQueueMaxBytes, bufferFactory);
-        var batcher = new Batcher(batchMaxItems, batchMaxBytes, batchTimeoutMs);
+
         pipeline = new DefaultPipeline(
-            batcher,
-            encoder.getLogRecordComparator(),
-            writer,
-            sendQueue,
-            httpClient,
-            metrics,
-            drainOnStop);
-        pipeline.setContext(context);
+            pipelineConf,
+            metrics);
         pipeline.start();
 
         super.start();
@@ -156,11 +154,6 @@ public final class Loki4jAppender extends UnsynchronizedAppenderBase<ILoggingEve
 
         pipeline.stop();
         encoder.stop();
-        try {
-            httpClient.close();
-        } catch (Exception e) {
-            addWarn("Error while closing HttpClient", e);
-        }
 
         addInfo("Successfully stopped");
     }

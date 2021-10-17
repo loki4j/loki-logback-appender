@@ -1,4 +1,4 @@
-package com.github.loki4j.logback;
+package com.github.loki4j.common.pipeline;
 
 import java.time.Duration;
 import java.util.Arrays;
@@ -12,7 +12,7 @@ import io.micrometer.core.instrument.Timer;
 /**
  * Provides an ability to report logging performance metrics using Micrometer framework
  */
-public class LoggerMetrics {
+public class Loki4jMetrics {
 
     private Timer appendTimer;
     private Timer encodeTimer;
@@ -26,7 +26,7 @@ public class LoggerMetrics {
     private Counter sendErrorsCounter;
     private Counter droppedEventsCounter;
 
-    public LoggerMetrics(String appenderName, String host) {
+    public Loki4jMetrics(String appenderName, String host) {
         var tags = Arrays.asList(
             Tag.of("appender", appenderName),
             Tag.of("host", host));

@@ -147,7 +147,7 @@ public class LokiTestingClient {
             }
             var batch = new LogRecordBatch(records);
             batch.sort(lokiLogsSorting);
-            var writer = encoder.createWriter(4 * 1024 * 1024, new ByteBufferFactory(false));
+            var writer = encoder.getWriterFactory().factory.apply(4 * 1024 * 1024, new ByteBufferFactory(false));
             writer.serializeBatch(batch);
             reqStr.set(new String(writer.toByteArray()));
         });

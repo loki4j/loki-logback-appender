@@ -51,7 +51,7 @@ public class HttpConfig {
     /**
      * Token to pass to HTTP server if basic auth is enabled
      */
-    public Optional<String> basicAuthToken() {
+    public final Optional<String> basicAuthToken() {
         return username.flatMap(u ->
             password.flatMap(p ->
                 Optional.of(
@@ -62,15 +62,23 @@ public class HttpConfig {
     }
 
     /**
-     * Preferences specific to {@link ApacheHttpClient ApacheHttpConfig}
+     * A configuration specific to a certain HTTP client
      */
-    public final ApacheHttpConfig apache;
+    public final ClientSpecificConfig clientSpecific;
 
     /**
-     * Preferences specific to {@link JavaHttpClient ApacheHttpConfig}
+     * A shortcut to preferences specific for {@link ApacheHttpClient ApacheHttpConfig}
      */
-    public final JavaHttpConfig java;
+    public final ApacheHttpConfig apache() {
+        return (ApacheHttpConfig)clientSpecific;
+    }
 
+    /**
+     * A shortcut to preferences specific for {@link JavaHttpClient ApacheHttpConfig}
+     */
+    public final JavaHttpConfig java() {
+        return (JavaHttpConfig)clientSpecific;
+    }
 
     public HttpConfig(
             String pushUrl,
@@ -80,8 +88,7 @@ public class HttpConfig {
             String contentType,
             Optional<String> username,
             Optional<String> password,
-            ApacheHttpConfig apache,
-            JavaHttpConfig java) {
+            ClientSpecificConfig clientSpecific) {
         this.pushUrl = pushUrl;
         this.connectionTimeoutMs = connectionTimeoutMs;
         this.requestTimeoutMs = requestTimeoutMs;
@@ -89,16 +96,16 @@ public class HttpConfig {
         this.contentType = contentType;
         this.username = username;
         this.password = password;
-        this.apache = apache;
-        this.java = java;
+        this.clientSpecific = clientSpecific;
     }
 
-    public static Builder builder(String contentType) {
-        return new Builder(contentType);
+    public static Builder builder() {
+        return new Builder();
     }
 
     public static class Builder {
-        private String contentType;
+        public static final ApacheHttpConfig apache = new ApacheHttpConfig(1, 120_000);
+        public static final JavaHttpConfig java = new JavaHttpConfig(5 * 60_000);
 
         private String pushUrl = "http://localhost:3100/loki/api/v1/push";
         private long connectionTimeoutMs = 30_000;
@@ -106,14 +113,9 @@ public class HttpConfig {
         private Optional<String> tenantId = Optional.empty();
         private Optional<String> username = Optional.empty();
         private Optional<String> password = Optional.empty();
-        private ApacheHttpConfig apache = new ApacheHttpConfig(1, 120_000);
-        private JavaHttpConfig java = new JavaHttpConfig(5 * 60_000);
+        private ClientSpecificConfig clientSpecific = java;
 
-        public Builder(String contentType) {
-            this.contentType = contentType;
-        }
-
-        public HttpConfig build() {
+        public HttpConfig build(String contentType) {
             return new HttpConfig(
                 pushUrl,
                 connectionTimeoutMs,
@@ -122,8 +124,7 @@ public class HttpConfig {
                 contentType,
                 username,
                 password,
-                apache,
-                java);
+                clientSpecific);
         }
 
         public Builder fill(Consumer<Builder> func) {
@@ -161,18 +162,15 @@ public class HttpConfig {
             return this;
         }
 
-        public Builder setApache(ApacheHttpConfig apache) {
-            this.apache = apache;
-            return this;
-        }
-
-        public Builder setJava(JavaHttpConfig java) {
-            this.java = java;
+        public Builder setClientConfig(ClientSpecificConfig clientSpecificConfig) {
+            this.clientSpecific = clientSpecificConfig;
             return this;
         }
     }
 
-    public static class ApacheHttpConfig {
+    public static interface ClientSpecificConfig { }
+
+    public static class ApacheHttpConfig implements ClientSpecificConfig {
         /**
          * Maximum number of HTTP connections setting for HttpClient
          */
@@ -191,7 +189,7 @@ public class HttpConfig {
         }
     }
 
-    public static class JavaHttpConfig {
+    public static class JavaHttpConfig implements ClientSpecificConfig {
         /**
          * Maximum time that excess idle threads will wait for new
          * tasks before terminating inner HTTP threads

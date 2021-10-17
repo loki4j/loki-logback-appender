@@ -1,17 +1,12 @@
 package com.github.loki4j.logback;
 
 import java.nio.charset.Charset;
-import java.util.Comparator;
 import java.util.HashMap;
-import java.util.Optional;
 import java.util.concurrent.atomic.AtomicInteger;
 import java.util.concurrent.atomic.AtomicReference;
 import java.util.regex.Pattern;
 
-import com.github.loki4j.common.batch.LogRecord;
 import com.github.loki4j.common.batch.LogRecordStream;
-import com.github.loki4j.common.util.ByteBufferFactory;
-import com.github.loki4j.common.writer.Writer;
 
 import ch.qos.logback.classic.PatternLayout;
 import ch.qos.logback.classic.spi.ILoggingEvent;
@@ -25,15 +20,6 @@ public abstract class AbstractLoki4jEncoder extends ContextAwareBase implements 
 
     private static final String STATIC_STREAM_KEY = "STATIC_STREAM_KEY";
     
-    private static final Comparator<LogRecord> byTime = (e1, e2) -> {
-        var tsCmp = Long.compare(e1.timestampMs, e2.timestampMs);
-        return tsCmp == 0 ? Integer.compare(e1.nanos, e2.nanos) : tsCmp;
-    };
-
-    private static final Comparator<LogRecord> byStream = (e1, e2) ->
-        Long.compare(e1.stream.id, e2.stream.id);
-
-
     public static final class LabelCfg {
         /**
          * Logback pattern to use for log record's label
@@ -86,8 +72,6 @@ public abstract class AbstractLoki4jEncoder extends ContextAwareBase implements 
 
     private MessageCfg message = new MessageCfg();
 
-    private Optional<Comparator<LogRecord>> logRecordComparator;
-
     /**
      * If true, log records in batch are sorted by timestamp.
      * If false, records will be sent to Loki in arrival order.
@@ -128,16 +112,6 @@ public abstract class AbstractLoki4jEncoder extends ContextAwareBase implements 
 
         messagePatternLayout = initPatternLayout(message.pattern);
         messagePatternLayout.start();
-
-        // prepare the comparator based on sorting settings
-        logRecordComparator = Optional.empty();
-        if (staticLabels) {
-            if (sortByTime)
-                logRecordComparator = Optional.of(byTime);
-        } else {
-            logRecordComparator = Optional.of(
-                sortByTime ? byStream.thenComparing(byTime) : byStream);
-        }
 
         this.started = true;
     }
@@ -187,8 +161,6 @@ public abstract class AbstractLoki4jEncoder extends ContextAwareBase implements 
         return nanos;
     }
 
-    public abstract Writer createWriter(int capacity, ByteBufferFactory bufferFactory);
-
     private PatternLayout initPatternLayout(String pattern) {
         var patternLayout = new PatternLayout();
         patternLayout.setContext(context);
@@ -229,10 +201,6 @@ public abstract class AbstractLoki4jEncoder extends ContextAwareBase implements 
         return result;
     }
 
-    public Optional<Comparator<LogRecord>> getLogRecordComparator() {
-        return logRecordComparator;
-    }
-
     public void setLabel(LabelCfg label) {
         this.label = label;
     }
@@ -241,10 +209,16 @@ public abstract class AbstractLoki4jEncoder extends ContextAwareBase implements 
         this.message = message;
     }
 
+    public boolean getSortByTime() {
+        return sortByTime;
+    }
     public void setSortByTime(boolean sortByTime) {
         this.sortByTime = sortByTime;
     }
 
+    public boolean getStaticLabels() {
+        return staticLabels;
+    }
     public void setStaticLabels(boolean staticLabels) {
         this.staticLabels = staticLabels;
     }

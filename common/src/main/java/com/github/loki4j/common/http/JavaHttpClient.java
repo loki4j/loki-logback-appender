@@ -14,7 +14,7 @@ import java.util.concurrent.Flow.Publisher;
 import java.util.concurrent.Flow.Subscriber;
 import java.util.concurrent.Flow.Subscription;
 
-import com.github.loki4j.common.util.LokiThreadFactory;
+import com.github.loki4j.common.util.Loki4jThreadFactory;
 
 /**
  * Loki client that is backed by Java standard {@link java.net.http.HttpClient HttpClient}
@@ -32,9 +32,9 @@ public final class JavaHttpClient implements Loki4jHttpClient {
 
         internalHttpThreadPool = new ThreadPoolExecutor(
             0, Integer.MAX_VALUE,
-            conf.java.innerThreadsExpirationMs, TimeUnit.MILLISECONDS, // expire unused threads after 5 batch intervals
+            conf.java().innerThreadsExpirationMs, TimeUnit.MILLISECONDS, // expire unused threads after 5 batch intervals
             new SynchronousQueue<Runnable>(),
-            new LokiThreadFactory("loki-java-http-internal"));
+            new Loki4jThreadFactory("loki-java-http-internal"));
 
         client = HttpClient
             .newBuilder()

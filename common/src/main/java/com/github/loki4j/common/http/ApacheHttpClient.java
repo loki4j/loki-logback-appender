@@ -33,8 +33,8 @@ public final class ApacheHttpClient implements Loki4jHttpClient {
         this.conf = conf;
 
         var cm = new PoolingHttpClientConnectionManager();
-        cm.setMaxTotal(conf.apache.maxConnections);
-        cm.setDefaultMaxPerRoute(conf.apache.maxConnections);
+        cm.setMaxTotal(conf.apache().maxConnections);
+        cm.setDefaultMaxPerRoute(conf.apache().maxConnections);
 
         client = HttpClients
             .custom()
@@ -42,7 +42,7 @@ public final class ApacheHttpClient implements Loki4jHttpClient {
             .setKeepAliveStrategy(new ConnectionKeepAliveStrategy() {
                 @Override
                 public long getKeepAliveDuration(HttpResponse response, HttpContext context) {
-                    return conf.apache.connectionKeepAliveMs;
+                    return conf.apache().connectionKeepAliveMs;
                 }
             })
             .setDefaultRequestConfig(RequestConfig

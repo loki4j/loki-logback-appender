@@ -1,5 +1,7 @@
 package com.github.loki4j.logback;
 
+import java.util.function.Function;
+
 import com.github.loki4j.common.http.HttpConfig;
 import com.github.loki4j.common.http.Loki4jHttpClient;
 
@@ -8,8 +10,8 @@ import com.github.loki4j.common.http.Loki4jHttpClient;
  */
 public interface HttpSender {
 
-    HttpConfig getConfig(String contentType);
+    HttpConfig.Builder getConfig();
 
-    Loki4jHttpClient createHttpClient(HttpConfig config);
+    Function<HttpConfig, Loki4jHttpClient> getHttpClientFactory();
 
 }
