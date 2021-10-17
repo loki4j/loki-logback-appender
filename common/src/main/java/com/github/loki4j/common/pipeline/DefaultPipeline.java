@@ -153,7 +153,7 @@ public final class DefaultPipeline {
                 unsentEvents.incrementAndGet();
                 accepted = true;
             } else {
-                log.warn("Dropping the record that exceeds max batch size: " + record.toString());
+                log.warn("Dropping the record that exceeds max batch size: %s", record);
             }
         }
         if (metrics != null)
@@ -233,7 +233,7 @@ public final class DefaultPipeline {
             if (metrics != null)
                 metrics.batchEncoded(startedNs, writer.size());
         } catch (Exception e) {
-            log.error("Error occurred while serializing batch " + batch, e);
+            log.error(e, "Error occurred while serializing batch %s", batch);
             writer.reset();
         }
     }
