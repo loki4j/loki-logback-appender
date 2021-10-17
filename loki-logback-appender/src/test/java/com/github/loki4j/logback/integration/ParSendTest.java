@@ -22,12 +22,12 @@ public class ParSendTest {
     private static LokiTestingClient client;
 
     @BeforeClass
-    public static void startMockLoki() {
+    public static void startLokiClient() {
         client = new LokiTestingClient(urlBase);
     }
 
     @AfterClass
-    public static void stopMockLoki() {
+    public static void stopLokiClient() {
         client.close();
     }
 
