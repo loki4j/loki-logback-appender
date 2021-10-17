@@ -1,7 +1,7 @@
 import static groovy.io.FileVisitResult.*
 import static groovy.io.FileType.*
 
-include 'common'
+include 'loki-client'
 include 'testkit'
 include 'loki-logback-appender'
 
