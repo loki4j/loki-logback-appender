@@ -1,6 +1,6 @@
 package com.github.loki4j.logback;
 
-import com.github.loki4j.common.util.Loki4jLogger;
+import com.github.loki4j.client.util.Loki4jLogger;
 
 import ch.qos.logback.core.spi.ContextAware;
 import ch.qos.logback.core.status.ErrorStatus;

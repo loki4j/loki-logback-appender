@@ -2,8 +2,8 @@ package com.github.loki4j.logback;
 
 import java.util.function.Function;
 
-import com.github.loki4j.common.http.HttpConfig;
-import com.github.loki4j.common.http.Loki4jHttpClient;
+import com.github.loki4j.client.http.HttpConfig;
+import com.github.loki4j.client.http.Loki4jHttpClient;
 
 /**
  * Basic interface that all Loki4j HTTP sender configurators must implement.

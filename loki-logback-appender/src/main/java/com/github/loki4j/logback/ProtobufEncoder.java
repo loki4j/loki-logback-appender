@@ -1,6 +1,6 @@
 package com.github.loki4j.logback;
 
-import com.github.loki4j.common.pipeline.PipelineConfig;
+import com.github.loki4j.client.pipeline.PipelineConfig;
 
 import ch.qos.logback.core.joran.spi.NoAutoStart;
 

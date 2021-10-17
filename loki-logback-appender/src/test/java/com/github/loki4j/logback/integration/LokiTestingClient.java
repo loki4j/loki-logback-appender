@@ -22,10 +22,10 @@ import com.fasterxml.jackson.annotation.JsonIgnoreProperties;
 import com.fasterxml.jackson.core.JsonProcessingException;
 import com.fasterxml.jackson.databind.JsonMappingException;
 import com.fasterxml.jackson.databind.ObjectMapper;
-import com.github.loki4j.common.batch.LogRecord;
-import com.github.loki4j.common.batch.LogRecordBatch;
-import com.github.loki4j.common.http.HttpHeaders;
-import com.github.loki4j.common.util.ByteBufferFactory;
+import com.github.loki4j.client.batch.LogRecord;
+import com.github.loki4j.client.batch.LogRecordBatch;
+import com.github.loki4j.client.http.HttpHeaders;
+import com.github.loki4j.client.util.ByteBufferFactory;
 import com.github.loki4j.logback.Loki4jAppender;
 import com.github.loki4j.logback.AbstractLoki4jEncoder;
 

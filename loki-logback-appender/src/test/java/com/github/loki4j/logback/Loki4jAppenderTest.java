@@ -12,9 +12,9 @@ import java.util.concurrent.atomic.AtomicBoolean;
 import java.util.concurrent.locks.LockSupport;
 import java.util.function.Function;
 
-import com.github.loki4j.common.http.HttpConfig;
-import com.github.loki4j.common.http.Loki4jHttpClient;
-import com.github.loki4j.common.http.LokiResponse;
+import com.github.loki4j.client.http.HttpConfig;
+import com.github.loki4j.client.http.Loki4jHttpClient;
+import com.github.loki4j.client.http.LokiResponse;
 
 import static com.github.loki4j.logback.Generators.*;
 

@@ -1,12 +1,6 @@
-package com.github.loki4j.logback.performance.reg_v120;
+package com.github.loki4j.client.batch;
 
-import java.nio.charset.StandardCharsets;
 import java.util.HashSet;
-
-import com.github.loki4j.client.batch.BatchCondition;
-import com.github.loki4j.client.batch.LogRecord;
-import com.github.loki4j.client.batch.LogRecordBatch;
-import com.github.loki4j.client.batch.LogRecordStream;
 
 /**
  * A component that is responsible for splitting a stream of log events into batches.
@@ -20,8 +14,9 @@ import com.github.loki4j.client.batch.LogRecordStream;
  * <li> {@code maxTimeoutMs} - if this timeout is passed since the last batch was sended,
  * applies only when {@code drain()} is called
  * </ul>
+ * This class is not thread-safe.
  */
-public final class BatcherV120a {
+public final class Batcher {
 
     private final int maxSizeBytes;
     private final long maxTimeoutMs;
@@ -29,13 +24,22 @@ public final class BatcherV120a {
 
     private int index = 0;
     private int sizeBytes = 0;
-    private HashSet<LogRecordStream> labels = new HashSet<>();
+    private HashSet<LogRecordStream> streams = new HashSet<>();
 
 
-    public BatcherV120a(int maxItems, int maxSizeBytes, long maxTimeoutMs) {
+    public Batcher(int maxItems, int maxSizeBytes, long maxTimeoutMs) {
         this.maxSizeBytes = maxSizeBytes;
         this.maxTimeoutMs = maxTimeoutMs;
         this.items = new LogRecord[maxItems];
+    }
+
+    /**
+     * Checks if the given message is less or equal to max allowed size for a batch.
+     * This method doesn't affect the internal state of the Batcher.
+     * This method is thread-safe.
+     */
+    public boolean validateLogRecordSize(LogRecord r) {
+        return (r.messageUtf8SizeBytes + 24 + r.stream.utf8SizeBytes + 8) <= maxSizeBytes;
     }
 
     /**
@@ -50,19 +54,19 @@ public final class BatcherV120a {
      * by Loki.
      */
     private long estimateSizeBytes(LogRecord r, boolean dryRun) {
-        long size = r.message.getBytes(StandardCharsets.UTF_8).length + 24;
-        if (!labels.contains(r.stream)) {
+        long size = r.messageUtf8SizeBytes + 24;
+        if (!streams.contains(r.stream)) {
             size += r.stream.utf8SizeBytes + 8;
-            if (!dryRun) labels.add(r.stream);
+            if (!dryRun) streams.add(r.stream);
         }
         return size;
     }
 
     private void cutBatchAndReset(LogRecordBatch destination, BatchCondition condition) {
-        destination.initFrom(items, index, labels.size(), condition, sizeBytes);
+        destination.initFrom(items, index, streams.size(), condition, sizeBytes);
         index = 0;
         sizeBytes = 0;
-        labels.clear();
+        streams.clear();
     }
 
     /**
@@ -70,25 +74,17 @@ public final class BatcherV120a {
      * Note that this method never adds an input record to the batch, you must call {@code add()}
      * for this purpose.
      * <p>
-     * If the size of the record itself is more than max bytes limit (i.e. record is invalid)
-     * this method returns {@code false} without further processing.
-     * <p>
      * If a valid record can not be added to batch without exceeding max bytes limit, batcher
      * returns a completed batch without this record.
      * <p>
      * Otherwise, no action is performed.
      * @param input Log record to check
      * @param destination Resulting batch (if ready)
-     * @return Whether the input record is valid (i.e. it's size is not more than max bytes)
      */
-    public boolean checkSizeBeforeAdd(LogRecord input, LogRecordBatch destination) {
+    public void checkSizeBeforeAdd(LogRecord input, LogRecordBatch destination) {
         var recordSizeBytes = estimateSizeBytes(input, true);
-        if (recordSizeBytes > maxSizeBytes)
-            return false;
-
         if (sizeBytes + recordSizeBytes > maxSizeBytes)
             cutBatchAndReset(destination, BatchCondition.MAX_BYTES);
-        return true;
     }
 
     /**
