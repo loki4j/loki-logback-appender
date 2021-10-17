@@ -135,6 +135,12 @@ public final class DefaultPipeline {
         scheduler.shutdown();
         encoderThreadPool.shutdown();
         senderThreadPool.shutdown();
+
+        try {
+            httpClient.close();
+        } catch (Exception e) {
+            log.error(e, "Error while closing HttpClient");
+        }
     }
 
     public boolean append(long timestamp, int nanos, Supplier<LogRecordStream> stream, Supplier<String> message) {
