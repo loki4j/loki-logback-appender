@@ -34,7 +34,7 @@ public final class JavaHttpClient implements Loki4jHttpClient {
             0, Integer.MAX_VALUE,
             conf.java().innerThreadsExpirationMs, TimeUnit.MILLISECONDS, // expire unused threads after 5 batch intervals
             new SynchronousQueue<Runnable>(),
-            new Loki4jThreadFactory("loki-java-http-internal"));
+            new Loki4jThreadFactory("loki4j-java-http-internal"));
 
         client = HttpClient
             .newBuilder()

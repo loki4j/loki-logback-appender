@@ -89,9 +89,14 @@ public class PipelineConfig {
     public final boolean useDirectBuffers;
 
     /**
-     * Wait util all remaining events are sent before shutdown the appender
+     * Wait util all remaining events are sent before shutdown the pipeline
      */
     public final boolean drainOnStop;
+
+    /**
+     * If true, the pipeline will report its metrics using Micrometer
+     */
+    public final boolean metricsEnabled;
 
     /**
      * A factory for Writer
@@ -115,10 +120,10 @@ public class PipelineConfig {
      */
     public final Function<Object, Loki4jLogger> internalLoggingFactory;
 
-    public PipelineConfig(String name, int batchMaxItems, int batchMaxBytes, long batchTimeoutMs, boolean sortByTime,
-            boolean staticLabels, long sendQueueMaxBytes, boolean useDirectBuffers, boolean drainOnStop,
-            WriterFactory writerFactory, HttpConfig httpConfig, Function<HttpConfig, Loki4jHttpClient> httpClientFactory,
-            Function<Object, Loki4jLogger> internalLoggingFactory) {
+    public PipelineConfig(String name, int batchMaxItems, int batchMaxBytes, long batchTimeoutMs,
+            boolean sortByTime, boolean staticLabels, long sendQueueMaxBytes, boolean useDirectBuffers,
+            boolean drainOnStop, boolean metricsEnabled, WriterFactory writerFactory, HttpConfig httpConfig,
+            Function<HttpConfig, Loki4jHttpClient> httpClientFactory, Function<Object, Loki4jLogger> internalLoggingFactory) {
         this.name = name;
         this.batchMaxItems = batchMaxItems;
         this.batchMaxBytes = batchMaxBytes;
@@ -128,6 +133,7 @@ public class PipelineConfig {
         this.sendQueueMaxBytes = sendQueueMaxBytes;
         this.useDirectBuffers = useDirectBuffers;
         this.drainOnStop = drainOnStop;
+        this.metricsEnabled = metricsEnabled;
         this.writerFactory = writerFactory;
         this.httpConfig = httpConfig;
         this.httpClientFactory = httpClientFactory;
@@ -149,6 +155,7 @@ public class PipelineConfig {
         private long sendQueueMaxBytes = batchMaxBytes * 10;
         private boolean useDirectBuffers = true;
         private boolean drainOnStop = true;
+        private boolean metricsEnabled = false;
         private WriterFactory writer = json;
         private HttpConfig.Builder httpConfigBuilder = java(5 * 60_000);
         private Function<HttpConfig, Loki4jHttpClient> httpClientFactory = defaultHttpClientFactory;
@@ -165,6 +172,7 @@ public class PipelineConfig {
                 sendQueueMaxBytes,
                 useDirectBuffers,
                 drainOnStop,
+                metricsEnabled,
                 writer,
                 httpConfigBuilder.build(writer.contentType),
                 httpClientFactory,
@@ -213,6 +221,11 @@ public class PipelineConfig {
 
         public Builder setDrainOnStop(boolean drainOnStop) {
             this.drainOnStop = drainOnStop;
+            return this;
+        }
+
+        public Builder setMetricsEnabled(boolean metricsEnabled) {
+            this.metricsEnabled = metricsEnabled;
             return this;
         }
 
