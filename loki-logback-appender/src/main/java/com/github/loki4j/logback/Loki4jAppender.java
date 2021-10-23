@@ -3,11 +3,9 @@ package com.github.loki4j.logback;
 import java.util.concurrent.atomic.AtomicLong;
 
 import com.github.loki4j.client.pipeline.DefaultPipeline;
-import com.github.loki4j.client.pipeline.Loki4jMetrics;
 import com.github.loki4j.client.pipeline.PipelineConfig;
 
 import ch.qos.logback.classic.spi.ILoggingEvent;
-import ch.qos.logback.core.CoreConstants;
 import ch.qos.logback.core.UnsynchronizedAppenderBase;
 import ch.qos.logback.core.joran.spi.DefaultClass;
 import ch.qos.logback.core.status.Status;
@@ -110,7 +108,7 @@ public final class Loki4jAppender extends UnsynchronizedAppenderBase<ILoggingEve
         }
 
         PipelineConfig pipelineConf = PipelineConfig.builder()
-            .setName(this.getName())
+            .setName(this.getName() == null ? "none" : this.getName())
             .setBatchMaxItems(batchMaxItems)
             .setBatchMaxBytes(batchMaxBytes)
             .setBatchTimeoutMs(batchTimeoutMs)
@@ -119,23 +117,14 @@ public final class Loki4jAppender extends UnsynchronizedAppenderBase<ILoggingEve
             .setSendQueueMaxBytes(sendQueueMaxBytes)
             .setUseDirectBuffers(useDirectBuffers)
             .setDrainOnStop(drainOnStop)
+            .setMetricsEnabled(metricsEnabled)
             .setWriter(encoder.getWriterFactory())
             .setHttpConfig(sender.getConfig())
             .setHttpClientFactory(sender.getHttpClientFactory())
             .setInternalLoggingFactory(source -> new InternalLogger(source, this))
             .build();
 
-        Loki4jMetrics metrics = null;
-        if (metricsEnabled) {
-            var host = context.getProperty(CoreConstants.HOSTNAME_KEY);
-            metrics = new Loki4jMetrics(
-                this.getName() == null ? "none" : this.getName(),
-                host == null ? "unknown" : host);
-        }
-
-        pipeline = new DefaultPipeline(
-            pipelineConf,
-            metrics);
+        pipeline = new DefaultPipeline(pipelineConf);
         pipeline.start();
 
         super.start();

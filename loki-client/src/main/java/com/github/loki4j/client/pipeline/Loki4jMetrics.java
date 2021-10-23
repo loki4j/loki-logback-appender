@@ -26,10 +26,9 @@ public class Loki4jMetrics {
     private Counter sendErrorsCounter;
     private Counter droppedEventsCounter;
 
-    public Loki4jMetrics(String appenderName, String host) {
+    public Loki4jMetrics(String appenderName) {
         var tags = Arrays.asList(
-            Tag.of("appender", appenderName),
-            Tag.of("host", host));
+            Tag.of("appender", appenderName));
 
         appendTimer = Timer
             .builder("loki4j.append.time")
