@@ -31,7 +31,7 @@ package gogoproto;
 
 import "descriptor.proto";
 
-option java_package = "com.google.protobuf";
+option java_package = "com.github.loki4j.pkg.google.protobuf";
 option java_outer_classname = "GoGoProtos";
 option go_package = "github.com/gogo/protobuf/gogoproto";
 

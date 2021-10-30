@@ -2,7 +2,7 @@ syntax = "proto3";
 
 package logproto;
 
-option java_package = "com.grafana.loki.protobuf";
+option java_package = "com.github.loki4j.pkg.loki.protobuf";
 option go_package = "github.com/grafana/loki/pkg/logproto";
 
 import "timestamp.proto";

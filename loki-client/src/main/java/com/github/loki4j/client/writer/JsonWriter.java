@@ -1,12 +1,12 @@
 package com.github.loki4j.client.writer;
 
+import static com.github.loki4j.pkg.dslplatform.json.RawJsonWriter.*;
+
 import java.nio.ByteBuffer;
 
-import com.dslplatform.json.RawJsonWriter;
 import com.github.loki4j.client.batch.LogRecord;
 import com.github.loki4j.client.batch.LogRecordBatch;
-
-import static com.dslplatform.json.RawJsonWriter.*;
+import com.github.loki4j.pkg.dslplatform.json.RawJsonWriter;
 
 public final class JsonWriter implements Writer {
 

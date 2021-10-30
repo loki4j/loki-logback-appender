@@ -26,7 +26,7 @@
 // OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE
 // OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 
-package com.dslplatform.json;
+package com.github.loki4j.pkg.dslplatform.json;
 
 import java.nio.ByteBuffer;
 import java.util.Arrays;
