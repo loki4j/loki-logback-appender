@@ -6,11 +6,11 @@ import java.nio.ByteBuffer;
 import com.github.loki4j.client.batch.LogRecord;
 import com.github.loki4j.client.batch.LogRecordBatch;
 import com.github.loki4j.client.util.ByteBufferFactory;
+import com.github.loki4j.pkg.google.protobuf.Timestamp;
+import com.github.loki4j.pkg.loki.protobuf.Logproto.EntryAdapter;
+import com.github.loki4j.pkg.loki.protobuf.Logproto.PushRequest;
+import com.github.loki4j.pkg.loki.protobuf.Logproto.StreamAdapter;
 import com.google.protobuf.CodedOutputStream;
-import com.google.protobuf.Timestamp;
-import com.grafana.loki.protobuf.Logproto.EntryAdapter;
-import com.grafana.loki.protobuf.Logproto.PushRequest;
-import com.grafana.loki.protobuf.Logproto.StreamAdapter;
 
 import org.xerial.snappy.Snappy;
 
