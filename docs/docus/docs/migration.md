@@ -9,7 +9,7 @@ sidebar_label: Migration Guide
 Version 1.3.0 was focused on internal refactoring and bug fixing.
 For most users 1.3.0 could be used as a drop-in replacement of 1.2.0.
 
-The only breaking change that could affect these who used Loki4j performance metrics
+The only breaking change that could affect these who use Loki4j performance metrics
 is that the tag `host` is no longer hardcoded for all the reported Loki4j metrics.
 This hardcoding was redundant as you always can set up `host` tag for any metric in your custom
 Micrometer config on the application level.
