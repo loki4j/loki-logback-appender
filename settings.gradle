@@ -1,9 +1,31 @@
 import static groovy.io.FileVisitResult.*
 import static groovy.io.FileType.*
 
-include 'common'
+include 'loki-client'
 include 'testkit'
 include 'loki-logback-appender'
+
+enableFeaturePreview('VERSION_CATALOGS')
+dependencyResolutionManagement {
+    versionCatalogs {
+        libs {
+            version('protobuf', '3.18.1')
+            version('jacoco', '0.8.6')
+
+            alias('protobuf').to('com.google.protobuf', 'protobuf-java').versionRef('protobuf')
+            alias('snappy').to('org.xerial.snappy:snappy-java:1.1.8.4')
+            alias('apache-httpclient4').to('org.apache.httpcomponents:httpclient:4.5.13')
+            alias('micrometer').to('io.micrometer:micrometer-core:1.7.5')
+
+            alias('logback').to('ch.qos.logback:logback-classic:1.2.3')
+            alias('jackson').to('com.fasterxml.jackson.core:jackson-databind:2.12.4')
+
+            alias('junit').to('junit:junit:4.13.2')
+
+            bundle('pluggable', ['protobuf', 'snappy', 'apache-httpclient4', 'micrometer'])
+        }
+    }
+}
 
 def tempProjects = new File(rootDir, 'temp')
 if (tempProjects.exists()) {

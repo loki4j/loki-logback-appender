@@ -17,7 +17,7 @@ repositories {
 sourceSets {
     main {
         java {
-            srcDirs += [files(project(":common").sourceSets.main.java.srcDirs)]
+            srcDirs += [files(project(":loki-client").sourceSets.main.java.srcDirs)]
         }
     }
     test {
@@ -28,22 +28,18 @@ sourceSets {
 }
 
 dependencies {
-    api 'ch.qos.logback:logback-classic:1.2.3'
+    api libs.logback
 
-    compileOnly 'com.google.protobuf:protobuf-java:3.15.8'
-    compileOnly 'org.xerial.snappy:snappy-java:1.1.8.4'
-    compileOnly 'org.apache.httpcomponents:httpclient:4.5.13'
-    compileOnly 'io.micrometer:micrometer-core:1.6.8'
+    compileOnly libs.bundles.pluggable
 
-    testImplementation 'junit:junit:4.13.2'
-    testImplementation 'com.google.protobuf:protobuf-java:3.15.8'
-    testImplementation 'org.xerial.snappy:snappy-java:1.1.8.4'
-    testImplementation 'org.apache.httpcomponents:httpclient:4.5.13'
-    testImplementation 'com.fasterxml.jackson.core:jackson-databind:2.12.4'
-    testImplementation 'io.micrometer:micrometer-core:1.6.8'
+    testImplementation libs.junit
+    testImplementation libs.bundles.pluggable
+    testImplementation libs.jackson
 }
 
 compileJava {
+    dependsOn ':loki-client:generateProto'
+    
     sourceCompatibility = 11
     targetCompatibility = 11
 }
@@ -71,7 +67,7 @@ jar {
 }
 
 jacoco {
-    toolVersion = "0.8.6"
+    toolVersion = libs.versions.jacoco.get()
 }
 
 jacocoTestReport {

@@ -22,10 +22,10 @@ import com.fasterxml.jackson.annotation.JsonIgnoreProperties;
 import com.fasterxml.jackson.core.JsonProcessingException;
 import com.fasterxml.jackson.databind.JsonMappingException;
 import com.fasterxml.jackson.databind.ObjectMapper;
-import com.github.loki4j.common.batch.LogRecord;
-import com.github.loki4j.common.batch.LogRecordBatch;
-import com.github.loki4j.common.http.HttpHeaders;
-import com.github.loki4j.common.util.ByteBufferFactory;
+import com.github.loki4j.client.batch.LogRecord;
+import com.github.loki4j.client.batch.LogRecordBatch;
+import com.github.loki4j.client.http.HttpHeaders;
+import com.github.loki4j.client.util.ByteBufferFactory;
 import com.github.loki4j.logback.Loki4jAppender;
 import com.github.loki4j.logback.AbstractLoki4jEncoder;
 
@@ -147,7 +147,7 @@ public class LokiTestingClient {
             }
             var batch = new LogRecordBatch(records);
             batch.sort(lokiLogsSorting);
-            var writer = encoder.createWriter(4 * 1024 * 1024, new ByteBufferFactory(false));
+            var writer = encoder.getWriterFactory().factory.apply(4 * 1024 * 1024, new ByteBufferFactory(false));
             writer.serializeBatch(batch);
             reqStr.set(new String(writer.toByteArray()));
         });

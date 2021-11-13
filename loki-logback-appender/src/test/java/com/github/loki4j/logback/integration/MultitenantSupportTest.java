@@ -17,12 +17,12 @@ public class MultitenantSupportTest {
     private static LokiTestingClient client;
 
     @BeforeClass
-    public static void startMockLoki() {
+    public static void startLokiClient() {
         client = new LokiTestingClient(urlBase, tenant);
     }
 
     @AfterClass
-    public static void stopMockLoki() {
+    public static void stopLokiClient() {
         client.close();
     }
 

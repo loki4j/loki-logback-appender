@@ -31,7 +31,7 @@ configurations {
 }
 
 compileJava8Java {
-    dependsOn ':common:generateProto'
+    dependsOn ':loki-client:generateProto'
 
     source(file('src/main/java8'))
 
