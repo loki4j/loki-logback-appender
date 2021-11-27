@@ -10,7 +10,7 @@ dependencyResolutionManagement {
     versionCatalogs {
         libs {
             version('protobuf', '3.18.1')
-            version('jacoco', '0.8.6')
+            version('jacoco', '0.8.7')
 
             alias('protobuf').to('com.google.protobuf', 'protobuf-java').versionRef('protobuf')
             alias('snappy').to('org.xerial.snappy:snappy-java:1.1.8.4')
