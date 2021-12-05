@@ -26,8 +26,8 @@ public final class Loki4jAppender extends UnsynchronizedAppenderBase<ILoggingEve
      */
     private int batchMaxBytes = 4 * 1024 * 1024;
     /**
-     * Max time in milliseconds to wait before sending a batch to Loki, even if that
-     * batch isn't full
+     * Max time in milliseconds to keep a batch before sending it to Loki, even if
+     * max items/bytes limits for this batch are not reached
      */
     private long batchTimeoutMs = 60 * 1000;
 
@@ -48,7 +48,9 @@ public final class Loki4jAppender extends UnsynchronizedAppenderBase<ILoggingEve
     private boolean metricsEnabled = false;
 
     /**
-     * Wait util all remaining events are sent before shutdown the appender
+     * If true, the appender will try to send all the remaining events on shutdown,
+     * so the proper shutdown procedure might take longer.
+     * Otherwise, the appender will drop the unsent events
      */
     private boolean drainOnStop = true;
 

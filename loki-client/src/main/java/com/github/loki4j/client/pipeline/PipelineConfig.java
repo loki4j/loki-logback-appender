@@ -59,8 +59,8 @@ public class PipelineConfig {
     public final int batchMaxBytes;
 
     /**
-     * Max time in milliseconds to wait before sending a batch to Loki, even if that
-     * batch isn't full
+     * Max time in milliseconds to keep a batch before sending it to Loki, even if
+     * max items/bytes limits for this batch are not reached
      */
     public final long batchTimeoutMs;
 
@@ -89,7 +89,9 @@ public class PipelineConfig {
     public final boolean useDirectBuffers;
 
     /**
-     * Wait util all remaining events are sent before shutdown the pipeline
+     * If true, the pipeline will try to send all the remaining events on shutdown,
+     * so the proper shutdown procedure might take longer.
+     * Otherwise, the pipeline will drop the unsent events
      */
     public final boolean drainOnStop;
 
