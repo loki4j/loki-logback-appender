@@ -13,12 +13,11 @@ Most Loki4j appender settings are optional. These few that are required are mark
 Setting|Default|Description
 -------|-------|-----------
 batchMaxItems|1000|Max number of events to put into a single batch before sending it to Loki
-batchMaxBytes|4194304|Max number of bytes a single batch (as counted by Loki) can contain. This value should not be greater than `server.grpc_server_max_recv_msg_size` in your Loki config
+batchMaxBytes|4194304|Max number of bytes a single batch can contain (as counted by Loki). This value should not be greater than `server.grpc_server_max_recv_msg_size` in your Loki config
 batchTimeoutMs|60000|Max time in milliseconds to keep a batch before sending it to Loki, even if max items/bytes limits for this batch are not reached
 sendQueueMaxBytes|41943040|Max number of bytes to keep in the send queue. When the queue is full, incoming log events are dropped
 useDirectBuffers|true|Use off-heap memory for storing intermediate data
-drainOnStop|true|If true, the appender will try to send all the remaining events on shutdown, so the proper shutdown procedure might take longer.
-Otherwise, the appender will drop the unsent events
+drainOnStop|true|If true, the appender will try to send all the remaining events on shutdown, so the proper shutdown procedure might take longer. Otherwise, the appender will drop the unsent events
 metricsEnabled|false|If true, the appender will report its metrics using Micrometer
 verbose|false|If true, the appender will print its own debug logs to stderr
 
