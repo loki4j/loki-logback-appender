@@ -36,7 +36,7 @@ public final class DefaultPipeline {
     private static final Comparator<LogRecord> compareByStream = (e1, e2) ->
         Long.compare(e1.stream.id, e2.stream.id);
 
-    private final long PARK_NS = TimeUnit.MILLISECONDS.toNanos(1);
+    private final long PARK_NS = TimeUnit.MILLISECONDS.toNanos(25);
 
     private final ConcurrentLinkedQueue<LogRecord> buffer = new ConcurrentLinkedQueue<>();
 
