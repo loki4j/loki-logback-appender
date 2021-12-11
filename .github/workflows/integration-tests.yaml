@@ -11,7 +11,16 @@ jobs:
     runs-on: ubuntu-latest
     strategy:
       matrix:
-        loki: [1.6.1, 2.3.0]
+        loki: [1.6.1, 2.4.1]
+        include:
+          - loki: 1.6.1
+            limits: -distributor.ingestion-rate-limit-mb=160 -distributor.ingestion-burst-size-mb=240
+          - loki: 2.4.1
+            limits: |
+              -distributor.ingestion-rate-limit-mb=160 -distributor.ingestion-burst-size-mb=240 \
+              -ingester.per-stream-rate-limit="80MB" -ingester.per-stream-rate-limit-burst="160MB" \
+              -server.grpc-max-recv-msg-size-bytes=4194304000 \
+              -querier.frontend-client.grpc-max-send-msg-size=167772160
     steps:
       - uses: actions/checkout@v2
       - name: Set up JDK
@@ -22,7 +31,7 @@ jobs:
         run: |
           docker run --name loki -d -p 3100:3100 grafana/loki:${{ matrix.loki }} \
             -config.file=/etc/loki/local-config.yaml \
-            -distributor.ingestion-rate-limit-mb=160 -distributor.ingestion-burst-size-mb=240
+            ${{ matrix.limits }}
           docker run --name lokimultitenant -d -p 3110:3100 grafana/loki:${{ matrix.loki }} \
             -config.file=/etc/loki/local-config.yaml -auth.enabled=true
           sleep 5s
