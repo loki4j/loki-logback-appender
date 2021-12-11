@@ -23,7 +23,7 @@ jobs:
           docker run --name loki -d -p 3100:3100 grafana/loki:${{ matrix.loki }} \
             -config.file=/etc/loki/local-config.yaml \
             -distributor.ingestion-rate-limit-mb=160 -distributor.ingestion-burst-size-mb=240 \
-            -distributor.per_stream_rate_limit="80MB" -distributor.per_stream_rate_limit_burst="160MB" \
+            -ingester.per-stream-rate-limit="80MB" -ingester.per-stream-rate-limit-burst="160MB" \
             -server.grpc-max-recv-msg-size-bytes=4194304000 \
             -querier.frontend-client.grpc-max-send-msg-size=167772160
           docker run --name lokimultitenant -d -p 3110:3100 grafana/loki:${{ matrix.loki }} \
