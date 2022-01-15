@@ -1,11 +1,13 @@
 package com.github.loki4j.logback;
 
 import java.nio.charset.Charset;
-import java.util.HashMap;
+import java.time.Duration;
 import java.util.concurrent.atomic.AtomicInteger;
-import java.util.concurrent.atomic.AtomicReference;
+import java.util.concurrent.atomic.AtomicLong;
 import java.util.regex.Pattern;
 
+import com.github.benmanes.caffeine.cache.Cache;
+import com.github.benmanes.caffeine.cache.Caffeine;
 import com.github.loki4j.client.batch.LogRecordStream;
 
 import ch.qos.logback.classic.PatternLayout;
@@ -64,7 +66,9 @@ public abstract class AbstractLoki4jEncoder extends ContextAwareBase implements 
 
     protected final Charset charset = Charset.forName("UTF-8");
 
-    private final AtomicReference<HashMap<String, LogRecordStream>> streams = new AtomicReference<>(new HashMap<>());
+    private final Cache<String, LogRecordStream> streams = Caffeine.newBuilder()
+        .expireAfterAccess(Duration.ofHours(1))
+        .build();
 
     private final AtomicInteger nanoCounter = new AtomicInteger(0);
 
@@ -168,20 +172,13 @@ public abstract class AbstractLoki4jEncoder extends ContextAwareBase implements 
         return patternLayout;
     }
 
+    private final AtomicLong ids = new AtomicLong(0);
+
     private LogRecordStream stream(String input) {
         final var streamKey = staticLabels ? STATIC_STREAM_KEY : input;
-        return streams
-            .updateAndGet(m -> {
-                if (!m.containsKey(streamKey)) {
-                    var nm = new HashMap<>(m);
-                    nm.put(streamKey, LogRecordStream.create(
-                        m.size(), extractStreamKVPairs(input)));
-                    return nm;
-                } else {
-                    return m;
-                }
-            })
-            .get(streamKey);
+        return streams.get(streamKey,
+            key -> LogRecordStream.create(ids.getAndIncrement(), extractStreamKVPairs(input))
+        );
     }
 
     String[] extractStreamKVPairs(String stream) {

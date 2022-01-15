@@ -19,6 +19,7 @@ dependencyResolutionManagement {
 
             alias('logback').to('ch.qos.logback:logback-classic:1.2.3')
             alias('jackson').to('com.fasterxml.jackson.core:jackson-databind:2.12.4')
+            alias('caffeine').to('com.github.ben-manes.caffeine:caffeine:3.0.5')
 
             alias('junit').to('junit:junit:4.13.2')
 
