@@ -68,6 +68,7 @@ jobs:
         env:
           GRAFANA_CLOUD_USERNAME: ${{ secrets.GRAFANA_CLOUD_USERNAME }}
           GRAFANA_CLOUD_PASSWORD: ${{ secrets.GRAFANA_CLOUD_PASSWORD }}
+          GRAFANA_CLOUD_EXTRA_LABEL: -JDK${{ matrix.jdk }}
         run: |
           ./gradlew check
           ./gradlew ciOnlyTests --tests "*GrafanaCloudTest"
