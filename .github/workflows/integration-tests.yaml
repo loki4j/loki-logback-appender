@@ -60,7 +60,7 @@ jobs:
         uses: actions/setup-java@v2
         with:
           distribution: 'temurin'
-          java-version: 11.0.13
+          java-version: 11
       - name: Build and Run Integration Tests
         env:
           GRAFANA_CLOUD_USERNAME: ${{ secrets.GRAFANA_CLOUD_USERNAME }}
