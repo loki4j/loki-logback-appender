@@ -54,13 +54,16 @@ jobs:
   grafana-cloud:
     runs-on: ubuntu-latest
     environment: integ-tests
+    strategy:
+      matrix:
+        jdk: [11.0.13, 11.0.14, 17.0.1, 17.0.2]
     steps:
       - uses: actions/checkout@v2
       - name: Set up JDK
         uses: actions/setup-java@v2
         with:
           distribution: 'temurin'
-          java-version: 11.0.13
+          java-version: ${{ matrix.jdk }}
       - name: Build and Run Integration Tests
         env:
           GRAFANA_CLOUD_USERNAME: ${{ secrets.GRAFANA_CLOUD_USERNAME }}
