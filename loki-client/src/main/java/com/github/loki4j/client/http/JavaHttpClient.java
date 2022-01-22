@@ -4,7 +4,6 @@ import java.net.URI;
 import java.net.http.HttpClient;
 import java.net.http.HttpRequest;
 import java.net.http.HttpResponse;
-import java.net.http.HttpClient.Version;
 import java.nio.ByteBuffer;
 import java.time.Duration;
 import java.util.concurrent.ExecutorService;
@@ -39,7 +38,6 @@ public final class JavaHttpClient implements Loki4jHttpClient {
 
         client = HttpClient
             .newBuilder()
-            .version(Version.HTTP_1_1)
             .connectTimeout(Duration.ofMillis(conf.connectionTimeoutMs))
             .executor(internalHttpThreadPool)
             .build();
