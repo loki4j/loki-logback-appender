@@ -11,11 +11,11 @@ jobs:
     runs-on: ubuntu-latest
     strategy:
       matrix:
-        loki: [1.6.1, 2.4.1]
+        loki: [1.6.1, 2.4.2]
         include:
           - loki: 1.6.1
             limits: -distributor.ingestion-rate-limit-mb=160 -distributor.ingestion-burst-size-mb=240
-          - loki: 2.4.1
+          - loki: 2.4.2
             limits: |
               -distributor.ingestion-rate-limit-mb=160 -distributor.ingestion-burst-size-mb=240 \
               -ingester.per-stream-rate-limit="80MB" -ingester.per-stream-rate-limit-burst="160MB" \
@@ -24,8 +24,9 @@ jobs:
     steps:
       - uses: actions/checkout@v2
       - name: Set up JDK
-        uses: actions/setup-java@v1
+        uses: actions/setup-java@v2
         with:
+          distribution: 'temurin'
           java-version: 11
       - name: Build and Run Integration Tests
         run: |
@@ -53,16 +54,21 @@ jobs:
   grafana-cloud:
     runs-on: ubuntu-latest
     environment: integ-tests
+    strategy:
+      matrix:
+        jdk: [11, 17]
     steps:
       - uses: actions/checkout@v2
       - name: Set up JDK
-        uses: actions/setup-java@v1
+        uses: actions/setup-java@v2
         with:
-          java-version: 11
+          distribution: 'temurin'
+          java-version: ${{ matrix.jdk }}
       - name: Build and Run Integration Tests
         env:
           GRAFANA_CLOUD_USERNAME: ${{ secrets.GRAFANA_CLOUD_USERNAME }}
           GRAFANA_CLOUD_PASSWORD: ${{ secrets.GRAFANA_CLOUD_PASSWORD }}
+          GRAFANA_CLOUD_EXTRA_LABEL: -JDK${{ matrix.jdk }}
         run: |
           ./gradlew check
           ./gradlew ciOnlyTests --tests "*GrafanaCloudTest"

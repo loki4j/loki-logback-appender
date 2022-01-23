@@ -18,6 +18,7 @@ public class GrafanaCloudTest {
 
     private static String username = System.getenv("GRAFANA_CLOUD_USERNAME");
     private static String password = System.getenv("GRAFANA_CLOUD_PASSWORD");
+    private static String extraLabel = System.getenv("GRAFANA_CLOUD_EXTRA_LABEL");
 
     private static LokiTestingClient client;
 
@@ -31,7 +32,13 @@ public class GrafanaCloudTest {
         client.close();
     }
 
-    public static AbstractHttpSender authorize(AbstractHttpSender sender) {
+    private static String label(String l) {
+        return extraLabel == null
+            ? l
+            : l + extraLabel;
+    }
+
+    private static AbstractHttpSender authorize(AbstractHttpSender sender) {
         var auth = new AbstractHttpSender.BasicAuth();
         auth.setUsername(username);
         auth.setPassword(password);
@@ -44,7 +51,7 @@ public class GrafanaCloudTest {
     @Test
     @Category({CIOnlyTests.class})
     public void testApacheJsonCloud() throws Exception {
-        var label = "testApacheJsonCloud";
+        var label = label("testApacheJsonCloud");
         var encoder = jsonEncoder(false, label);
         var sender = authorize(apacheHttpSender(urlPush));
         var appender = appender(10, 1000, encoder, sender);
@@ -58,7 +65,7 @@ public class GrafanaCloudTest {
     @Test
     @Category({CIOnlyTests.class})
     public void testJavaJsonCloud() throws Exception {
-        var label = "testJavaJsonCloud";
+        var label = label("testJavaJsonCloud");
         var encoder = jsonEncoder(false, label);
         var sender = authorize(javaHttpSender(urlPush));
         var appender = appender(10, 1000, encoder, sender);
@@ -70,7 +77,7 @@ public class GrafanaCloudTest {
     @Test
     @Category({CIOnlyTests.class})
     public void testApacheProtobufCloud() throws Exception {
-        var label = "testApacheProtobufCloud";
+        var label = label("testApacheProtobufCloud");
         var encoder = protobufEncoder(false, label);
         var sender = authorize(apacheHttpSender(urlPush));
         var appender = appender(10, 1000, encoder, sender);
@@ -82,7 +89,7 @@ public class GrafanaCloudTest {
     @Test
     @Category({CIOnlyTests.class})
     public void testJavaProtobufCloud() throws Exception {
-        var label = "testJavaProtobufCloud";
+        var label = label("testJavaProtobufCloud");
         var encoder = protobufEncoder(false, label);
         var sender = authorize(javaHttpSender(urlPush));
         var appender = appender(10, 1000, encoder, sender);
@@ -94,7 +101,7 @@ public class GrafanaCloudTest {
     @Test
     @Category({CIOnlyTests.class})
     public void testApacheJsonMaxBytesSend() throws Exception {
-        var label = "testApacheJsonMaxBytesSendCloud";
+        var label = label("testApacheJsonMaxBytesSendCloud");
         var encoder = jsonEncoder(false, label);
         var sender = authorize(apacheHttpSender(urlPush));
         sender.setRequestTimeoutMs(30_000L);
@@ -111,7 +118,7 @@ public class GrafanaCloudTest {
     @Test
     @Category({CIOnlyTests.class})
     public void testJavaProtobufMaxBytesSend() throws Exception {
-        var label = "testJavaProtobufMaxBytesSendCloud";
+        var label = label("testJavaProtobufMaxBytesSendCloud");
         var encoder = protobufEncoder(false, label);
         var sender = authorize(javaHttpSender(urlPush));
         sender.setRequestTimeoutMs(30_000L);

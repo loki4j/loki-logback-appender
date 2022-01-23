@@ -7,6 +7,7 @@ import java.io.IOException;
 import java.net.URI;
 import java.net.URLEncoder;
 import java.net.http.HttpClient;
+import java.net.http.HttpClient.Version;
 import java.net.http.HttpRequest;
 import java.net.http.HttpResponse;
 import java.time.Duration;
@@ -51,6 +52,7 @@ public class LokiTestingClient {
 
         client = HttpClient
             .newBuilder()
+            .version(Version.HTTP_1_1)
             .connectTimeout(Duration.ofSeconds(120))
             .build();
 
