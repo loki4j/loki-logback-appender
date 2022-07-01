@@ -10,7 +10,7 @@ This project is unofficial and community-driven.
 Please proceed to the microsite for more information:
 
 - [Quick Start](https://loki4j.github.io/loki-logback-appender/#quick-start)
-- [Configuration Guide](https://loki4j.github.io/loki-logback-appender/docs/appenders)
+- [Configuration Guide](https://loki4j.github.io/loki-logback-appender/docs/configuration)
 
 If you have found this project helpful, please drop a :star:!
 
