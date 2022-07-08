@@ -1,6 +1,7 @@
 package com.github.loki4j.logback;
 
 import java.nio.charset.Charset;
+import java.util.Arrays;
 import java.util.HashMap;
 import java.util.concurrent.atomic.AtomicInteger;
 import java.util.concurrent.atomic.AtomicReference;
@@ -19,6 +20,7 @@ import ch.qos.logback.core.spi.ContextAwareBase;
 public abstract class AbstractLoki4jEncoder extends ContextAwareBase implements Loki4jEncoder {
 
     private static final String STATIC_STREAM_KEY = "STATIC_STREAM_KEY";
+    private static final String REGEX_STARTER = "regex:";
     
     public static final class LabelCfg {
         /**
@@ -92,6 +94,9 @@ public abstract class AbstractLoki4jEncoder extends ContextAwareBase implements 
      */
     private volatile long maxTimestampMs = 0;
 
+    private Pattern compiledLabelPairSeparator;
+    private Pattern compiledLabelKeyValueSeparator;
+
     private PatternLayout labelPatternLayout;
     private PatternLayout messagePatternLayout;
 
@@ -106,6 +111,13 @@ public abstract class AbstractLoki4jEncoder extends ContextAwareBase implements 
         var labelPattern = label.nopex
             ? resolvedLblPat + "%nopex"
             : resolvedLblPat;
+
+        // check if label pair separator is RegEx or literal string
+        compiledLabelPairSeparator = label.pairSeparator.startsWith(REGEX_STARTER)
+            ? Pattern.compile(label.pairSeparator.substring(REGEX_STARTER.length()))
+            : Pattern.compile(Pattern.quote(label.pairSeparator));
+        // label key-value separator supports only literal strings
+        compiledLabelKeyValueSeparator = Pattern.compile(Pattern.quote(label.keyValueSeparator));
 
         labelPatternLayout = initPatternLayout(labelPattern);
         labelPatternLayout.start();
@@ -185,20 +197,24 @@ public abstract class AbstractLoki4jEncoder extends ContextAwareBase implements 
     }
 
     String[] extractStreamKVPairs(String stream) {
-        var pairs = stream.split(Pattern.quote(label.pairSeparator));
+        var pairs = compiledLabelPairSeparator.split(stream);
         var result = new String[pairs.length * 2];
+        var pos = 0;
         for (int i = 0; i < pairs.length; i++) {
-            var kv = pairs[i].split(Pattern.quote(label.keyValueSeparator));
+            if (pairs[i].isBlank()) continue;
+
+            var kv = compiledLabelKeyValueSeparator.split(pairs[i]);
             if (kv.length == 2) {
-                result[i * 2] = kv[0];
-                result[i * 2 + 1] = kv[1];
+                result[pos] = kv[0];
+                result[pos + 1] = kv[1];
+                pos += 2;
             } else {
                 throw new IllegalArgumentException(String.format(
                     "Unable to split '%s' in '%s' to label key-value pairs, pairSeparator=%s, keyValueSeparator=%s",
                     pairs[i], stream, label.pairSeparator, label.keyValueSeparator));
             }
         }
-        return result;
+        return Arrays.copyOf(result, pos);
     }
 
     public void setLabel(LabelCfg label) {
