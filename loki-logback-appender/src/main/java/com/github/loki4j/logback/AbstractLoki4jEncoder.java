@@ -8,6 +8,7 @@ import java.util.concurrent.atomic.AtomicReference;
 import java.util.regex.Pattern;
 
 import com.github.loki4j.client.batch.LogRecordStream;
+import com.github.loki4j.client.util.StringUtils;
 
 import ch.qos.logback.classic.PatternLayout;
 import ch.qos.logback.classic.spi.ILoggingEvent;
@@ -201,7 +202,7 @@ public abstract class AbstractLoki4jEncoder extends ContextAwareBase implements 
         var result = new String[pairs.length * 2];
         var pos = 0;
         for (int i = 0; i < pairs.length; i++) {
-            if (pairs[i].isBlank()) continue;
+            if (StringUtils.isBlank(pairs[i])) continue;
 
             var kv = compiledLabelKeyValueSeparator.split(pairs[i]);
             if (kv.length == 2) {

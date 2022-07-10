@@ -24,4 +24,19 @@ public class StringUtils {
         return count;
     }
 
+    /**
+     * Check if given String is null, empty or contains only whitespace chars.
+     */
+    public static boolean isBlank(CharSequence input) {
+        var len = input == null
+            ? 0
+            : input.length();
+        for (int i = 0; i < len; i++) {
+            if (!Character.isWhitespace(input.charAt(i))) {
+                return false;
+            }
+        }
+        return true;
+    }
+
 }
