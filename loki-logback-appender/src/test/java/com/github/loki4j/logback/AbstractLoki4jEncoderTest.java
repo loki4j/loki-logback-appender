@@ -25,6 +25,36 @@ public class AbstractLoki4jEncoderTest {
     }
 
     @Test
+    public void testExtractStreamKVPairsIgnoringEmpty() {
+        withEncoder(toStringEncoder(
+                labelCfg(",,level=%level,,app=\"my\"app,", ",", "=", true),
+                messageCfg("l=%level c=%logger{20} t=%thread | %msg %ex{1}"),
+                false,
+                false), encoder -> {
+            var kvs1 = encoder.extractStreamKVPairs(",,level=INFO,,app=\"my\"app,test=test,");
+            var kvse1 = new String[] {"level", "INFO", "app", "\"my\"app", "test", "test"};
+            assertArrayEquals("Split by ,=", kvse1, kvs1);
+        });
+    }
+
+    @Test
+    public void testExtractStreamKVPairsByRegex() {
+        withEncoder(toStringEncoder(
+                labelCfg(
+                    "\n\n// level is label\nlevel=%level\n// another comment\n\napp=\"my\"app\n\n// end comment",
+                    "regex:(\n|//[^\n]+)+",
+                    "=",
+                    true),
+                messageCfg("l=%level c=%logger{20} t=%thread | %msg %ex{1}"),
+                false,
+                false), encoder -> {
+            var kvs1 = encoder.extractStreamKVPairs("\n\n// level is label\nlevel=INFO\n// another comment\n\napp=\"my\"app\n\n// end comment");
+            var kvse1 = new String[] {"level", "INFO", "app", "\"my\"app"};
+            assertArrayEquals("Split by ,=", kvse1, kvs1);
+        });
+    }
+
+    @Test
     public void testExtractStreamKVPairs() {
         withEncoder(toStringEncoder(
                 labelCfg("level=%level,app=\"my\"app", ",", "=", true),

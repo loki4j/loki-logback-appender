@@ -16,5 +16,14 @@ public class StringUtilsTest {
             assertEquals(test.getBytes(UTF_8).length, StringUtils.utf8Length(test));
         }
     }
+
+    @Test
+    public void testIsBlank() {
+        assertEquals(true, StringUtils.isBlank(null));
+        assertEquals(true, StringUtils.isBlank(""));
+        assertEquals(true, StringUtils.isBlank("    \t\t\n "));
+        assertEquals(false, StringUtils.isBlank("0"));
+        assertEquals(false, StringUtils.isBlank("erfqwef9jokfwejfi"));
+    }
     
 }
