@@ -95,7 +95,7 @@ public class LabelMarker implements Marker {
      * @param value Value od the label will be created at time when it is first accessed (i.e. deferred creation).
      */
     public static LabelMarker of(String key, Supplier<String> value) {
-        return of(() -> Map.of(key, value.get()));
+        return of(() -> Collections.singletonMap(key, value.get()));
     }
     
 }
