@@ -49,7 +49,7 @@ public class JavaHttpAppenderTest {
 
             a.append(events[2]);
             a.waitAllAppended();
-            assertEquals("http send", expected, new String(mockLoki.lastBatch));
+            assertEquals("http send", expected, StringPayload.parse(mockLoki.lastBatch));
             return null;
         });
     }
@@ -65,7 +65,7 @@ public class JavaHttpAppenderTest {
 
             a.append(events[2]);
             a.waitAllAppended();
-            assertEquals("http send", expected, new String(mockLoki.lastBatch));
+            assertEquals("http send", expected, StringPayload.parse(mockLoki.lastBatch));
             return null;
         });
     }
@@ -77,7 +77,7 @@ public class JavaHttpAppenderTest {
         withAppender(appender(3, 1000L, defaultToStringEncoder(), sender), a -> {
             a.append(events);
             a.waitAllAppended();
-            assertEquals("http send", expected, new String(mockLoki.lastBatch));
+            assertEquals("http send", expected, StringPayload.parse(mockLoki.lastBatch));
             assertTrue(mockLoki.lastHeaders
                 .get(HttpHeaders.X_SCOPE_ORGID)
                 .contains("tenant1"));

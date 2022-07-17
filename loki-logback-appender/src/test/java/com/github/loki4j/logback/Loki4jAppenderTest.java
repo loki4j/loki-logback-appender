@@ -44,10 +44,13 @@ public class Loki4jAppenderTest {
             null)
     };
 
-    static String expected =
-            "LogRecord [ts=100, stream=Stream [id=0, labels=[level, INFO, app, my-app]], message=l=INFO c=test.TestApp t=thread-1 | Test message 1 ]\n" +
-            "LogRecord [ts=107, stream=Stream [id=0, labels=[level, INFO, app, my-app]], message=l=INFO c=test.TestApp t=thread-1 | Test message 3 ]\n" +
-            "LogRecord [ts=104, stream=Stream [id=1, labels=[level, WARN, app, my-app]], message=l=WARN c=test.TestApp t=thread-2 | Test message 2 ]\n";
+    static StringPayload expected = StringPayload.builder()
+        .stream("[level, INFO, app, my-app]",
+            "ts=100 l=INFO c=test.TestApp t=thread-1 | Test message 1 ",
+            "ts=107 l=INFO c=test.TestApp t=thread-1 | Test message 3 ")
+        .stream("[level, WARN, app, my-app]",
+            "ts=104 l=WARN c=test.TestApp t=thread-2 | Test message 2 ")
+        .build();
 
     @Test
     public void testBatchSize() {
@@ -60,7 +63,7 @@ public class Loki4jAppenderTest {
 
             appender.append(events[2]);
             appender.waitAllAppended();
-            assertEquals("batchSize", expected, new String(sender.lastBatch(), encoder.charset));
+            assertEquals("batchSize", expected, StringPayload.parse(sender.lastBatch(), encoder.charset));
             return null;
         });
     }
@@ -79,7 +82,7 @@ public class Loki4jAppenderTest {
             assertTrue("no batches before batchTimeout reached", sender.lastBatch() == null);
         
             try { Thread.sleep(300L); } catch (InterruptedException e1) { }
-            assertEquals("batchTimeout", expected, new String(sender.lastBatch(), encoder.charset));
+            assertEquals("batchTimeout", expected, StringPayload.parse(sender.lastBatch(), encoder.charset));
             return null;
         });
     }
@@ -99,7 +102,7 @@ public class Loki4jAppenderTest {
         assertTrue("no batches before stop", sender.lastBatch() == null);
         
         appender.stop();
-        assertEquals("batchTimeout", expected, new String(sender.lastBatch(), encoder.charset));
+        assertEquals("batchTimeout", expected, StringPayload.parse(sender.lastBatch(), encoder.charset));
     }
 
     @Test
@@ -147,7 +150,10 @@ public class Loki4jAppenderTest {
             "['100100002','l=INFO c=TestApp t=main | m3-line1\\rline2\\r ']]}]}"
             ).replace('\'', '"');
 
-        assertEquals("batchSize", expected, new String(sender.lastBatch(), encoder.charset));
+        var actual = new String(sender.lastBatch(), encoder.charset);
+        System.out.println(expected);
+        System.out.println(actual);
+        assertEquals("batchSize", expected, actual);
         appender.stop();
     }
 
@@ -174,7 +180,7 @@ public class Loki4jAppenderTest {
         appender.append(events[2]);
 
         try { Thread.sleep(100L); } catch (InterruptedException e1) { }
-        assertEquals("batchSize", expected, new String(sender.lastBatch(), encoder.charset));
+        assertEquals("batchSize", expected, StringPayload.parse(sender.lastBatch(), encoder.charset));
 
         appender.stop();
     }
@@ -196,7 +202,7 @@ public class Loki4jAppenderTest {
         appender.append(events[2]);
         try { Thread.sleep(100L); } catch (InterruptedException e1) { }
         // sender queue
-        for (int i = 0; i < 4; i++) {
+        for (int i = 0; i < 6; i++) {
             appender.append(events[0]);
             try { Thread.sleep(100L); } catch (InterruptedException e1) { }
         }
