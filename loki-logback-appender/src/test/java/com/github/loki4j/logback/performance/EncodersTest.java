@@ -92,7 +92,7 @@ public class EncodersTest {
                         UnaryOperator.identity())
                     .map(rs -> new LogRecordBatch(rs))
                     .map(b -> {
-                        b.sort((e1, e2) -> Long.compare(e1.stream.id, e2.stream.id));
+                        b.sort((e1, e2) -> Long.compare(e1.stream.hash, e2.stream.hash));
                         return b;
                     })
                     .limit(1000)

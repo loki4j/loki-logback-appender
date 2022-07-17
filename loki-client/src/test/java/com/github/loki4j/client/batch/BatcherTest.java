@@ -6,7 +6,7 @@ import static org.junit.Assert.*;
 public class BatcherTest {
 
     private static LogRecord logRecord(long ts) {
-        return LogRecord.create(ts, 0, LogRecordStream.create(0, "testkey", "testval"), ("message" + ts));
+        return LogRecord.create(ts, 0, LogRecordStream.create("testkey", "testval"), ("message" + ts));
     }
 
     private static LogRecord logRecord(long ts, LogRecordStream stream, String message) {
@@ -65,7 +65,7 @@ public class BatcherTest {
 
         assertEquals("capacity is correct", 1, cbb.getCapacity());
 
-        var record = logRecord(1, LogRecordStream.create(0, "a", "b"), "3456789");
+        var record = logRecord(1, LogRecordStream.create("a", "b"), "3456789");
         assertFalse("Size too large", cbb.validateLogRecordSize(record));
         assertEquals("Batch is not ready", 0, buf.size());
     }
@@ -77,7 +77,7 @@ public class BatcherTest {
 
         assertEquals("capacity is correct", 10, cbb.getCapacity());
 
-        var stream = LogRecordStream.create(0, "a", "b");
+        var stream = LogRecordStream.create("a", "b");
 
         var r1 = logRecord(1, stream, "123");
         assertTrue("Size is ok", cbb.validateLogRecordSize(r1));

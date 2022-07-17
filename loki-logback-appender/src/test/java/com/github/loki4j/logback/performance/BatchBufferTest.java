@@ -26,7 +26,7 @@ public class BatchBufferTest {
         return LogRecord.create(
             e.getTimeStamp(),
             0,
-            LogRecordStream.create(0, "test","dlkjafh"),
+            LogRecordStream.create("test","dlkjafh"),
             e.getMessage());
     }
 

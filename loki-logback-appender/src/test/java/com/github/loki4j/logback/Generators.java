@@ -2,14 +2,19 @@ package com.github.loki4j.logback;
 
 import java.io.IOException;
 import java.nio.ByteBuffer;
+import java.nio.charset.Charset;
 import java.nio.charset.StandardCharsets;
 import java.time.Instant;
 import java.util.ArrayList;
+import java.util.Arrays;
+import java.util.HashMap;
 import java.util.Iterator;
 import java.util.concurrent.ThreadLocalRandom;
 import java.util.function.Consumer;
 import java.util.function.Function;
 import java.util.stream.StreamSupport;
+
+import org.slf4j.Marker;
 
 import com.github.loki4j.client.batch.LogRecord;
 import com.github.loki4j.client.batch.LogRecordBatch;
@@ -32,13 +37,22 @@ import static com.github.loki4j.testkit.dummy.Generators.genMessage;
 
 public class Generators {
 
+    private static String LABELS_MESSAGE_SEPARATOR = " %%% ";
+
     static HttpConfig.Builder defaultHttpConfig = HttpConfig.builder();
 
     public static String batchToString(LogRecordBatch batch) {
         var s = new StringBuilder();
         for (int i = 0; i < batch.size(); i++) {
-            s.append(batch.get(i));
-            s.append('\n');
+            var b = batch.get(i);
+            s
+                .append(Arrays.toString(b.stream.labels))
+                .append(LABELS_MESSAGE_SEPARATOR)
+                .append("ts=")
+                .append(b.timestampMs)
+                .append(" ")
+                .append(b.message)
+                .append('\n');
         }
         return s.toString();
     }
@@ -97,7 +111,7 @@ public class Generators {
     public static JsonEncoder jsonEncoder(boolean staticLabels, String testLabel) {
         var encoder = new JsonEncoder();
         encoder.setStaticLabels(staticLabels);
-        encoder.setLabel(labelCfg("test=" + testLabel + ",level=%level,app=my-app", ",", "=", true));
+        encoder.setLabel(labelCfg("test=" + testLabel + ",level=%level,app=my-app", ",", "=", true, false));
         encoder.setSortByTime(true);
         return encoder;
     }
@@ -105,7 +119,7 @@ public class Generators {
     public static ProtobufEncoder protobufEncoder(boolean staticLabels, String testLabel) {
         var encoder = new ProtobufEncoder();
         encoder.setStaticLabels(staticLabels);
-        encoder.setLabel(labelCfg("test=" + testLabel + ",level=%level,app=my-app", ",", "=", true));
+        encoder.setLabel(labelCfg("test=" + testLabel + ",level=%level,app=my-app", ",", "=", true, false));
         return encoder;
     }
 
@@ -123,7 +137,7 @@ public class Generators {
 
     public static AbstractLoki4jEncoder defaultToStringEncoder() {
         return toStringEncoder(
-            labelCfg("level=%level,app=my-app", ",", "=", true),
+            labelCfg("level=%level,app=my-app", ",", "=", true, false),
             messageCfg("l=%level c=%logger{20} t=%thread | %msg %ex{1}"),
             true,
             false);
@@ -197,12 +211,14 @@ public class Generators {
             String pattern,
             String pairSeparator,
             String keyValueSeparator,
-            boolean nopex) {
+            boolean nopex,
+            boolean readMarkers) {
         var label = new AbstractLoki4jEncoder.LabelCfg();
         label.setPattern(pattern);
         label.setPairSeparator(pairSeparator);
         label.setKeyValueSeparator(keyValueSeparator);
         label.setNopex(nopex);
+        label.setReadMarkers(readMarkers);
         return label;
     }
 
@@ -297,7 +313,8 @@ public class Generators {
             String className,
             String threadName,
             String message,
-            Throwable throwable) {
+            Throwable throwable,
+            Marker marker) {
         var e = new LoggingEvent();
         e.setTimeStamp(timestamp);
         e.setLevel(level);
@@ -306,7 +323,19 @@ public class Generators {
         e.setMessage(message);
         if (throwable != null)
             e.setThrowableProxy(new ThrowableProxy(throwable));
+        if (marker != null)
+            e.setMarker(marker);
         return e;
+    }
+
+    public static LoggingEvent loggingEvent(
+            long timestamp,
+            Level level,
+            String className,
+            String threadName,
+            String message,
+            Throwable throwable) {
+        return loggingEvent(timestamp, level, className, threadName, message, throwable, null);
     }
 
     public static LogRecord eventToRecord(ILoggingEvent e, Loki4jEncoder enc) {
@@ -372,6 +401,79 @@ public class Generators {
             lastBatch = new byte[batch.remaining()];
             batch.get(lastBatch);
             return new LokiResponse(204, "");
+        }
+    }
+
+    public static class StringPayload {
+        public final HashMap<String, ArrayList<String>> data;
+
+        private StringPayload(HashMap<String, ArrayList<String>> data) {
+            this.data = data;
+        }
+
+        @Override
+        public int hashCode() {
+            final int prime = 31;
+            int result = 1;
+            result = prime * result + ((data == null) ? 0 : data.hashCode());
+            return result;
+        }
+
+        @Override
+        public boolean equals(Object obj) {
+            if (this == obj)
+                return true;
+            if (obj == null)
+                return false;
+            if (getClass() != obj.getClass())
+                return false;
+            StringPayload other = (StringPayload) obj;
+            if (data == null) {
+                if (other.data != null)
+                    return false;
+            } else if (!data.equals(other.data))
+                return false;
+            return true;
+        }
+
+        @Override
+        public String toString() {
+            return "StringPayload [" + data + "]";
+        }
+
+        public static StringPayload parse(String input) {
+            HashMap<String, ArrayList<String>> data = new HashMap<>();
+            var lines = input.split("\n");
+            for (String line : lines) {
+                var pair = line.split(LABELS_MESSAGE_SEPARATOR);
+                var recs = data.computeIfAbsent(pair[0], x -> new ArrayList<>());
+                recs.add(pair[1]);
+            }
+            return new StringPayload(data);
+        }
+
+        public static StringPayload parse(byte[] input) {
+            return parse(new String(input));
+        }
+
+        public static StringPayload parse(byte[] input, Charset charset) {
+            return parse(new String(input, charset));
+        }
+
+        public static StringPayloadBuilder builder() {
+            return new StringPayloadBuilder();
+        }
+
+        public static class StringPayloadBuilder {
+            private HashMap<String, ArrayList<String>> data = new HashMap<>();
+            public StringPayloadBuilder stream(String stream, String... records) {
+                var recs = data.computeIfAbsent(stream, x -> new ArrayList<>());
+                recs.addAll(Arrays.asList(records));
+                return this;
+            }
+            public StringPayload build() {
+                return new StringPayload(data);
+            }
         }
     }
 

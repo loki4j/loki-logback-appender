@@ -34,7 +34,7 @@ public final class DefaultPipeline {
     };
 
     private static final Comparator<LogRecord> compareByStream = (e1, e2) ->
-        Long.compare(e1.stream.id, e2.stream.id);
+        Long.compare(e1.stream.hash, e2.stream.hash);
 
     private final long PARK_NS = TimeUnit.MILLISECONDS.toNanos(25);
 
@@ -269,8 +269,7 @@ public final class DefaultPipeline {
             log.error(e,
                 "Error while sending Batch %s to Loki (%s)",
                     batch, httpClient.getConfig().pushUrl);
-        }
-        else {
+        } else {
             if (r.status < 200 || r.status > 299)
                 log.error(
                     "Loki responded with non-success status %s on batch %s. Error: %s",

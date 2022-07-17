@@ -3,8 +3,10 @@ package com.github.loki4j.logback;
 import java.nio.charset.Charset;
 import java.util.Arrays;
 import java.util.HashMap;
+import java.util.Map.Entry;
 import java.util.concurrent.atomic.AtomicInteger;
 import java.util.concurrent.atomic.AtomicReference;
+import java.util.function.Supplier;
 import java.util.regex.Pattern;
 
 import com.github.loki4j.client.batch.LogRecordStream;
@@ -20,8 +22,8 @@ import ch.qos.logback.core.spi.ContextAwareBase;
  */
 public abstract class AbstractLoki4jEncoder extends ContextAwareBase implements Loki4jEncoder {
 
-    private static final String STATIC_STREAM_KEY = "STATIC_STREAM_KEY";
     private static final String REGEX_STARTER = "regex:";
+    private static final String[] EMPTY_LABELS = new String[0];
     
     public static final class LabelCfg {
         /**
@@ -37,6 +39,11 @@ public abstract class AbstractLoki4jEncoder extends ContextAwareBase implements 
          */
         String keyValueSeparator = "=";
         /**
+         * If true, scans each log record for attached LabelMarker to
+         * add its values to record's labels.
+         */
+        boolean readMarkers = false;
+        /**
          * If true, exception info is not added to label.
          * If false, you should take care of proper formatting
          */
@@ -49,6 +56,9 @@ public abstract class AbstractLoki4jEncoder extends ContextAwareBase implements 
         }
         public void setPairSeparator(String pairSeparator) {
             this.pairSeparator = pairSeparator;
+        }
+        public void setReadMarkers(boolean readMarkers) {
+            this.readMarkers = readMarkers;
         }
         public void setNopex(boolean nopex) {
             this.nopex = nopex;
@@ -67,7 +77,7 @@ public abstract class AbstractLoki4jEncoder extends ContextAwareBase implements 
 
     protected final Charset charset = Charset.forName("UTF-8");
 
-    private final AtomicReference<HashMap<String, LogRecordStream>> streams = new AtomicReference<>(new HashMap<>());
+    private final AtomicReference<HashMap<String, LogRecordStream>> streamCache = new AtomicReference<>(new HashMap<>());
 
     private final AtomicInteger nanoCounter = new AtomicInteger(0);
 
@@ -100,6 +110,8 @@ public abstract class AbstractLoki4jEncoder extends ContextAwareBase implements 
 
     private PatternLayout labelPatternLayout;
     private PatternLayout messagePatternLayout;
+
+    private LogRecordStream staticLabelStream = null;
 
     private boolean started = false;
 
@@ -141,7 +153,33 @@ public abstract class AbstractLoki4jEncoder extends ContextAwareBase implements 
     }
 
     public LogRecordStream eventToStream(ILoggingEvent e) {
-        return stream(labelPatternLayout.doLayout(e).intern());
+        if (staticLabels) {
+            if (staticLabelStream == null) {
+                staticLabelStream = LogRecordStream.create(extractStreamKVPairs(labelPatternLayout.doLayout(e)));
+            }
+            return staticLabelStream;
+        }
+
+        final var renderedLayout = labelPatternLayout.doLayout(e).intern();
+        var streamKey = renderedLayout;
+        var markerLablesVar = EMPTY_LABELS;
+        if (label.readMarkers) {
+            var marker = e.getMarker();
+            if (marker != null && marker instanceof LabelMarker) {
+                markerLablesVar = extractLabelsFromMarker((LabelMarker) marker);
+                streamKey = streamKey + "!markers!" + Arrays.toString(markerLablesVar);
+            }
+        }
+        final var markerLables = markerLablesVar;
+        return checkStreamCache(streamKey, () -> {
+            var layoutLabels = extractStreamKVPairs(renderedLayout);
+            if (markerLables == EMPTY_LABELS) {
+                return LogRecordStream.create(layoutLabels);
+            }
+            var allLabels = Arrays.copyOf(layoutLabels, layoutLabels.length + markerLables.length);
+            System.arraycopy(markerLables, 0, allLabels, layoutLabels.length, markerLables.length);
+            return LogRecordStream.create(allLabels);
+        });
     }
 
     public String eventToMessage(ILoggingEvent e) {
@@ -181,14 +219,12 @@ public abstract class AbstractLoki4jEncoder extends ContextAwareBase implements 
         return patternLayout;
     }
 
-    private LogRecordStream stream(String input) {
-        final var streamKey = staticLabels ? STATIC_STREAM_KEY : input;
-        return streams
+    private LogRecordStream checkStreamCache(String streamKey, Supplier<LogRecordStream> onMiss) {
+        return streamCache
             .updateAndGet(m -> {
                 if (!m.containsKey(streamKey)) {
                     var nm = new HashMap<>(m);
-                    nm.put(streamKey, LogRecordStream.create(
-                        m.size(), extractStreamKVPairs(input)));
+                    nm.put(streamKey, onMiss.get());
                     return nm;
                 } else {
                     return m;
@@ -216,6 +252,18 @@ public abstract class AbstractLoki4jEncoder extends ContextAwareBase implements 
             }
         }
         return Arrays.copyOf(result, pos);
+    }
+
+    String[] extractLabelsFromMarker(LabelMarker marker) {
+        var labelMap = marker.getLabels();
+        var markerLables = new String[labelMap.size() * 2];
+        var pos = 0;
+        for (Entry<String, String> entry : labelMap.entrySet()) {
+            markerLables[pos] = entry.getKey();
+            markerLables[pos + 1] = entry.getValue();
+            pos += 2;
+        }
+        return markerLables;
     }
 
     public void setLabel(LabelCfg label) {
