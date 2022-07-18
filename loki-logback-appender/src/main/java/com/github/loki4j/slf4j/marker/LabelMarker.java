@@ -1,4 +1,4 @@
-package com.github.loki4j.logback;
+package com.github.loki4j.slf4j.marker;
 
 import java.util.Collections;
 import java.util.Iterator;

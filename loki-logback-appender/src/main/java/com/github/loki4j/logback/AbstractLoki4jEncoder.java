@@ -11,6 +11,7 @@ import java.util.regex.Pattern;
 
 import com.github.loki4j.client.batch.LogRecordStream;
 import com.github.loki4j.client.util.StringUtils;
+import com.github.loki4j.slf4j.marker.LabelMarker;
 
 import ch.qos.logback.classic.PatternLayout;
 import ch.qos.logback.classic.spi.ILoggingEvent;
