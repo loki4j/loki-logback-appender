@@ -280,8 +280,15 @@ public final class DefaultPipeline {
                     batch, r.status);
         }
 
-        if (metrics != null)
-            metrics.batchSent(startedNs, batch.sizeBytes, e != null || r.status > 299);
+        if (metrics != null) {
+            final var ex = e;
+            final var resp = r;
+            metrics.batchSent(startedNs, batch.sizeBytes, ex != null || resp.status > 299, () -> {
+                return ex != null
+                    ? "exception:" + ex.getClass().getSimpleName()
+                    : "status:" + resp.status;
+            });
+        }
 
         return r;
     }
