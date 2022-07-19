@@ -2,8 +2,12 @@ package com.github.loki4j.client.pipeline;
 
 import java.time.Duration;
 import java.util.Arrays;
+import java.util.function.Supplier;
+
+import com.github.loki4j.client.util.Cache.UnboundAtomicMapCache;
 
 import io.micrometer.core.instrument.Counter;
+import io.micrometer.core.instrument.Counter.Builder;
 import io.micrometer.core.instrument.DistributionSummary;
 import io.micrometer.core.instrument.Metrics;
 import io.micrometer.core.instrument.Tag;
@@ -23,8 +27,10 @@ public class Loki4jMetrics {
 
     private Counter batchesEncodedCounter;
     private Counter batchesSentCounter;
-    private Counter sendErrorsCounter;
     private Counter droppedEventsCounter;
+
+    private Builder sendErrorsCounterBuilder;
+    private final UnboundAtomicMapCache<String, Counter> sendErrorsCounterCache = new UnboundAtomicMapCache<>();
 
     public Loki4jMetrics(String appenderName) {
         var tags = Arrays.asList(
@@ -73,17 +79,16 @@ public class Loki4jMetrics {
             .tags(tags)
             .register(Metrics.globalRegistry);
 
-        sendErrorsCounter = Counter
-            .builder("loki4j.send.errors")
-            .description("Number of errors occurred while sending batches to Loki")
-            .tags(tags)
-            .register(Metrics.globalRegistry);
-
         droppedEventsCounter = Counter
             .builder("loki4j.drop.events")
             .description("Number of events dropped due to backpressure settings")
             .tags(tags)
             .register(Metrics.globalRegistry);
+
+        sendErrorsCounterBuilder = Counter
+            .builder("loki4j.send.errors")
+            .description("Number of errors occurred while sending batches to Loki")
+            .tags(tags);
     }
 
     private void recordTimer(Timer timer, long startedNs) {
@@ -101,10 +106,18 @@ public class Loki4jMetrics {
         batchesEncodedCounter.increment();
     }
 
-    public void batchSent(long startedNs, int bytesCount, boolean failed) {
+    public void batchSent(long startedNs, int bytesCount, boolean failed, Supplier<String> failure) {
         recordTimer(sendTimer, startedNs);
         bytesSentSummary.record(bytesCount);
         batchesSentCounter.increment();
-        if (failed) sendErrorsCounter.increment();
+        if (failed) {
+            var failKey = failure.get();
+            var sendErrorsCounter = sendErrorsCounterCache.get(failKey, () -> {
+                return sendErrorsCounterBuilder
+                    .tag("reason", failKey)
+                    .register(Metrics.globalRegistry);
+            });
+            sendErrorsCounter.increment();
+        }
     }
 }

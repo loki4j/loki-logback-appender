@@ -2,15 +2,13 @@ package com.github.loki4j.logback;
 
 import java.nio.charset.Charset;
 import java.util.Arrays;
-import java.util.HashMap;
 import java.util.Map.Entry;
 import java.util.concurrent.atomic.AtomicInteger;
-import java.util.concurrent.atomic.AtomicReference;
-import java.util.function.Supplier;
 import java.util.regex.Pattern;
 
 import com.github.loki4j.client.batch.LogRecordStream;
 import com.github.loki4j.client.util.StringUtils;
+import com.github.loki4j.client.util.Cache.UnboundAtomicMapCache;
 import com.github.loki4j.slf4j.marker.LabelMarker;
 
 import ch.qos.logback.classic.PatternLayout;
@@ -78,7 +76,7 @@ public abstract class AbstractLoki4jEncoder extends ContextAwareBase implements 
 
     protected final Charset charset = Charset.forName("UTF-8");
 
-    private final AtomicReference<HashMap<String, LogRecordStream>> streamCache = new AtomicReference<>(new HashMap<>());
+    private final UnboundAtomicMapCache<String, LogRecordStream> streamCache = new UnboundAtomicMapCache<>();
 
     private final AtomicInteger nanoCounter = new AtomicInteger(0);
 
@@ -172,7 +170,7 @@ public abstract class AbstractLoki4jEncoder extends ContextAwareBase implements 
             }
         }
         final var markerLables = markerLablesVar;
-        return checkStreamCache(streamKey, () -> {
+        return streamCache.get(streamKey, () -> {
             var layoutLabels = extractStreamKVPairs(renderedLayout);
             if (markerLables == EMPTY_LABELS) {
                 return LogRecordStream.create(layoutLabels);
@@ -218,20 +216,6 @@ public abstract class AbstractLoki4jEncoder extends ContextAwareBase implements 
         patternLayout.setContext(context);
         patternLayout.setPattern(pattern);
         return patternLayout;
-    }
-
-    private LogRecordStream checkStreamCache(String streamKey, Supplier<LogRecordStream> onMiss) {
-        return streamCache
-            .updateAndGet(m -> {
-                if (!m.containsKey(streamKey)) {
-                    var nm = new HashMap<>(m);
-                    nm.put(streamKey, onMiss.get());
-                    return nm;
-                } else {
-                    return m;
-                }
-            })
-            .get(streamKey);
     }
 
     String[] extractStreamKVPairs(String stream) {
