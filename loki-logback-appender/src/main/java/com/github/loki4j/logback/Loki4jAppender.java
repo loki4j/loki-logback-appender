@@ -188,10 +188,6 @@ public final class Loki4jAppender extends UnsynchronizedAppenderBase<ILoggingEve
         return droppedEventsCount.get();
     }
 
-    @Deprecated
-    public void setBatchSize(int batchSize) {
-        addWarn("Property `batchSize` was replaced with `batchMaxItems`. Please fix your configuration");
-    }
     public void setBatchMaxItems(int batchMaxItems) {
         this.batchMaxItems = batchMaxItems;
     }
