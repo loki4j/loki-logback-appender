@@ -7,6 +7,7 @@ import java.util.concurrent.atomic.AtomicInteger;
 import java.util.regex.Pattern;
 
 import com.github.loki4j.client.batch.LogRecordStream;
+import com.github.loki4j.client.util.Cache;
 import com.github.loki4j.client.util.StringUtils;
 import com.github.loki4j.client.util.Cache.UnboundAtomicMapCache;
 import com.github.loki4j.slf4j.marker.LabelMarker;
@@ -14,6 +15,7 @@ import com.github.loki4j.slf4j.marker.LabelMarker;
 import ch.qos.logback.classic.PatternLayout;
 import ch.qos.logback.classic.spi.ILoggingEvent;
 import ch.qos.logback.core.CoreConstants;
+import ch.qos.logback.core.joran.spi.DefaultClass;
 import ch.qos.logback.core.spi.ContextAwareBase;
 
 /**
@@ -44,9 +46,14 @@ public abstract class AbstractLoki4jEncoder extends ContextAwareBase implements 
         boolean readMarkers = false;
         /**
          * If true, exception info is not added to label.
-         * If false, you should take care of proper formatting
+         * If false, you should take care of proper formatting.
          */
         boolean nopex = true;
+        /**
+         * You can provide a custom implementation of a Stream cache,
+         * by default UnboundAtomicMapCache is used.
+         */
+        Cache<String, LogRecordStream> streamCache;
         public void setPattern(String pattern) {
             this.pattern = pattern;
         }
@@ -62,6 +69,10 @@ public abstract class AbstractLoki4jEncoder extends ContextAwareBase implements 
         public void setNopex(boolean nopex) {
             this.nopex = nopex;
         }
+        @DefaultClass(UnboundAtomicMapCache.class)
+        public void setStreamCache(Cache<String, LogRecordStream> streamCache) {
+            this.streamCache = streamCache;
+        }
     }
 
     public static final class MessageCfg {
@@ -75,8 +86,6 @@ public abstract class AbstractLoki4jEncoder extends ContextAwareBase implements 
     }
 
     protected final Charset charset = Charset.forName("UTF-8");
-
-    private final UnboundAtomicMapCache<String, LogRecordStream> streamCache = new UnboundAtomicMapCache<>();
 
     private final AtomicInteger nanoCounter = new AtomicInteger(0);
 
@@ -131,6 +140,11 @@ public abstract class AbstractLoki4jEncoder extends ContextAwareBase implements 
         // label key-value separator supports only literal strings
         compiledLabelKeyValueSeparator = Pattern.compile(Pattern.quote(label.keyValueSeparator));
 
+        // if streamCache is not set in the config
+        if (label.streamCache == null) {
+            label.streamCache = new UnboundAtomicMapCache<>();
+        }
+
         labelPatternLayout = initPatternLayout(labelPattern);
         labelPatternLayout.start();
 
@@ -170,7 +184,7 @@ public abstract class AbstractLoki4jEncoder extends ContextAwareBase implements 
             }
         }
         final var markerLables = markerLablesVar;
-        return streamCache.get(streamKey, () -> {
+        return label.streamCache.get(streamKey, () -> {
             var layoutLabels = extractStreamKVPairs(renderedLayout);
             if (markerLables == EMPTY_LABELS) {
                 return LogRecordStream.create(layoutLabels);
