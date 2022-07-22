@@ -2,13 +2,15 @@ plugins {
     id 'java-library'
     id 'maven-publish'
     id 'signing'
-    id 'jacoco'
+    id "com.google.protobuf" version "0.8.19"
 }
 
-group = "com.github.loki4j"
-version = "${file("VERSION").text.trim()}"
+def pbVersion = rootProject.hasProperty('pbVersion')
+    ? rootProject.pbVersion
+    : libs.versions.protobuf.get()
 
-evaluationDependsOn(":testkit")
+group = "com.github.loki4j"
+version = "${file("VERSION").text.trim().replace('#.#.#', pbVersion)}"
 
 repositories {
      mavenCentral()
@@ -17,42 +19,28 @@ repositories {
 sourceSets {
     main {
         java {
-            srcDirs += [files(project(":loki-client").sourceSets.main.java.srcDirs)]
-        }
-    }
-    test {
-        java {
-            srcDirs += [files(project(":testkit").sourceSets.main.java.srcDirs)]
+            srcDirs += ["$buildDir/generated/source/proto/main/java"]
         }
     }
 }
 
 dependencies {
-    api libs.logback
-
-    compileOnly libs.bundles.pluggable
+    api "com.google.protobuf:protobuf-java:${pbVersion}"
+    api libs.snappy
 
     testImplementation libs.junit
     testImplementation libs.bundles.pluggable
-    testImplementation libs.jackson
 }
 
 compileJava {
-    sourceCompatibility = 11
-    targetCompatibility = 11
+    sourceCompatibility = 8
+    targetCompatibility = 8
 }
 
-test {
-    testLogging {
-        showExceptions = true
-        showCauses = true
-        showStackTraces = true
-        exceptionFormat = "full"
-        showStandardStreams = true
-    }
-    useJUnit {
-        excludeCategories 'com.github.loki4j.testkit.categories.SlowTests'
-    }
+protobuf {
+  protoc {
+    artifact = "com.google.protobuf:protoc:${pbVersion}"
+  }
 }
 
 java {
@@ -60,51 +48,21 @@ java {
     withSourcesJar()
 }
 
-jacoco {
-    toolVersion = libs.versions.jacoco.get()
+tasks.withType(JavaCompile) {
+    options.encoding = "UTF-8"
 }
 
-jacocoTestReport {
-    reports {
-        xml.enabled = true
-    }
-}
-
-task integTests(type: Test) {
-    description = 'Run integration tests'
-    useJUnit {
-        includeCategories 'com.github.loki4j.testkit.categories.IntegrationTests'
-    }
-    maxHeapSize = "2G"
-    testLogging.exceptionFormat = "full"
-}
-
-task perfTests(type: Test) {
-    description = 'Run performance tests'
-    useJUnit {
-        includeCategories 'com.github.loki4j.testkit.categories.PerformanceTests'
-    }
-    forkEvery = 1
-    maxHeapSize = "3G"
-    testLogging.showStandardStreams = true
-}
-
-task ciOnlyTests(type: Test) {
-    description = 'Run CI-bound tests'
-    useJUnit {
-        includeCategories 'com.github.loki4j.testkit.categories.CIOnlyTests'
-    }
-    //testLogging.exceptionFormat = "full"
-    testLogging.showStandardStreams = true
+tasks.withType(Test) {
+    systemProperty "file.encoding", "UTF-8"
 }
 
 publishing {
     publications {
         mavenJava(MavenPublication) {
-            artifactId = 'loki-logback-appender'
+            artifactId = 'loki-protobuf'
             from components.java
             pom {
-                name = 'Logback Appender for Loki'
+                name = 'Compiled Protobuf files for Loki4j'
                 description = 'Loki4j aims to be the fastest and the most lightweight implementation of Logback Appender for Loki'
                 url = 'https://github.com/loki4j/loki-logback-appender'
                 licenses {
@@ -150,20 +108,4 @@ publishing {
 
 signing {
     sign publishing.publications.mavenJava
-}
-
-if (rootProject.hasProperty('java8')) {
-    apply from: '../gradle/java8.gradle'
-}
-
-tasks.withType(GenerateModuleMetadata) {
-    enabled = false
-}
-
-tasks.withType(JavaCompile) {
-    options.encoding = "UTF-8"
-}
-
-tasks.withType(Test) {
-    systemProperty "file.encoding", "UTF-8"
 }

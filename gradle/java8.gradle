@@ -31,8 +31,6 @@ configurations {
 }
 
 compileJava8Java {
-    dependsOn ':loki-client:generateProto'
-
     source(file('src/main/java8'))
 
     sourceCompatibility = 8
@@ -72,7 +70,7 @@ compileJava8TestJava {
     }
 }
 
-task java8Test (type: Test) {
+task java8Test(type: Test) {
     description = 'Run Java 8 tests'
 
     testClassesDirs = sourceSets.java8Test.output.classesDirs

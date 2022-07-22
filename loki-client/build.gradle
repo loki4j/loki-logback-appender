@@ -1,21 +1,12 @@
 plugins {
     id 'java-library'
     id 'jacoco'
-    id "com.google.protobuf" version "0.8.17"
 }
 
 group = "com.github.loki4j"
 
 repositories {
      mavenCentral()
-}
-
-sourceSets {
-    main {
-        java {
-            srcDirs += ["$buildDir/generated/source/proto/main/java"]
-        }
-    }
 }
 
 dependencies {
@@ -40,12 +31,6 @@ test {
     }
 }
 
-protobuf {
-  protoc {
-    artifact = "com.google.protobuf:protoc:${libs.versions.protobuf.get()}"
-  }
-}
-
 jacoco {
     toolVersion = libs.versions.jacoco.get()
 }
@@ -53,11 +38,6 @@ jacoco {
 jacocoTestReport {
     reports {
         xml.enabled = true
-    }
-    afterEvaluate {
-        classDirectories.setFrom(files(classDirectories.files.collect {
-            fileTree(dir: it, exclude: '**/protobuf/**')
-        }))
     }
 }
 
