@@ -56,52 +56,14 @@ tasks.withType(Test) {
     systemProperty "file.encoding", "UTF-8"
 }
 
+apply from: '../gradle/publishing.gradle'
+
 publishing {
     publications {
         mavenJava(MavenPublication) {
             artifactId = 'loki-protobuf'
+            pom.name = 'Compiled Protobuf files for Loki4j'
             from components.java
-            pom {
-                name = 'Compiled Protobuf files for Loki4j'
-                description = 'Loki4j aims to be the fastest and the most lightweight implementation of Logback Appender for Loki'
-                url = 'https://github.com/loki4j/loki-logback-appender'
-                licenses {
-                    license {
-                        name = 'BSD Software License, 2-clause version'
-                        url = 'https://github.com/loki4j/loki-logback-appender/blob/master/LICENSE.md'
-                    }
-                }
-                developers {
-                    developer {
-                        id = 'nehaev'
-                        name = 'Anton Nehaev'
-                        email = "nehaev@gmail.com"
-                    }
-                }
-                scm {
-                    connection = 'scm:git:git@github.com/loki4j/loki-logback-appender.git'
-                    developerConnection = 'scm:git:git@github.com/loki4j/loki-logback-appender.git'
-                    url = 'https://github.com/loki4j/loki-logback-appender'
-                }
-            }
-        }
-    }
-    repositories {
-        maven {
-            def releasesRepoUrl = "https://oss.sonatype.org/service/local/staging/deploy/maven2"
-            def snapshotsRepoUrl =
-                rootProject.hasProperty('pubToOSSR')
-                    ? "https://oss.sonatype.org/content/repositories/snapshots"
-                    : "$buildDir/repos/snapshots"
-            url = version.endsWith('SNAPSHOT') ? snapshotsRepoUrl : releasesRepoUrl
-            if (rootProject.hasProperty('pubToOSSR')) {
-                credentials {
-                    if (rootProject.hasProperty('ossrhUsername') && rootProject.hasProperty('ossrhPassword')) {
-                        username = rootProject.ossrhUsername
-                        password = rootProject.ossrhPassword
-                    }
-                }
-            }
         }
     }
 }
