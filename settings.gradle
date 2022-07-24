@@ -11,7 +11,7 @@ dependencyResolutionManagement {
     versionCatalogs {
         libs {
             version('protobuf', '3.21.0')
-            version('loki-protobuf', '0.0.1_pb3.21.0-m1')
+            version('loki-protobuf', '0.0.1_pb3.21.0')
             version('jacoco', '0.8.8')
 
             alias('loki-protobuf').to('com.github.loki4j', 'loki-protobuf').versionRef('loki-protobuf')
@@ -24,7 +24,7 @@ dependencyResolutionManagement {
 
             alias('junit').to('junit:junit:4.13.2')
 
-            bundle('pluggable', ['loki-protobuf', 'snappy', 'apache-httpclient4', 'micrometer'])
+            bundle('pluggable', ['loki-protobuf', 'apache-httpclient4', 'micrometer'])
         }
     }
 }
