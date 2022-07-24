@@ -38,8 +38,6 @@ dependencies {
 }
 
 compileJava {
-    dependsOn ':loki-client:generateProto'
-    
     sourceCompatibility = 11
     targetCompatibility = 11
 }
@@ -60,10 +58,6 @@ test {
 java {
     withJavadocJar()
     withSourcesJar()
-}
-
-jar {
-    exclude '*.proto'
 }
 
 jacoco {
@@ -104,52 +98,14 @@ task ciOnlyTests(type: Test) {
     testLogging.showStandardStreams = true
 }
 
+apply from: '../gradle/publishing.gradle'
+
 publishing {
     publications {
         mavenJava(MavenPublication) {
             artifactId = 'loki-logback-appender'
+            pom.name = 'Logback Appender for Loki'
             from components.java
-            pom {
-                name = 'Logback Appender for Loki'
-                description = 'Loki4j aims to be the fastest and the most lightweight implementation of Logback Appender for Loki'
-                url = 'https://github.com/loki4j/loki-logback-appender'
-                licenses {
-                    license {
-                        name = 'BSD Software License, 2-clause version'
-                        url = 'https://github.com/loki4j/loki-logback-appender/blob/master/LICENSE.md'
-                    }
-                }
-                developers {
-                    developer {
-                        id = 'nehaev'
-                        name = 'Anton Nehaev'
-                        email = "nehaev@gmail.com"
-                    }
-                }
-                scm {
-                    connection = 'scm:git:git@github.com/loki4j/loki-logback-appender.git'
-                    developerConnection = 'scm:git:git@github.com/loki4j/loki-logback-appender.git'
-                    url = 'https://github.com/loki4j/loki-logback-appender'
-                }
-            }
-        }
-    }
-    repositories {
-        maven {
-            def releasesRepoUrl = "https://oss.sonatype.org/service/local/staging/deploy/maven2"
-            def snapshotsRepoUrl =
-                rootProject.hasProperty('pubToOSSR')
-                    ? "https://oss.sonatype.org/content/repositories/snapshots"
-                    : "$buildDir/repos/snapshots"
-            url = version.endsWith('SNAPSHOT') ? snapshotsRepoUrl : releasesRepoUrl
-            if (rootProject.hasProperty('pubToOSSR')) {
-                credentials {
-                    if (rootProject.hasProperty('ossrhUsername') && rootProject.hasProperty('ossrhPassword')) {
-                        username = rootProject.ossrhUsername
-                        password = rootProject.ossrhPassword
-                    }
-                }
-            }
         }
     }
 }
