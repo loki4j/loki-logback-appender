@@ -38,6 +38,12 @@ public final class Loki4jAppender extends UnsynchronizedAppenderBase<ILoggingEve
     private long sendQueueMaxBytes = batchMaxBytes * 10;
 
     /**
+     * A timeout for Loki4j threads to sleep if encode or send queues are empty.
+     * Decreasing this value means lower latency at cost of higher CPU usage.
+     */
+    private long internalQueuesCheckTimeoutMs = 25;
+
+    /**
      * If true, the appender will print its own debug logs to stderr
      */
     private boolean verbose = false;
@@ -117,6 +123,7 @@ public final class Loki4jAppender extends UnsynchronizedAppenderBase<ILoggingEve
             .setSortByTime(encoder.getSortByTime())
             .setStaticLabels(encoder.getStaticLabels())
             .setSendQueueMaxBytes(sendQueueMaxBytes)
+            .setInternalQueuesCheckTimeoutMs(internalQueuesCheckTimeoutMs)
             .setUseDirectBuffers(useDirectBuffers)
             .setDrainOnStop(drainOnStop)
             .setMetricsEnabled(metricsEnabled)
