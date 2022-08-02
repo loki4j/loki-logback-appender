@@ -256,41 +256,51 @@ public final class DefaultPipeline {
     }
 
     private LokiResponse sendBatch(BinaryBatch batch) {
-        var startedNs = System.nanoTime();
+        long startedNs = System.nanoTime();
         LokiResponse r = null;
         Exception e = null;
-        try {
-            r = httpClient.send(batch.data);
-        } catch (Exception re) {
-            e = re;
-        }
+        int retry = 0;
+        do {
+            try {
+                r = httpClient.send(batch.data);
+            } catch (Exception re) {
+                e = re;
+            }
+        } while (evaluateIfRetryNeeded(batch, r, e, retry++));
 
+        return r;
+    }
+
+    private boolean evaluateIfRetryNeeded(BinaryBatch batch, LokiResponse r, Exception e, int retry) {
+        boolean failed = false;
         if (e != null) {
+            failed = true;
             log.error(e,
                 "Error while sending Batch %s to Loki (%s)",
                     batch, httpClient.getConfig().pushUrl);
         } else {
-            if (r.status < 200 || r.status > 299)
+            if (r.status < 200 || r.status > 299) {
+                failed = true;
                 log.error(
                     "Loki responded with non-success status %s on batch %s. Error: %s",
                     r.status, batch, r.body);
-            else
+            }
+            else {
                 log.info(
                     "<<< Batch %s: Loki responded with status %s",
                     batch, r.status);
+            }
         }
 
-        if (metrics != null) {
+        if (failed && metrics != null) {
             final var ex = e;
             final var resp = r;
-            metrics.batchSent(startedNs, batch.sizeBytes, ex != null || resp.status > 299, () -> {
+            metrics.batchSendAttemptFailed(() -> {
                 return ex != null
                     ? "exception:" + ex.getClass().getSimpleName()
                     : "status:" + resp.status;
             });
         }
-
-        return r;
     }
 
     public void waitSendQueueIsEmpty(long timeoutMs) {

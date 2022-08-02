@@ -106,18 +106,19 @@ public class Loki4jMetrics {
         batchesEncodedCounter.increment();
     }
 
-    public void batchSent(long startedNs, int bytesCount, boolean failed, Supplier<String> failure) {
+    public void batchSendAttemptFailed(Supplier<String> failure) {
+        var failKey = failure.get();
+        var sendErrorsCounter = sendErrorsCounterCache.get(failKey, () -> {
+            return sendErrorsCounterBuilder
+                .tag("reason", failKey)
+                .register(Metrics.globalRegistry);
+        });
+        sendErrorsCounter.increment();
+    }
+
+    public void batchSent(long startedNs, int bytesCount) {
         recordTimer(sendTimer, startedNs);
         bytesSentSummary.record(bytesCount);
         batchesSentCounter.increment();
-        if (failed) {
-            var failKey = failure.get();
-            var sendErrorsCounter = sendErrorsCounterCache.get(failKey, () -> {
-                return sendErrorsCounterBuilder
-                    .tag("reason", failKey)
-                    .register(Metrics.globalRegistry);
-            });
-            sendErrorsCounter.increment();
-        }
     }
 }
