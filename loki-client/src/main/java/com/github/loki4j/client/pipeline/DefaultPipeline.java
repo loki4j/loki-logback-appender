@@ -36,9 +36,9 @@ public final class DefaultPipeline {
     private static final Comparator<LogRecord> compareByStream = (e1, e2) ->
         Long.compare(e1.stream.hash, e2.stream.hash);
 
-    private final long PARK_NS = TimeUnit.MILLISECONDS.toNanos(25);
-
     private final ConcurrentLinkedQueue<LogRecord> buffer = new ConcurrentLinkedQueue<>();
+
+    private final long parkTimeoutNs;
 
     private final ByteBufferQueue sendQueue;
 
@@ -95,6 +95,7 @@ public final class DefaultPipeline {
         sendQueue = new ByteBufferQueue(conf.sendQueueMaxBytes, bufferFactory);
         httpClient = conf.httpClientFactory.apply(conf.httpConfig);
         drainOnStop = conf.drainOnStop;
+        parkTimeoutNs = TimeUnit.MILLISECONDS.toNanos(conf.internalQueuesCheckTimeoutMs);
         this.log = conf.internalLoggingFactory.apply(this);
         this.metrics = conf.metricsEnabled ? new Loki4jMetrics(conf.name) : null;
     }
@@ -189,7 +190,7 @@ public final class DefaultPipeline {
 
     private void encodeStep(LogRecordBatch batch) throws InterruptedException {
         while (started && buffer.isEmpty() && !drainRequested.get()) {
-            LockSupport.parkNanos(this, PARK_NS);
+            LockSupport.parkNanos(this, parkTimeoutNs);
         }
         if (!started) return;
         log.trace("check encode actions");
@@ -214,7 +215,7 @@ public final class DefaultPipeline {
                     writer.size(),
                     b -> writer.toByteBuffer(b))) {
             acceptNewEvents.set(false);
-            LockSupport.parkNanos(this, PARK_NS);
+            LockSupport.parkNanos(this, parkTimeoutNs);
         }
         batch.clear();
         acceptNewEvents.set(true);
@@ -241,7 +242,7 @@ public final class DefaultPipeline {
     private void sendStep() throws InterruptedException {
         BinaryBatch batch = sendQueue.borrowBuffer();
         while(started && batch == null) {
-            LockSupport.parkNanos(this, PARK_NS);
+            LockSupport.parkNanos(this, parkTimeoutNs);
             batch = sendQueue.borrowBuffer();
         }
         if (!started) return;
@@ -301,8 +302,8 @@ public final class DefaultPipeline {
         var timeoutNs = TimeUnit.MILLISECONDS.toNanos(timeoutMs);
         var elapsedNs = 0L;
         while(started && unsentEvents.get() >= size && elapsedNs < timeoutNs) {
-            LockSupport.parkNanos(PARK_NS);
-            elapsedNs += PARK_NS;
+            LockSupport.parkNanos(parkTimeoutNs);
+            elapsedNs += parkTimeoutNs;
         }
         log.trace("wait send queue: started=%s, buffer(%s)>=%s, %s ms %s elapsed",
                 started, unsentEvents.get(), size, timeoutMs, elapsedNs < timeoutNs ? "not" : "");

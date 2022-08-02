@@ -84,6 +84,12 @@ public class PipelineConfig {
     public final long sendQueueMaxBytes;
 
     /**
+     * A timeout for Loki4j threads to sleep if encode or send queues are empty.
+     * Decreasing this value means lower latency at cost of higher CPU usage.
+     */
+    public final long internalQueuesCheckTimeoutMs;
+
+    /**
      * Use off-heap memory for storing intermediate data
      */
     public final boolean useDirectBuffers;
@@ -122,8 +128,8 @@ public class PipelineConfig {
      */
     public final Function<Object, Loki4jLogger> internalLoggingFactory;
 
-    public PipelineConfig(String name, int batchMaxItems, int batchMaxBytes, long batchTimeoutMs,
-            boolean sortByTime, boolean staticLabels, long sendQueueMaxBytes, boolean useDirectBuffers,
+    public PipelineConfig(String name, int batchMaxItems, int batchMaxBytes, long batchTimeoutMs, boolean sortByTime,
+            boolean staticLabels, long sendQueueMaxBytes, long internalQueuesCheckTimeoutMs, boolean useDirectBuffers,
             boolean drainOnStop, boolean metricsEnabled, WriterFactory writerFactory, HttpConfig httpConfig,
             Function<HttpConfig, Loki4jHttpClient> httpClientFactory, Function<Object, Loki4jLogger> internalLoggingFactory) {
         this.name = name;
@@ -133,6 +139,7 @@ public class PipelineConfig {
         this.sortByTime = sortByTime;
         this.staticLabels = staticLabels;
         this.sendQueueMaxBytes = sendQueueMaxBytes;
+        this.internalQueuesCheckTimeoutMs = internalQueuesCheckTimeoutMs;
         this.useDirectBuffers = useDirectBuffers;
         this.drainOnStop = drainOnStop;
         this.metricsEnabled = metricsEnabled;
@@ -155,6 +162,7 @@ public class PipelineConfig {
         private boolean sortByTime = false;
         private boolean staticLabels = false;
         private long sendQueueMaxBytes = batchMaxBytes * 10;
+        private long internalQueuesCheckTimeoutMs = 25;
         private boolean useDirectBuffers = true;
         private boolean drainOnStop = true;
         private boolean metricsEnabled = false;
@@ -172,6 +180,7 @@ public class PipelineConfig {
                 sortByTime,
                 staticLabels,
                 sendQueueMaxBytes,
+                internalQueuesCheckTimeoutMs,
                 useDirectBuffers,
                 drainOnStop,
                 metricsEnabled,
@@ -213,6 +222,11 @@ public class PipelineConfig {
 
         public Builder setSendQueueMaxBytes(long sendQueueMaxBytes) {
             this.sendQueueMaxBytes = sendQueueMaxBytes;
+            return this;
+        }
+
+        public Builder setInternalQueuesCheckTimeoutMs(long internalQueuesCheckTimeoutMs) {
+            this.internalQueuesCheckTimeoutMs = internalQueuesCheckTimeoutMs;
             return this;
         }
 
