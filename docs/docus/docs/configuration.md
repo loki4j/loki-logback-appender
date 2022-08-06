@@ -102,7 +102,7 @@ If you want to use `ProtobufEncoder`, you need to add Protobuf-related dependenc
 <dependency>
     <groupId>com.google.protobuf</groupId>
     <artifactId>protobuf-java</artifactId>
-    <version>3.18.1</version>
+    <version>3.18.2</version>
 </dependency>
 <dependency>
     <groupId>org.xerial.snappy</groupId>
