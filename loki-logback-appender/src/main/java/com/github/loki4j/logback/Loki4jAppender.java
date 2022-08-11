@@ -42,7 +42,7 @@ public final class Loki4jAppender extends UnsynchronizedAppenderBase<ILoggingEve
      * A failed batch send could be retried only in case of ConnectException or 503 status from Loki.
      * All other exceptions and 4xx-5xx statuses do not cause a retry in order to avoid duplicates.
      */
-    private int maxRetries = 0;
+    private int maxRetries = 2;
 
     /**
      * Time in milliseconds to wait before the next attempt to re-send a failed batch.

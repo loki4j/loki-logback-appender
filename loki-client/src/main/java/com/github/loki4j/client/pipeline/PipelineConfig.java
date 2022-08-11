@@ -176,7 +176,7 @@ public class PipelineConfig {
         private boolean sortByTime = false;
         private boolean staticLabels = false;
         private long sendQueueMaxBytes = batchMaxBytes * 10;
-        private int maxRetries = 1;
+        private int maxRetries = 2;
         private long retryTimeoutMs = 60 * 1000;
         private long internalQueuesCheckTimeoutMs = 25;
         private boolean useDirectBuffers = true;

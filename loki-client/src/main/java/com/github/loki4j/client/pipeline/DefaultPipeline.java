@@ -268,44 +268,51 @@ public final class DefaultPipeline {
         LokiResponse r = null;
         Exception e = null;
         int retry = 0;
+
         do {
+            batch.data.rewind();
             try {
                 r = httpClient.send(batch.data);
                 // exit if send is successful
                 if (r.status >= 200 && r.status < 300) {
-                    log.info("<<< Batch %s: Loki responded with status %s", batch, r.status);
+                    log.info("<<< %sBatch %s: Loki responded with status %s",
+                        retry > 0 ? "Retry #" + retry + ". " : "", batch, r.status);
                     if (metrics != null) metrics.batchSent(startedNs, batch.sizeBytes);
                     return r;
                 }
             } catch (Exception re) {
                 e = re;
             }
-            reportSendError(batch, e, r);
+            reportSendError(batch, e, r, retry);
         } while (++retry <= maxRetries && checkIfEligibleForRetry(e, r) && sleep(retryTimeoutMs));
+
+        if (metrics != null) metrics.batchSendFailed(sendErrorReasonProvider(e, r));
         return null;
     }
 
-    private void reportSendError(BinaryBatch batch, Exception e, LokiResponse r) {
+    private void reportSendError(BinaryBatch batch, Exception e, LokiResponse r, int retry) {
         // whether exception occured or error status received
         var exceptionOccured = e != null;
+        var isRetry = retry > 0;
 
         if (exceptionOccured) {
             log.error(e,
-                "Error while sending Batch %s to Loki (%s)",
-                    batch, httpClient.getConfig().pushUrl);
+                "%sError while sending Batch %s to Loki (%s)",
+                isRetry ? "Retry #" + retry + ". " : "", batch, httpClient.getConfig().pushUrl);
         } else {
             log.error(
-                "Loki responded with non-success status %s on batch %s. Error: %s",
-                r.status, batch, r.body);
+                "%sLoki responded with non-success status %s on batch %s. Error: %s",
+                isRetry ? "Retry #" + retry + ". " : "", r.status, batch, r.body);
         }
 
-        if (metrics != null) {
-            metrics.batchSendAttemptFailed(() ->
-                exceptionOccured
-                    ? "exception:" + e.getClass().getSimpleName()
-                    : "status:" + r.status
-            );
-        }
+        if (metrics != null && isRetry) metrics.sendRetryFailed(sendErrorReasonProvider(e, r));
+    }
+
+    private Supplier<String> sendErrorReasonProvider(Exception e, LokiResponse r) {
+        return () ->
+            e != null
+                ? "exception:" + e.getClass().getSimpleName()
+                : "status:" + r.status;
     }
 
     private boolean checkIfEligibleForRetry(Exception e, LokiResponse r) {
