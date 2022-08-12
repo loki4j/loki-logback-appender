@@ -84,6 +84,18 @@ public class PipelineConfig {
     public final long sendQueueMaxBytes;
 
     /**
+     * Max number of attempts to send a batch to Loki before it will be dropped.
+     * A failed batch send could be retried only in case of ConnectException or 503 status from Loki.
+     * All other exceptions and 4xx-5xx statuses do not cause a retry in order to avoid duplicates.
+     */
+    public final int maxRetries;
+
+    /**
+     * Time in milliseconds to wait before the next attempt to re-send a failed batch.
+     */
+    public final long retryTimeoutMs;
+
+    /**
      * A timeout for Loki4j threads to sleep if encode or send queues are empty.
      * Decreasing this value means lower latency at cost of higher CPU usage.
      */
@@ -129,8 +141,8 @@ public class PipelineConfig {
     public final Function<Object, Loki4jLogger> internalLoggingFactory;
 
     public PipelineConfig(String name, int batchMaxItems, int batchMaxBytes, long batchTimeoutMs, boolean sortByTime,
-            boolean staticLabels, long sendQueueMaxBytes, long internalQueuesCheckTimeoutMs, boolean useDirectBuffers,
-            boolean drainOnStop, boolean metricsEnabled, WriterFactory writerFactory, HttpConfig httpConfig,
+            boolean staticLabels, long sendQueueMaxBytes, int maxRetries, long retryTimeoutMs, long internalQueuesCheckTimeoutMs,
+            boolean useDirectBuffers, boolean drainOnStop, boolean metricsEnabled, WriterFactory writerFactory, HttpConfig httpConfig,
             Function<HttpConfig, Loki4jHttpClient> httpClientFactory, Function<Object, Loki4jLogger> internalLoggingFactory) {
         this.name = name;
         this.batchMaxItems = batchMaxItems;
@@ -139,6 +151,8 @@ public class PipelineConfig {
         this.sortByTime = sortByTime;
         this.staticLabels = staticLabels;
         this.sendQueueMaxBytes = sendQueueMaxBytes;
+        this.maxRetries = maxRetries;
+        this.retryTimeoutMs = retryTimeoutMs;
         this.internalQueuesCheckTimeoutMs = internalQueuesCheckTimeoutMs;
         this.useDirectBuffers = useDirectBuffers;
         this.drainOnStop = drainOnStop;
@@ -162,6 +176,8 @@ public class PipelineConfig {
         private boolean sortByTime = false;
         private boolean staticLabels = false;
         private long sendQueueMaxBytes = batchMaxBytes * 10;
+        private int maxRetries = 2;
+        private long retryTimeoutMs = 60 * 1000;
         private long internalQueuesCheckTimeoutMs = 25;
         private boolean useDirectBuffers = true;
         private boolean drainOnStop = true;
@@ -180,6 +196,8 @@ public class PipelineConfig {
                 sortByTime,
                 staticLabels,
                 sendQueueMaxBytes,
+                maxRetries,
+                retryTimeoutMs,
                 internalQueuesCheckTimeoutMs,
                 useDirectBuffers,
                 drainOnStop,
@@ -222,6 +240,16 @@ public class PipelineConfig {
 
         public Builder setSendQueueMaxBytes(long sendQueueMaxBytes) {
             this.sendQueueMaxBytes = sendQueueMaxBytes;
+            return this;
+        }
+
+        public Builder setMaxRetries(int maxRetries) {
+            this.maxRetries = maxRetries;
+            return this;
+        }
+
+        public Builder setRetryTimeoutMs(long retryTimeoutMs) {
+            this.retryTimeoutMs = retryTimeoutMs;
             return this;
         }
 

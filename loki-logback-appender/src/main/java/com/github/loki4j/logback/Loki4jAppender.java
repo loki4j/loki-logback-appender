@@ -38,6 +38,18 @@ public final class Loki4jAppender extends UnsynchronizedAppenderBase<ILoggingEve
     private long sendQueueMaxBytes = batchMaxBytes * 10;
 
     /**
+     * Max number of attempts to send a batch to Loki before it will be dropped.
+     * A failed batch send could be retried only in case of ConnectException or 503 status from Loki.
+     * All other exceptions and 4xx-5xx statuses do not cause a retry in order to avoid duplicates.
+     */
+    private int maxRetries = 2;
+
+    /**
+     * Time in milliseconds to wait before the next attempt to re-send a failed batch.
+     */
+    private long retryTimeoutMs = 60 * 1000;
+
+    /**
      * A timeout for Loki4j threads to sleep if encode or send queues are empty.
      * Decreasing this value means lower latency at cost of higher CPU usage.
      */
@@ -123,6 +135,8 @@ public final class Loki4jAppender extends UnsynchronizedAppenderBase<ILoggingEve
             .setSortByTime(encoder.getSortByTime())
             .setStaticLabels(encoder.getStaticLabels())
             .setSendQueueMaxBytes(sendQueueMaxBytes)
+            .setMaxRetries(maxRetries)
+            .setRetryTimeoutMs(retryTimeoutMs)
             .setInternalQueuesCheckTimeoutMs(internalQueuesCheckTimeoutMs)
             .setUseDirectBuffers(useDirectBuffers)
             .setDrainOnStop(drainOnStop)
@@ -206,6 +220,13 @@ public final class Loki4jAppender extends UnsynchronizedAppenderBase<ILoggingEve
     }
     public void setSendQueueMaxBytes(long sendQueueMaxBytes) {
         this.sendQueueMaxBytes = sendQueueMaxBytes;
+    }
+
+    public void setMaxRetries(int maxRetries) {
+        this.maxRetries = maxRetries;
+    }
+    public void setRetryTimeoutMs(long retryTimeoutMs) {
+        this.retryTimeoutMs = retryTimeoutMs;
     }
 
     /**

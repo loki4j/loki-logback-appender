@@ -7,6 +7,7 @@ import ch.qos.logback.classic.spi.ILoggingEvent;
 
 import static org.junit.Assert.*;
 
+import java.net.ConnectException;
 import java.nio.ByteBuffer;
 import java.util.concurrent.atomic.AtomicBoolean;
 import java.util.concurrent.locks.LockSupport;
@@ -187,7 +188,7 @@ public class Loki4jAppenderTest {
 
     @Test
     public void testBackpressure() {
-        var sender = new StoppableHttpSender();
+        var sender = new WrappingHttpSender<StoppableHttpClient>(new StoppableHttpClient());
         var encoder = defaultToStringEncoder();
         var appender = appender(1, 4000L, encoder, sender);
         appender.setBatchMaxBytes(120);
@@ -222,6 +223,53 @@ public class Loki4jAppenderTest {
         appender.stop();
     }
 
+    @Test
+    public void testRetry() {
+        var sender = new WrappingHttpSender<FailingHttpClient>(new FailingHttpClient());
+        var encoder = defaultToStringEncoder();
+        var appender = appender(1, 4000L, encoder, sender);
+        appender.setRetryTimeoutMs(200);
+        appender.start();
+
+        // all retries failed
+        StringPayload expected = StringPayload.builder()
+            .stream("[level, INFO, app, my-app]",
+                "ts=100 l=INFO c=test.TestApp t=thread-1 | Test message 1 ")
+            .build();
+        sender.client.fail.set(true);
+        appender.append(events[0]);
+
+        try { Thread.sleep(100L); } catch (InterruptedException e1) { }
+        assertEquals("send", 1, sender.client.sendCount);
+        assertEquals("send", expected, StringPayload.parse(sender.client.lastBatch, encoder.charset));
+
+        try { Thread.sleep(200L); } catch (InterruptedException e1) { }
+        assertEquals("retry1", 2, sender.client.sendCount);
+        assertEquals("retry1", expected, StringPayload.parse(sender.client.lastBatch, encoder.charset));
+
+        try { Thread.sleep(200L); } catch (InterruptedException e1) { }
+        assertEquals("retry2", 3, sender.client.sendCount);
+        assertEquals("retry2", expected, StringPayload.parse(sender.client.lastBatch, encoder.charset));
+
+        // first retry is successful
+        StringPayload expected2 = StringPayload.builder()
+            .stream("[level, WARN, app, my-app]",
+                "ts=104 l=WARN c=test.TestApp t=thread-2 | Test message 2 ")
+            .build();
+        appender.append(events[1]);
+
+        try { Thread.sleep(50L); } catch (InterruptedException e1) { }
+        assertEquals("send-2", 4, sender.client.sendCount);
+        assertEquals("send-2", expected2, StringPayload.parse(sender.client.lastBatch, encoder.charset));
+
+        sender.client.fail.set(false);
+        try { Thread.sleep(500L); } catch (InterruptedException e1) { }
+        assertEquals("retry1-2", 5, sender.client.sendCount);
+        assertEquals("retry1-2", expected2, StringPayload.parse(sender.client.lastBatch, encoder.charset));
+
+        appender.stop();
+    }
+
     private static class StoppableHttpClient implements Loki4jHttpClient {
         public AtomicBoolean wait = new AtomicBoolean(false);
         public byte[] lastBatch;
@@ -246,8 +294,38 @@ public class Loki4jAppenderTest {
         }
     }
 
-    private static class StoppableHttpSender extends AbstractHttpSender {
-        public final StoppableHttpClient client = new StoppableHttpClient();
+    private static class FailingHttpClient implements Loki4jHttpClient {
+        public AtomicBoolean fail = new AtomicBoolean(false);
+        public volatile int sendCount = 0;
+        public byte[] lastBatch;
+
+        @Override
+        public LokiResponse send(ByteBuffer batch) throws ConnectException {
+            sendCount++;
+            lastBatch = new byte[batch.remaining()];
+            batch.get(lastBatch);
+            if (fail.get())
+                throw new ConnectException("Text exception");
+            return new LokiResponse(204, "");
+        }
+
+        @Override
+        public void close() throws Exception {
+            lastBatch = null;
+        }
+
+        @Override
+        public HttpConfig getConfig() {
+            return defaultHttpConfig.build("test");
+        }
+    }
+
+    private static class WrappingHttpSender<T extends Loki4jHttpClient> extends AbstractHttpSender {
+        public final T client;
+
+        public WrappingHttpSender(T client) {
+            this.client = client;
+        }
 
         @Override
         public HttpConfig.Builder getConfig() {

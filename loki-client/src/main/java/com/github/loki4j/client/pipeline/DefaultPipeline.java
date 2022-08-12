@@ -1,5 +1,6 @@
 package com.github.loki4j.client.pipeline;
 
+import java.net.ConnectException;
 import java.util.Comparator;
 import java.util.Optional;
 import java.util.concurrent.ConcurrentLinkedQueue;
@@ -62,6 +63,10 @@ public final class DefaultPipeline {
 
     private final boolean drainOnStop;
 
+    private final int maxRetries;
+
+    private final long retryTimeoutMs;
+
     private volatile boolean started = false;
 
     private AtomicBoolean acceptNewEvents = new AtomicBoolean(true);
@@ -95,6 +100,8 @@ public final class DefaultPipeline {
         sendQueue = new ByteBufferQueue(conf.sendQueueMaxBytes, bufferFactory);
         httpClient = conf.httpClientFactory.apply(conf.httpConfig);
         drainOnStop = conf.drainOnStop;
+        maxRetries = conf.maxRetries;
+        retryTimeoutMs = conf.retryTimeoutMs;
         parkTimeoutNs = TimeUnit.MILLISECONDS.toNanos(conf.internalQueuesCheckTimeoutMs);
         this.log = conf.internalLoggingFactory.apply(this);
         this.metrics = conf.metricsEnabled ? new Loki4jMetrics(conf.name) : null;
@@ -260,38 +267,65 @@ public final class DefaultPipeline {
         var startedNs = System.nanoTime();
         LokiResponse r = null;
         Exception e = null;
-        try {
-            r = httpClient.send(batch.data);
-        } catch (Exception re) {
-            e = re;
-        }
+        int retry = 0;
 
-        if (e != null) {
+        do {
+            batch.data.rewind();
+            try {
+                r = httpClient.send(batch.data);
+                // exit if send is successful
+                if (r.status >= 200 && r.status < 300) {
+                    log.info("<<< %sBatch %s: Loki responded with status %s",
+                        retry > 0 ? "Retry #" + retry + ". " : "", batch, r.status);
+                    if (metrics != null) metrics.batchSent(startedNs, batch.sizeBytes);
+                    return r;
+                }
+            } catch (Exception re) {
+                e = re;
+            }
+            reportSendError(batch, e, r, retry);
+        } while (++retry <= maxRetries && checkIfEligibleForRetry(e, r) && sleep(retryTimeoutMs));
+
+        if (metrics != null) metrics.batchSendFailed(sendErrorReasonProvider(e, r));
+        return null;
+    }
+
+    private void reportSendError(BinaryBatch batch, Exception e, LokiResponse r, int retry) {
+        // whether exception occured or error status received
+        var exceptionOccured = e != null;
+        var isRetry = retry > 0;
+
+        if (exceptionOccured) {
             log.error(e,
-                "Error while sending Batch %s to Loki (%s)",
-                    batch, httpClient.getConfig().pushUrl);
+                "%sError while sending Batch %s to Loki (%s)",
+                isRetry ? "Retry #" + retry + ". " : "", batch, httpClient.getConfig().pushUrl);
         } else {
-            if (r.status < 200 || r.status > 299)
-                log.error(
-                    "Loki responded with non-success status %s on batch %s. Error: %s",
-                    r.status, batch, r.body);
-            else
-                log.info(
-                    "<<< Batch %s: Loki responded with status %s",
-                    batch, r.status);
+            log.error(
+                "%sLoki responded with non-success status %s on batch %s. Error: %s",
+                isRetry ? "Retry #" + retry + ". " : "", r.status, batch, r.body);
         }
 
-        if (metrics != null) {
-            final var ex = e;
-            final var resp = r;
-            metrics.batchSent(startedNs, batch.sizeBytes, ex != null || resp.status > 299, () -> {
-                return ex != null
-                    ? "exception:" + ex.getClass().getSimpleName()
-                    : "status:" + resp.status;
-            });
-        }
+        if (metrics != null && isRetry) metrics.sendRetryFailed(sendErrorReasonProvider(e, r));
+    }
 
-        return r;
+    private Supplier<String> sendErrorReasonProvider(Exception e, LokiResponse r) {
+        return () ->
+            e != null
+                ? "exception:" + e.getClass().getSimpleName()
+                : "status:" + r.status;
+    }
+
+    private boolean checkIfEligibleForRetry(Exception e, LokiResponse r) {
+        return e instanceof ConnectException  || (r != null && r.status == 503);
+    }
+
+    private boolean sleep(long timeoutMs) {
+        try {
+            Thread.sleep(timeoutMs);
+        } catch (InterruptedException e) {
+            Thread.currentThread().interrupt();
+        }
+        return true;
     }
 
     public void waitSendQueueIsEmpty(long timeoutMs) {

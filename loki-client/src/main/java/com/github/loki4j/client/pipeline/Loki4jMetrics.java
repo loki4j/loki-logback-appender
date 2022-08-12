@@ -29,6 +29,9 @@ public class Loki4jMetrics {
     private Counter batchesSentCounter;
     private Counter droppedEventsCounter;
 
+    private Builder retryErrorsCounterBuilder;
+    private final UnboundAtomicMapCache<String, Counter> retryErrorsCounterCache = new UnboundAtomicMapCache<>();
+
     private Builder sendErrorsCounterBuilder;
     private final UnboundAtomicMapCache<String, Counter> sendErrorsCounterCache = new UnboundAtomicMapCache<>();
 
@@ -85,6 +88,11 @@ public class Loki4jMetrics {
             .tags(tags)
             .register(Metrics.globalRegistry);
 
+        retryErrorsCounterBuilder = Counter
+            .builder("loki4j.retry.errors")
+            .description("Number of errors occurred while retrying to send failed batches to Loki")
+            .tags(tags);
+
         sendErrorsCounterBuilder = Counter
             .builder("loki4j.send.errors")
             .description("Number of errors occurred while sending batches to Loki")
@@ -106,18 +114,29 @@ public class Loki4jMetrics {
         batchesEncodedCounter.increment();
     }
 
-    public void batchSent(long startedNs, int bytesCount, boolean failed, Supplier<String> failure) {
+    public void sendRetryFailed(Supplier<String> failure) {
+        var failKey = failure.get();
+        var retryErrorsCounter = retryErrorsCounterCache.get(failKey, () -> {
+            return retryErrorsCounterBuilder
+                .tag("reason", failKey)
+                .register(Metrics.globalRegistry);
+        });
+        retryErrorsCounter.increment();
+    }
+
+    public void batchSendFailed(Supplier<String> failure) {
+        var failKey = failure.get();
+        var sendErrorsCounter = sendErrorsCounterCache.get(failKey, () -> {
+            return sendErrorsCounterBuilder
+                .tag("reason", failKey)
+                .register(Metrics.globalRegistry);
+        });
+        sendErrorsCounter.increment();
+    }
+
+    public void batchSent(long startedNs, int bytesCount) {
         recordTimer(sendTimer, startedNs);
         bytesSentSummary.record(bytesCount);
         batchesSentCounter.increment();
-        if (failed) {
-            var failKey = failure.get();
-            var sendErrorsCounter = sendErrorsCounterCache.get(failKey, () -> {
-                return sendErrorsCounterBuilder
-                    .tag("reason", failKey)
-                    .register(Metrics.globalRegistry);
-            });
-            sendErrorsCounter.increment();
-        }
     }
 }
