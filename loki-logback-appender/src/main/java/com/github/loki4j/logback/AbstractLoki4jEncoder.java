@@ -32,7 +32,9 @@ public abstract class AbstractLoki4jEncoder extends ContextAwareBase implements 
          */
         String pattern;
         /**
-         * Character to use as a separator between labels
+         * Character sequence to use as a separator between labels.
+         * If starts with "regex:" prefix, the remainder is used as a regular expression separator.
+         * Otherwise, the provided char sequence is used as a separator literally.
          */
         String pairSeparator = ",";
         /**
@@ -50,8 +52,7 @@ public abstract class AbstractLoki4jEncoder extends ContextAwareBase implements 
          */
         boolean nopex = true;
         /**
-         * You can provide a custom implementation of a Stream cache,
-         * by default UnboundAtomicMapCache is used.
+         * An implementation of a Stream cache to use.
          */
         Cache<String, LogRecordStream> streamCache;
         public void setPattern(String pattern) {

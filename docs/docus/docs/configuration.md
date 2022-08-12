@@ -16,6 +16,9 @@ batchMaxItems|1000|Max number of events to put into a single batch before sendin
 batchMaxBytes|4194304|Max number of bytes a single batch can contain (as counted by Loki). This value should not be greater than `server.grpc_server_max_recv_msg_size` in your Loki config
 batchTimeoutMs|60000|Max time in milliseconds to keep a batch before sending it to Loki, even if max items/bytes limits for this batch are not reached
 sendQueueMaxBytes|41943040|Max number of bytes to keep in the send queue. When the queue is full, incoming log events are dropped
+maxRetries|2|Max number of attempts to send a batch to Loki before it will be dropped. A failed batch send could be retried only in case of ConnectException or 503 status from Loki. All other exceptions and 4xx-5xx statuses do not cause a retry in order to avoid duplicates
+retryTimeoutMs|60000|Time in milliseconds to wait before the next attempt to re-send a failed batch
+internalQueuesCheckTimeoutMs|25|A timeout for Loki4j threads to sleep if encode or send queues are empty. Decreasing this value means lower latency at cost of higher CPU usage
 useDirectBuffers|true|Use off-heap memory for storing intermediate data
 drainOnStop|true|If true, the appender will try to send all the remaining events on shutdown, so the proper shutdown procedure might take longer. Otherwise, the appender will drop the unsent events
 metricsEnabled|false|If true, the appender will report its metrics using Micrometer
@@ -37,9 +40,11 @@ http.tenantId||Tenant identifier. It is required only for sending logs directly 
 Setting|Default|Description
 -------|-------|-----------
 format.label.pattern||**Required**. Logback pattern to use for log record's label
-format.label.pairSeparator|,|Character to use as a separator between labels
+format.label.pairSeparator|,|Character sequence to use as a separator between labels. If starts with "regex:" prefix, the remainder is used as a regular expression separator. Otherwise, the provided char sequence is used as a separator literally.
 format.label.keyValueSeparator|=|Character to use as a separator between label's name and its value
+format.label.readMarkers|false|If true, Loki4j scans each log record for attached LabelMarker to add its values to record's labels
 format.label.nopex|true|If true, exception info is not added to labels. If false, you should take care of proper formatting
+format.label.streamCache|UnboundAtomicMapCache|An implementation of a Stream cache to use
 format.message.pattern||**Required**. Logback pattern to use for log record's message
 format.staticLabels|false|If you use only one label for all log records, you can set this flag to true and save some CPU time on grouping records by label
 format.sortByTime|false|If true, log records in batch are sorted by timestamp. If false, records will be sent to Loki in arrival order. Enable this if you see 'entry out of order' error from Loki
@@ -100,22 +105,16 @@ If you want to use `ProtobufEncoder`, you need to add Protobuf-related dependenc
 
 ```xml
 <dependency>
-    <groupId>com.google.protobuf</groupId>
-    <artifactId>protobuf-java</artifactId>
-    <version>3.18.1</version>
-</dependency>
-<dependency>
-    <groupId>org.xerial.snappy</groupId>
-    <artifactId>snappy-java</artifactId>
-    <version>1.1.8.4</version>
+    <groupId>com.github.loki4j</groupId>
+    <artifactId>loki-protobuf</artifactId>
+    <version>0.0.1_pb3.21.0</version>
 </dependency>
 ```
 
 <!--Gradle-->
 
 ```groovy
-compile 'com.google.protobuf:protobuf-java:3.18.1'
-compile 'org.xerial.snappy:snappy-java:1.1.8.4'
+compile 'com.github.loki4j:loki-protobuf:0.0.1_pb3.21.0'
 ```
 <!--END_DOCUSAURUS_CODE_TABS-->
 
