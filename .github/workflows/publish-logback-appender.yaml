@@ -30,4 +30,4 @@ jobs:
             OSSRH_USERNAME: ${{ secrets.OSSRH_USERNAME }}
             OSSRH_PASSWORD: ${{ secrets.OSSRH_PASSWORD }}
         with:
-          arguments: -PpubToOSSR -Pjava8 :loki-logback-appender:publish
+          arguments: -PpubToOSSR :loki-logback-appender:publish
