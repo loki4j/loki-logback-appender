@@ -34,5 +34,5 @@ jobs:
         with:
           arguments: |
             -Psigning.keyId=${{secrets.SIGNING_KEY_ID}} -Psigning.password=${{secrets.SIGNING_PASSWORD}}
-            -Psigning.secretKeyRingFile=$(pwd)/.gradle/secring.gpg)
+            -Psigning.secretKeyRingFile="$(pwd)/.gradle/secring.gpg"
             -PpubToOSSR :loki-logback-appender:publish
