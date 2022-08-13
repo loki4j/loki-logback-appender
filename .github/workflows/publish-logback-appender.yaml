@@ -27,12 +27,11 @@ jobs:
       - name: Decode GPG
         run: echo "${{secrets.SIGNING_SECRET_KEY_RING_FILE}}" | base64 -d > $(pwd)/.gradle/secring.gpg
       - name: Publish to Maven Central
-        uses: gradle/gradle-build-action@v2
         env:
             OSSRH_USERNAME: ${{ secrets.OSSRH_USERNAME }}
             OSSRH_PASSWORD: ${{ secrets.OSSRH_PASSWORD }}
-        with:
-          arguments: |
+        run: |
+          gradle
             -Psigning.keyId=${{secrets.SIGNING_KEY_ID}} -Psigning.password=${{secrets.SIGNING_PASSWORD}}
             -Psigning.secretKeyRingFile="$(pwd)/.gradle/secring.gpg"
             -PpubToOSSR :loki-logback-appender:publish
