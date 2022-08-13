@@ -22,12 +22,14 @@ jobs:
               -server.grpc-max-recv-msg-size-bytes=4194304000 \
               -querier.frontend-client.grpc-max-send-msg-size=167772160
     steps:
-      - uses: actions/checkout@v2
+      - uses: actions/checkout@v3
       - name: Set up JDK
-        uses: actions/setup-java@v2
+        uses: actions/setup-java@v3
         with:
           distribution: 'temurin'
           java-version: 11
+      - name: Setup Gradle
+        uses: gradle/gradle-build-action@v2
       - name: Build and Run Integration Tests
         run: |
           docker run --name loki -d -p 3100:3100 grafana/loki:${{ matrix.loki }} \
@@ -37,8 +39,8 @@ jobs:
             -config.file=/etc/loki/local-config.yaml -auth.enabled=true
           sleep 5s
 
-          ./gradlew check integTests
-          ./gradlew ciOnlyTests --tests "*MultitenantSupportTest"
+          gradle check integTests
+          gradle ciOnlyTests --tests "*MultitenantSupportTest"
 
           docker stop loki
           docker stop lokimultitenant
@@ -58,17 +60,19 @@ jobs:
       matrix:
         jdk: [11, 17]
     steps:
-      - uses: actions/checkout@v2
+      - uses: actions/checkout@v3
       - name: Set up JDK
-        uses: actions/setup-java@v2
+        uses: actions/setup-java@v3
         with:
           distribution: 'temurin'
           java-version: ${{ matrix.jdk }}
+      - name: Setup Gradle
+        uses: gradle/gradle-build-action@v2
       - name: Build and Run Integration Tests
         env:
           GRAFANA_CLOUD_USERNAME: ${{ secrets.GRAFANA_CLOUD_USERNAME }}
           GRAFANA_CLOUD_PASSWORD: ${{ secrets.GRAFANA_CLOUD_PASSWORD }}
           GRAFANA_CLOUD_EXTRA_LABEL: -JDK${{ matrix.jdk }}
         run: |
-          ./gradlew check
-          ./gradlew ciOnlyTests --tests "*GrafanaCloudTest"
+          gradle check
+          gradle ciOnlyTests --tests "*GrafanaCloudTest"
