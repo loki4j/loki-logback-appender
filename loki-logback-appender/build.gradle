@@ -111,6 +111,7 @@ publishing {
 }
 
 signing {
+    required false
     sign publishing.publications.mavenJava
 }
 
