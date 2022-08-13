@@ -25,7 +25,7 @@ jobs:
         with:
           arguments: check
       - name: Decode GPG
-        run: echo "${{secrets.SIGNING_SECRET_KEY_RING_FILE}}" | base64 -d ~/.gradle/secring.gpg
+        run: echo "${{secrets.SIGNING_SECRET_KEY_RING_FILE}}" | base64 -d > ~/.gradle/secring.gpg
       - name: Publish to Maven Central
         uses: gradle/gradle-build-action@v2
         env:
