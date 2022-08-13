@@ -21,9 +21,13 @@ jobs:
       - name: Setup Gradle
         uses: gradle/gradle-build-action@v2
       - name: Build with Gradle
-        run: gradle check
+        uses: gradle/gradle-build-action@v2
+        with:
+          arguments: check
       - name: Publish to Maven Central
+        uses: gradle/gradle-build-action@v2
         env:
             OSSRH_USERNAME: ${{ secrets.OSSRH_USERNAME }}
             OSSRH_PASSWORD: ${{ secrets.OSSRH_PASSWORD }}
-        run: gradle -PpubToOSSR -Pjava8 :loki-logback-appender:publish
+        with:
+          arguments: -PpubToOSSR -Pjava8 :loki-logback-appender:publish
