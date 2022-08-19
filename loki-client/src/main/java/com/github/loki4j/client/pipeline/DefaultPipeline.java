@@ -283,14 +283,28 @@ public final class DefaultPipeline {
             } catch (Exception re) {
                 e = re;
             }
-            reportSendError(batch, e, r, retry);
-        } while (++retry <= maxRetries && checkIfEligibleForRetry(e, r) && sleep(retryTimeoutMs));
+        } while (
+            ++retry <= maxRetries
+            && checkIfEligibleForRetry(e, r)
+            && reportRetryError(batch, e, r, retry)
+            && sleep(retryTimeoutMs));
 
         if (metrics != null) metrics.batchSendFailed(sendErrorReasonProvider(e, r));
         return null;
     }
 
-    private void reportSendError(BinaryBatch batch, Exception e, LokiResponse r, int retry) {
+    private Supplier<String> sendErrorReasonProvider(Exception e, LokiResponse r) {
+        return () ->
+            e != null
+                ? "exception:" + e.getClass().getSimpleName()
+                : "status:" + r.status;
+    }
+
+    private boolean checkIfEligibleForRetry(Exception e, LokiResponse r) {
+        return e instanceof ConnectException  || (r != null && r.status == 503);
+    }
+
+    private boolean reportRetryError(BinaryBatch batch, Exception e, LokiResponse r, int retry) {
         // whether exception occured or error status received
         var exceptionOccured = e != null;
         var isRetry = retry > 0;
@@ -306,17 +320,7 @@ public final class DefaultPipeline {
         }
 
         if (metrics != null && isRetry) metrics.sendRetryFailed(sendErrorReasonProvider(e, r));
-    }
-
-    private Supplier<String> sendErrorReasonProvider(Exception e, LokiResponse r) {
-        return () ->
-            e != null
-                ? "exception:" + e.getClass().getSimpleName()
-                : "status:" + r.status;
-    }
-
-    private boolean checkIfEligibleForRetry(Exception e, LokiResponse r) {
-        return e instanceof ConnectException  || (r != null && r.status == 503);
+        return true;
     }
 
     private boolean sleep(long timeoutMs) {
