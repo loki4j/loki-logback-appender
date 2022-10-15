@@ -284,7 +284,11 @@ public final class DefaultPipeline {
                 e = re;
             }
             reportSendError(batch, e, r, retry);
-        } while (++retry <= maxRetries && checkIfEligibleForRetry(e, r) && sleep(retryTimeoutMs));
+        } while (
+            ++retry <= maxRetries
+            && checkIfEligibleForRetry(e, r)
+            && reportRetryFailed(e, r)
+            && sleep(retryTimeoutMs));
 
         if (metrics != null) metrics.batchSendFailed(sendErrorReasonProvider(e, r));
         return null;
@@ -304,8 +308,11 @@ public final class DefaultPipeline {
                 "%sLoki responded with non-success status %s on batch %s. Error: %s",
                 isRetry ? "Retry #" + retry + ". " : "", r.status, batch, r.body);
         }
+    }
 
-        if (metrics != null && isRetry) metrics.sendRetryFailed(sendErrorReasonProvider(e, r));
+    private boolean reportRetryFailed(Exception e, LokiResponse r) {
+        if (metrics != null) metrics.sendRetryFailed(sendErrorReasonProvider(e, r));
+        return true;
     }
 
     private Supplier<String> sendErrorReasonProvider(Exception e, LokiResponse r) {
