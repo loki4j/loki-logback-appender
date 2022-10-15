@@ -29,6 +29,7 @@ jobs:
             OSSRH_USERNAME: ${{ secrets.OSSRH_USERNAME }}
             OSSRH_PASSWORD: ${{ secrets.OSSRH_PASSWORD }}
         run: |
+          cat loki-logback-appender/VERSION | grep -v '\-SNAPSHOT$' && \
           gradle \
             -Psigning.keyId=${{secrets.SIGNING_KEY_ID}} -Psigning.password=${{secrets.SIGNING_PASSWORD}} \
             -Psigning.secretKeyRingFile="$(pwd)/.gradle/secring.gpg" \
