@@ -45,6 +45,7 @@ loki4j.encode.events|Number of log events processed by encoder
 loki4j.encode.batches|Number of batches processed by encoder
 loki4j.send.time|Time for a HTTP send operation
 loki4j.send.bytes|Size of batches sent to Loki
-loki4j.send.batches|Number of batches sent to Loki
-loki4j.send.errors|Number of errors occurred while sending batches to Loki
+loki4j.send.batches|Number of batches successfully sent to Loki
+loki4j.send.errors|Number of batches not sent to to Loki due to errors
+loki4j.retry.errors|Number of failed attempts while sending batches to Loki
 loki4j.drop.events|Number of events dropped due to backpressure settings

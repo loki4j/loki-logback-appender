@@ -4,6 +4,30 @@ title: Loki4j Migration Guide
 sidebar_label: Migration Guide
 ---
 
+## Upgrading from 1.3.x to 1.4.x
+
+Version 1.4.0 includes several new features (described below) that may break the existing behavior for some users.
+
+#### Separate Protobuf JAR
+
+
+
+#### Retry functionality added
+
+Loki4j is designed to operate in presence of errors and connection failures returned from Loki.
+However, the previous versions tried to send each log batch only once, so all batches sent during
+unavailability of Loki are lost.
+
+In 1.4.0 batch retry functionality was added.
+A failed batch send could be retried only in case of ConnectException or 503 status from Loki.
+All other exceptions and 4xx-5xx statuses do not cause a retry in order to avoid duplicates.
+
+#### Deprecated "batchSize" setting is removed
+
+The `batchSize` setting was renamed to `batchMaxItems` back in 1.2.0, but you still could you the old name until 1.4.0.
+Now the old name support was completely dropped, so please make sure you use `batchMaxItems` instead.
+
+
 ## Upgrading from 1.2.x to 1.3.x
 
 Version 1.3.0 was focused on internal refactoring and bug fixing.
