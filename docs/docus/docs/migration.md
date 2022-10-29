@@ -6,7 +6,8 @@ sidebar_label: Migration Guide
 
 ## Upgrading from 1.3.x to 1.4.x
 
-Version 1.4.0 includes several new features (described below) that may break the existing behavior for some users.
+Version 1.4.0 contains several new features that may break the existing behavior for some users.
+Please see below for the details.
 
 #### Separate Protobuf JAR
 
