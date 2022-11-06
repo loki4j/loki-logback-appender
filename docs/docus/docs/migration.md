@@ -15,17 +15,17 @@ Please see below for the details.
 
 #### Retry functionality added
 
-Loki4j is designed to operate in presence of errors and connection failures returned from Loki.
+Loki4j is designed to operate in presence of various errors and connection failures returned from Loki.
 However, the previous versions tried to send each log batch only once, so all batches sent during
 unavailability of Loki are lost.
 
-In 1.4.0 batch retry functionality was added.
-A failed batch send could be retried only in case of ConnectException or 503 status from Loki.
-All other exceptions and 4xx-5xx statuses do not cause a retry in order to avoid duplicates.
+In 1.4.0 Loki4j can try to send a log batch to Loki again, if the previous attempt failed.
+Please note, that re-send is done only in case of `ConnectException` or `503` HTTP status from Loki.
+All other exceptions as well as 4xx-5xx statuses are not retried in order to avoid duplicates.
 
 #### Deprecated "batchSize" setting is removed
 
-The `batchSize` setting was renamed to `batchMaxItems` back in 1.2.0, but you still could you the old name until 1.4.0.
+The `batchSize` setting was renamed to `batchMaxItems` back in 1.2.0, but you still could use the old name until 1.4.0.
 Now the old name support was completely dropped, so please make sure you use `batchMaxItems` instead.
 
 

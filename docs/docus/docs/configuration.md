@@ -40,7 +40,7 @@ http.tenantId||Tenant identifier. It is required only for sending logs directly 
 Setting|Default|Description
 -------|-------|-----------
 format.label.pattern||**Required**. Logback pattern to use for log record's label
-format.label.pairSeparator|,|Character sequence to use as a separator between labels. If starts with "regex:" prefix, the remainder is used as a regular expression separator. Otherwise, the provided char sequence is used as a separator literally.
+format.label.pairSeparator|,|Character sequence to use as a separator between labels. If starts with "regex:" prefix, the remainder is used as a regular expression separator. Otherwise, the provided char sequence is used as a separator literally
 format.label.keyValueSeparator|=|Character to use as a separator between label's name and its value
 format.label.readMarkers|false|If true, Loki4j scans each log record for attached LabelMarker to add its values to record's labels
 format.label.nopex|true|If true, exception info is not added to labels. If false, you should take care of proper formatting
