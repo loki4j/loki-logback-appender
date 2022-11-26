@@ -128,6 +128,67 @@ Then you can explicitly specify `ProtobufEncoder` by setting `class` attribute f
 </appender>
 ```
 
+## Working with Loki labels
+
+```xml
+<appender name="LOKI" class="com.github.loki4j.logback.Loki4jAppender">
+    <format>
+        <label>
+            <-- All labels settings go here -->
+        </label>
+        ...
+    </format>
+    ...
+</appender>
+```
+
+### Organizing labels
+
+```xml
+<label>
+    <pattern>app=my-app,host=${HOSTNAME},level=%level</pattern>
+</label>
+```
+
+```xml
+<label>
+    <pattern>
+        job=loki4j
+        app=my-app
+        // you even can write comments here
+        namespace_name=${NAMESCAPE_NAME}
+        pod_name=${POD_NAME}
+        level=%level
+    </pattern>
+    <pairSeparator>regex:(\n|//[^\n]+)+</pairSeparator>
+</label>
+```
+
+### Using MDC in labels
+
+```xml
+<label>
+    <pattern>app=my-app,level=%level,stage=%mdc{stage:-none}</pattern>
+</label>
+```
+
+### Adding dynamic labels using Markers
+
+<label>
+    <pattern>app=my-app,host=${HOSTNAME},level=%level</pattern>
+    <readMarkers>true</readMarkers>
+</label>
+
+```java
+import com.github.loki4j.slf4j.marker.LabelMarker;
+
+
+void handleException(Exception ex) {
+    var marker = LabelMarker.of("exception", () -> ex.getClass().getSimpleName());
+    log.error(marker, format("An error '%s' occurred", ex.getMessage()), ex);
+}
+```
+
 ## Examples
 
 ### Minimalistic zero-dependency configuration
