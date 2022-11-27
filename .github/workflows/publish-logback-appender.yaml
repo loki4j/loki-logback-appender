@@ -1,0 +1,38 @@
+name: publish-logback
+
+on:
+  pull_request:
+    paths:
+      # Trigger only if logback appender version changed
+      - 'loki-logback-appender/VERSION'
+
+jobs:
+  build:
+    runs-on: ubuntu-latest
+    environment: ossrh
+
+    steps:
+      - uses: actions/checkout@v3
+      - name: Set up JDK 11
+        uses: actions/setup-java@v3
+        with:
+          distribution: temurin
+          java-version: 11
+      - name: Setup Gradle
+        uses: gradle/gradle-build-action@v2
+      - name: Build with Gradle
+        run: gradle check
+      - name: Decode GPG
+        run: echo "${{secrets.SIGNING_SECRET_KEY_RING_FILE}}" | base64 -d > $(pwd)/.gradle/secring.gpg
+      - name: Publish to Maven Central
+        env:
+            OSSRH_USERNAME: ${{ secrets.OSSRH_USERNAME }}
+            OSSRH_PASSWORD: ${{ secrets.OSSRH_PASSWORD }}
+        run: |
+          cat loki-logback-appender/VERSION | grep -v '\-SNAPSHOT$' && \
+          gradle \
+            -Psigning.keyId=${{secrets.SIGNING_KEY_ID}} -Psigning.password=${{secrets.SIGNING_PASSWORD}} \
+            -Psigning.secretKeyRingFile="$(pwd)/.gradle/secring.gpg" \
+            -PpubToOSSR -Pjava8 :loki-logback-appender:publish
+      - name: Cleanup
+        run: rm $(pwd)/.gradle/secring.gpg

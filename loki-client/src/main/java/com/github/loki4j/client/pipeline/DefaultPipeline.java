@@ -242,7 +242,9 @@ public final class DefaultPipeline {
                 metrics.batchEncoded(startedNs, writer.size());
         } catch (Exception e) {
             log.error(e, "Error occurred while serializing batch %s", batch);
+            if (metrics != null) metrics.batchEncodeFailed(() -> e.getClass().getSimpleName());
             writer.reset();
+            batch.clear();
         }
     }
 

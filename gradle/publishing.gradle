@@ -36,7 +36,10 @@ plugins.withType(MavenPublishPlugin) {
                 url = version.endsWith('SNAPSHOT') ? snapshotsRepoUrl : releasesRepoUrl
                 if (rootProject.hasProperty('pubToOSSR')) {
                     credentials {
-                        if (rootProject.hasProperty('ossrhUsername') && rootProject.hasProperty('ossrhPassword')) {
+                        if (System.getenv("OSSRH_USERNAME") != null && System.getenv("OSSRH_PASSWORD")) {
+                            username = System.getenv("OSSRH_USERNAME")
+                            password = System.getenv("OSSRH_PASSWORD")
+                        } else if (rootProject.hasProperty('ossrhUsername') && rootProject.hasProperty('ossrhPassword')) {
                             username = rootProject.ossrhUsername
                             password = rootProject.ossrhPassword
                         }
