@@ -13,7 +13,7 @@ jobs:
   check-pb:
     runs-on: ubuntu-latest
     outputs:
-      matrix: ${{ steps. .outputs.matrix }}
+      matrix: ${{ steps.set-matrix.outputs.matrix }}
     steps:
       - uses: actions/checkout@v3
       - id: set-matrix
