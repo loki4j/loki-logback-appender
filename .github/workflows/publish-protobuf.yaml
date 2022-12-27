@@ -10,10 +10,38 @@ on:
 # cat PB-VERSION | while read pbver; do curl -s --output /dev/null --fail "https://repo1.maven.org/maven2/com/github/loki4j/loki-protobuf/0.0.1_pb${pbver}.0/loki-protobuf-0.0.1_pb${pbver}.0.jar" || echo "${pbver} - not published"; done
 # gradle -PpubToOSSR -PpbVersion=3.10.0 :loki-protobuf:publish
 jobs:
-  build:
+  check-pb:
+    runs-on: ubuntu-latest
+    outputs:
+      matrix: ${{ steps. .outputs.matrix }}
+    steps:
+      - uses: actions/checkout@v3
+      - id: set-matrix
+        name: Check unpublished PB versions
+            LOKI4J_MVN_PATH: "https://repo1.maven.org/maven2/com/github/loki4j"
+        run: |
+          VER=$(cat loki-protobuf/VERSION | grep -o '^[^_]\+')
+          echo "Checking already published versions of loki-protobuf-${VER}..."
+          UNPUB='{"pbver":['
+          while read PBVER; 
+          do 
+            if ! curl --silent --head --output /dev/null --fail \
+                "${LOKI4J_MVN_PATH}/loki-protobuf/${VER}_pb${PBVER}.0/loki-protobuf-${VER}_pb${PBVER}.0.jar"; then
+              echo "${PBVER} is not published"
+              UNPUB+="\"${PBVER}\","
+            fi
+          done < loki-protobuf/PB-VERSION
+          UNPUB+=']}'
+          UNPUB=${UNPUB//,\]/\]}
+          echo "${UNPUB}"
+          echo "::set-output name=matrix::${UNPUB}"
+
+  publish-pb:
+    needs: check-pb
     runs-on: ubuntu-latest
     environment: ossrh
-
+    strategy:
+      matrix: ${{fromJson(needs.check-pb.outputs.matrix)}}
     steps:
       - uses: actions/checkout@v3
       - name: Set up JDK 11
@@ -31,22 +59,12 @@ jobs:
         env:
             OSSRH_USERNAME: ${{ secrets.OSSRH_USERNAME }}
             OSSRH_PASSWORD: ${{ secrets.OSSRH_PASSWORD }}
-            LOKI4J_MVN_PATH: "https://repo1.maven.org/maven2/com/github/loki4j"
         run: |
-          VER=$(cat loki-protobuf/VERSION | grep -o '^[^_]\+')
-          echo "Checking already published versions of loki-protobuf-${VER}..."
-          while read PBVER; 
-          do 
-            if ! curl --silent --head --output /dev/null --fail \
-                "${LOKI4J_MVN_PATH}/loki-protobuf/${VER}_pb${PBVER}.0/loki-protobuf-${VER}_pb${PBVER}.0.jar"; then
-              echo "${PBVER} is not published. Running publish command..."
-              gradle \
-                  -Psigning.keyId=${{secrets.SIGNING_KEY_ID}} -Psigning.password=${{secrets.SIGNING_PASSWORD}} \
-                  -Psigning.secretKeyRingFile="$(pwd)/.gradle/secring.gpg" \
-                  -PpubToOSSR -PpbVersion=${PBVER}.0 :loki-protobuf:publish \
-                || echo "Publishing of ${PBVER} failed"
-              echo "${PBVER} published successfully"
-            fi
-          done < loki-protobuf/PB-VERSION
+          PBVER=${{ matrix.pbver }}
+          echo "${PBVER} is not published. Running publish command..."
+          gradle \
+              -Psigning.keyId=${{secrets.SIGNING_KEY_ID}} -Psigning.password=${{secrets.SIGNING_PASSWORD}} \
+              -Psigning.secretKeyRingFile="$(pwd)/.gradle/secring.gpg" \
+              -PpubToOSSR -PpbVersion=${PBVER}.0 :loki-protobuf:publish \
       - name: Cleanup
         run: rm $(pwd)/.gradle/secring.gpg
