@@ -18,6 +18,7 @@ jobs:
       - uses: actions/checkout@v3
       - id: set-matrix
         name: Check unpublished PB versions
+        env:
             LOKI4J_MVN_PATH: "https://repo1.maven.org/maven2/com/github/loki4j"
         run: |
           VER=$(cat loki-protobuf/VERSION | grep -o '^[^_]\+')
