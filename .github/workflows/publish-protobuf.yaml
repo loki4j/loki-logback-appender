@@ -21,9 +21,12 @@ jobs:
         env:
             LOKI4J_MVN_PATH: "https://repo1.maven.org/maven2/com/github/loki4j"
         run: |
+          cat loki-protobuf/VERSION | grep 'SNAPSHOT' && echo "Skip publishing due to SNAPSHOT version" && exit 0
+
           VER=$(cat loki-protobuf/VERSION | grep -o '^[^_]\+')
           echo "Checking already published versions of loki-protobuf-${VER}..."
           UNPUB='{"pbver":['
+
           while read PBVER; 
           do 
             if ! curl --silent --head --output /dev/null --fail \
@@ -32,6 +35,7 @@ jobs:
               UNPUB+="\"${PBVER}\","
             fi
           done < loki-protobuf/PB-VERSION
+
           UNPUB+=']}'
           UNPUB=${UNPUB//,\]/\]}
           echo "${UNPUB}"
