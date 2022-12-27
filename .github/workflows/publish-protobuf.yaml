@@ -1,0 +1,73 @@
+name: publish-protobuf
+
+on:
+  pull_request:
+    paths:
+      # Trigger only if logback protobuf version changed
+      - 'loki-protobuf/VERSION'
+      - 'loki-protobuf/PB-VERSION'
+
+jobs:
+  check-pb:
+    runs-on: ubuntu-latest
+    outputs:
+      matrix: ${{ steps.set-matrix.outputs.matrix }}
+    steps:
+      - uses: actions/checkout@v3
+      - id: set-matrix
+        name: Check unpublished PB versions
+        env:
+            LOKI4J_MVN_PATH: "https://repo1.maven.org/maven2/com/github/loki4j"
+        run: |
+          cat loki-protobuf/VERSION | grep 'SNAPSHOT' && echo "Skip publishing due to SNAPSHOT version" && exit 0
+
+          VER=$(cat loki-protobuf/VERSION | grep -o '^[^_]\+')
+          echo "Checking already published versions of loki-protobuf-${VER}..."
+          UNPUB='{"pbver":['
+
+          while read PBVER; 
+          do 
+            if ! curl --silent --head --output /dev/null --fail \
+                "${LOKI4J_MVN_PATH}/loki-protobuf/${VER}_pb${PBVER}.0/loki-protobuf-${VER}_pb${PBVER}.0.jar"; then
+              echo "${PBVER} is not published"
+              UNPUB+="\"${PBVER}\","
+            fi
+          done < loki-protobuf/PB-VERSION
+
+          UNPUB+=']}'
+          UNPUB=${UNPUB//,\]/\]}
+          echo "${UNPUB}"
+          echo "matrix=${UNPUB}" >> $GITHUB_OUTPUT
+
+  publish-pb:
+    needs: check-pb
+    runs-on: ubuntu-latest
+    environment: ossrh
+    strategy:
+      matrix: ${{fromJson(needs.check-pb.outputs.matrix)}}
+    steps:
+      - uses: actions/checkout@v3
+      - name: Set up JDK 11
+        uses: actions/setup-java@v3
+        with:
+          distribution: temurin
+          java-version: 11
+      - name: Setup Gradle
+        uses: gradle/gradle-build-action@v2
+      - name: Build with Gradle
+        run: gradle check
+      - name: Decode GPG
+        run: echo "${{secrets.SIGNING_SECRET_KEY_RING_FILE}}" | base64 -d > $(pwd)/.gradle/secring.gpg
+      - name: Publish to Maven Central
+        env:
+            OSSRH_USERNAME: ${{ secrets.OSSRH_USERNAME }}
+            OSSRH_PASSWORD: ${{ secrets.OSSRH_PASSWORD }}
+        run: |
+          PBVER=${{ matrix.pbver }}
+          echo "${PBVER} is not published. Running publish command..."
+          gradle \
+              -Psigning.keyId=${{secrets.SIGNING_KEY_ID}} -Psigning.password=${{secrets.SIGNING_PASSWORD}} \
+              -Psigning.secretKeyRingFile="$(pwd)/.gradle/secring.gpg" \
+              -PpubToOSSR -PpbVersion=${PBVER}.0 :loki-protobuf:publish \
+      - name: Cleanup
+        run: rm $(pwd)/.gradle/secring.gpg
