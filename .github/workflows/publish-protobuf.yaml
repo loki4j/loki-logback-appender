@@ -7,8 +7,6 @@ on:
       - 'loki-protobuf/VERSION'
       - 'loki-protobuf/PB-VERSION'
 
-# cat PB-VERSION | while read pbver; do curl -s --output /dev/null --fail "https://repo1.maven.org/maven2/com/github/loki4j/loki-protobuf/0.0.1_pb${pbver}.0/loki-protobuf-0.0.1_pb${pbver}.0.jar" || echo "${pbver} - not published"; done
-# gradle -PpubToOSSR -PpbVersion=3.10.0 :loki-protobuf:publish
 jobs:
   check-pb:
     runs-on: ubuntu-latest
