@@ -11,7 +11,21 @@ Please see below for the details.
 
 #### Separate Protobuf JAR
 
+If you use Protobuf format, now you need to add a new dependency to your project:
 
+```xml
+<dependency>
+    <groupId>com.github.loki4j</groupId>
+    <artifactId>loki-protobuf</artifactId>
+    <version>0.0.1_pbX.Y.0</version>
+</dependency>
+```
+
+A part `_pbX.Y.0` in version means that now you can use any supported PB version by substituting it here.
+E.g. for Protobuf v3.21.x it should be `_pb3.21.0`.
+
+In previous versions of Loki4j you were required to add `protobuf-java` and `snappy-java` as dependencies to you project.
+In 1.4.0 it's no longer required as the proper versions of this libs come as transitive dependencies of `loki-protobuf`.
 
 #### Retry functionality added
 

@@ -98,7 +98,7 @@ http.connectionKeepAliveMs|120000|A duration of time in milliseconds which the c
 By default Loki4j uses `JsonEncoder` that converts log batches into JSON format specified by Loki API.
 This encoder does not use any extra libs for JSON generation.
 
-If you want to use `ProtobufEncoder`, you need to add Protobuf-related dependencies to your project:
+If you want to use `ProtobufEncoder`, you need to add the following dependency to your project:
 
 <!--DOCUSAURUS_CODE_TABS-->
 <!--Maven-->
@@ -118,6 +118,8 @@ compile 'com.github.loki4j:loki-protobuf:0.0.1_pb3.21.0'
 ```
 <!--END_DOCUSAURUS_CODE_TABS-->
 
+This library contains pre-generated encoders for Loki Protobuf format along with the proper version of Protobuf runtime and Snappy as a transitive dependencies.
+
 Then you can explicitly specify `ProtobufEncoder` by setting `class` attribute for `format` section:
 
 ```xml
@@ -128,13 +130,31 @@ Then you can explicitly specify `ProtobufEncoder` by setting `class` attribute f
 </appender>
 ```
 
+### Selecting a version of Protobuf
+
+If you project already depends on a certain version of Protobuf, you will have to use a proper version of `loki-protobuf` as well.
+
+You can change the Protobuf version bundled with `loki-protobuf` by modifying `_pbX.Y.0` part.
+The list of supported Protobuf versions is available in [PB-VERSION file](https://github.com/loki4j/loki-logback-appender/blob/main/loki-protobuf/PB-VERSION).
+
+If the version you need is not listed in there, consider the following options:
+
+- Add the version you need to PB-VERSION file and create a PR to Loki4j. Once merged, this will add one more publishing configuration to `loki-protobuf`, and the new Protobuf version will be available to everyone
+
+- Put Loki-specific `.proto` files inside your project and generate corresponding Java files by yourself. This option is considered advanced, so you should be able to figure out all the details you might need from the `loki-protobuf`'s [source code](https://github.com/loki4j/loki-logback-appender/tree/main/loki-protobuf)
+
 ## Working with Loki labels
+
+Logs in Loki are indexed using labels that have key-value format.
+In Loki4j you can specify labels on per-record level using all the benefits Logback has to offer.
+
+Labels are set in `format.label` section of `Loki4jAppender`'s config:
 
 ```xml
 <appender name="LOKI" class="com.github.loki4j.logback.Loki4jAppender">
     <format>
         <label>
-            <-- All labels settings go here -->
+            <-- All label settings go here -->
         </label>
         ...
     </format>
@@ -142,13 +162,20 @@ Then you can explicitly specify `ProtobufEncoder` by setting `class` attribute f
 </appender>
 ```
 
+Below we will go through some tips and tricks referring this section.
+
 ### Organizing labels
+
+By default labels are defined as `key=value` pairs separated by comma.
 
 ```xml
 <label>
     <pattern>app=my-app,host=${HOSTNAME},level=%level</pattern>
 </label>
 ```
+
+But you can override `pairSeparator` to organize them in a different way.
+For example, if you have many labels, it's better to have each of them on a separate line:
 
 ```xml
 <label>
@@ -164,7 +191,12 @@ Then you can explicitly specify `ProtobufEncoder` by setting `class` attribute f
 </label>
 ```
 
+Please note, that in the example above the regular expression in `pairSeparator` defines lines starting with `//` a part of a separator.
+So now we have a `// comment` feature as well.
+
 ### Using MDC in labels
+
+`label.pattern` is nothing but Logback's [pattern layout](https://logback.qos.ch/manual/layouts.html#ClassicPatternLayout), which means it supports [MDC](https://logback.qos.ch/manual/mdc.html):
 
 ```xml
 <label>
@@ -174,17 +206,24 @@ Then you can explicitly specify `ProtobufEncoder` by setting `class` attribute f
 
 ### Adding dynamic labels using Markers
 
+In classic Logback markers are typically used to [filter](https://logback.qos.ch/manual/filters.html#TurboFilter) log records.
+In Loki4j you can also use markers to dynamically set Loki labels for any particular log message.
+
+First, you need to make Loki4j scan markers attached to each log event:
+
 <label>
     <pattern>app=my-app,host=${HOSTNAME},level=%level</pattern>
     <readMarkers>true</readMarkers>
 </label>
+
+Then you can set one or more key-value labels to any specific log line using `LabelMarker`:
 
 ```java
 import com.github.loki4j.slf4j.marker.LabelMarker;
 
 
 void handleException(Exception ex) {
-    var marker = LabelMarker.of("exception", () -> ex.getClass().getSimpleName());
+    var marker = LabelMarker.of("exceptionClass", () -> ex.getClass().getSimpleName());
     log.error(marker, format("An error '%s' occurred", ex.getMessage()), ex);
 }
 ```
