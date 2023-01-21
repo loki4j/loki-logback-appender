@@ -14,6 +14,7 @@ import java.util.function.Consumer;
 import java.util.function.Function;
 import java.util.stream.StreamSupport;
 
+import ch.qos.logback.core.encoder.Encoder;
 import org.slf4j.Marker;
 
 import com.github.loki4j.client.batch.LogRecord;
@@ -112,6 +113,15 @@ public class Generators {
         var encoder = new JsonEncoder();
         encoder.setStaticLabels(staticLabels);
         encoder.setLabel(labelCfg("test=" + testLabel + ",level=%level,app=my-app", ",", "=", true, false));
+        encoder.setSortByTime(true);
+        return encoder;
+    }
+
+    public static JsonEncoder jsonEncoder(boolean staticLabels, String testLabel, Encoder<ILoggingEvent> messageEncoder) {
+        var encoder = new JsonEncoder();
+        encoder.setStaticLabels(staticLabels);
+        encoder.setLabel(labelCfg("test=" + testLabel + ",level=%level,app=my-app", ",", "=", true, false));
+        encoder.setMessage(messageCfg(messageEncoder));
         encoder.setSortByTime(true);
         return encoder;
     }
@@ -222,10 +232,15 @@ public class Generators {
         return label;
     }
 
-    public static AbstractLoki4jEncoder.MessageCfg messageCfg(
-            String pattern) {
+    public static AbstractLoki4jEncoder.MessageCfg messageCfg(String pattern) {
         var message = new AbstractLoki4jEncoder.MessageCfg();
         message.setPattern(pattern);
+        return message;
+    }
+
+    public static AbstractLoki4jEncoder.MessageCfg messageCfg(Encoder<ILoggingEvent> encoder) {
+        var message = new AbstractLoki4jEncoder.MessageCfg();
+        message.setEncoder(encoder);
         return message;
     }
 

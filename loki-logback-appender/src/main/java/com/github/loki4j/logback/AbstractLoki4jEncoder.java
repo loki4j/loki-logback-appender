@@ -1,6 +1,7 @@
 package com.github.loki4j.logback;
 
 import java.nio.charset.Charset;
+import java.nio.charset.StandardCharsets;
 import java.util.Arrays;
 import java.util.Map.Entry;
 import java.util.concurrent.atomic.AtomicInteger;
@@ -13,8 +14,10 @@ import com.github.loki4j.client.util.Cache.UnboundAtomicMapCache;
 import com.github.loki4j.slf4j.marker.LabelMarker;
 
 import ch.qos.logback.classic.PatternLayout;
+import ch.qos.logback.classic.encoder.PatternLayoutEncoder;
 import ch.qos.logback.classic.spi.ILoggingEvent;
 import ch.qos.logback.core.CoreConstants;
+import ch.qos.logback.core.encoder.Encoder;
 import ch.qos.logback.core.joran.spi.DefaultClass;
 import ch.qos.logback.core.spi.ContextAwareBase;
 
@@ -80,12 +83,18 @@ public abstract class AbstractLoki4jEncoder extends ContextAwareBase implements 
          * Logback pattern to use for log record's message
          */
         String pattern = "l=%level c=%logger{20} t=%thread | %msg %ex";
+        Encoder<ILoggingEvent> encoder;
+
         public void setPattern(String pattern) {
             this.pattern = pattern;
         }
+
+        public void setEncoder(Encoder<ILoggingEvent> encoder) {
+            this.encoder = encoder;
+        }
     }
 
-    protected final Charset charset = Charset.forName("UTF-8");
+    protected final Charset charset = StandardCharsets.UTF_8;
 
     private final AtomicInteger nanoCounter = new AtomicInteger(0);
 
@@ -117,7 +126,7 @@ public abstract class AbstractLoki4jEncoder extends ContextAwareBase implements 
     private Pattern compiledLabelKeyValueSeparator;
 
     private PatternLayout labelPatternLayout;
-    private PatternLayout messagePatternLayout;
+    private Encoder<ILoggingEvent> messageEncoder;
 
     private LogRecordStream staticLabelStream = null;
 
@@ -148,15 +157,15 @@ public abstract class AbstractLoki4jEncoder extends ContextAwareBase implements 
         labelPatternLayout = initPatternLayout(labelPattern);
         labelPatternLayout.start();
 
-        messagePatternLayout = initPatternLayout(message.pattern);
-        messagePatternLayout.start();
+        messageEncoder = message.encoder != null ? message.encoder : initPatternLayoutEncoder(message.pattern);
+        messageEncoder.start();
 
         this.started = true;
     }
 
     public void stop() {
         this.started = false;
-        messagePatternLayout.stop();
+        messageEncoder.stop();
         labelPatternLayout.stop();
     }
 
@@ -196,7 +205,7 @@ public abstract class AbstractLoki4jEncoder extends ContextAwareBase implements 
     }
 
     public String eventToMessage(ILoggingEvent e) {
-        return messagePatternLayout.doLayout(e);
+        return new String(messageEncoder.encode(e));
     }
 
     public int timestampToNanos(long timestampMs) {
@@ -226,7 +235,14 @@ public abstract class AbstractLoki4jEncoder extends ContextAwareBase implements 
     }
 
     private PatternLayout initPatternLayout(String pattern) {
-        var patternLayout = new PatternLayout();
+        PatternLayout patternLayout = new PatternLayout();
+        patternLayout.setContext(context);
+        patternLayout.setPattern(pattern);
+        return patternLayout;
+    }
+
+    private PatternLayoutEncoder initPatternLayoutEncoder(String pattern) {
+        PatternLayoutEncoder patternLayout = new PatternLayoutEncoder();
         patternLayout.setContext(context);
         patternLayout.setPattern(pattern);
         return patternLayout;

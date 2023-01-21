@@ -1,5 +1,6 @@
 package com.github.loki4j.logback;
 
+import ch.qos.logback.core.encoder.EncoderBase;
 import org.junit.Test;
 
 import ch.qos.logback.classic.Level;
@@ -149,6 +150,55 @@ public class Loki4jAppenderTest {
             "'values':[['100100000','l=INFO c=TestApp t=main | m1-line1\\r\\nline2\\r\\n ']," +
             "['100100001','l=INFO c=TestApp t=main | m2-line1\\nline2\\n ']," +
             "['100100002','l=INFO c=TestApp t=main | m3-line1\\rline2\\r ']]}]}"
+            ).replace('\'', '"');
+
+        var actual = new String(sender.lastBatch(), encoder.charset);
+        System.out.println(expected);
+        System.out.println(actual);
+        assertEquals("batchSize", expected, actual);
+        appender.stop();
+    }
+
+    @Test
+    public void testNonPatternMessageEncoder() {
+        ILoggingEvent[] events = new ILoggingEvent[] {
+            loggingEvent(100L, Level.INFO, "TestApp", "main", "m1", null),
+            loggingEvent(100L, Level.INFO, "TestApp", "main", "m2", null),
+            loggingEvent(100L, Level.INFO, "TestApp", "main", "m3", null)
+        };
+
+        var testMessageEncoder = new EncoderBase<ILoggingEvent>() {
+            @Override
+            public byte[] headerBytes() {
+                return new byte[]{};
+            }
+
+            @Override
+            public byte[] encode(ILoggingEvent event) {
+                return ("test encoded: " + event.getMessage()).getBytes();
+            }
+
+            @Override
+            public byte[] footerBytes() {
+                return new byte[]{};
+            }
+        };
+        var encoder = jsonEncoder(false, "testNonPatternMessageEncoder", testMessageEncoder);
+        var sender = dummySender();
+        var appender = appender(3, 1000L, encoder, sender);
+        appender.start();
+
+        appender.append(events[0]);
+        appender.append(events[1]);
+        appender.append(events[2]);
+
+        try { Thread.sleep(100L); } catch (InterruptedException e1) { }
+
+        var expected = (
+            "{'streams':[{'stream':{'test':'testNonPatternMessageEncoder','level':'INFO','app':'my-app'}," +
+            "'values':[['100100000','test encoded: m1']," +
+            "['100100001','test encoded: m2']," +
+            "['100100002','test encoded: m3']]}]}"
             ).replace('\'', '"');
 
         var actual = new String(sender.lastBatch(), encoder.charset);

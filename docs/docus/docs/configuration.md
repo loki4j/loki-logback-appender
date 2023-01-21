@@ -40,7 +40,8 @@ format.label.pattern||**Required**. Logback pattern to use for log record's labe
 format.label.pairSeparator|,|Character to use as a separator between labels
 format.label.keyValueSeparator|=|Character to use as a separator between label's name and its value
 format.label.nopex|true|If true, exception info is not added to labels. If false, you should take care of proper formatting
-format.message.pattern||**Required**. Logback pattern to use for log record's message
+format.message.pattern||**Required if encoder is not set**. Logback pattern to use for log record's message
+format.message.encoder||**Required if pattern is not set**. Logback encoder to use for log record's message
 format.staticLabels|false|If you use only one label for all log records, you can set this flag to true and save some CPU time on grouping records by label
 format.sortByTime|false|If true, log records in batch are sorted by timestamp. If false, records will be sent to Loki in arrival order. Enable this if you see 'entry out of order' error from Loki
 
@@ -228,6 +229,37 @@ so we need to specify this explicitly.
         </label>
         <message>
             <pattern>l=%level c=%logger{20} t=%thread | %msg %ex</pattern>
+        </message>
+    </format>
+</appender>
+```
+
+
+### Using custom message encoder
+
+In this example we will see how to configure custom message encoder(e.g. net.logstash.logback.encoder.LoggingEventCompositeJsonEncoder, we should add it to the app dependencies).
+
+```xml
+<appender name="LOKI" class="com.github.loki4j.logback.Loki4jAppender">
+    <http>
+        <url>http://localhost:3100/loki/api/v1/push</url>
+    </http>
+    <format>
+        <label>
+            <pattern>app=my-app,host=${HOSTNAME},level=%level</pattern>
+        </label>
+        <message>
+            <encoder class="net.logstash.logback.encoder.LoggingEventCompositeJsonEncoder">
+                <providers>
+                    <timestamp/>
+                    <version/>
+                    <logLevel/>
+                    <loggerName/>
+                    <message/>
+                    <mdc/>
+                    <stackTrace/>
+                </providers>
+            </encoder>
         </message>
     </format>
 </appender>
