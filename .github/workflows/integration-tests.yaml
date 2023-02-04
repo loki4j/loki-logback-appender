@@ -15,7 +15,7 @@ jobs:
         include:
           - loki: 1.6.1
             limits: -distributor.ingestion-rate-limit-mb=160 -distributor.ingestion-burst-size-mb=240
-          - loki: 2.7.1
+          - loki: 2.7.3
             limits: |
               -distributor.ingestion-rate-limit-mb=160 -distributor.ingestion-burst-size-mb=240 \
               -ingester.per-stream-rate-limit="80MB" -ingester.per-stream-rate-limit-burst="160MB" \
