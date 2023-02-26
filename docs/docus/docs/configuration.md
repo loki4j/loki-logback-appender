@@ -17,7 +17,7 @@ batchMaxBytes|4194304|Max number of bytes a single batch can contain (as counted
 batchTimeoutMs|60000|Max time in milliseconds to keep a batch before sending it to Loki, even if max items/bytes limits for this batch are not reached
 sendQueueMaxBytes|41943040|Max number of bytes to keep in the send queue. When the queue is full, incoming log events are dropped
 maxRetries|2|Max number of attempts to send a batch to Loki before it will be dropped. A failed batch send could be retried only in case of ConnectException or 503 status from Loki. All other exceptions and 4xx-5xx statuses do not cause a retry in order to avoid duplicates
-retryTimeoutMs|60000|Time in milliseconds to wait before the next attempt to re-send a failed batch
+retryTimeoutMs|60000|Time in milliseconds to wait before the next attempt to re-send the failed batch
 internalQueuesCheckTimeoutMs|25|A timeout for Loki4j threads to sleep if encode or send queues are empty. Decreasing this value means lower latency at cost of higher CPU usage
 useDirectBuffers|true|Use off-heap memory for storing intermediate data
 drainOnStop|true|If true, the appender will try to send all the remaining events on shutdown, so the proper shutdown procedure might take longer. Otherwise, the appender will drop the unsent events
@@ -40,7 +40,7 @@ http.tenantId||Tenant identifier. It is required only for sending logs directly 
 Setting|Default|Description
 -------|-------|-----------
 format.label.pattern||**Required**. Logback pattern to use for log record's label
-format.label.pairSeparator|,|Character sequence to use as a separator between labels. If starts with "regex:" prefix, the remainder is used as a regular expression separator. Otherwise, the provided char sequence is used as a separator literally
+format.label.pairSeparator|,|Character sequence to use as a separator between labels. If starts with "regex:" prefix, the remainder is applied as a regular expression separator. Otherwise, the provided char sequence is used as a separator literally
 format.label.keyValueSeparator|=|Character to use as a separator between label's name and its value
 format.label.readMarkers|false|If true, Loki4j scans each log record for attached LabelMarker to add its values to record's labels
 format.label.nopex|true|If true, exception info is not added to labels. If false, you should take care of proper formatting
@@ -162,7 +162,7 @@ Labels are set in `format.label` section of `Loki4jAppender`'s config:
 </appender>
 ```
 
-Below we will go through some tips and tricks referring this section.
+Below we will go through some tips and tricks you can use in `format.label` section to make your life a bit easier.
 
 ### Organizing labels
 
@@ -192,7 +192,7 @@ For example, if you have many labels, it's better to have each of them on a sepa
 ```
 
 Please note, that in the example above the regular expression in `pairSeparator` defines lines starting with `//` a part of a separator.
-So now we have a `// comment` feature as well.
+So now we have a `// comment` feature here as well.
 
 ### Using MDC in labels
 
@@ -206,21 +206,24 @@ So now we have a `// comment` feature as well.
 
 ### Adding dynamic labels using Markers
 
-In classic Logback markers are typically used to [filter](https://logback.qos.ch/manual/filters.html#TurboFilter) log records.
+In classic Logback, markers are typically used to [filter](https://logback.qos.ch/manual/filters.html#TurboFilter) log records.
 In Loki4j you can also use markers to dynamically set Loki labels for any particular log message.
 
 First, you need to make Loki4j scan markers attached to each log event:
 
+```xml
 <label>
     <pattern>app=my-app,host=${HOSTNAME},level=%level</pattern>
     <readMarkers>true</readMarkers>
 </label>
+```
 
 Then you can set one or more key-value labels to any specific log line using `LabelMarker`:
 
 ```java
 import com.github.loki4j.slf4j.marker.LabelMarker;
 
+...
 
 void handleException(Exception ex) {
     var marker = LabelMarker.of("exceptionClass", () -> ex.getClass().getSimpleName());

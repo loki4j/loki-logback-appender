@@ -25,7 +25,7 @@ A part `_pbX.Y.0` in version means that now you can use any supported PB version
 E.g. for Protobuf v3.21.x it should be `_pb3.21.0`.
 
 In previous versions of Loki4j you were required to add `protobuf-java` and `snappy-java` as dependencies to you project.
-In 1.4.0 it's no longer required as the proper versions of this libs come as transitive dependencies of `loki-protobuf`.
+In 1.4.0 it's no longer required as the proper versions of these libs come as transitive dependencies of `loki-protobuf`.
 
 #### Retry functionality added
 
