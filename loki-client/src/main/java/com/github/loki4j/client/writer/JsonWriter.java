@@ -16,6 +16,10 @@ public final class JsonWriter implements Writer {
         this.raw = new RawJsonWriter(capacity);
     }
 
+    public boolean isBinary() {
+        return false;
+    }
+
     public void serializeBatch(LogRecordBatch batch) {
         var currentStream = batch.get(0).stream;
         beginStreams(batch.get(0), currentStream.labels);

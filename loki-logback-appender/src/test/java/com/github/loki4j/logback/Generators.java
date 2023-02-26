@@ -184,6 +184,10 @@ public class Generators {
             public void reset() {
                 b.clear();
             }
+            @Override
+            public boolean isBinary() {
+                return false;
+            }
         };
     }
 

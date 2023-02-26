@@ -1,5 +1,8 @@
 package com.github.loki4j.client.util;
 
+import java.nio.charset.StandardCharsets;
+import java.util.Base64;
+
 public class StringUtils {
 
     /**
@@ -37,6 +40,14 @@ public class StringUtils {
             }
         }
         return true;
+    }
+
+    public static String bytesAsUtf8String(byte[] input) {
+        return new String(input, StandardCharsets.UTF_8);
+    }
+
+    public static String bytesAsBase64String(byte[] input) {
+        return Base64.getEncoder().encodeToString(input);
     }
 
 }

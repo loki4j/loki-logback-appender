@@ -27,7 +27,10 @@ import com.github.loki4j.client.util.Loki4jLogger;
 import com.github.loki4j.client.util.Loki4jThreadFactory;
 import com.github.loki4j.client.writer.Writer;
 
-public final class DefaultPipeline {
+import static com.github.loki4j.client.util.StringUtils.bytesAsBase64String;
+import static com.github.loki4j.client.util.StringUtils.bytesAsUtf8String;
+
+public final class AsyncBufferPipeline {
 
     private static final Comparator<LogRecord> compareByTime = (e1, e2) -> {
         var tsCmp = Long.compare(e1.timestampMs, e2.timestampMs);
@@ -83,7 +86,7 @@ public final class DefaultPipeline {
 
     private ScheduledFuture<?> drainScheduledFuture;
 
-    public DefaultPipeline(PipelineConfig conf) {
+    public AsyncBufferPipeline(PipelineConfig conf) {
         Optional<Comparator<LogRecord>> logRecordComparator = Optional.empty();
         if (conf.staticLabels) {
             if (conf.sortByTime)
@@ -124,9 +127,13 @@ public final class DefaultPipeline {
             100,
             100,
             TimeUnit.MILLISECONDS);
+
+        log.trace("Pipeline started");
     }
 
     public void stop() {
+        log.trace("Pipeline is stopping...");
+
         drainScheduledFuture.cancel(false);
 
         if (drainOnStop) {
@@ -149,6 +156,12 @@ public final class DefaultPipeline {
         } catch (Exception e) {
             log.error(e, "Error while closing HttpClient");
         }
+
+        log.trace("Pipeline stopped");
+    }
+
+    public void waitSendQueueIsEmpty(long timeoutMs) {
+        waitSendQueueLessThan(1, timeoutMs);
     }
 
     public boolean append(long timestamp, int nanos, Supplier<LogRecordStream> stream, Supplier<String> message) {
@@ -160,6 +173,7 @@ public final class DefaultPipeline {
                 buffer.offer(record);
                 unsentEvents.incrementAndGet();
                 accepted = true;
+                log.trace("Log record was accepted for sending: %s", record);
             } else {
                 log.warn("Dropping the record that exceeds max batch size: %s", record);
             }
@@ -171,7 +185,7 @@ public final class DefaultPipeline {
 
     private void drain() {
         drainRequested.set(true);
-        log.trace("drain planned");
+        log.trace("Drain planned");
     }
 
     private void runEncodeLoop() {
@@ -200,7 +214,7 @@ public final class DefaultPipeline {
             LockSupport.parkNanos(this, parkTimeoutNs);
         }
         if (!started) return;
-        log.trace("check encode actions");
+        log.trace("Checking encode actions...");
         LogRecord record = buffer.peek();
         while(record != null && batch.isEmpty()) {
             batcher.checkSizeBeforeAdd(record, batch);
@@ -208,8 +222,10 @@ public final class DefaultPipeline {
             if (batch.isEmpty()) record = buffer.peek();
         }
 
-        if (batch.isEmpty() && drainRequested.get())
+        if (batch.isEmpty() && drainRequested.get()) {
             batcher.drain(lastSendTimeMs.get(), batch);
+            log.trace("Draining %s remained log records for encode", batch.size());
+        }
         drainRequested.set(false);
         if (batch.isEmpty()) return;
 
@@ -236,8 +252,6 @@ public final class DefaultPipeline {
             log.info(
                 ">>> Batch %s converted to %,d bytes",
                     batch, writer.size());
-            //try { System.out.write(batch); } catch (Exception e) { e.printStackTrace(); }
-            //System.out.println("\n");
             if (metrics != null)
                 metrics.batchEncoded(startedNs, writer.size());
         } catch (Exception e) {
@@ -258,7 +272,7 @@ public final class DefaultPipeline {
         try {
             sendBatch(batch);
             lastSendTimeMs.set(System.currentTimeMillis());
-            log.trace("sent items: %s", batch.sizeItems);
+            log.trace("Batch %s was successfully sent to Loki", batch);
         } finally {
             unsentEvents.addAndGet(-batch.sizeItems);
             sendQueue.returnBuffer(batch);
@@ -273,6 +287,17 @@ public final class DefaultPipeline {
 
         do {
             batch.data.rewind();
+            // print out the batch before send if tracing is enabled
+            if (log.isTraceEnabled(this)) {
+                var payload = new byte[batch.data.limit()];
+                batch.data.get(payload);
+                batch.data.rewind();
+                log.trace("Sending batch %s with %spayload:\n%s",
+                    batch,
+                    writer.isBinary() ? "binary " : "",
+                    writer.isBinary() ? bytesAsBase64String(payload) : bytesAsUtf8String(payload));
+            }
+            // try to send the batch
             try {
                 r = httpClient.send(batch.data);
                 // exit if send is successful
@@ -297,11 +322,11 @@ public final class DefaultPipeline {
     }
 
     private void reportSendError(BinaryBatch batch, Exception e, LokiResponse r, int retry) {
-        // whether exception occured or error status received
-        var exceptionOccured = e != null;
+        // whether exception occurred or error status received
+        var exceptionOccurred = e != null;
         var isRetry = retry > 0;
 
-        if (exceptionOccured) {
+        if (exceptionOccurred) {
             log.error(e,
                 "%sError while sending Batch %s to Loki (%s)",
                 isRetry ? "Retry #" + retry + ". " : "", batch, httpClient.getConfig().pushUrl);
@@ -337,10 +362,6 @@ public final class DefaultPipeline {
         return true;
     }
 
-    public void waitSendQueueIsEmpty(long timeoutMs) {
-        waitSendQueueLessThan(1, timeoutMs);
-    }
-
     void waitSendQueueLessThan(int size, long timeoutMs) {
         var timeoutNs = TimeUnit.MILLISECONDS.toNanos(timeoutMs);
         var elapsedNs = 0L;
@@ -348,7 +369,7 @@ public final class DefaultPipeline {
             LockSupport.parkNanos(parkTimeoutNs);
             elapsedNs += parkTimeoutNs;
         }
-        log.trace("wait send queue: started=%s, buffer(%s)>=%s, %s ms %s elapsed",
+        log.trace("Wait send queue: started=%s, buffer(%s)>=%s, %s ms %s elapsed",
                 started, unsentEvents.get(), size, timeoutMs, elapsedNs < timeoutNs ? "not" : "");
         if (elapsedNs >= timeoutNs)
             throw new RuntimeException("Not completed within timeout " + timeoutMs + " ms");

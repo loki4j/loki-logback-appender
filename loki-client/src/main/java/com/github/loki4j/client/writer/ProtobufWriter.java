@@ -31,6 +31,10 @@ public final class ProtobufWriter implements Writer {
         this.request = PushRequest.newBuilder();
     }
 
+    public boolean isBinary() {
+        return true;
+    }
+
     public void serializeBatch(LogRecordBatch batch) {
         var currentStream = batch.get(0).stream;
         nextStream(currentStream.labels);
