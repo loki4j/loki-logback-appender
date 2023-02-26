@@ -1,6 +1,6 @@
 # loki-logback-appender
 
-![Build](https://img.shields.io/github/workflow/status/loki4j/loki-logback-appender/build/main)
+![Build](https://img.shields.io/github/actions/workflow/status/loki4j/loki-logback-appender/build-and-test.yaml?branch=main)
 ![Maven Central](https://img.shields.io/maven-central/v/com.github.loki4j/loki-logback-appender?color=blue)
 
 Loki4j aims to be the fastest and the most lightweight implementation of
