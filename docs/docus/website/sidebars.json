@@ -1,6 +1,6 @@
 {
   "docs": {
-    "Logback": ["configuration", "performance", "migration", "olddocs"]
+    "Logback": ["configuration", "performance", "tracing", "migration", "olddocs"]
   },
   "docs-other": {
     "First Category": ["doc4", "doc5"]
