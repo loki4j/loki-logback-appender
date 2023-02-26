@@ -29,7 +29,7 @@ For Maven project add the following dependency to your `pom.xml`:
 <dependency>
     <groupId>org.apache.httpcomponents</groupId>
     <artifactId>httpclient</artifactId>
-    <version>4.5.13</version>
+    <version>4.5.14</version>
 </dependency>
 ```
 <!--END_DOCUSAURUS_CODE_TABS-->
@@ -46,7 +46,7 @@ implementation 'com.github.loki4j:loki-logback-appender:%version%'
 
 ```groovy
 implementation 'com.github.loki4j:loki-logback-appender-jdk8:%version%'
-implementation 'org.apache.httpcomponents:httpclient:4.5.13'
+implementation 'org.apache.httpcomponents:httpclient:4.5.14'
 ```
 <!--END_DOCUSAURUS_CODE_TABS-->
 

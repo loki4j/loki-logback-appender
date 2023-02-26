@@ -4,6 +4,45 @@ title: Loki4j Migration Guide
 sidebar_label: Migration Guide
 ---
 
+## Upgrading from 1.3.x to 1.4.x
+
+Version 1.4.0 contains several new features that may break the existing behavior for some users.
+Please see below for the details.
+
+#### Separate Protobuf JAR
+
+If you use Protobuf format, now you need to add a new dependency to your project:
+
+```xml
+<dependency>
+    <groupId>com.github.loki4j</groupId>
+    <artifactId>loki-protobuf</artifactId>
+    <version>0.0.1_pbX.Y.0</version>
+</dependency>
+```
+
+A part `_pbX.Y.0` in version means that now you can use any supported PB version by substituting it here.
+E.g. for Protobuf v3.21.x it should be `_pb3.21.0`.
+
+In previous versions of Loki4j you were required to add `protobuf-java` and `snappy-java` as dependencies to you project.
+In 1.4.0 it's no longer required as the proper versions of this libs come as transitive dependencies of `loki-protobuf`.
+
+#### Retry functionality added
+
+Loki4j is designed to operate in presence of various errors and connection failures returned from Loki.
+However, the previous versions tried to send each log batch only once, so all batches sent during
+unavailability of Loki are lost.
+
+In 1.4.0 Loki4j can try to send a log batch to Loki again, if the previous attempt failed.
+Please note, that re-send is done only in case of `ConnectException` or `503` HTTP status from Loki.
+All other exceptions as well as 4xx-5xx statuses are not retried in order to avoid duplicates.
+
+#### Deprecated "batchSize" setting is removed
+
+The `batchSize` setting was renamed to `batchMaxItems` back in 1.2.0, but you still could use the old name until 1.4.0.
+Now the old name support was completely dropped, so please make sure you use `batchMaxItems` instead.
+
+
 ## Upgrading from 1.2.x to 1.3.x
 
 Version 1.3.0 was focused on internal refactoring and bug fixing.
