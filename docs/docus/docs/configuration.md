@@ -209,7 +209,7 @@ So now we have a `// comment` feature here as well.
 In classic Logback, markers are typically used to [filter](https://logback.qos.ch/manual/filters.html#TurboFilter) log records.
 In Loki4j you can also use markers to dynamically set Loki labels for any particular log message.
 
-First, you need to make Loki4j scan markers attached to each log event:
+First, you need to make Loki4j scan markers attached to each log event by enabling `readMarkers` flag:
 
 ```xml
 <label>
