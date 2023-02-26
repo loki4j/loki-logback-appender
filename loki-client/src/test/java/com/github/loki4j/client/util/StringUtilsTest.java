@@ -3,7 +3,7 @@ package com.github.loki4j.client.util;
 import org.junit.Test;
 
 import static org.junit.Assert.assertEquals;
-import static java.nio.charset.StandardCharsets.UTF_8;;
+import static java.nio.charset.StandardCharsets.UTF_8;
 
 public class StringUtilsTest {
 

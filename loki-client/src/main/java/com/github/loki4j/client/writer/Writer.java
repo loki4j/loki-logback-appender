@@ -6,6 +6,8 @@ import com.github.loki4j.client.batch.LogRecordBatch;
 
 public interface Writer {
 
+    boolean isBinary();
+
     void serializeBatch(LogRecordBatch batch);
 
     int size();
