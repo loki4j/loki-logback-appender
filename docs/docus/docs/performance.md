@@ -22,7 +22,7 @@ First you need to make sure that Micrometer dependency is added to your project:
 <!--Gradle-->
 
 ```groovy
-compile 'io.micrometer:micrometer-core:1.9.2'
+implementation 'io.micrometer:micrometer-core:1.9.8'
 ```
 <!--END_DOCUSAURUS_CODE_TABS-->
 

@@ -71,7 +71,7 @@ In this case you need to ensure you have added the required dependencies to your
 <!--Gradle-->
 
 ```groovy
-compile 'org.apache.httpcomponents:httpclient:4.5.13'
+implementation 'org.apache.httpcomponents:httpclient:4.5.13'
 ```
 <!--END_DOCUSAURUS_CODE_TABS-->
 
@@ -114,7 +114,7 @@ If you want to use `ProtobufEncoder`, you need to add the following dependency t
 <!--Gradle-->
 
 ```groovy
-compile 'com.github.loki4j:loki-protobuf:0.0.1_pb3.21.0'
+implementation 'com.github.loki4j:loki-protobuf:0.0.1_pb3.21.0'
 ```
 <!--END_DOCUSAURUS_CODE_TABS-->
 
