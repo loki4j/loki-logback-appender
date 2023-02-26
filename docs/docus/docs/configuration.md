@@ -64,14 +64,14 @@ In this case you need to ensure you have added the required dependencies to your
 <dependency>
     <groupId>org.apache.httpcomponents</groupId>
     <artifactId>httpclient</artifactId>
-    <version>4.5.13</version>
+    <version>4.5.14</version>
 </dependency>
 ```
 
 <!--Gradle-->
 
 ```groovy
-implementation 'org.apache.httpcomponents:httpclient:4.5.13'
+implementation 'org.apache.httpcomponents:httpclient:4.5.14'
 ```
 <!--END_DOCUSAURUS_CODE_TABS-->
 

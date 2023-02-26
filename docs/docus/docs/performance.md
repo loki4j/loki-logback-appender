@@ -15,7 +15,7 @@ First you need to make sure that Micrometer dependency is added to your project:
 <dependency>
     <groupId>io.micrometer</groupId>
     <artifactId>micrometer-core</artifactId>
-    <version>1.9.2</version>
+    <version>1.9.8</version>
 </dependency>
 ```
 

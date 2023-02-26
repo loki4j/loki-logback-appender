@@ -15,7 +15,7 @@ dependencyResolutionManagement {
 
             library('loki-protobuf', 'com.github.loki4j', 'loki-protobuf').versionRef('loki-protobuf')
             library('snappy', 'org.xerial.snappy:snappy-java:1.1.8.4')
-            library('apache-httpclient4', 'org.apache.httpcomponents:httpclient:4.5.13')
+            library('apache-httpclient4', 'org.apache.httpcomponents:httpclient:4.5.14')
             library('micrometer', 'io.micrometer:micrometer-core:1.9.8')
 
             library('logback', 'ch.qos.logback:logback-classic:1.2.11')
