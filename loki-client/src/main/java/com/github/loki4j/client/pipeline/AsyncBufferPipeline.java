@@ -30,7 +30,7 @@ import com.github.loki4j.client.writer.Writer;
 import static com.github.loki4j.client.util.StringUtils.bytesAsBase64String;
 import static com.github.loki4j.client.util.StringUtils.bytesAsUtf8String;
 
-public final class DefaultPipeline {
+public final class AsyncBufferPipeline {
 
     private static final Comparator<LogRecord> compareByTime = (e1, e2) -> {
         var tsCmp = Long.compare(e1.timestampMs, e2.timestampMs);
@@ -86,7 +86,7 @@ public final class DefaultPipeline {
 
     private ScheduledFuture<?> drainScheduledFuture;
 
-    public DefaultPipeline(PipelineConfig conf) {
+    public AsyncBufferPipeline(PipelineConfig conf) {
         Optional<Comparator<LogRecord>> logRecordComparator = Optional.empty();
         if (conf.staticLabels) {
             if (conf.sortByTime)
@@ -272,7 +272,7 @@ public final class DefaultPipeline {
         try {
             sendBatch(batch);
             lastSendTimeMs.set(System.currentTimeMillis());
-            log.info("Batch %s was successfully sent to Loki", batch);
+            log.trace("Batch %s was successfully sent to Loki", batch);
         } finally {
             unsentEvents.addAndGet(-batch.sizeItems);
             sendQueue.returnBuffer(batch);
@@ -320,11 +320,11 @@ public final class DefaultPipeline {
     }
 
     private void reportSendError(BinaryBatch batch, Exception e, LokiResponse r, int retry) {
-        // whether exception occured or error status received
-        var exceptionOccured = e != null;
+        // whether exception occurred or error status received
+        var exceptionOccurred = e != null;
         var isRetry = retry > 0;
 
-        if (exceptionOccured) {
+        if (exceptionOccurred) {
             log.error(e,
                 "%sError while sending Batch %s to Loki (%s)",
                 isRetry ? "Retry #" + retry + ". " : "", batch, httpClient.getConfig().pushUrl);

@@ -2,7 +2,7 @@ package com.github.loki4j.logback;
 
 import java.util.concurrent.atomic.AtomicLong;
 
-import com.github.loki4j.client.pipeline.DefaultPipeline;
+import com.github.loki4j.client.pipeline.AsyncBufferPipeline;
 import com.github.loki4j.client.pipeline.PipelineConfig;
 
 import ch.qos.logback.classic.spi.ILoggingEvent;
@@ -90,7 +90,7 @@ public final class Loki4jAppender extends UnsynchronizedAppenderBase<ILoggingEve
     /**
      * A pipeline that does all the heavy lifting log records processing
      */
-    private DefaultPipeline pipeline;
+    private AsyncBufferPipeline pipeline;
 
     /**
      * A counter for events dropped due to backpressure
@@ -147,7 +147,7 @@ public final class Loki4jAppender extends UnsynchronizedAppenderBase<ILoggingEve
             .setInternalLoggingFactory(source -> new InternalLogger(source, this))
             .build();
 
-        pipeline = new DefaultPipeline(pipelineConf);
+        pipeline = new AsyncBufferPipeline(pipelineConf);
         pipeline.start();
 
         super.start();
