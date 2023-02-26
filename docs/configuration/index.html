@@ -72,7 +72,7 @@
 <tr><td>batchTimeoutMs</td><td>60000</td><td>Max time in milliseconds to keep a batch before sending it to Loki, even if max items/bytes limits for this batch are not reached</td></tr>
 <tr><td>sendQueueMaxBytes</td><td>41943040</td><td>Max number of bytes to keep in the send queue. When the queue is full, incoming log events are dropped</td></tr>
 <tr><td>maxRetries</td><td>2</td><td>Max number of attempts to send a batch to Loki before it will be dropped. A failed batch send could be retried only in case of ConnectException or 503 status from Loki. All other exceptions and 4xx-5xx statuses do not cause a retry in order to avoid duplicates</td></tr>
-<tr><td>retryTimeoutMs</td><td>60000</td><td>Time in milliseconds to wait before the next attempt to re-send a failed batch</td></tr>
+<tr><td>retryTimeoutMs</td><td>60000</td><td>Time in milliseconds to wait before the next attempt to re-send the failed batch</td></tr>
 <tr><td>internalQueuesCheckTimeoutMs</td><td>25</td><td>A timeout for Loki4j threads to sleep if encode or send queues are empty. Decreasing this value means lower latency at cost of higher CPU usage</td></tr>
 <tr><td>useDirectBuffers</td><td>true</td><td>Use off-heap memory for storing intermediate data</td></tr>
 <tr><td>drainOnStop</td><td>true</td><td>If true, the appender will try to send all the remaining events on shutdown, so the proper shutdown procedure might take longer. Otherwise, the appender will drop the unsent events</td></tr>
@@ -101,7 +101,7 @@
 </thead>
 <tbody>
 <tr><td>format.label.pattern</td><td></td><td><strong>Required</strong>. Logback pattern to use for log record's label</td></tr>
-<tr><td>format.label.pairSeparator</td><td>,</td><td>Character sequence to use as a separator between labels. If starts with &quot;regex:&quot; prefix, the remainder is used as a regular expression separator. Otherwise, the provided char sequence is used as a separator literally</td></tr>
+<tr><td>format.label.pairSeparator</td><td>,</td><td>Character sequence to use as a separator between labels. If starts with &quot;regex:&quot; prefix, the remainder is applied as a regular expression separator. Otherwise, the provided char sequence is used as a separator literally</td></tr>
 <tr><td>format.label.keyValueSeparator</td><td>=</td><td>Character to use as a separator between label's name and its value</td></tr>
 <tr><td>format.label.readMarkers</td><td>false</td><td>If true, Loki4j scans each log record for attached LabelMarker to add its values to record's labels</td></tr>
 <tr><td>format.label.nopex</td><td>true</td><td>If true, exception info is not added to labels. If false, you should take care of proper formatting</td></tr>
@@ -175,7 +175,7 @@ In Loki4j you can specify labels on per-record level using all the benefits Logb
     ...
 <span class="hljs-tag">&lt;/<span class="hljs-name">appender</span>&gt;</span>
 </code></pre>
-<p>Below we will go through some tips and tricks referring this section.</p>
+<p>Below we will go through some tips and tricks you can use in <code>format.label</code> section to make your life a bit easier.</p>
 <h3><a class="anchor" aria-hidden="true" id="organizing-labels"></a><a href="#organizing-labels" aria-hidden="true" class="hash-link"><svg class="hash-link-icon" aria-hidden="true" height="16" version="1.1" viewBox="0 0 16 16" width="16"><path fill-rule="evenodd" d="M4 9h1v1H4c-1.5 0-3-1.69-3-3.5S2.55 3 4 3h4c1.45 0 3 1.69 3 3.5 0 1.41-.91 2.72-2 3.25V8.59c.58-.45 1-1.27 1-2.09C10 5.22 8.98 4 8 4H4c-.98 0-2 1.22-2 2.5S3 9 4 9zm9-3h-1v1h1c1 0 2 1.22 2 2.5S13.98 12 13 12H9c-.98 0-2-1.22-2-2.5 0-.83.42-1.64 1-2.09V6.25c-1.09.53-2 1.84-2 3.25C6 11.31 7.55 13 9 13h4c1.45 0 3-1.69 3-3.5S14.5 6 13 6z"></path></svg></a>Organizing labels</h3>
 <p>By default labels are defined as <code>key=value</code> pairs separated by comma.</p>
 <pre><code class="hljs css language-xml"><span class="hljs-tag">&lt;<span class="hljs-name">label</span>&gt;</span>
@@ -197,7 +197,7 @@ For example, if you have many labels, it's better to have each of them on a sepa
 <span class="hljs-tag">&lt;/<span class="hljs-name">label</span>&gt;</span>
 </code></pre>
 <p>Please note, that in the example above the regular expression in <code>pairSeparator</code> defines lines starting with <code>//</code> a part of a separator.
-So now we have a <code>// comment</code> feature as well.</p>
+So now we have a <code>// comment</code> feature here as well.</p>
 <h3><a class="anchor" aria-hidden="true" id="using-mdc-in-labels"></a><a href="#using-mdc-in-labels" aria-hidden="true" class="hash-link"><svg class="hash-link-icon" aria-hidden="true" height="16" version="1.1" viewBox="0 0 16 16" width="16"><path fill-rule="evenodd" d="M4 9h1v1H4c-1.5 0-3-1.69-3-3.5S2.55 3 4 3h4c1.45 0 3 1.69 3 3.5 0 1.41-.91 2.72-2 3.25V8.59c.58-.45 1-1.27 1-2.09C10 5.22 8.98 4 8 4H4c-.98 0-2 1.22-2 2.5S3 9 4 9zm9-3h-1v1h1c1 0 2 1.22 2 2.5S13.98 12 13 12H9c-.98 0-2-1.22-2-2.5 0-.83.42-1.64 1-2.09V6.25c-1.09.53-2 1.84-2 3.25C6 11.31 7.55 13 9 13h4c1.45 0 3-1.69 3-3.5S14.5 6 13 6z"></path></svg></a>Using MDC in labels</h3>
 <p><code>label.pattern</code> is nothing but Logback's <a href="https://logback.qos.ch/manual/layouts.html#ClassicPatternLayout">pattern layout</a>, which means it supports <a href="https://logback.qos.ch/manual/mdc.html">MDC</a>:</p>
 <pre><code class="hljs css language-xml"><span class="hljs-tag">&lt;<span class="hljs-name">label</span>&gt;</span>
@@ -205,16 +205,18 @@ So now we have a <code>// comment</code> feature as well.</p>
 <span class="hljs-tag">&lt;/<span class="hljs-name">label</span>&gt;</span>
 </code></pre>
 <h3><a class="anchor" aria-hidden="true" id="adding-dynamic-labels-using-markers"></a><a href="#adding-dynamic-labels-using-markers" aria-hidden="true" class="hash-link"><svg class="hash-link-icon" aria-hidden="true" height="16" version="1.1" viewBox="0 0 16 16" width="16"><path fill-rule="evenodd" d="M4 9h1v1H4c-1.5 0-3-1.69-3-3.5S2.55 3 4 3h4c1.45 0 3 1.69 3 3.5 0 1.41-.91 2.72-2 3.25V8.59c.58-.45 1-1.27 1-2.09C10 5.22 8.98 4 8 4H4c-.98 0-2 1.22-2 2.5S3 9 4 9zm9-3h-1v1h1c1 0 2 1.22 2 2.5S13.98 12 13 12H9c-.98 0-2-1.22-2-2.5 0-.83.42-1.64 1-2.09V6.25c-1.09.53-2 1.84-2 3.25C6 11.31 7.55 13 9 13h4c1.45 0 3-1.69 3-3.5S14.5 6 13 6z"></path></svg></a>Adding dynamic labels using Markers</h3>
-<p>In classic Logback markers are typically used to <a href="https://logback.qos.ch/manual/filters.html#TurboFilter">filter</a> log records.
+<p>In classic Logback, markers are typically used to <a href="https://logback.qos.ch/manual/filters.html#TurboFilter">filter</a> log records.
 In Loki4j you can also use markers to dynamically set Loki labels for any particular log message.</p>
 <p>First, you need to make Loki4j scan markers attached to each log event:</p>
-<p><label>
-<pattern>app=my-app,host=${HOSTNAME},level=%level</pattern>
-<readMarkers>true</readMarkers>
-</label></p>
+<pre><code class="hljs css language-xml"><span class="hljs-tag">&lt;<span class="hljs-name">label</span>&gt;</span>
+    <span class="hljs-tag">&lt;<span class="hljs-name">pattern</span>&gt;</span>app=my-app,host=${HOSTNAME},level=%level<span class="hljs-tag">&lt;/<span class="hljs-name">pattern</span>&gt;</span>
+    <span class="hljs-tag">&lt;<span class="hljs-name">readMarkers</span>&gt;</span>true<span class="hljs-tag">&lt;/<span class="hljs-name">readMarkers</span>&gt;</span>
+<span class="hljs-tag">&lt;/<span class="hljs-name">label</span>&gt;</span>
+</code></pre>
 <p>Then you can set one or more key-value labels to any specific log line using <code>LabelMarker</code>:</p>
 <pre><code class="hljs css language-java"><span class="hljs-keyword">import</span> com.github.loki4j.slf4j.marker.LabelMarker;
 
+...
 
 <span class="hljs-function"><span class="hljs-keyword">void</span> <span class="hljs-title">handleException</span><span class="hljs-params">(Exception ex)</span> </span>{
     <span class="hljs-keyword">var</span> marker = LabelMarker.of(<span class="hljs-string">"exceptionClass"</span>, () -&gt; ex.getClass().getSimpleName());
