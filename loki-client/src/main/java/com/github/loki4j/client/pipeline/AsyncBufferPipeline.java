@@ -292,8 +292,10 @@ public final class AsyncBufferPipeline {
                 var payload = new byte[batch.data.limit()];
                 batch.data.get(payload);
                 batch.data.rewind();
-                log.trace("Sending batch %s with payload:\n%s\n",
-                    batch, writer.isBinary() ? bytesAsBase64String(payload) : bytesAsUtf8String(payload));
+                log.trace("Sending batch %s with %spayload:\n%s",
+                    batch,
+                    writer.isBinary() ? "binary " : "",
+                    writer.isBinary() ? bytesAsBase64String(payload) : bytesAsUtf8String(payload));
             }
             // try to send the batch
             try {
