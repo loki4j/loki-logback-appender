@@ -227,7 +227,7 @@ import com.github.loki4j.slf4j.marker.LabelMarker;
 
 void handleException(Exception ex) {
     var marker = LabelMarker.of("exceptionClass", () -> ex.getClass().getSimpleName());
-    log.error(marker, format("An error '%s' occurred", ex.getMessage()), ex);
+    log.error(marker, "Unexpected error", ex);
 }
 ```
 
