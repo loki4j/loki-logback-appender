@@ -6,6 +6,20 @@ sidebar_label: Configuration
 
 ## Reference
 
+Loki4j appender XML configuration consists of 3 sections: general settings, HTTP settings, and format settings.
+
+```xml
+<appender name="LOKI" class="com.github.loki4j.logback.Loki4jAppender">
+    <!-- general settings -->
+    <http>
+        <!-- HTTP settings -->
+    </http>
+    <format>
+        <!-- format settings -->
+    </format>
+</appender>
+```
+
 Most Loki4j appender settings are optional. These few that are required are marked explicitly.
 
 ### General settings
