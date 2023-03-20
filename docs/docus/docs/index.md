@@ -115,7 +115,7 @@ Loki4j supports HTTP basic authentication, so you can use it for hosted Loki ser
 as well as for on-premise Loki instances.
 See the [example](docs/grafanacloud)...
 
-- **Flexible Loki labels' management using MDC and SLF4J Markers.**
+- **Flexible management of Loki labels using MDC and SLF4J Markers.**
 You can specify Loki labels dynamically for any set of log records, and even on per-record basis.
 [Learn more...](docs/labels)
 
