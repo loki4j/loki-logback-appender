@@ -115,9 +115,9 @@ Loki4j supports HTTP basic authentication, so you can use it for hosted Loki ser
 as well as for on-premise Loki instances.
 See the [example](docs/grafanacloud)...
 
-- **Optional sorting of log records by timestamp before sending them to Loki.**
-In order to prevent log records loss, Loki4j can sort log records by timestamp inside each batch,
-so they will not be rejected by Loki with 'entry out of order' error.
+- **Flexible Loki labels' management using MDC and SLF4J Markers.**
+You can specify Loki labels dynamically for any set of log records, and even on per-record basis.
+[Learn more...](docs/labels)
 
 - **Logback formatting patterns are used for both labels and messages.**
 Loki4j allows you to use all the power and flexibility of
@@ -125,6 +125,10 @@ Loki4j allows you to use all the power and flexibility of
 both for labels and messages.
 Same patterns are used in Logback's standard `ConsoleAppender` or `FileAppender`,
 so you are probably familiar with the syntax.
+
+- **Optional sorting of log records by timestamp before sending them to Loki.**
+In Loki versions pre 2.4.0, to prevent log records loss, Loki4j can sort log records by timestamp inside each batch,
+so they will not be rejected by Loki with 'entry out of order' error.
 
 - **No JSON library bundled.**
 Instead of bundling with any JSON library (e.g. Jackson),
