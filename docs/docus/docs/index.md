@@ -108,12 +108,12 @@ Migrating from the previous version? Read the [Migration Guide](docs/migration).
 
 - **Support for both JSON and Protobuf formats.**
 With Loki4j you can try out both JSON and Protobuf API for sending log records to Loki.
-[Learn more...](docs/configuration#switching-to-protobuf-format)
+[Learn more...](docs/protobuf)
 
 - **Compatibility with Grafana Cloud.**
 Loki4j supports HTTP basic authentication, so you can use it for hosted Loki services (e.g. Grafana Cloud)
 as well as for on-premise Loki instances.
-See the [example](docs/configuration#sending-logs-to-grafana-cloud)...
+See the [example](docs/grafanacloud)...
 
 - **Optional sorting of log records by timestamp before sending them to Loki.**
 In order to prevent log records loss, Loki4j can sort log records by timestamp inside each batch,
