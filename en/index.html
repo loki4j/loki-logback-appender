@@ -32,15 +32,18 @@ With Loki4j you can try out both JSON and Protobuf API for sending log records t
 Loki4j supports HTTP basic authentication, so you can use it for hosted Loki services (e.g. Grafana Cloud)
 as well as for on-premise Loki instances.
 See the <a href="docs/grafanacloud">example</a>...</p></li>
-<li><p><strong>Optional sorting of log records by timestamp before sending them to Loki.</strong>
-In order to prevent log records loss, Loki4j can sort log records by timestamp inside each batch,
-so they will not be rejected by Loki with 'entry out of order' error.</p></li>
+<li><p><strong>Flexible Loki labels' management using MDC and SLF4J Markers.</strong>
+You can specify Loki labels dynamically for any set of log records, and even on per-record basis.
+<a href="docs/labels">Learn more...</a></p></li>
 <li><p><strong>Logback formatting patterns are used for both labels and messages.</strong>
 Loki4j allows you to use all the power and flexibility of
 <a href="http://logback.qos.ch/manual/layouts.html#ClassicPatternLayout">Logback patterns</a>
 both for labels and messages.
 Same patterns are used in Logback's standard <code>ConsoleAppender</code> or <code>FileAppender</code>,
 so you are probably familiar with the syntax.</p></li>
+<li><p><strong>Optional sorting of log records by timestamp before sending them to Loki.</strong>
+In Loki versions pre 2.4.0, to prevent log records loss, Loki4j can sort log records by timestamp inside each batch,
+so they will not be rejected by Loki with 'entry out of order' error.</p></li>
 <li><p><strong>No JSON library bundled.</strong>
 Instead of bundling with any JSON library (e.g. Jackson),
 Loki4j comes with a small part of JSON rendering functionality borrowed from <a href="https://github.com/ngs-doo/dsl-json/">DSL-JSON</a>.</p></li>
