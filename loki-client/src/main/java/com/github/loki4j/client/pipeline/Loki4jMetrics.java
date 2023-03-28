@@ -9,6 +9,7 @@ import com.github.loki4j.client.util.Cache.UnboundAtomicMapCache;
 import io.micrometer.core.instrument.Counter;
 import io.micrometer.core.instrument.Counter.Builder;
 import io.micrometer.core.instrument.DistributionSummary;
+import io.micrometer.core.instrument.Gauge;
 import io.micrometer.core.instrument.Metrics;
 import io.micrometer.core.instrument.Tag;
 import io.micrometer.core.instrument.Timer;
@@ -38,7 +39,7 @@ public class Loki4jMetrics {
     private Builder sendErrorsCounterBuilder;
     private final UnboundAtomicMapCache<String, Counter> sendErrorsCounterCache = new UnboundAtomicMapCache<>();
 
-    public Loki4jMetrics(String appenderName) {
+    public Loki4jMetrics(String appenderName, Supplier<Long> unsentEvents) {
         var tags = Arrays.asList(
             Tag.of("appender", appenderName));
 
@@ -88,6 +89,12 @@ public class Loki4jMetrics {
         droppedEventsCounter = Counter
             .builder("loki4j.drop.events")
             .description("Number of events dropped due to backpressure settings")
+            .tags(tags)
+            .register(Metrics.globalRegistry);
+
+        Gauge
+            .builder("loki4j.unsent.events", () -> unsentEvents.get())
+            .description("Current number of unsent events")
             .tags(tags)
             .register(Metrics.globalRegistry);
 
