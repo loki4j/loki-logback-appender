@@ -94,7 +94,7 @@ public class Loki4jMetrics {
 
         Gauge
             .builder("loki4j.unsent.events", () -> unsentEvents.get())
-            .description("Current number of unsent events")
+            .description("Current number of accepted but not yet sent events")
             .tags(tags)
             .register(Metrics.globalRegistry);
 
