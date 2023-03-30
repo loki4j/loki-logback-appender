@@ -107,7 +107,7 @@ public final class AsyncBufferPipeline {
         retryTimeoutMs = conf.retryTimeoutMs;
         parkTimeoutNs = TimeUnit.MILLISECONDS.toNanos(conf.internalQueuesCheckTimeoutMs);
         this.log = conf.internalLoggingFactory.apply(this);
-        this.metrics = conf.metricsEnabled ? new Loki4jMetrics(conf.name) : null;
+        this.metrics = conf.metricsEnabled ? new Loki4jMetrics(conf.name, () -> unsentEvents.get()) : null;
     }
 
     public void start() {
