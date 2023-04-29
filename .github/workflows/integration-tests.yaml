@@ -11,11 +11,11 @@ jobs:
     runs-on: ubuntu-latest
     strategy:
       matrix:
-        loki: [1.6.1, 2.7.3]
+        loki: [1.6.1, 2.8.1]
         include:
           - loki: 1.6.1
             limits: -distributor.ingestion-rate-limit-mb=160 -distributor.ingestion-burst-size-mb=240
-          - loki: 2.7.3
+          - loki: 2.8.1
             limits: |
               -distributor.ingestion-rate-limit-mb=160 -distributor.ingestion-burst-size-mb=240 \
               -ingester.per-stream-rate-limit="80MB" -ingester.per-stream-rate-limit-burst="160MB" \
