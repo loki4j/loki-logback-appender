@@ -13,7 +13,7 @@ import ch.qos.logback.core.status.Status;
 /**
  * Main appender that provides functionality for sending log record batches to Loki
  */
-public final class Loki4jAppender extends UnsynchronizedAppenderBase<ILoggingEvent> {
+public class Loki4jAppender extends UnsynchronizedAppenderBase<ILoggingEvent> {
 
     /**
      * Max number of events to put into a single batch before sending it to Loki
