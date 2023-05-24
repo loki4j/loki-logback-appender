@@ -1,6 +1,7 @@
 package com.github.loki4j.logback;
 
 import java.io.IOException;
+import java.net.ConnectException;
 import java.nio.ByteBuffer;
 import java.nio.charset.Charset;
 import java.nio.charset.StandardCharsets;
@@ -10,6 +11,9 @@ import java.util.Arrays;
 import java.util.HashMap;
 import java.util.Iterator;
 import java.util.concurrent.ThreadLocalRandom;
+import java.util.concurrent.atomic.AtomicBoolean;
+import java.util.concurrent.locks.LockSupport;
+import java.util.function.BiFunction;
 import java.util.function.Consumer;
 import java.util.function.Function;
 import java.util.stream.StreamSupport;
@@ -154,54 +158,19 @@ public class Generators {
     }
 
     public static Writer stringWriter(int capacity, ByteBufferFactory bufferFactory) {
-        return new Writer(){
-            private ByteBuffer b = bufferFactory.allocate(capacity);
-            @Override
-            public void serializeBatch(LogRecordBatch batch) {
-                b.clear();
-                var data = batchToString(batch).getBytes(StandardCharsets.UTF_8);
-                if (b.capacity() < data.length)
-                b = bufferFactory.allocate(data.length);
-                b.put(data);
-                b.flip();
-            }
-            @Override
-            public int size() {
-                return b.remaining();
-            }
-            @Override
-            public void toByteBuffer(ByteBuffer buffer) {
-                buffer.put(b);
-                buffer.flip();
-            }
-            @Override
-            public byte[] toByteArray() {
-                byte[] r = new byte[b.remaining()];
-                b.get(r);
-                return r;
-            }
-            @Override
-            public void reset() {
-                b.clear();
-            }
-            @Override
-            public boolean isBinary() {
-                return false;
-            }
-        };
+        return new StringWriter(capacity, bufferFactory);
     }
 
-    public static AbstractLoki4jEncoder toStringEncoder(
-        AbstractLoki4jEncoder.LabelCfg label,
-        AbstractLoki4jEncoder.MessageCfg message,
-        boolean sortByTime,
-        boolean staticLabels) {
+    public static AbstractLoki4jEncoder wrapToEncoder(
+            BiFunction<Integer, ByteBufferFactory, Writer> writerFactory,
+            AbstractLoki4jEncoder.LabelCfg label,
+            AbstractLoki4jEncoder.MessageCfg message,
+            boolean sortByTime,
+            boolean staticLabels) {
         var encoder = new AbstractLoki4jEncoder() {
             @Override
             public PipelineConfig.WriterFactory getWriterFactory() {
-                return new PipelineConfig.WriterFactory(
-                    (capacity, bufferFactory) -> stringWriter(capacity, bufferFactory),
-                    "text/plain");
+                return new PipelineConfig.WriterFactory(writerFactory, "text/plain");
             }
         };
         encoder.setLabel(label);
@@ -209,6 +178,14 @@ public class Generators {
         encoder.setSortByTime(sortByTime);
         encoder.setStaticLabels(staticLabels);
         return encoder;
+    }
+
+    public static AbstractLoki4jEncoder toStringEncoder(
+            AbstractLoki4jEncoder.LabelCfg label,
+            AbstractLoki4jEncoder.MessageCfg message,
+            boolean sortByTime,
+            boolean staticLabels) {
+        return wrapToEncoder(Generators::stringWriter, label, message, sortByTime, staticLabels);
     }
 
     public static AbstractLoki4jEncoder.LabelCfg labelCfg(
@@ -231,39 +208,6 @@ public class Generators {
         var message = new AbstractLoki4jEncoder.MessageCfg();
         message.setPattern(pattern);
         return message;
-    }
-
-    public static class InfiniteEventIterator implements Iterator<ILoggingEvent> {
-        private LoggingEvent[] es;
-        private int idx = -1;
-        private long timestampMs = 0L;
-        public InfiniteEventIterator(LoggingEvent[] events) {
-            this.es = events;
-            timestampMs = events[0].getTimeStamp();
-        }
-        @Override
-        public boolean hasNext() {
-            return true;
-        }
-        @Override
-        public ILoggingEvent next() {
-            idx++;
-            if (idx >= es.length) {
-                timestampMs++;
-                idx = 0;
-            }
-            es[idx].setTimeStamp(timestampMs);
-            return es[idx];
-        }
-        public Iterator<ILoggingEvent> limited(long limit) {
-            Iterable<ILoggingEvent> iterable = () -> this;
-            return StreamSupport.stream(iterable.spliterator(), false)
-                .limit(limit)
-                .iterator();
-        }
-        public static InfiniteEventIterator from(LoggingEvent[] sampleEvents) {
-            return new InfiniteEventIterator(sampleEvents);
-        }
     }
 
     public static LoggingEvent[] generateEvents(int maxMessages, int maxWords) {
@@ -371,6 +315,96 @@ public class Generators {
         }
     }
 
+    public static class InfiniteEventIterator implements Iterator<ILoggingEvent> {
+        private LoggingEvent[] es;
+        private int idx = -1;
+        private long timestampMs = 0L;
+        public InfiniteEventIterator(LoggingEvent[] events) {
+            this.es = events;
+            timestampMs = events[0].getTimeStamp();
+        }
+        @Override
+        public boolean hasNext() {
+            return true;
+        }
+        @Override
+        public ILoggingEvent next() {
+            idx++;
+            if (idx >= es.length) {
+                timestampMs++;
+                idx = 0;
+            }
+            es[idx].setTimeStamp(timestampMs);
+            return es[idx];
+        }
+        public Iterator<ILoggingEvent> limited(long limit) {
+            Iterable<ILoggingEvent> iterable = () -> this;
+            return StreamSupport.stream(iterable.spliterator(), false)
+                .limit(limit)
+                .iterator();
+        }
+        public static InfiniteEventIterator from(LoggingEvent[] sampleEvents) {
+            return new InfiniteEventIterator(sampleEvents);
+        }
+    }
+
+    public static class StringWriter implements Writer {
+        private final ByteBufferFactory bf;
+        private ByteBuffer b;
+        private int size = 0;
+        public StringWriter(int capacity, ByteBufferFactory bufferFactory) {
+            bf = bufferFactory;
+            b = bf.allocate(capacity);
+        }
+        @Override
+        public void serializeBatch(LogRecordBatch batch) {
+            b.clear();
+            var str = batchToString(batch);
+            var data = str.getBytes(StandardCharsets.UTF_8);
+            if (b.capacity() < data.length) b = bf.allocate(data.length);
+            b.put(data);
+            b.flip();
+            size = data.length;
+        }
+        @Override
+        public int size() {
+            return size;
+        }
+        @Override
+        public void toByteBuffer(ByteBuffer buffer) {
+            buffer.put(b);
+            buffer.flip();
+        }
+        @Override
+        public byte[] toByteArray() {
+            byte[] r = new byte[b.remaining()];
+            b.get(r);
+            return r;
+        }
+        @Override
+        public void reset() {
+            size = 0;
+            b.clear();
+        }
+        @Override
+        public boolean isBinary() {
+            return false;
+        }
+    }
+
+    public static class FailingStringWriter extends StringWriter {
+        public AtomicBoolean fail = new AtomicBoolean(false);
+        public FailingStringWriter(int capacity, ByteBufferFactory bufferFactory) {
+            super(capacity, bufferFactory);
+        }
+        @Override
+        public void serializeBatch(LogRecordBatch batch) {
+            if (fail.get())
+                throw new RuntimeException("Text exception");
+            super.serializeBatch(batch);
+        }
+    }
+
     public static class DummyHttpSender extends AbstractHttpSender {
         private final DummyHttpClient client = new DummyHttpClient();
 
@@ -405,6 +439,47 @@ public class Generators {
             lastBatch = new byte[batch.remaining()];
             batch.get(lastBatch);
             return new LokiResponse(204, "");
+        }
+    }
+
+    public static class StoppableHttpClient extends DummyHttpClient {
+        public AtomicBoolean wait = new AtomicBoolean(false);
+        @Override
+        public LokiResponse send(ByteBuffer batch) throws Exception {
+            while(wait.get())
+                LockSupport.parkNanos(1000);
+            return super.send(batch);
+        }
+    }
+
+    public static class FailingHttpClient extends DummyHttpClient {
+        public AtomicBoolean fail = new AtomicBoolean(false);
+        public volatile int sendCount = 0;
+        @Override
+        public LokiResponse send(ByteBuffer batch) throws Exception {
+            sendCount++;
+            var response = super.send(batch);
+            if (fail.get())
+                throw new ConnectException("Text exception");
+            return response;
+        }
+    }
+
+    public static class WrappingHttpSender<T extends Loki4jHttpClient> extends AbstractHttpSender {
+        public final T client;
+
+        public WrappingHttpSender(T client) {
+            this.client = client;
+        }
+
+        @Override
+        public HttpConfig.Builder getConfig() {
+            return defaultHttpConfig;
+        }
+
+        @Override
+        public Function<HttpConfig, Loki4jHttpClient> getHttpClientFactory() {
+            return cfg -> client;
         }
     }
 

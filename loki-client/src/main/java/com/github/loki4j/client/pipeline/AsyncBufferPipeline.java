@@ -256,6 +256,7 @@ public final class AsyncBufferPipeline {
                 metrics.batchEncoded(startedNs, writer.size());
         } catch (Exception e) {
             log.error(e, "Error occurred while serializing batch %s", batch);
+            unsentEvents.addAndGet(-batch.size());
             if (metrics != null) metrics.batchEncodeFailed(() -> e.getClass().getSimpleName());
             writer.reset();
             batch.clear();
