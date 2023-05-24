@@ -50,3 +50,4 @@ loki4j.send.batches|Number of batches successfully sent to Loki
 loki4j.send.errors|Number of batches not sent to Loki due to errors
 loki4j.retry.errors|Number of failed attempts while sending batches to Loki
 loki4j.drop.events|Number of events dropped due to backpressure settings
+loki4j.unsent.events|Current number of encoded but not yet sent events
