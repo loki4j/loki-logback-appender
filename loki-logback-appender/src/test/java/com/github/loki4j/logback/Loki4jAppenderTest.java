@@ -7,15 +7,7 @@ import ch.qos.logback.classic.spi.ILoggingEvent;
 
 import static org.junit.Assert.*;
 
-import java.net.ConnectException;
-import java.nio.ByteBuffer;
-import java.util.concurrent.atomic.AtomicBoolean;
-import java.util.concurrent.locks.LockSupport;
-import java.util.function.Function;
-
-import com.github.loki4j.client.http.HttpConfig;
-import com.github.loki4j.client.http.Loki4jHttpClient;
-import com.github.loki4j.client.http.LokiResponse;
+import java.util.concurrent.atomic.AtomicReference;
 
 import static com.github.loki4j.logback.Generators.*;
 
@@ -102,6 +94,42 @@ public class Loki4jAppenderTest {
         try { Thread.sleep(300L); } catch (InterruptedException e1) { }
         assertTrue("no batches before stop", sender.lastBatch() == null);
         
+        appender.stop();
+        assertEquals("batchTimeout", expected, StringPayload.parse(sender.lastBatch(), encoder.charset));
+    }
+
+    @Test
+    public void testDrainOnStopWhileEncoderFails() {
+        var failingWriterRef = new AtomicReference<FailingStringWriter>();
+        var encoder = wrapToEncoder(
+                (c, bf) -> {
+                    var failingWriter = new FailingStringWriter(c, bf);
+                    failingWriterRef.set(failingWriter);
+                    return failingWriter;
+                },
+                labelCfg("level=%level,app=my-app", ",", "=", true, false),
+                messageCfg("l=%level c=%logger{20} t=%thread | %msg %ex{1}"),
+                true,
+                false);
+        var sender = dummySender();
+        var appender = appender(4, 4000L, encoder, sender);
+        appender.start();
+        failingWriterRef.get().fail.set(true);
+        appender.append(events[0]);
+        appender.append(events[1]);
+        appender.append(events[2]);
+        appender.append(events[0]);
+        try { Thread.sleep(300L); } catch (InterruptedException e1) { }
+
+        appender.append(events[0]);
+        appender.append(events[1]);
+        appender.append(events[2]);
+        assertTrue("no batches before stop", sender.lastBatch() == null);
+
+        try { Thread.sleep(300L); } catch (InterruptedException e1) { }
+        assertTrue("no batches before stop", sender.lastBatch() == null);
+
+        failingWriterRef.get().fail.set(false);
         appender.stop();
         assertEquals("batchTimeout", expected, StringPayload.parse(sender.lastBatch(), encoder.charset));
     }
@@ -270,71 +298,4 @@ public class Loki4jAppenderTest {
         appender.stop();
     }
 
-    private static class StoppableHttpClient implements Loki4jHttpClient {
-        public AtomicBoolean wait = new AtomicBoolean(false);
-        public byte[] lastBatch;
-
-        @Override
-        public LokiResponse send(ByteBuffer batch) {
-            while(wait.get())
-                LockSupport.parkNanos(1000);
-            lastBatch = new byte[batch.remaining()];
-            batch.get(lastBatch);
-            return new LokiResponse(204, "");
-        }
-
-        @Override
-        public void close() throws Exception {
-            lastBatch = null;
-        }
-
-        @Override
-        public HttpConfig getConfig() {
-            return defaultHttpConfig.build("test");
-        }
-    }
-
-    private static class FailingHttpClient implements Loki4jHttpClient {
-        public AtomicBoolean fail = new AtomicBoolean(false);
-        public volatile int sendCount = 0;
-        public byte[] lastBatch;
-
-        @Override
-        public LokiResponse send(ByteBuffer batch) throws ConnectException {
-            sendCount++;
-            lastBatch = new byte[batch.remaining()];
-            batch.get(lastBatch);
-            if (fail.get())
-                throw new ConnectException("Text exception");
-            return new LokiResponse(204, "");
-        }
-
-        @Override
-        public void close() throws Exception {
-            lastBatch = null;
-        }
-
-        @Override
-        public HttpConfig getConfig() {
-            return defaultHttpConfig.build("test");
-        }
-    }
-
-    private static class WrappingHttpSender<T extends Loki4jHttpClient> extends AbstractHttpSender {
-        public final T client;
-
-        public WrappingHttpSender(T client) {
-            this.client = client;
-        }
-
-        @Override
-        public HttpConfig.Builder getConfig() {
-            return defaultHttpConfig;
-        }
-
-        @Override
-        public Function<HttpConfig, Loki4jHttpClient> getHttpClientFactory() {
-            return cfg -> client;
-        }
-    }
 }
