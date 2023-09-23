@@ -2,7 +2,7 @@ plugins {
     id 'java-library'
     id 'maven-publish'
     id 'signing'
-    id "com.google.protobuf" version "0.8.19"
+    id "com.google.protobuf" version "0.9.4"
 }
 
 def pbVersion = rootProject.hasProperty('pbVersion')
@@ -22,6 +22,10 @@ sourceSets {
             srcDirs += ["$buildDir/generated/source/proto/main/java"]
         }
     }
+}
+
+sourcesJar {
+    dependsOn: ':loki-protobuf:generateProto'
 }
 
 dependencies {
