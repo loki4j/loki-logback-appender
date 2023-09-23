@@ -58,6 +58,8 @@ tasks.withType(Test) {
 
 tasks.withType(Jar) {
     dependsOn(generateProto)
+
+    duplicatesStrategy = "WARN"
 }
 
 tasks.withType(Javadoc) {
