@@ -56,10 +56,10 @@ tasks.withType(Test) {
     systemProperty "file.encoding", "UTF-8"
 }
 
-tasks.withType(Jar) {
+tasks.withType(JavaCompile) {
     dependsOn(generateProto)
 
-    duplicatesStrategy = "WARN"
+    //duplicatesStrategy = "WARN"
 }
 
 tasks.withType(Javadoc) {
