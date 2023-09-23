@@ -28,7 +28,7 @@ jobs:
           while read PBVER; 
           do 
             if ! curl --silent --head --output /dev/null --fail \
-                "${LOKI4J_MVN_PATH}/loki-protobuf/${VER}_pb${PBVER}.0/loki-protobuf-${VER}_pb${PBVER}.0.jar"; then
+                "${LOKI4J_MVN_PATH}/loki-protobuf/${VER}_pb${PBVER}.0/loki-protobuf-${VER}_pb${PBVER}.0-m1.jar"; then
               echo "${PBVER} is not published"
               UNPUB+="\"${PBVER}\","
             fi
@@ -68,6 +68,6 @@ jobs:
           gradle \
               -Psigning.keyId=${{secrets.SIGNING_KEY_ID}} -Psigning.password=${{secrets.SIGNING_PASSWORD}} \
               -Psigning.secretKeyRingFile="$(pwd)/.gradle/secring.gpg" \
-              -PpubToOSSR -PpbVersion=${PBVER}.0 :loki-protobuf:publish \
+              -PpubToOSSR -PpbVersion=${PBVER}.0-m1 :loki-protobuf:publish \
       - name: Cleanup
         run: rm $(pwd)/.gradle/secring.gpg
