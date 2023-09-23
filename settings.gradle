@@ -11,15 +11,15 @@ dependencyResolutionManagement {
         libs {
             version('protobuf', '3.21.0')
             version('loki-protobuf', '0.0.1_pb3.21.0')
-            version('jacoco', '0.8.8')
+            version('jacoco', '0.8.10')
 
             library('loki-protobuf', 'com.github.loki4j', 'loki-protobuf').versionRef('loki-protobuf')
-            library('snappy', 'org.xerial.snappy:snappy-java:1.1.8.4')
+            library('snappy', 'org.xerial.snappy:snappy-java:1.1.10.3')
             library('apache-httpclient4', 'org.apache.httpcomponents:httpclient:4.5.14')
-            library('micrometer', 'io.micrometer:micrometer-core:1.9.8')
+            library('micrometer', 'io.micrometer:micrometer-core:1.9.15')
 
-            library('logback', 'ch.qos.logback:logback-classic:1.2.11')
-            library('jackson', 'com.fasterxml.jackson.core:jackson-databind:2.13.3')
+            library('logback', 'ch.qos.logback:logback-classic:1.2.12')
+            library('jackson', 'com.fasterxml.jackson.core:jackson-databind:2.15.2')
 
             library('junit', 'junit:junit:4.13.2')
 
