@@ -60,6 +60,10 @@ tasks.withType(Jar) {
     dependsOn(generateProto)
 }
 
+tasks.withType(Javadoc) {
+    dependsOn(generateProto)
+}
+
 apply from: '../gradle/publishing.gradle'
 
 publishing {
