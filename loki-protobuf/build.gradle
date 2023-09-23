@@ -48,18 +48,18 @@ java {
     withSourcesJar()
 }
 
+sourcesJar {
+    dependsOn(generateProto)
+    duplicatesStrategy ='WARN'
+}
+
 tasks.withType(JavaCompile) {
     options.encoding = "UTF-8"
+    dependsOn(generateProto)
 }
 
 tasks.withType(Test) {
     systemProperty "file.encoding", "UTF-8"
-}
-
-tasks.withType(JavaCompile) {
-    dependsOn(generateProto)
-
-    //duplicatesStrategy = "WARN"
 }
 
 tasks.withType(Javadoc) {
