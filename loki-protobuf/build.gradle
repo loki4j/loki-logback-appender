@@ -24,8 +24,8 @@ sourceSets {
     }
 }
 
-sourcesJar {
-    dependsOn: ':loki-protobuf:generateProto'
+task sourcesJar {
+    dependsOn(generateProto)
 }
 
 dependencies {
