@@ -112,7 +112,7 @@ const siteConfig = {
   repoUrl: ghUrl,
   startDoc: defaultDoc,
 
-  artifactVersion: '1.4.0',
+  artifactVersion: '1.4.2',
 };
 
 module.exports = siteConfig;
