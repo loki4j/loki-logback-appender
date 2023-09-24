@@ -24,10 +24,11 @@ public final class ProtobufWriter implements Writer {
     private int size = 0;
 
     public ProtobufWriter(int capacity, ByteBufferFactory bbFactory) {
-        this.uncompressed = bbFactory.allocate(capacity);
-        // allocating x1.5 for compressed buffer, as compressed size
-        // may be larger than uncompressed
-        this.compressed = bbFactory.allocate(capacity + capacity / 2);
+        // allocating x1.5 of capacity, as compressed protobuf size
+        // may be larger than uncompressed json
+        var capacityX1_5 = capacity + capacity / 2;
+        this.uncompressed = bbFactory.allocate(capacityX1_5);
+        this.compressed = bbFactory.allocate(capacityX1_5);
         this.request = PushRequest.newBuilder();
     }
 

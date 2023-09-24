@@ -2,7 +2,7 @@ plugins {
     id 'java-library'
     id 'maven-publish'
     id 'signing'
-    id "com.google.protobuf" version "0.8.19"
+    id "com.google.protobuf" version "0.9.4"
 }
 
 def pbVersion = rootProject.hasProperty('pbVersion')
@@ -48,12 +48,26 @@ java {
     withSourcesJar()
 }
 
+sourcesJar {
+    dependsOn(generateProto)
+    duplicatesStrategy ='WARN'
+}
+
+extractIncludeTestProto {
+    mustRunAfter(processResources)
+}
+
 tasks.withType(JavaCompile) {
     options.encoding = "UTF-8"
+    dependsOn(generateProto)
 }
 
 tasks.withType(Test) {
     systemProperty "file.encoding", "UTF-8"
+}
+
+tasks.withType(Javadoc) {
+    dependsOn(generateProto)
 }
 
 apply from: '../gradle/publishing.gradle'
