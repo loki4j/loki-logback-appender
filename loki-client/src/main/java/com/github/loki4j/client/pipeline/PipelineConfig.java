@@ -14,7 +14,7 @@ import com.github.loki4j.client.writer.ProtobufWriter;
 import com.github.loki4j.client.writer.Writer;
 
 /**
- * Configuration properties for Loki4j pipeline
+ * Configuration properties for Loki4j pipeline.
  */
 public class PipelineConfig {
 
@@ -42,25 +42,25 @@ public class PipelineConfig {
     }
 
     /**
-     * Name of this pipeline
+     * Name of this pipeline.
      */
     public final String name;
 
     /**
-     * Max number of events to put into a single batch before sending it to Loki
+     * Max number of events to put into a single batch before sending it to Loki.
      */
     public final int batchMaxItems;
 
     /**
      * Max number of bytes a single batch can contain (as counted by Loki).
      * This value should not be greater than server.grpc_server_max_recv_msg_size
-     * in your Loki config
+     * in your Loki config.
      */
     public final int batchMaxBytes;
 
     /**
      * Max time in milliseconds to keep a batch before sending it to Loki, even if
-     * max items/bytes limits for this batch are not reached
+     * max items/bytes limits for this batch are not reached.
      */
     public final long batchTimeoutMs;
 
@@ -79,7 +79,7 @@ public class PipelineConfig {
 
     /**
      * Max number of bytes to keep in the send queue.
-     * When the queue is full, incoming log events are dropped
+     * When the queue is full, incoming log events are dropped.
      */
     public final long sendQueueMaxBytes;
 
@@ -96,54 +96,62 @@ public class PipelineConfig {
     public final long retryTimeoutMs;
 
     /**
+     * Disables retries of batches that Loki responds to with a 429 status code (TooManyRequests).
+     * This reduces impacts on batches from other tenants, which could end up being delayed or dropped
+     * due to backoff.
+     */
+    public final boolean dropRateLimitedBatches;
+
+    /**
      * A timeout for Loki4j threads to sleep if encode or send queues are empty.
      * Decreasing this value means lower latency at cost of higher CPU usage.
      */
     public final long internalQueuesCheckTimeoutMs;
 
     /**
-     * Use off-heap memory for storing intermediate data
+     * Use off-heap memory for storing intermediate data.
      */
     public final boolean useDirectBuffers;
 
     /**
      * If true, the pipeline will try to send all the remaining events on shutdown,
      * so the proper shutdown procedure might take longer.
-     * Otherwise, the pipeline will drop the unsent events
+     * Otherwise, the pipeline will drop the unsent events.
      */
     public final boolean drainOnStop;
 
     /**
-     * If true, the pipeline will report its metrics using Micrometer
+     * If true, the pipeline will report its metrics using Micrometer.
      */
     public final boolean metricsEnabled;
 
     /**
-     * A factory for Writer
+     * A factory for Writer.
     */
     public final WriterFactory writerFactory;
 
     /**
-     * Configuration properties for HTTP clients
+     * Configuration properties for HTTP clients.
      */
     public final HttpConfig httpConfig;
 
     /**
      * A factory for HTTP client for sending logs to Loki.
-     * Argument is a config required for constructing an HTTP client
+     * Argument is a config required for constructing an HTTP client.
      */
     public final Function<HttpConfig, Loki4jHttpClient> httpClientFactory;
 
     /**
      * A factory for an internal logger.
-     * Argument is a source class to report log messages from
+     * Argument is a source class to report log messages from.
      */
     public final Function<Object, Loki4jLogger> internalLoggingFactory;
 
     public PipelineConfig(String name, int batchMaxItems, int batchMaxBytes, long batchTimeoutMs, boolean sortByTime,
-            boolean staticLabels, long sendQueueMaxBytes, int maxRetries, long retryTimeoutMs, long internalQueuesCheckTimeoutMs,
-            boolean useDirectBuffers, boolean drainOnStop, boolean metricsEnabled, WriterFactory writerFactory, HttpConfig httpConfig,
-            Function<HttpConfig, Loki4jHttpClient> httpClientFactory, Function<Object, Loki4jLogger> internalLoggingFactory) {
+            boolean staticLabels, long sendQueueMaxBytes, int maxRetries, long retryTimeoutMs, boolean dropRateLimitedBatches,
+            long internalQueuesCheckTimeoutMs, boolean useDirectBuffers, boolean drainOnStop, boolean metricsEnabled,
+            WriterFactory writerFactory, HttpConfig httpConfig, Function<HttpConfig, Loki4jHttpClient> httpClientFactory,
+            Function<Object, Loki4jLogger> internalLoggingFactory) {
         this.name = name;
         this.batchMaxItems = batchMaxItems;
         this.batchMaxBytes = batchMaxBytes;
@@ -153,6 +161,7 @@ public class PipelineConfig {
         this.sendQueueMaxBytes = sendQueueMaxBytes;
         this.maxRetries = maxRetries;
         this.retryTimeoutMs = retryTimeoutMs;
+        this.dropRateLimitedBatches = dropRateLimitedBatches;
         this.internalQueuesCheckTimeoutMs = internalQueuesCheckTimeoutMs;
         this.useDirectBuffers = useDirectBuffers;
         this.drainOnStop = drainOnStop;
@@ -178,6 +187,7 @@ public class PipelineConfig {
         private long sendQueueMaxBytes = batchMaxBytes * 10;
         private int maxRetries = 2;
         private long retryTimeoutMs = 60 * 1000;
+        private boolean dropRateLimitedBatches = false;
         private long internalQueuesCheckTimeoutMs = 25;
         private boolean useDirectBuffers = true;
         private boolean drainOnStop = true;
@@ -198,6 +208,7 @@ public class PipelineConfig {
                 sendQueueMaxBytes,
                 maxRetries,
                 retryTimeoutMs,
+                dropRateLimitedBatches,
                 internalQueuesCheckTimeoutMs,
                 useDirectBuffers,
                 drainOnStop,
@@ -253,6 +264,11 @@ public class PipelineConfig {
             return this;
         }
 
+        public Builder setDropRateLimitedBatches(boolean dropRateLimitedBatches) {
+            this.dropRateLimitedBatches = dropRateLimitedBatches;
+            return this;
+        }
+
         public Builder setInternalQueuesCheckTimeoutMs(long internalQueuesCheckTimeoutMs) {
             this.internalQueuesCheckTimeoutMs = internalQueuesCheckTimeoutMs;
             return this;
@@ -296,7 +312,7 @@ public class PipelineConfig {
     }
 
     /**
-     * A factory for Writer
+     * A factory for Writer.
      */
     public static class WriterFactory {
 
@@ -308,7 +324,7 @@ public class PipelineConfig {
         public final BiFunction<Integer, ByteBufferFactory, Writer> factory;
 
         /**
-         * HTTP content-type generated by this Writer
+         * HTTP content-type generated by this Writer.
          */
         public final String contentType;
 
