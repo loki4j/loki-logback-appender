@@ -9,7 +9,7 @@ import java.util.function.Supplier;
 import org.slf4j.Marker;
 
 /*
- * A SLF4J Marker implementation that allows to dynamically add Loki lables to the log record.
+ * A SLF4J Marker implementation that allows to dynamically add Loki labels to the log record.
  */
 public class LabelMarker implements Marker {
 
@@ -83,7 +83,7 @@ public class LabelMarker implements Marker {
 
     /**
      * Creates a Marker containing a set of Loki labels, where each label is a key-value pair.
-     * @param labels Lables will be created at time when they are first accessed (i.e. deferred creation).
+     * @param labels Labels will be created at time when they are first accessed (i.e. deferred creation).
      */
     public static LabelMarker of(Supplier<Map<String, String>> labels) {
         return new LabelMarker(labels);

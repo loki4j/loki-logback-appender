@@ -176,22 +176,24 @@ public abstract class AbstractLoki4jEncoder extends ContextAwareBase implements 
 
         final var renderedLayout = labelPatternLayout.doLayout(e).intern();
         var streamKey = renderedLayout;
-        var markerLablesVar = EMPTY_LABELS;
-        if (label.readMarkers) {
-            var marker = e.getMarker();
-            if (marker != null && marker instanceof LabelMarker) {
-                markerLablesVar = extractLabelsFromMarker((LabelMarker) marker);
-                streamKey = streamKey + "!markers!" + Arrays.toString(markerLablesVar);
+        var markerLabelsVar = EMPTY_LABELS;
+        if (label.readMarkers && e.getMarkerList() != null) {
+            for (var marker: e.getMarkerList()) {
+                if (marker != null && marker instanceof LabelMarker) {
+                    markerLabelsVar = extractLabelsFromMarker((LabelMarker) marker);
+                    streamKey = streamKey + "!markers!" + Arrays.toString(markerLabelsVar);
+                    break; // only one LabelMarker is supported per event
+                }
             }
         }
-        final var markerLables = markerLablesVar;
+        final var markerLabels = markerLabelsVar;
         return label.streamCache.get(streamKey, () -> {
             var layoutLabels = extractStreamKVPairs(renderedLayout);
-            if (markerLables == EMPTY_LABELS) {
+            if (markerLabels == EMPTY_LABELS) {
                 return LogRecordStream.create(layoutLabels);
             }
-            var allLabels = Arrays.copyOf(layoutLabels, layoutLabels.length + markerLables.length);
-            System.arraycopy(markerLables, 0, allLabels, layoutLabels.length, markerLables.length);
+            var allLabels = Arrays.copyOf(layoutLabels, layoutLabels.length + markerLabels.length);
+            System.arraycopy(markerLabels, 0, allLabels, layoutLabels.length, markerLabels.length);
             return LogRecordStream.create(allLabels);
         });
     }
@@ -256,14 +258,14 @@ public abstract class AbstractLoki4jEncoder extends ContextAwareBase implements 
 
     String[] extractLabelsFromMarker(LabelMarker marker) {
         var labelMap = marker.getLabels();
-        var markerLables = new String[labelMap.size() * 2];
+        var markerLabels = new String[labelMap.size() * 2];
         var pos = 0;
         for (Entry<String, String> entry : labelMap.entrySet()) {
-            markerLables[pos] = entry.getKey();
-            markerLables[pos + 1] = entry.getValue();
+            markerLabels[pos] = entry.getKey();
+            markerLabels[pos + 1] = entry.getValue();
             pos += 2;
         }
-        return markerLables;
+        return markerLabels;
     }
 
     public void setLabel(LabelCfg label) {

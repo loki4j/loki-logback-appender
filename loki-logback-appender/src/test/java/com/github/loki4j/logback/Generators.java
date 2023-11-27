@@ -272,7 +272,7 @@ public class Generators {
         if (throwable != null)
             e.setThrowableProxy(new ThrowableProxy(throwable));
         if (marker != null)
-            e.setMarker(marker);
+            e.addMarker(marker);
         return e;
     }
 
