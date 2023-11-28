@@ -13,7 +13,7 @@ import org.junit.experimental.categories.Category;
 
 public class GrafanaCloudTest {
 
-    private static String urlBase = "https://logs-prod-us-central1.grafana.net/loki/api/v1";
+    private static String urlBase = System.getenv("GRAFANA_CLOUD_URL_BASE");
     private static String urlPush = urlBase + "/push";
 
     private static String username = System.getenv("GRAFANA_CLOUD_USERNAME");
