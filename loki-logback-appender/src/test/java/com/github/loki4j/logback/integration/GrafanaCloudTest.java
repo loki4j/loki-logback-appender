@@ -33,9 +33,10 @@ public class GrafanaCloudTest {
     }
 
     private static String label(String l) {
+        var ts = System.currentTimeMillis();
         return extraLabel == null
-            ? l
-            : l + extraLabel;
+            ? (l + "-" + ts)
+            : (l + extraLabel + "-" + ts);
     }
 
     private static AbstractHttpSender authorize(AbstractHttpSender sender) {
