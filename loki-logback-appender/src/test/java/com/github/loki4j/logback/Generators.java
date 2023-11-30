@@ -453,14 +453,18 @@ public class Generators {
     }
 
     public static class FailingHttpClient extends DummyHttpClient {
-        public AtomicBoolean fail = new AtomicBoolean(false);
+        private static final LokiResponse RATE_LIMITED = new LokiResponse(429, "Rate Limited Request");
+        public final AtomicBoolean fail = new AtomicBoolean(false);
+        public final AtomicBoolean rateLimited = new AtomicBoolean(false);
         public volatile int sendCount = 0;
         @Override
         public LokiResponse send(ByteBuffer batch) throws Exception {
             sendCount++;
             var response = super.send(batch);
-            if (fail.get())
+            if (fail.get() && !rateLimited.get())
                 throw new ConnectException("Text exception");
+            else if (fail.get() && rateLimited.get())
+                return RATE_LIMITED;
             return response;
         }
     }

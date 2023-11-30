@@ -32,6 +32,8 @@ import static com.github.loki4j.client.util.StringUtils.bytesAsUtf8String;
 
 public final class AsyncBufferPipeline {
 
+    private static final int TOO_MANY_REQUEST_HTTP_STATUS = 429;
+
     private static final Comparator<LogRecord> compareByTime = (e1, e2) -> {
         var tsCmp = Long.compare(e1.timestampMs, e2.timestampMs);
         return tsCmp == 0 ? Integer.compare(e1.nanos, e2.nanos) : tsCmp;
@@ -70,6 +72,13 @@ public final class AsyncBufferPipeline {
 
     private final long retryTimeoutMs;
 
+    /**
+     * Disables retries of batches that Loki responds to with a 429 status code (TooManyRequests).
+     * This reduces impacts on batches from other tenants, which could end up being delayed or dropped
+     * due to backoff.
+     */
+    private final boolean dropRateLimitedBatches;
+
     private volatile boolean started = false;
 
     private AtomicBoolean acceptNewEvents = new AtomicBoolean(true);
@@ -105,6 +114,7 @@ public final class AsyncBufferPipeline {
         drainOnStop = conf.drainOnStop;
         maxRetries = conf.maxRetries;
         retryTimeoutMs = conf.retryTimeoutMs;
+        dropRateLimitedBatches = conf.dropRateLimitedBatches;
         parkTimeoutNs = TimeUnit.MILLISECONDS.toNanos(conf.internalQueuesCheckTimeoutMs);
         this.log = conf.internalLoggingFactory.apply(this);
         this.metrics = conf.metricsEnabled ? new Loki4jMetrics(conf.name, () -> unsentEvents.get()) : null;
@@ -231,7 +241,7 @@ public final class AsyncBufferPipeline {
 
         writeBatch(batch, writer);
         if (writer.isEmpty()) return;
-        while(started && 
+        while(started &&
                 !sendQueue.offer(
                     batch.batchId(),
                     batch.size(),
@@ -351,7 +361,11 @@ public final class AsyncBufferPipeline {
     }
 
     private boolean checkIfEligibleForRetry(Exception e, LokiResponse r) {
-        return e instanceof ConnectException  || (r != null && r.status == 503);
+        return e instanceof ConnectException || (r != null && (r.status == 503 || shouldRetryRateLimitedBatches(r.status)));
+    }
+
+    private boolean shouldRetryRateLimitedBatches(int status) {
+        return status == TOO_MANY_REQUEST_HTTP_STATUS && !dropRateLimitedBatches;
     }
 
     private boolean sleep(long timeoutMs) {
