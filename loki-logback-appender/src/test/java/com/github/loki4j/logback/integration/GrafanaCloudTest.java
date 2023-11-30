@@ -8,12 +8,13 @@ import com.github.loki4j.testkit.categories.CIOnlyTests;
 
 import org.junit.AfterClass;
 import org.junit.BeforeClass;
+import org.junit.Ignore;
 import org.junit.Test;
 import org.junit.experimental.categories.Category;
 
 public class GrafanaCloudTest {
 
-    private static String urlBase = "https://logs-prod-us-central1.grafana.net/loki/api/v1";
+    private static String urlBase = System.getenv("GRAFANA_CLOUD_URL_BASE");
     private static String urlPush = urlBase + "/push";
 
     private static String username = System.getenv("GRAFANA_CLOUD_USERNAME");
@@ -33,9 +34,10 @@ public class GrafanaCloudTest {
     }
 
     private static String label(String l) {
+        var ts = System.currentTimeMillis();
         return extraLabel == null
-            ? l
-            : l + extraLabel;
+            ? (l + "-" + ts)
+            : (l + extraLabel + "-" + ts);
     }
 
     private static AbstractHttpSender authorize(AbstractHttpSender sender) {
@@ -117,6 +119,7 @@ public class GrafanaCloudTest {
 
     @Test
     @Category({CIOnlyTests.class})
+    @Ignore("Disabled due to unpredictable stream sharding on Grafana Cloud Loki side")
     public void testJavaProtobufMaxBytesSend() throws Exception {
         var label = label("testJavaProtobufMaxBytesSendCloud");
         var encoder = protobufEncoder(false, label);
