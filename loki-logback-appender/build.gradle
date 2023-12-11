@@ -94,7 +94,7 @@ task ciOnlyTests(type: Test) {
     useJUnit {
         includeCategories 'com.github.loki4j.testkit.categories.CIOnlyTests'
     }
-    //testLogging.exceptionFormat = "full"
+    testLogging.exceptionFormat = "full"
     testLogging.showStandardStreams = true
 }
 

@@ -70,6 +70,7 @@ jobs:
         uses: gradle/gradle-build-action@v2
       - name: Build and Run Integration Tests
         env:
+          GRAFANA_CLOUD_URL_BASE: ${{ vars.GRAFANA_CLOUD_URL_BASE }}
           GRAFANA_CLOUD_USERNAME: ${{ secrets.GRAFANA_CLOUD_USERNAME }}
           GRAFANA_CLOUD_PASSWORD: ${{ secrets.GRAFANA_CLOUD_PASSWORD }}
           GRAFANA_CLOUD_EXTRA_LABEL: -JDK${{ matrix.jdk }}
