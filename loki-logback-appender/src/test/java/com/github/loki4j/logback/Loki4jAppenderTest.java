@@ -11,8 +11,6 @@ import java.util.concurrent.atomic.AtomicReference;
 
 import static com.github.loki4j.logback.Generators.*;
 
-import java.nio.charset.Charset;
-
 public class Loki4jAppenderTest {
 
     public static ILoggingEvent[] events = new ILoggingEvent[] {

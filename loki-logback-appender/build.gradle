@@ -28,10 +28,9 @@ sourceSets {
 }
 
 dependencies {
-    compileOnly libs.logback
+    api libs.logback
     compileOnly libs.bundles.pluggable
 
-    testImplementation libs.logback
     testImplementation libs.bundles.pluggable
     testImplementation libs.junit
     testImplementation libs.jackson
