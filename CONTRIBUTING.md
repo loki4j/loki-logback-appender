@@ -1,6 +1,19 @@
 First off, thanks for taking the time to contribute!
 
+## Ask a question
+
+Please do not create an issue if you want to ask a question.
+Instead, you can use [Q&A Board](https://github.com/loki4j/loki-logback-appender/discussions/categories/q-a).
+
+Before creating a new thread in Q&A Board:
+
+- Make sure your question is not already covered by the existing documentation
+- Check if there are already existing issues or Q&A threads about this question, in this case please add a comment to the existing issue/thread instead of creating a new one
+
 ## Report a bug
+
+Bug means something is clearly wrong, or something is not working as expected.
+If you don't know, or unsure - consider asking a question (see the section above) instead of reporting a bug.
 
 Before submitting a bug report:
 
@@ -10,6 +23,7 @@ Before submitting a bug report:
 What information to include in the bug report:
 
 - Exact steps which reproduce the problem in as many details as possible
+- What was expected, and what was the actual result
 - Code snippets that help to reproduce a problem and don't contain any irrelevant parts
 - Uncut stack traces copied with all the nested exceptions
 - Your Loki4j configuration and logs (if relevant)
@@ -24,6 +38,26 @@ There are several advanced things you can do to help with reproducing and fixing
 - Provide a minimal runnable project that reproduces the problem (shared as a gist, GitHub repo etc.)
 - Dig into the issue yourself, find the root cause of it, and describe it in the bug report
 - Explicitly specify in your bug report if you would like to prepare a fix for it. It's not recommended to start working on the fix before your bug report is accepted
+
+## Suggest an enhancement
+
+You can suggest a completely new feature, or a minor improvement to the existing functionality.
+
+If you have multiple ideas, it is not recommended to post them all at once.
+Features that are useful to most Loki4j users and fit well into the existing architecture, have a higher chance to be accepted.
+So please start with the one which you think has the highest chance, and wait for a feedback.
+
+Before suggesting a new enhancement:
+
+- Make sure this feature is not already implemented, check the documentation and the current codebase, if necessary
+- Check if there are already existing issues or discussion threads about this feature, in this case please add a comment to the existing issue/thread instead of creating a new one
+
+What information to include in the enhancement suggestion:
+
+- Describe the current behavior, and explain which behavior you expected to see instead, and why
+- Provide specific examples to demonstrate different aspects of the feature (configs, code snippets, etc.)
+- Explain why this enhancement would be useful to most Loki4j users
+- Optionally list some other Loki clients (or Logback appenders) where this enhancement exists
 
 ## Prepare a pull request
 
