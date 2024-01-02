@@ -12,6 +12,7 @@ import java.util.concurrent.TimeUnit;
 import java.util.concurrent.atomic.AtomicBoolean;
 import java.util.concurrent.atomic.AtomicLong;
 import java.util.concurrent.locks.LockSupport;
+import java.util.function.BiFunction;
 import java.util.function.Supplier;
 
 import com.github.loki4j.client.batch.Batcher;
@@ -73,6 +74,12 @@ public final class AsyncBufferPipeline {
     private final long retryTimeoutMs;
 
     /**
+     * Sleep function that receives attempts and a timeout and sleeps depending on the
+     * value of those parameters. Used when retries are enabled.
+     */
+    private final BiFunction<Integer, Long, Boolean> sleep;
+
+    /**
      * Disables retries of batches that Loki responds to with a 429 status code (TooManyRequests).
      * This reduces impacts on batches from other tenants, which could end up being delayed or dropped
      * due to backoff.
@@ -114,6 +121,7 @@ public final class AsyncBufferPipeline {
         drainOnStop = conf.drainOnStop;
         maxRetries = conf.maxRetries;
         retryTimeoutMs = conf.retryTimeoutMs;
+        sleep = conf.sleep;
         dropRateLimitedBatches = conf.dropRateLimitedBatches;
         parkTimeoutNs = TimeUnit.MILLISECONDS.toNanos(conf.internalQueuesCheckTimeoutMs);
         this.log = conf.internalLoggingFactory.apply(this);
@@ -326,7 +334,7 @@ public final class AsyncBufferPipeline {
             ++retry <= maxRetries
             && checkIfEligibleForRetry(e, r)
             && reportRetryFailed(e, r)
-            && sleep(retryTimeoutMs));
+            && sleep.apply(retry, retryTimeoutMs));
 
         if (metrics != null) metrics.batchSendFailed(sendErrorReasonProvider(e, r));
         return null;
@@ -366,15 +374,6 @@ public final class AsyncBufferPipeline {
 
     private boolean shouldRetryRateLimitedBatches(int status) {
         return status == TOO_MANY_REQUEST_HTTP_STATUS && !dropRateLimitedBatches;
-    }
-
-    private boolean sleep(long timeoutMs) {
-        try {
-            Thread.sleep(timeoutMs);
-        } catch (InterruptedException e) {
-            Thread.currentThread().interrupt();
-        }
-        return true;
     }
 
     void waitSendQueueLessThan(int size, long timeoutMs) {
