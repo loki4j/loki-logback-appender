@@ -1,6 +1,7 @@
 package com.github.loki4j.logback;
 
 import java.nio.charset.Charset;
+import java.nio.charset.StandardCharsets;
 import java.util.Arrays;
 import java.util.Map.Entry;
 import java.util.concurrent.atomic.AtomicInteger;
@@ -86,7 +87,7 @@ public abstract class AbstractLoki4jEncoder extends ContextAwareBase implements 
         }
     }
 
-    protected final Charset charset = Charset.forName("UTF-8");
+    protected final Charset charset = StandardCharsets.UTF_8;
 
     private final AtomicInteger nanoCounter = new AtomicInteger(0);
 

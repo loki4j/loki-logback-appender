@@ -29,6 +29,7 @@
 package com.github.loki4j.pkg.dslplatform.json;
 
 import java.nio.ByteBuffer;
+import java.nio.charset.StandardCharsets;
 import java.util.Arrays;
 
 public class RawJsonWriter {
@@ -340,6 +341,11 @@ public class RawJsonWriter {
         b.put(buffer, 0, position);
         b.flip();
         reset();
+    }
+
+    @Override
+    public String toString() {
+        return new String(buffer, 0, position, StandardCharsets.UTF_8);
     }
 
     /**
