@@ -345,7 +345,9 @@ public class RawJsonWriter {
 
     @Override
     public String toString() {
-        return new String(buffer, 0, position, StandardCharsets.UTF_8);
+        var r = new String(buffer, 0, position, StandardCharsets.UTF_8);
+        reset();
+        return r;
     }
 
     /**

@@ -1,6 +1,5 @@
 package com.github.loki4j.logback.json;
 
-import java.io.IOException;
 import java.util.Map;
 
 import ch.qos.logback.classic.spi.ILoggingEvent;
@@ -14,7 +13,7 @@ public class MdcJsonProvider extends AbstractFieldJsonProvider {
     }
 
     @Override
-    public void writeTo(JsonEventWriter writer, ILoggingEvent event) throws IOException {
+    public void writeTo(JsonEventWriter writer, ILoggingEvent event) {
          Map<String, String> mdcProperties = event.getMDCPropertyMap();
         if (mdcProperties != null && !mdcProperties.isEmpty()) {
             for (Map.Entry<String, String> entry : mdcProperties.entrySet()) {

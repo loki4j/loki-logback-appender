@@ -1,7 +1,5 @@
 package com.github.loki4j.logback.json;
 
-import java.io.IOException;
-
 import ch.qos.logback.classic.pattern.ExtendedThrowableProxyConverter;
 import ch.qos.logback.classic.pattern.ThrowableHandlingConverter;
 import ch.qos.logback.classic.spi.ILoggingEvent;
@@ -35,7 +33,7 @@ public class StackTraceJsonProvider extends AbstractFieldJsonProvider {
     }
 
     @Override
-    public void writeTo(JsonEventWriter writer, ILoggingEvent event) throws IOException {
+    public void writeTo(JsonEventWriter writer, ILoggingEvent event) {
         IThrowableProxy throwableProxy = event.getThrowableProxy();
         if (throwableProxy != null) {
             writer.writeStringField(getFieldName(), throwableConverter.convert(event));
