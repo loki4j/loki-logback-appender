@@ -12,6 +12,10 @@ import java.util.Iterator;
 import java.util.concurrent.ThreadLocalRandom;
 import java.util.concurrent.atomic.AtomicBoolean;
 import java.util.concurrent.locks.LockSupport;
+import java.util.concurrent.BrokenBarrierException;
+import java.util.concurrent.CyclicBarrier;
+import java.util.concurrent.TimeUnit;
+import java.util.concurrent.TimeoutException;
 import java.util.function.BiFunction;
 import java.util.function.Consumer;
 import java.util.function.Function;
@@ -41,7 +45,6 @@ import ch.qos.logback.core.Layout;
 
 import static com.github.loki4j.testkit.dummy.Generators.genMessage;
 
-import java.util.function.IntSupplier;
 
 public class Generators {
 
@@ -473,18 +476,27 @@ public class Generators {
         public final AtomicBoolean fail = new AtomicBoolean(false);
         public final AtomicBoolean rateLimited = new AtomicBoolean(false);
         public volatile int sendCount = 0;
-        public IntSupplier barrier = () -> 0;
+        private final CyclicBarrier requestSent = new CyclicBarrier(2);
+
         @Override
         public LokiResponse send(ByteBuffer batch) throws Exception {
             sendCount++;
             var response = super.send(batch);
-            barrier.getAsInt();
+            await();
             if (fail.get() && !rateLimited.get())
                 throw new ConnectException("Text exception");
             else if (fail.get() && rateLimited.get())
                 return RATE_LIMITED;
             return response;
         }
+
+        void await() throws InterruptedException, BrokenBarrierException, TimeoutException {
+            try {
+                requestSent.await(1L, TimeUnit.MINUTES);
+            } catch (InterruptedException | BrokenBarrierException ex) {
+                Thread.currentThread().interrupt();
+            }
+        };
     }
 
     public static class WrappingHttpSender<T extends Loki4jHttpClient> extends AbstractHttpSender {

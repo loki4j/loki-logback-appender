@@ -19,8 +19,9 @@ import ch.qos.logback.classic.spi.ILoggingEvent;
 
 import java.util.concurrent.BrokenBarrierException;
 import java.util.concurrent.CyclicBarrier;
+import java.util.concurrent.TimeUnit;
+import java.util.concurrent.TimeoutException;
 import java.util.function.BiFunction;
-import java.util.function.IntSupplier;
 
 import com.github.loki4j.client.pipeline.PipelineConfig;
 
@@ -232,10 +233,8 @@ public class Loki4jAppenderTest {
     }
 
     @Test
-    public void testRetry() throws InterruptedException, BrokenBarrierException {
+    public void testRetry() throws InterruptedException, BrokenBarrierException, TimeoutException {
         var failingHttpClient = new FailingHttpClient();
-        var requestBarrier = new RequestBarrier();
-        failingHttpClient.barrier = requestBarrier.barrier;
         var sender = new WrappingHttpSender<FailingHttpClient>(failingHttpClient);
         var encoder = defaultToStringEncoder();
         var appender = appender(1, 4000L, encoder, sender);
@@ -252,17 +251,17 @@ public class Loki4jAppenderTest {
                 "ts=100 l=INFO c=test.TestApp t=thread-1 | Test message 1 ")
             .build();
 
-        requestBarrier.await();
+        failingHttpClient.await();
         assertEquals("send", 1, sender.client.sendCount);
         assertEquals("send", expectedPayload, StringPayload.parse(sender.client.lastBatch, encoder.charset));
 
         sleep.retry.await();
-        requestBarrier.await();
+        failingHttpClient.await();
         assertEquals("retry1", 2, sender.client.sendCount);
         assertEquals("retry1", expectedPayload, StringPayload.parse(sender.client.lastBatch, encoder.charset));
 
         sleep.retry.await();
-        requestBarrier.await();
+        failingHttpClient.await();
         assertEquals("retry2", 3, sender.client.sendCount);
         assertEquals("retry2", expectedPayload, StringPayload.parse(sender.client.lastBatch, encoder.charset));
 
@@ -273,14 +272,14 @@ public class Loki4jAppenderTest {
             .build();
         appender.append(events[1]);
 
-        requestBarrier.await();
+        failingHttpClient.await();
         assertEquals("send-2", 4, sender.client.sendCount);
         assertEquals("send-2", expected2, StringPayload.parse(sender.client.lastBatch, encoder.charset));
         sleep.retry.await();
 
         sender.client.fail.set(false);
 
-        requestBarrier.await();
+        failingHttpClient.await();
         assertEquals("retry1-2", 5, sender.client.sendCount);
         assertEquals("retry1-2", expected2, StringPayload.parse(sender.client.lastBatch, encoder.charset));
 
@@ -288,10 +287,8 @@ public class Loki4jAppenderTest {
     }
 
     @Test
-    public void testRateLimitedRetry() throws InterruptedException, BrokenBarrierException {
+    public void testRateLimitedRetry() throws InterruptedException, BrokenBarrierException, TimeoutException {
         var failingHttpClient = new FailingHttpClient();
-        var requestBarrier = new RequestBarrier();
-        failingHttpClient.barrier = requestBarrier.barrier;
         var sender = new WrappingHttpSender<>(failingHttpClient);
         var encoder = defaultToStringEncoder();
 
@@ -308,17 +305,17 @@ public class Loki4jAppenderTest {
                 "ts=100 l=INFO c=test.TestApp t=thread-1 | Test message 1 ")
             .build();
 
-        requestBarrier.await();
+        failingHttpClient.await();
         assertEquals("send", 1, sender.client.sendCount);
         assertEquals("send", expectedPayload, StringPayload.parse(sender.client.lastBatch, encoder.charset));
 
         sleep.retry.await();
-        requestBarrier.await();
+        failingHttpClient.await();
         assertEquals("retry1", 2, sender.client.sendCount);
         assertEquals("retry1", expectedPayload, StringPayload.parse(sender.client.lastBatch, encoder.charset));
 
         sleep.retry.await();
-        requestBarrier.await();
+        failingHttpClient.await();
         assertEquals("retry2", 3, sender.client.sendCount);
         assertEquals("retry2", expectedPayload, StringPayload.parse(sender.client.lastBatch, encoder.charset));
 
@@ -326,12 +323,9 @@ public class Loki4jAppenderTest {
     }
 
     @Test
-    @Ignore("Problematic test, failing probably due to race condition")
-    public void testRateLimitedNoRetries() throws InterruptedException, BrokenBarrierException {
+    public void testRateLimitedNoRetries() throws InterruptedException, BrokenBarrierException, TimeoutException {
         var encoder = defaultToStringEncoder();
-        var requestBarrier = new RequestBarrier();
         var failingHttpClient = new FailingHttpClient();
-        failingHttpClient.barrier = requestBarrier.barrier;
         var sender = new WrappingHttpSender<>(failingHttpClient);
 
         // retries rate limited requests
@@ -349,7 +343,7 @@ public class Loki4jAppenderTest {
         appender.start();
 
         appender.append(events[0]);
-        requestBarrier.await();
+        failingHttpClient.await();
         assertEquals("send-2", 1, sender.client.sendCount);
         assertEquals("send-2", expectedPayload, StringPayload.parse(sender.client.lastBatch, encoder.charset));
 
@@ -375,31 +369,14 @@ public class Loki4jAppenderTest {
         @Override
         public Boolean apply(Integer t, Long u) {
             try {
-                retry.await();
+                retry.await(1L, TimeUnit.MINUTES);
                 return true;
-            } catch (InterruptedException | BrokenBarrierException ex) {
+            } catch (InterruptedException | BrokenBarrierException | TimeoutException ex) {
                 Thread.currentThread().interrupt();
                 return false;
             }
         }
 
-    }
-
-    private static class RequestBarrier {
-
-        private final CyclicBarrier requestSent = new CyclicBarrier(2);
-        private final IntSupplier barrier = () -> {
-            try {
-                return requestSent.await();
-            } catch (InterruptedException | BrokenBarrierException ex) {
-                Thread.currentThread().interrupt();
-                return -1;
-            }
-        };
-
-        private int await() throws InterruptedException, BrokenBarrierException {
-            return requestSent.await();
-        }
     }
 
 }

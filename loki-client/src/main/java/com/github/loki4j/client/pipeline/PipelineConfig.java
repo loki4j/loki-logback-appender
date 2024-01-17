@@ -1,6 +1,5 @@
 package com.github.loki4j.client.pipeline;
 
-import java.util.Random;
 import java.util.function.BiFunction;
 import java.util.function.Function;
 import java.util.function.Supplier;
@@ -198,10 +197,10 @@ public class PipelineConfig {
         private int maxRetries = 2;
         private long retryTimeoutMs = 60 * 1000;
         private Supplier<Long> jitter = new Jitter();
-        private BiFunction<Integer, Long, Boolean> sleep = (attempt, timeout) -> {
+        private BiFunction<Integer, Long, Boolean> sleep = (attempt, timeout_ms) -> {
             try {
-                long backoff = timeout * (2 << (attempt - 1));
-                Thread.sleep(backoff + jitter.get());
+                long backoff_ms = timeout_ms * (1 << (attempt - 1));
+                Thread.sleep(backoff_ms + jitter.get());
                 return true;
             } catch (InterruptedException e) {
                 Thread.currentThread().interrupt();
@@ -334,19 +333,6 @@ public class PipelineConfig {
         public Builder setInternalLoggingFactory(Function<Object, Loki4jLogger> internalLoggingFactory) {
             this.internalLoggingFactory = internalLoggingFactory;
             return this;
-        }
-
-    }
-
-
-    private static class Jitter implements Supplier<Long> {
-
-        private static final int JITTER_BOUND = 1000;
-        private final ThreadLocal<Random> jitter = ThreadLocal.withInitial(Random::new);
-
-        @Override
-        public Long get() {
-            return Long.valueOf(jitter.get().nextInt(JITTER_BOUND));
         }
 
     }
