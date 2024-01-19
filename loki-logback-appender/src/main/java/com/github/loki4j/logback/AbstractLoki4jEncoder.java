@@ -16,6 +16,7 @@ import com.github.loki4j.slf4j.marker.LabelMarker;
 import ch.qos.logback.classic.PatternLayout;
 import ch.qos.logback.classic.spi.ILoggingEvent;
 import ch.qos.logback.core.CoreConstants;
+import ch.qos.logback.core.Layout;
 import ch.qos.logback.core.joran.spi.DefaultClass;
 import ch.qos.logback.core.spi.ContextAwareBase;
 
@@ -26,6 +27,7 @@ public abstract class AbstractLoki4jEncoder extends ContextAwareBase implements 
 
     private static final String REGEX_STARTER = "regex:";
     private static final String[] EMPTY_LABELS = new String[0];
+    private static final String DEFAULT_MSG_PATTERN = "l=%level c=%logger{20} t=%thread | %msg %ex";
     
     public static final class LabelCfg {
         /**
@@ -77,23 +79,11 @@ public abstract class AbstractLoki4jEncoder extends ContextAwareBase implements 
         }
     }
 
-    public static final class MessageCfg {
-        /**
-         * Logback pattern to use for log record's message
-         */
-        String pattern = "l=%level c=%logger{20} t=%thread | %msg %ex";
-        public void setPattern(String pattern) {
-            this.pattern = pattern;
-        }
-    }
-
     protected final Charset charset = StandardCharsets.UTF_8;
 
     private final AtomicInteger nanoCounter = new AtomicInteger(0);
 
     private LabelCfg label = new LabelCfg();
-
-    private MessageCfg message = new MessageCfg();
 
     /**
      * If true, log records in batch are sorted by timestamp.
@@ -119,7 +109,7 @@ public abstract class AbstractLoki4jEncoder extends ContextAwareBase implements 
     private Pattern compiledLabelKeyValueSeparator;
 
     private PatternLayout labelPatternLayout;
-    private PatternLayout messagePatternLayout;
+    private Layout<ILoggingEvent> message;
 
     private LogRecordStream staticLabelStream = null;
 
@@ -148,17 +138,22 @@ public abstract class AbstractLoki4jEncoder extends ContextAwareBase implements 
         }
 
         labelPatternLayout = initPatternLayout(labelPattern);
+        labelPatternLayout.setContext(context);
         labelPatternLayout.start();
 
-        messagePatternLayout = initPatternLayout(message.pattern);
-        messagePatternLayout.start();
+        if (message == null) {
+            addWarn("No message layout specified in the config. Using PatternLayout with default settings");
+            message = initPatternLayout(DEFAULT_MSG_PATTERN);
+        }
+        message.setContext(context);
+        message.start();
 
         this.started = true;
     }
 
     public void stop() {
         this.started = false;
-        messagePatternLayout.stop();
+        message.stop();
         labelPatternLayout.stop();
     }
 
@@ -200,7 +195,7 @@ public abstract class AbstractLoki4jEncoder extends ContextAwareBase implements 
     }
 
     public String eventToMessage(ILoggingEvent e) {
-        return messagePatternLayout.doLayout(e);
+        return message.doLayout(e);
     }
 
     public int timestampToNanos(long timestampMs) {
@@ -231,7 +226,6 @@ public abstract class AbstractLoki4jEncoder extends ContextAwareBase implements 
 
     private PatternLayout initPatternLayout(String pattern) {
         var patternLayout = new PatternLayout();
-        patternLayout.setContext(context);
         patternLayout.setPattern(pattern);
         return patternLayout;
     }
@@ -273,7 +267,8 @@ public abstract class AbstractLoki4jEncoder extends ContextAwareBase implements 
         this.label = label;
     }
 
-    public void setMessage(MessageCfg message) {
+    @DefaultClass(PatternLayout.class)
+    public void setMessage(Layout<ILoggingEvent> message) {
         this.message = message;
     }
 

@@ -33,9 +33,11 @@ import com.github.loki4j.testkit.dummy.LokiHttpServerMock;
 
 import ch.qos.logback.classic.Level;
 import ch.qos.logback.classic.LoggerContext;
+import ch.qos.logback.classic.PatternLayout;
 import ch.qos.logback.classic.spi.ILoggingEvent;
 import ch.qos.logback.classic.spi.LoggingEvent;
 import ch.qos.logback.classic.spi.ThrowableProxy;
+import ch.qos.logback.core.Layout;
 
 import static com.github.loki4j.testkit.dummy.Generators.genMessage;
 
@@ -142,7 +144,7 @@ public class Generators {
     public static AbstractLoki4jEncoder defaultToStringEncoder() {
         return toStringEncoder(
             labelCfg("level=%level,app=my-app", ",", "=", true, false),
-            messageCfg("l=%level c=%logger{20} t=%thread | %msg %ex{1}"),
+            plainTextMsgLayout("l=%level c=%logger{20} t=%thread | %msg %ex{1}"),
             true,
             false);
     }
@@ -164,7 +166,7 @@ public class Generators {
     public static AbstractLoki4jEncoder wrapToEncoder(
             BiFunction<Integer, ByteBufferFactory, Writer> writerFactory,
             AbstractLoki4jEncoder.LabelCfg label,
-            AbstractLoki4jEncoder.MessageCfg message,
+            Layout<ILoggingEvent> message,
             boolean sortByTime,
             boolean staticLabels) {
         var encoder = new AbstractLoki4jEncoder() {
@@ -182,7 +184,7 @@ public class Generators {
 
     public static AbstractLoki4jEncoder toStringEncoder(
             AbstractLoki4jEncoder.LabelCfg label,
-            AbstractLoki4jEncoder.MessageCfg message,
+            Layout<ILoggingEvent> message,
             boolean sortByTime,
             boolean staticLabels) {
         return wrapToEncoder(Generators::stringWriter, label, message, sortByTime, staticLabels);
@@ -203,9 +205,8 @@ public class Generators {
         return label;
     }
 
-    public static AbstractLoki4jEncoder.MessageCfg messageCfg(
-            String pattern) {
-        var message = new AbstractLoki4jEncoder.MessageCfg();
+    public static Layout<ILoggingEvent> plainTextMsgLayout(String pattern) {
+        var message = new PatternLayout();
         message.setPattern(pattern);
         return message;
     }
