@@ -3,7 +3,6 @@ package com.github.loki4j.logback.json;
 import ch.qos.logback.classic.pattern.ExtendedThrowableProxyConverter;
 import ch.qos.logback.classic.pattern.ThrowableHandlingConverter;
 import ch.qos.logback.classic.spi.ILoggingEvent;
-import ch.qos.logback.classic.spi.IThrowableProxy;
 
 public class StackTraceJsonProvider extends AbstractFieldJsonProvider {
 
@@ -33,11 +32,13 @@ public class StackTraceJsonProvider extends AbstractFieldJsonProvider {
     }
 
     @Override
+    public boolean canWrite(ILoggingEvent event) {
+        return event.getThrowableProxy() != null;
+    }
+
+    @Override
     public void writeTo(JsonEventWriter writer, ILoggingEvent event) {
-        IThrowableProxy throwableProxy = event.getThrowableProxy();
-        if (throwableProxy != null) {
-            writer.writeStringField(getFieldName(), throwableConverter.convert(event));
-        }
+        writer.writeStringField(getFieldName(), throwableConverter.convert(event));
     }
 
     public ThrowableHandlingConverter getThrowableConverter() {

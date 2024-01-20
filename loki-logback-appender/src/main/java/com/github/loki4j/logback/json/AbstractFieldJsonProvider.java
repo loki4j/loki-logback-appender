@@ -13,6 +13,11 @@ public abstract class AbstractFieldJsonProvider extends ContextAwareBase impleme
     public void prepareForDeferredProcessing(ILoggingEvent event) { }
 
     @Override
+    public boolean canWrite(ILoggingEvent event) {
+        return true;
+    }
+
+    @Override
     public void start() {
         started = true;
     }

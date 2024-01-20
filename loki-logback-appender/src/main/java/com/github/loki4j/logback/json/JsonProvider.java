@@ -5,6 +5,8 @@ import ch.qos.logback.core.spi.DeferredProcessingAware;
 import ch.qos.logback.core.spi.LifeCycle;
 
 public interface JsonProvider<Event extends DeferredProcessingAware> extends ContextAware, LifeCycle {
+
+    boolean canWrite(Event event);
     
     void writeTo(JsonEventWriter writer, Event event);
 

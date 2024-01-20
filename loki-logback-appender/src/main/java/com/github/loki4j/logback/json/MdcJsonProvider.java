@@ -13,12 +13,20 @@ public class MdcJsonProvider extends AbstractFieldJsonProvider {
     }
 
     @Override
+    public boolean canWrite(ILoggingEvent event) {
+        Map<String, String> mdcProperties = event.getMDCPropertyMap();
+        return mdcProperties != null && !mdcProperties.isEmpty();
+    }
+
+    @Override
     public void writeTo(JsonEventWriter writer, ILoggingEvent event) {
-         Map<String, String> mdcProperties = event.getMDCPropertyMap();
-        if (mdcProperties != null && !mdcProperties.isEmpty()) {
-            for (Map.Entry<String, String> entry : mdcProperties.entrySet()) {
-                writer.writeStringField(getFieldName() + entry.getKey(), entry.getValue());
-            }
+        Map<String, String> mdcProperties = event.getMDCPropertyMap();
+        var firstFieldWritten = false;
+        for (Map.Entry<String, String> entry : mdcProperties.entrySet()) {
+            if (firstFieldWritten)
+                writer.writeFieldSeparator();
+            writer.writeStringField(getFieldName() + entry.getKey(), entry.getValue());
+            firstFieldWritten = true;
         }
     }
     
