@@ -5,6 +5,9 @@ import static com.github.loki4j.pkg.dslplatform.json.RawJsonWriter.*;
 import com.github.loki4j.pkg.dslplatform.json.NumberConverter;
 import com.github.loki4j.pkg.dslplatform.json.RawJsonWriter;
 
+/**
+ * A wrapper around {@link RawJsonWriter} that supports basic high-level write operations
+ */
 public class JsonEventWriter {
     
     private final RawJsonWriter raw;
@@ -40,5 +43,4 @@ public class JsonEventWriter {
     public String toString() {
         return raw.toString();
     }
-
 }

@@ -3,6 +3,9 @@ package com.github.loki4j.logback.json;
 import ch.qos.logback.classic.spi.ILoggingEvent;
 import ch.qos.logback.core.spi.ContextAwareBase;
 
+/**
+ * An abstract provider that writes a certain aspect of a logging event as a JSON field
+ */
 public abstract class AbstractFieldJsonProvider extends ContextAwareBase implements JsonProvider<ILoggingEvent> {
 
     private boolean enabled = true;
@@ -11,9 +14,6 @@ public abstract class AbstractFieldJsonProvider extends ContextAwareBase impleme
 
     private volatile boolean started;
     
-    @Override
-    public void prepareForDeferredProcessing(ILoggingEvent event) { }
-
     @Override
     public boolean canWrite(ILoggingEvent event) {
         return true;

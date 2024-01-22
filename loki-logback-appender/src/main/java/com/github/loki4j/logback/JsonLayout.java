@@ -1,5 +1,6 @@
 package com.github.loki4j.logback;
 
+import java.util.ArrayList;
 import java.util.List;
 import java.util.function.Supplier;
 
@@ -13,13 +14,19 @@ import com.github.loki4j.logback.json.StackTraceJsonProvider;
 import com.github.loki4j.logback.json.ThreadNameJsonProvider;
 import com.github.loki4j.logback.json.TimestampJsonProvider;
 
+import ch.qos.logback.classic.PatternLayout;
 import ch.qos.logback.classic.spi.ILoggingEvent;
 import ch.qos.logback.core.Layout;
 import ch.qos.logback.core.spi.ContextAwareBase;
 
+/**
+ * A layout that converts a logback event to a string in JSON format.
+ * This layout can be used as an alternative to the default {@link PatternLayout}
+ */
 public class JsonLayout extends ContextAwareBase implements Layout<ILoggingEvent> {
 
     private static final String EMPTY_STRING = "";
+    private static final int INIT_WRITER_CAPACITY_BYTES = 1_000;
 
     private TimestampJsonProvider timestamp;
     private LoggerNameJsonProvider loggerName;
@@ -35,7 +42,7 @@ public class JsonLayout extends ContextAwareBase implements Layout<ILoggingEvent
 
     private List<JsonProvider<ILoggingEvent>> providers;
 
-    private List<JsonProvider<ILoggingEvent>> customProviders = List.of();
+    private List<JsonProvider<ILoggingEvent>> customProviders = new ArrayList<>();
 
     @Override
     public String doLayout(ILoggingEvent event) {
@@ -60,7 +67,7 @@ public class JsonLayout extends ContextAwareBase implements Layout<ILoggingEvent
 
     @Override
     public void start() {
-        jsonWriter = new JsonEventWriter(100);  // TODO: fix hardcoding
+        jsonWriter = new JsonEventWriter(INIT_WRITER_CAPACITY_BYTES);
 
         timestamp = ensureProvider(timestamp, TimestampJsonProvider::new);
         loggerName = ensureProvider(loggerName, LoggerNameJsonProvider::new);
@@ -79,11 +86,6 @@ public class JsonLayout extends ContextAwareBase implements Layout<ILoggingEvent
                 stackTrace,
                 mdc
         );
-
-        for (var provider : customProviders) {
-            provider.setContext(context);
-            provider.start();
-        }
 
         started = true;
     }
@@ -105,9 +107,11 @@ public class JsonLayout extends ContextAwareBase implements Layout<ILoggingEvent
             return current;
 
         var newInstance = factory.get();
-        newInstance.setContext(context);
-        newInstance.start();
         return newInstance;
+    }
+
+    public void addCustomProvider(JsonProvider<ILoggingEvent> provider) {
+        customProviders.add(provider);
     }
 
     public void setTimestamp(TimestampJsonProvider timestamp) {
@@ -167,5 +171,4 @@ public class JsonLayout extends ContextAwareBase implements Layout<ILoggingEvent
     public String getContentType() {
         return "application/json";
     }
-    
 }

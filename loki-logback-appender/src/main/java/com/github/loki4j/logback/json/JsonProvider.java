@@ -4,6 +4,9 @@ import ch.qos.logback.core.spi.ContextAware;
 import ch.qos.logback.core.spi.DeferredProcessingAware;
 import ch.qos.logback.core.spi.LifeCycle;
 
+/**
+ * A provider that writes a certain aspect of a logging event to a JSON
+ */
 public interface JsonProvider<Event extends DeferredProcessingAware> extends ContextAware, LifeCycle {
 
     boolean isEnabled();
@@ -11,7 +14,4 @@ public interface JsonProvider<Event extends DeferredProcessingAware> extends Con
     boolean canWrite(Event event);
     
     void writeTo(JsonEventWriter writer, Event event);
-
-    void prepareForDeferredProcessing(Event event);
-
 }
