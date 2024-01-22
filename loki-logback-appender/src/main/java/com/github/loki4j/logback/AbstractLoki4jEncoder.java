@@ -109,7 +109,7 @@ public abstract class AbstractLoki4jEncoder extends ContextAwareBase implements 
     private Pattern compiledLabelKeyValueSeparator;
 
     private PatternLayout labelPatternLayout;
-    private Layout<ILoggingEvent> message;
+    private Layout<ILoggingEvent> messageLayout;
 
     private LogRecordStream staticLabelStream = null;
 
@@ -141,19 +141,19 @@ public abstract class AbstractLoki4jEncoder extends ContextAwareBase implements 
         labelPatternLayout.setContext(context);
         labelPatternLayout.start();
 
-        if (message == null) {
+        if (messageLayout == null) {
             addWarn("No message layout specified in the config. Using PatternLayout with default settings");
-            message = initPatternLayout(DEFAULT_MSG_PATTERN);
+            messageLayout = initPatternLayout(DEFAULT_MSG_PATTERN);
         }
-        message.setContext(context);
-        message.start();
+        messageLayout.setContext(context);
+        messageLayout.start();
 
         this.started = true;
     }
 
     public void stop() {
         this.started = false;
-        message.stop();
+        messageLayout.stop();
         labelPatternLayout.stop();
     }
 
@@ -195,7 +195,7 @@ public abstract class AbstractLoki4jEncoder extends ContextAwareBase implements 
     }
 
     public String eventToMessage(ILoggingEvent e) {
-        return message.doLayout(e);
+        return messageLayout.doLayout(e);
     }
 
     public int timestampToNanos(long timestampMs) {
@@ -269,7 +269,7 @@ public abstract class AbstractLoki4jEncoder extends ContextAwareBase implements 
 
     @DefaultClass(PatternLayout.class)
     public void setMessage(Layout<ILoggingEvent> message) {
-        this.message = message;
+        this.messageLayout = message;
     }
 
     public boolean getSortByTime() {

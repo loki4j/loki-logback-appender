@@ -5,6 +5,8 @@ import ch.qos.logback.core.spi.ContextAwareBase;
 
 public abstract class AbstractFieldJsonProvider extends ContextAwareBase implements JsonProvider<ILoggingEvent> {
 
+    private boolean enabled = true;
+
     private String fieldName;
 
     private volatile boolean started;
@@ -31,7 +33,16 @@ public abstract class AbstractFieldJsonProvider extends ContextAwareBase impleme
     public boolean isStarted() {
         return started;
     }
-    
+
+    @Override
+    public boolean isEnabled() {
+        return enabled;
+    }
+
+    public void setEnabled(boolean enabled) {
+        this.enabled = enabled;
+    }
+
     public String getFieldName() {
         return fieldName;
     }
