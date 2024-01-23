@@ -166,7 +166,7 @@ public class Generators {
     public static AbstractLoki4jEncoder wrapToEncoder(
             BiFunction<Integer, ByteBufferFactory, Writer> writerFactory,
             AbstractLoki4jEncoder.LabelCfg label,
-            Layout<ILoggingEvent> message,
+            Layout<ILoggingEvent> messageLayout,
             boolean sortByTime,
             boolean staticLabels) {
         var encoder = new AbstractLoki4jEncoder() {
@@ -176,7 +176,7 @@ public class Generators {
             }
         };
         encoder.setLabel(label);
-        encoder.setMessage(message);
+        encoder.setMessage(messageLayout);
         encoder.setSortByTime(sortByTime);
         encoder.setStaticLabels(staticLabels);
         return encoder;
@@ -184,10 +184,10 @@ public class Generators {
 
     public static AbstractLoki4jEncoder toStringEncoder(
             AbstractLoki4jEncoder.LabelCfg label,
-            Layout<ILoggingEvent> message,
+            Layout<ILoggingEvent> messageLayout,
             boolean sortByTime,
             boolean staticLabels) {
-        return wrapToEncoder(Generators::stringWriter, label, message, sortByTime, staticLabels);
+        return wrapToEncoder(Generators::stringWriter, label, messageLayout, sortByTime, staticLabels);
     }
 
     public static AbstractLoki4jEncoder.LabelCfg labelCfg(

@@ -144,9 +144,9 @@ public abstract class AbstractLoki4jEncoder extends ContextAwareBase implements 
         if (messageLayout == null) {
             addWarn("No message layout specified in the config. Using PatternLayout with default settings");
             messageLayout = initPatternLayout(DEFAULT_MSG_PATTERN);
-            messageLayout.setContext(context);
-            messageLayout.start();
         }
+        messageLayout.setContext(context);
+        messageLayout.start();
 
         this.started = true;
     }
