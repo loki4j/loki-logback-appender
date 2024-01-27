@@ -1,6 +1,7 @@
 package com.github.loki4j.logback;
 
 import java.util.ArrayList;
+import java.util.Arrays;
 import java.util.List;
 import java.util.function.Supplier;
 
@@ -55,11 +56,7 @@ public class JsonLayout extends ContextAwareBase implements Layout<ILoggingEvent
             if (!provider.isEnabled() || !provider.canWrite(event))
                 continue;
 
-            if (firstFieldWritten)
-                jsonWriter.writeFieldSeparator();
-            provider.writeTo(jsonWriter, event);
-
-            firstFieldWritten = true;
+            firstFieldWritten = provider.writeTo(jsonWriter, event, firstFieldWritten) || firstFieldWritten;
         }
         jsonWriter.writeEndObject();
         return jsonWriter.toString();
@@ -77,7 +74,7 @@ public class JsonLayout extends ContextAwareBase implements Layout<ILoggingEvent
         stackTrace = ensureProvider(stackTrace, StackTraceJsonProvider::new);
         mdc = ensureProvider(mdc, MdcJsonProvider::new);
 
-        providers = List.of(
+        providers = Arrays.asList(
                 timestamp,
                 loggerName,
                 logLevel,

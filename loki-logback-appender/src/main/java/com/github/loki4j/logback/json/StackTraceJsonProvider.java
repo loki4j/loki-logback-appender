@@ -37,7 +37,7 @@ public class StackTraceJsonProvider extends AbstractFieldJsonProvider {
     }
 
     @Override
-    public void writeTo(JsonEventWriter writer, ILoggingEvent event) {
+    protected void writeExactlyOneField(JsonEventWriter writer, ILoggingEvent event) {
         writer.writeStringField(getFieldName(), throwableConverter.convert(event));
     }
 
