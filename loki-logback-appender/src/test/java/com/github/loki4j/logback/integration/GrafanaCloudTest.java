@@ -4,6 +4,7 @@ import static com.github.loki4j.logback.Generators.*;
 import static org.junit.Assert.*;
 
 import com.github.loki4j.logback.AbstractHttpSender;
+import com.github.loki4j.logback.JsonLayout;
 import com.github.loki4j.testkit.categories.CIOnlyTests;
 
 import org.junit.AfterClass;
@@ -98,6 +99,30 @@ public class GrafanaCloudTest {
 
         var events = generateEvents(100, 10);
         client.testHttpSend(label, events, appender, jsonEncoder(false, label));
+    }
+
+    @Test
+    @Category({CIOnlyTests.class})
+    public void testJsonLayoutJavaJsonCloud() throws Exception {
+        var label = label("testJsonLayoutJavaJsonCloud");
+        var encoder = jsonEncoder(false, label, new JsonLayout());
+        var sender = authorize(javaHttpSender(urlPush));
+        var appender = appender(10, 1000, encoder, sender);
+
+        var events = generateEvents(20, 10);
+        client.testHttpSend(label, events, appender, jsonEncoder(false, label, new JsonLayout()));
+    }
+
+    @Test
+    @Category({CIOnlyTests.class})
+    public void testJsonLayoutApacheProtobufCloud() throws Exception {
+        var label = label("testJsonLayoutApacheProtobufCloud");
+        var encoder = protobufEncoder(false, label, new JsonLayout());
+        var sender = authorize(apacheHttpSender(urlPush));
+        var appender = appender(10, 1000, encoder, sender);
+
+        var events = generateEvents(50, 10);
+        client.testHttpSend(label, events, appender, jsonEncoder(false, label, new JsonLayout()));
     }
 
     @Test

@@ -1,15 +1,20 @@
 package com.github.loki4j.logback;
 
-import org.junit.Test;
-
-import ch.qos.logback.classic.Level;
-import ch.qos.logback.classic.spi.ILoggingEvent;
-
+import static com.github.loki4j.logback.Generators.*;
 import static org.junit.Assert.*;
 
 import java.util.concurrent.atomic.AtomicReference;
 
-import static com.github.loki4j.logback.Generators.*;
+import org.junit.Test;
+
+import com.github.loki4j.logback.Generators.FailingHttpClient;
+import com.github.loki4j.logback.Generators.FailingStringWriter;
+import com.github.loki4j.logback.Generators.StoppableHttpClient;
+import com.github.loki4j.logback.Generators.WrappingHttpSender;
+import com.github.loki4j.testkit.dummy.StringPayload;
+
+import ch.qos.logback.classic.Level;
+import ch.qos.logback.classic.spi.ILoggingEvent;
 
 public class Loki4jAppenderTest {
 
@@ -108,7 +113,7 @@ public class Loki4jAppenderTest {
                     return failingWriter;
                 },
                 labelCfg("level=%level,app=my-app", ",", "=", true, false),
-                messageCfg("l=%level c=%logger{20} t=%thread | %msg %ex{1}"),
+                plainTextMsgLayout("l=%level c=%logger{20} t=%thread | %msg %ex{1}"),
                 true,
                 false);
         var sender = dummySender();
@@ -151,39 +156,6 @@ public class Loki4jAppenderTest {
 
         appender.stop();
         assertTrue("no batches after stop", sender.lastBatch() == null);
-    }
-
-    @Test
-    public void testEncodeEscapes() {
-        ILoggingEvent[] escEvents = new ILoggingEvent[] {
-            loggingEvent(100L, Level.INFO, "TestApp", "main", "m1-line1\r\nline2\r\n", null),
-            loggingEvent(100L, Level.INFO, "TestApp", "main", "m2-line1\nline2\n", null),
-            loggingEvent(100L, Level.INFO, "TestApp", "main", "m3-line1\rline2\r", null)
-        };
-
-        var encoder = jsonEncoder(false, "testEncodeEscapes");
-        var sender = dummySender();
-        var appender = appender(3, 1000L, encoder, sender);
-        appender.start();
-
-        appender.append(escEvents[0]);
-        appender.append(escEvents[1]);
-        appender.append(escEvents[2]);
-
-        try { Thread.sleep(100L); } catch (InterruptedException e1) { }
-
-        var expected = (
-            "{'streams':[{'stream':{'test':'testEncodeEscapes','level':'INFO','app':'my-app'}," +
-            "'values':[['100100000','l=INFO c=TestApp t=main | m1-line1\\r\\nline2\\r\\n ']," +
-            "['100100001','l=INFO c=TestApp t=main | m2-line1\\nline2\\n ']," +
-            "['100100002','l=INFO c=TestApp t=main | m3-line1\\rline2\\r ']]}]}"
-            ).replace('\'', '"');
-
-        var actual = new String(sender.lastBatch(), encoder.charset);
-        System.out.println(expected);
-        System.out.println(actual);
-        assertEquals("batchSize", expected, actual);
-        appender.stop();
     }
 
     @Test

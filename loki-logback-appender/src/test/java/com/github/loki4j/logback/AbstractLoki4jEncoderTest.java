@@ -3,6 +3,7 @@ package com.github.loki4j.logback;
 import org.junit.Test;
 
 import com.github.loki4j.slf4j.marker.LabelMarker;
+import com.github.loki4j.testkit.dummy.StringPayload;
 
 import ch.qos.logback.classic.Level;
 import ch.qos.logback.classic.spi.ILoggingEvent;
@@ -19,7 +20,7 @@ public class AbstractLoki4jEncoderTest {
     public void testExtractStreamKVPairsIncorrectFormat() {
         withEncoder(toStringEncoder(
                 labelCfg("level=%level,app=\"my\"app", "|", "~", true, false),
-                messageCfg("l=%level c=%logger{20} t=%thread | %msg %ex{1}"),
+                plainTextMsgLayout("l=%level c=%logger{20} t=%thread | %msg %ex{1}"),
                 false,
                 false), encoder -> {
             var kvs1 = encoder.extractStreamKVPairs("level=INFO,app=\"my\"app,test=test");
@@ -32,7 +33,7 @@ public class AbstractLoki4jEncoderTest {
     public void testExtractStreamKVPairsIgnoringEmpty() {
         withEncoder(toStringEncoder(
                 labelCfg(",,level=%level,,app=\"my\"app,", ",", "=", true, false),
-                messageCfg("l=%level c=%logger{20} t=%thread | %msg %ex{1}"),
+                plainTextMsgLayout("l=%level c=%logger{20} t=%thread | %msg %ex{1}"),
                 false,
                 false), encoder -> {
             var kvs1 = encoder.extractStreamKVPairs(",,level=INFO,,app=\"my\"app,test=test,");
@@ -50,7 +51,7 @@ public class AbstractLoki4jEncoderTest {
                     "=",
                     true,
                     false),
-                messageCfg("l=%level c=%logger{20} t=%thread | %msg %ex{1}"),
+                plainTextMsgLayout("l=%level c=%logger{20} t=%thread | %msg %ex{1}"),
                 false,
                 false), encoder -> {
             var kvs1 = encoder.extractStreamKVPairs("\n\n// level is label\nlevel=INFO\n// another comment\n\napp=\"my\"app\n\n// end comment");
@@ -63,7 +64,7 @@ public class AbstractLoki4jEncoderTest {
     public void testExtractStreamKVPairs() {
         withEncoder(toStringEncoder(
                 labelCfg("level=%level,app=\"my\"app", ",", "=", true, false),
-                messageCfg("l=%level c=%logger{20} t=%thread | %msg %ex{1}"),
+                plainTextMsgLayout("l=%level c=%logger{20} t=%thread | %msg %ex{1}"),
                 false,
                 false), encoder -> {
             var kvs1 = encoder.extractStreamKVPairs("level=INFO,app=\"my\"app,test=test");
@@ -73,7 +74,7 @@ public class AbstractLoki4jEncoderTest {
 
         withEncoder(toStringEncoder(
                 labelCfg("level:%level;app:\"my\"app", ";", ":", true, false),
-                messageCfg("l=%level c=%logger{20} t=%thread | %msg %ex{1}"),
+                plainTextMsgLayout("l=%level c=%logger{20} t=%thread | %msg %ex{1}"),
                 false,
                 false), encoder -> {
             var kvs2 = encoder.extractStreamKVPairs("level:INFO;app:\"my\"app;test:test");
@@ -83,7 +84,7 @@ public class AbstractLoki4jEncoderTest {
 
         withEncoder(toStringEncoder(
                 labelCfg("level.%level|app.\"my\"app", "|", ".", true, false),
-                messageCfg("l=%level c=%logger{20} t=%thread | %msg %ex{1}"),
+                plainTextMsgLayout("l=%level c=%logger{20} t=%thread | %msg %ex{1}"),
                 false,
                 false), encoder -> {
             var kvs3 = encoder.extractStreamKVPairs("level.INFO|app.\"my\"app|test.test");
@@ -112,7 +113,7 @@ public class AbstractLoki4jEncoderTest {
             appender(
                 4,
                 1000L,
-                toStringEncoder(labelCfg("l=%level", ",", "=", true, true), messageCfg("%level | %msg"), false, false),
+                toStringEncoder(labelCfg("l=%level", ",", "=", true, true), plainTextMsgLayout("%level | %msg"), false, false),
                 sender), appender -> {
             appender.append(events);
             appender.waitAllAppended();
@@ -149,7 +150,7 @@ public class AbstractLoki4jEncoderTest {
             appender(
                 6,
                 1000L,
-                toStringEncoder(labelCfg("l=%level", ",", "=", true, false), messageCfg("%level | %msg"), false, true),
+                toStringEncoder(labelCfg("l=%level", ",", "=", true, false), plainTextMsgLayout("%level | %msg"), false, true),
                 sender), appender -> {
             appender.append(eventsToOrder);
             appender.waitAllAppended();
@@ -172,7 +173,7 @@ public class AbstractLoki4jEncoderTest {
             appender(
                 6,
                 1000L,
-                toStringEncoder(labelCfg("l=%level", ",", "=", true, false), messageCfg("%level | %msg"), true, true),
+                toStringEncoder(labelCfg("l=%level", ",", "=", true, false), plainTextMsgLayout("%level | %msg"), true, true),
                 sender), appender -> {
             appender.append(eventsToOrder);
             appender.waitAllAppended();
@@ -195,7 +196,7 @@ public class AbstractLoki4jEncoderTest {
             appender(
                 6,
                 1000L,
-                toStringEncoder(labelCfg("l=%level", ",", "=", true, false), messageCfg("%level | %msg"), false, false),
+                toStringEncoder(labelCfg("l=%level", ",", "=", true, false), plainTextMsgLayout("%level | %msg"), false, false),
                 sender), appender -> {
             appender.append(eventsToOrder);
             appender.waitAllAppended();
@@ -221,7 +222,7 @@ public class AbstractLoki4jEncoderTest {
             appender(
                 6,
                 1000L,
-                toStringEncoder(labelCfg("l=%level", ",", "=", true, false), messageCfg("%level | %msg"), true, false),
+                toStringEncoder(labelCfg("l=%level", ",", "=", true, false), plainTextMsgLayout("%level | %msg"), true, false),
                 sender), appender -> {
             appender.append(eventsToOrder);
             appender.waitAllAppended();
@@ -248,7 +249,7 @@ public class AbstractLoki4jEncoderTest {
     public void testNanoCounter() {
         var enc = toStringEncoder(
             labelCfg("app=my-app", ",", "=", true, false),
-            messageCfg("l=%level c=%logger{20} t=%thread | %msg"),
+            plainTextMsgLayout("l=%level c=%logger{20} t=%thread | %msg"),
             true,
             false);
 

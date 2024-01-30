@@ -3,6 +3,7 @@ package com.github.loki4j.logback.integration;
 import static com.github.loki4j.logback.Generators.*;
 import static org.junit.Assert.*;
 
+import com.github.loki4j.logback.JsonLayout;
 import com.github.loki4j.testkit.categories.IntegrationTests;
 
 import org.junit.AfterClass;
@@ -46,7 +47,7 @@ public class FastSendTest {
     @Category({IntegrationTests.class})
     public void testJavaJsonFastSend() throws Exception {
         var label = "testJavaJsonFastSend";
-        var encoder = protobufEncoder(false, label);
+        var encoder = jsonEncoder(false, label);
         var sender = javaHttpSender(urlPush);
         var appender = appender(10, 1000, encoder, sender);
 
@@ -70,12 +71,36 @@ public class FastSendTest {
     @Category({IntegrationTests.class})
     public void testJavaProtobufFastSend() throws Exception {
         var label = "testJavaProtobufFastSend";
-        var encoder = jsonEncoder(false, label);
+        var encoder = protobufEncoder(false, label);
         var sender = javaHttpSender(urlPush);
         var appender = appender(10, 1000, encoder, sender);
 
         var events = generateEvents(1000, 10);
         client.testHttpSend(label, events, appender, jsonEncoder(false, label));
+    }
+
+    @Test
+    @Category({IntegrationTests.class})
+    public void testJsonLayoutJsonFastSend() throws Exception {
+        var label = "testJsonLayoutJsonFastSend";
+        var encoder = jsonEncoder(false, label, new JsonLayout());
+        var sender = javaHttpSender(urlPush);
+        var appender = appender(10, 1000, encoder, sender);
+
+        var events = generateEvents(1000, 10);
+        client.testHttpSend(label, events, appender, jsonEncoder(false, label, new JsonLayout()));
+    }
+
+    @Test
+    @Category({IntegrationTests.class})
+    public void testJsonLayoutProtobufFastSend() throws Exception {
+        var label = "testJsonLayoutProtobufFastSend";
+        var encoder = protobufEncoder(false, label, new JsonLayout());
+        var sender = javaHttpSender(urlPush);
+        var appender = appender(10, 1000, encoder, sender);
+
+        var events = generateEvents(1000, 10);
+        client.testHttpSend(label, events, appender, jsonEncoder(false, label, new JsonLayout()));
     }
 
 }

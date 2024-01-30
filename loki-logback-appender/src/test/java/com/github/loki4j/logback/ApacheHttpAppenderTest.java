@@ -4,6 +4,7 @@ import java.util.Random;
 
 import com.github.loki4j.client.http.HttpHeaders;
 import com.github.loki4j.testkit.dummy.LokiHttpServerMock;
+import com.github.loki4j.testkit.dummy.StringPayload;
 
 import static com.github.loki4j.logback.Generators.*;
 import static com.github.loki4j.logback.Loki4jAppenderTest.*;
