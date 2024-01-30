@@ -58,7 +58,7 @@ jobs:
     environment: integ-tests
     strategy:
       matrix:
-        jdk: [11, 17]
+        jdk: [11, 21]
     steps:
       - uses: actions/checkout@v3
       - name: Set up JDK
