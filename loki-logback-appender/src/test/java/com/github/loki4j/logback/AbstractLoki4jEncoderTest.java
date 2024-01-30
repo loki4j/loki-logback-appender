@@ -3,6 +3,7 @@ package com.github.loki4j.logback;
 import org.junit.Test;
 
 import com.github.loki4j.slf4j.marker.LabelMarker;
+import com.github.loki4j.testkit.dummy.StringPayload;
 
 import ch.qos.logback.classic.Level;
 import ch.qos.logback.classic.spi.ILoggingEvent;

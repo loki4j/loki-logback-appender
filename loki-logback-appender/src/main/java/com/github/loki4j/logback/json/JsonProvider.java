@@ -16,6 +16,11 @@ public interface JsonProvider<Event extends DeferredProcessingAware> extends Con
     boolean isEnabled();
 
     /**
+     * Allows to configure if the provider is enabled.
+     */
+    void setEnabled(boolean enabled);
+
+    /**
      * Indicates if this provider can write anything for a particular event.
      * If this method returns {@code false}, {@code writeTo()} should not be called for a particular event.
      * You can put all your preliminary checks here, no need to duplicated them in {@code writeTo()}.

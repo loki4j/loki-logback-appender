@@ -84,6 +84,15 @@ public class JsonLayout extends ContextAwareBase implements Layout<ILoggingEvent
                 mdc
         );
 
+        for (var provider : providers) {
+            provider.setContext(context);
+            provider.start();
+        }
+        for (var provider : customProviders) {
+            provider.setContext(context);
+            provider.start();
+        }
+
         started = true;
     }
     
