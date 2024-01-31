@@ -480,8 +480,11 @@ public class Generators {
 
         @Override
         public LokiResponse send(ByteBuffer batch) throws Exception {
+            // ensures data is not updated until assertions are done
+            await();
             sendCount++;
             var response = super.send(batch);
+            // ensures the code has run before running the assertions
             await();
             if (fail.get() && !rateLimited.get())
                 throw new ConnectException("Text exception");

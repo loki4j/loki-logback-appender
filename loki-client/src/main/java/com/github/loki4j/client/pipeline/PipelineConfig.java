@@ -196,11 +196,11 @@ public class PipelineConfig {
         private long sendQueueMaxBytes = batchMaxBytes * 10;
         private int maxRetries = 2;
         private long retryTimeoutMs = 60 * 1000;
-        private Supplier<Long> jitter = new Jitter();
-        private BiFunction<Integer, Long, Boolean> sleep = (attempt, timeout_ms) -> {
+        private Jitter jitter = new Jitter(1000);
+        private BiFunction<Integer, Long, Boolean> sleep = (attempt, timeoutMs) -> {
             try {
-                long backoff_ms = timeout_ms * (1 << (attempt - 1));
-                Thread.sleep(backoff_ms + jitter.get());
+                long backoffMs = timeoutMs * (1 << (attempt - 1));
+                Thread.sleep(backoffMs + jitter.generate());
                 return true;
             } catch (InterruptedException e) {
                 Thread.currentThread().interrupt();
@@ -282,6 +282,11 @@ public class PipelineConfig {
 
         public Builder setRetryTimeoutMs(long retryTimeoutMs) {
             this.retryTimeoutMs = retryTimeoutMs;
+            return this;
+        }
+
+        public Builder setMaxJitterMs(int maxJitterMs) {
+            this.jitter = new Jitter(maxJitterMs);
             return this;
         }
 

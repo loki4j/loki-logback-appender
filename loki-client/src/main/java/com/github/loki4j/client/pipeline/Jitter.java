@@ -1,16 +1,31 @@
 package com.github.loki4j.client.pipeline;
 
 import java.util.Random;
-import java.util.function.Supplier;
+import java.util.function.Function;
 
-class Jitter implements Supplier<Long> {
+class Jitter {
 
-    private static final int MAX_JITTER = 1000;
-    private final ThreadLocal<Random> random = ThreadLocal.withInitial(Random::new);
+    private final Function<Integer, Long> randomSupplier;
+    private final int maxJitter;
 
-    @Override
-    public Long get() {
-        return Long.valueOf(random.get().nextInt(MAX_JITTER));
+    Jitter(int maxJitter) {
+        randomSupplier = maxJitter > 0
+                ? new RandomFunction()
+                : ignored -> 0L;
+        this.maxJitter = maxJitter;
+    }
+
+    long generate() {
+        return randomSupplier.apply(maxJitter);
+    }
+
+    private static class RandomFunction implements Function<Integer, Long> {
+        private final ThreadLocal<Random> random = ThreadLocal.withInitial(Random::new);
+
+        @Override
+        public Long apply(Integer maxJitter) {
+            return Long.valueOf(random.get().nextInt(maxJitter));
+        }
     }
 
 }

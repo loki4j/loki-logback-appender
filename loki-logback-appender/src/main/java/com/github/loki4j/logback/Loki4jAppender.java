@@ -57,6 +57,11 @@ public class Loki4jAppender extends UnsynchronizedAppenderBase<ILoggingEvent> {
     private long retryTimeoutMs = 60 * 1000;
 
     /**
+     * Upper bound in milliseconds for a jitter added to the retries.
+     */
+    private int maxJitterMs = 1000;
+
+    /**
      * Disables retries of batches that Loki responds to with a 429 status code (TooManyRequests).
      * This reduces impacts on batches from other tenants, which could end up being delayed or dropped
      * due to backoff.
@@ -153,6 +158,7 @@ public class Loki4jAppender extends UnsynchronizedAppenderBase<ILoggingEvent> {
             .setSendQueueMaxBytes(sendQueueMaxBytes)
             .setMaxRetries(maxRetries)
             .setRetryTimeoutMs(retryTimeoutMs)
+            .setMaxJitterMs(maxJitterMs)
             .setDropRateLimitedBatches(dropRateLimitedBatches)
             .setInternalQueuesCheckTimeoutMs(internalQueuesCheckTimeoutMs)
             .setUseDirectBuffers(useDirectBuffers)
@@ -240,20 +246,24 @@ public class Loki4jAppender extends UnsynchronizedAppenderBase<ILoggingEvent> {
     }
 
     public void setMaxRetries(int maxRetries) {
-        if (maxRetries > 0 && maxRetries <= MAX_RETRIES) {
-            this.maxRetries = maxRetries;
-        } else {
+        if (maxRetries > MAX_RETRIES) {
+            addWarn("Invalid value for `maxRetries`, using " + MAX_RETRIES + " instead.");
             this.maxRetries = MAX_RETRIES;
-            addError("Invalid value for `maxRetries`, using " + MAX_RETRIES + " instead.");
+        } else {
+            this.maxRetries = maxRetries;
         }
     }
     public void setRetryTimeoutMs(long retryTimeoutMs) {
-        if (retryTimeoutMs > 0 && retryTimeoutMs <= MAX_RETRY_TIMEOUT_MS) {
-            this.retryTimeoutMs = retryTimeoutMs;
-        } else {
+        if (retryTimeoutMs > MAX_RETRY_TIMEOUT_MS) {
+            addWarn("Invalid value for `retryTimeoutMs`, using " + MAX_RETRY_TIMEOUT_MS + " instead.");
             this.retryTimeoutMs = MAX_RETRY_TIMEOUT_MS;
-            addError("Invalid value for `retryTimeoutMs`, using " + MAX_RETRY_TIMEOUT_MS + " instead.");
+        } else {
+            this.retryTimeoutMs = retryTimeoutMs;
         }
+    }
+
+    public void setMaxJitterMs(int maxJitterMs) {
+        this.maxJitterMs = maxJitterMs;
     }
 
     public void setDropRateLimitedBatches(boolean dropRateLimitedBatches) {

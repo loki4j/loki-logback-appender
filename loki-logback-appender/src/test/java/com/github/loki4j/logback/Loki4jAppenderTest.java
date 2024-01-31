@@ -4,10 +4,13 @@ import static com.github.loki4j.logback.Generators.*;
 import static org.junit.Assert.*;
 
 import java.util.concurrent.atomic.AtomicReference;
+import java.util.concurrent.BrokenBarrierException;
+import java.util.concurrent.TimeoutException;
+import java.util.function.BiFunction;
 
-import org.junit.Ignore;
 import org.junit.Test;
 
+import com.github.loki4j.client.pipeline.PipelineConfig;
 import com.github.loki4j.logback.Generators.FailingHttpClient;
 import com.github.loki4j.logback.Generators.FailingStringWriter;
 import com.github.loki4j.logback.Generators.StoppableHttpClient;
@@ -16,14 +19,6 @@ import com.github.loki4j.testkit.dummy.StringPayload;
 
 import ch.qos.logback.classic.Level;
 import ch.qos.logback.classic.spi.ILoggingEvent;
-
-import java.util.concurrent.BrokenBarrierException;
-import java.util.concurrent.CyclicBarrier;
-import java.util.concurrent.TimeUnit;
-import java.util.concurrent.TimeoutException;
-import java.util.function.BiFunction;
-
-import com.github.loki4j.client.pipeline.PipelineConfig;
 
 public class Loki4jAppenderTest {
 
@@ -238,8 +233,7 @@ public class Loki4jAppenderTest {
         var sender = new WrappingHttpSender<FailingHttpClient>(failingHttpClient);
         var encoder = defaultToStringEncoder();
         var appender = appender(1, 4000L, encoder, sender);
-        var sleep = new CyclicSleep();
-        appender.setPipelineBuilder(PipelineConfig.builder().setSleep(sleep));
+        appender.setPipelineBuilder(PipelineConfig.builder().setSleep((a, b) -> true));
         appender.start();
 
         sender.client.fail.set(true);
@@ -252,15 +246,16 @@ public class Loki4jAppenderTest {
             .build();
 
         failingHttpClient.await();
+        failingHttpClient.await();
         assertEquals("send", 1, sender.client.sendCount);
         assertEquals("send", expectedPayload, StringPayload.parse(sender.client.lastBatch, encoder.charset));
 
-        sleep.retry.await();
+        failingHttpClient.await();
         failingHttpClient.await();
         assertEquals("retry1", 2, sender.client.sendCount);
         assertEquals("retry1", expectedPayload, StringPayload.parse(sender.client.lastBatch, encoder.charset));
 
-        sleep.retry.await();
+        failingHttpClient.await();
         failingHttpClient.await();
         assertEquals("retry2", 3, sender.client.sendCount);
         assertEquals("retry2", expectedPayload, StringPayload.parse(sender.client.lastBatch, encoder.charset));
@@ -273,9 +268,10 @@ public class Loki4jAppenderTest {
         appender.append(events[1]);
 
         failingHttpClient.await();
+        failingHttpClient.await();
         assertEquals("send-2", 4, sender.client.sendCount);
         assertEquals("send-2", expected2, StringPayload.parse(sender.client.lastBatch, encoder.charset));
-        sleep.retry.await();
+        failingHttpClient.await();
 
         sender.client.fail.set(false);
 
@@ -294,8 +290,7 @@ public class Loki4jAppenderTest {
 
         // retries rate limited requests by default
         var appender = buildRateLimitedAppender(false, encoder, sender);
-        var sleep = new CyclicSleep();
-        appender.setPipelineBuilder(PipelineConfig.builder().setSleep(sleep));
+        appender.setPipelineBuilder(PipelineConfig.builder().setSleep((a, b) -> true));
         appender.start();
         appender.append(events[0]);
 
@@ -306,15 +301,16 @@ public class Loki4jAppenderTest {
             .build();
 
         failingHttpClient.await();
+        failingHttpClient.await();
         assertEquals("send", 1, sender.client.sendCount);
         assertEquals("send", expectedPayload, StringPayload.parse(sender.client.lastBatch, encoder.charset));
 
-        sleep.retry.await();
+        failingHttpClient.await();
         failingHttpClient.await();
         assertEquals("retry1", 2, sender.client.sendCount);
         assertEquals("retry1", expectedPayload, StringPayload.parse(sender.client.lastBatch, encoder.charset));
 
-        sleep.retry.await();
+        failingHttpClient.await();
         failingHttpClient.await();
         assertEquals("retry2", 3, sender.client.sendCount);
         assertEquals("retry2", expectedPayload, StringPayload.parse(sender.client.lastBatch, encoder.charset));
@@ -344,6 +340,7 @@ public class Loki4jAppenderTest {
 
         appender.append(events[0]);
         failingHttpClient.await();
+        failingHttpClient.await();
         assertEquals("send-2", 1, sender.client.sendCount);
         assertEquals("send-2", expectedPayload, StringPayload.parse(sender.client.lastBatch, encoder.charset));
 
@@ -361,22 +358,6 @@ public class Loki4jAppenderTest {
         sender.client.rateLimited.set(true);
 
         return appender;
-    }
-
-    private static class CyclicSleep implements BiFunction<Integer, Long, Boolean> {
-        private CyclicBarrier retry = new CyclicBarrier(2);
-
-        @Override
-        public Boolean apply(Integer t, Long u) {
-            try {
-                retry.await(1L, TimeUnit.MINUTES);
-                return true;
-            } catch (InterruptedException | BrokenBarrierException | TimeoutException ex) {
-                Thread.currentThread().interrupt();
-                return false;
-            }
-        }
-
     }
 
 }
