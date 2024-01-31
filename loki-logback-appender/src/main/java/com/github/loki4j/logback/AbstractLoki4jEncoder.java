@@ -55,6 +55,10 @@ public abstract class AbstractLoki4jEncoder extends ContextAwareBase implements 
          */
         boolean nopex = true;
         /**
+         * Ignore label when it's value is blank instead of throwing exception
+         */
+        boolean ignoreBlankLabel = false;
+        /**
          * An implementation of a Stream cache to use.
          */
         Cache<String, LogRecordStream> streamCache;
@@ -72,6 +76,9 @@ public abstract class AbstractLoki4jEncoder extends ContextAwareBase implements 
         }
         public void setNopex(boolean nopex) {
             this.nopex = nopex;
+        }
+        public void setIgnoreBlankLabel(boolean ignoreBlankLabel) {
+            this.ignoreBlankLabel = ignoreBlankLabel;
         }
         @DefaultClass(UnboundAtomicMapCache.class)
         public void setStreamCache(Cache<String, LogRecordStream> streamCache) {
@@ -243,6 +250,9 @@ public abstract class AbstractLoki4jEncoder extends ContextAwareBase implements 
                 result[pos + 1] = kv[1];
                 pos += 2;
             } else {
+                if (label.ignoreBlankLabel) {
+                    continue;
+                }
                 throw new IllegalArgumentException(String.format(
                     "Unable to split '%s' in '%s' to label key-value pairs, pairSeparator=%s, keyValueSeparator=%s",
                     pairs[i], stream, label.pairSeparator, label.keyValueSeparator));

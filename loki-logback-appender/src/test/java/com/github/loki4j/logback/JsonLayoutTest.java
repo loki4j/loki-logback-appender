@@ -39,7 +39,7 @@ public class JsonLayoutTest {
             .build();
 
         var encoder = toStringEncoder(
-                labelCfg("app=my-app", ",", "=", true, false),
+                labelCfg("app=my-app", ",", "=", true, false, false),
                 jsonMsgLayout(),
                 false,
                 false

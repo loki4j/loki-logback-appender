@@ -19,7 +19,7 @@ public class AbstractLoki4jEncoderTest {
     @Test(expected = IllegalArgumentException.class)
     public void testExtractStreamKVPairsIncorrectFormat() {
         withEncoder(toStringEncoder(
-                labelCfg("level=%level,app=\"my\"app", "|", "~", true, false),
+                labelCfg("level=%level,app=\"my\"app", "|", "~", true, false, false),
                 plainTextMsgLayout("l=%level c=%logger{20} t=%thread | %msg %ex{1}"),
                 false,
                 false), encoder -> {
@@ -32,11 +32,24 @@ public class AbstractLoki4jEncoderTest {
     @Test
     public void testExtractStreamKVPairsIgnoringEmpty() {
         withEncoder(toStringEncoder(
-                labelCfg(",,level=%level,,app=\"my\"app,", ",", "=", true, false),
+                labelCfg(",,level=%level,,app=\"my\"app,", ",", "=", true, false, false),
                 plainTextMsgLayout("l=%level c=%logger{20} t=%thread | %msg %ex{1}"),
                 false,
                 false), encoder -> {
             var kvs1 = encoder.extractStreamKVPairs(",,level=INFO,,app=\"my\"app,test=test,");
+            var kvse1 = new String[] {"level", "INFO", "app", "\"my\"app", "test", "test"};
+            assertArrayEquals("Split by ,=", kvse1, kvs1);
+        });
+    }
+
+    @Test
+    public void testExtractStreamKVPairsIgnoringBlank() {
+        withEncoder(toStringEncoder(
+                labelCfg(",,level=%level,,app=\"my\"app,", ",", "=", true, false, true),
+                plainTextMsgLayout("l=%level c=%logger{20} t=%thread | %msg %ex{1}"),
+                false,
+                false), encoder -> {
+            var kvs1 = encoder.extractStreamKVPairs("level=INFO,,app=\"my\"app,test=test,blank=");
             var kvse1 = new String[] {"level", "INFO", "app", "\"my\"app", "test", "test"};
             assertArrayEquals("Split by ,=", kvse1, kvs1);
         });
@@ -50,6 +63,7 @@ public class AbstractLoki4jEncoderTest {
                     "regex:(\n|//[^\n]+)+",
                     "=",
                     true,
+                    false,
                     false),
                 plainTextMsgLayout("l=%level c=%logger{20} t=%thread | %msg %ex{1}"),
                 false,
@@ -63,7 +77,7 @@ public class AbstractLoki4jEncoderTest {
     @Test
     public void testExtractStreamKVPairs() {
         withEncoder(toStringEncoder(
-                labelCfg("level=%level,app=\"my\"app", ",", "=", true, false),
+                labelCfg("level=%level,app=\"my\"app", ",", "=", true, false, false),
                 plainTextMsgLayout("l=%level c=%logger{20} t=%thread | %msg %ex{1}"),
                 false,
                 false), encoder -> {
@@ -73,7 +87,7 @@ public class AbstractLoki4jEncoderTest {
         });
 
         withEncoder(toStringEncoder(
-                labelCfg("level:%level;app:\"my\"app", ";", ":", true, false),
+                labelCfg("level:%level;app:\"my\"app", ";", ":", true, false, false),
                 plainTextMsgLayout("l=%level c=%logger{20} t=%thread | %msg %ex{1}"),
                 false,
                 false), encoder -> {
@@ -83,7 +97,7 @@ public class AbstractLoki4jEncoderTest {
         });
 
         withEncoder(toStringEncoder(
-                labelCfg("level.%level|app.\"my\"app", "|", ".", true, false),
+                labelCfg("level.%level|app.\"my\"app", "|", ".", true, false, false),
                 plainTextMsgLayout("l=%level c=%logger{20} t=%thread | %msg %ex{1}"),
                 false,
                 false), encoder -> {
@@ -113,7 +127,7 @@ public class AbstractLoki4jEncoderTest {
             appender(
                 4,
                 1000L,
-                toStringEncoder(labelCfg("l=%level", ",", "=", true, true), plainTextMsgLayout("%level | %msg"), false, false),
+                toStringEncoder(labelCfg("l=%level", ",", "=", true, true, false), plainTextMsgLayout("%level | %msg"), false, false),
                 sender), appender -> {
             appender.append(events);
             appender.waitAllAppended();
@@ -150,7 +164,7 @@ public class AbstractLoki4jEncoderTest {
             appender(
                 6,
                 1000L,
-                toStringEncoder(labelCfg("l=%level", ",", "=", true, false), plainTextMsgLayout("%level | %msg"), false, true),
+                toStringEncoder(labelCfg("l=%level", ",", "=", true, false, false), plainTextMsgLayout("%level | %msg"), false, true),
                 sender), appender -> {
             appender.append(eventsToOrder);
             appender.waitAllAppended();
@@ -173,7 +187,7 @@ public class AbstractLoki4jEncoderTest {
             appender(
                 6,
                 1000L,
-                toStringEncoder(labelCfg("l=%level", ",", "=", true, false), plainTextMsgLayout("%level | %msg"), true, true),
+                toStringEncoder(labelCfg("l=%level", ",", "=", true, false, false), plainTextMsgLayout("%level | %msg"), true, true),
                 sender), appender -> {
             appender.append(eventsToOrder);
             appender.waitAllAppended();
@@ -196,7 +210,7 @@ public class AbstractLoki4jEncoderTest {
             appender(
                 6,
                 1000L,
-                toStringEncoder(labelCfg("l=%level", ",", "=", true, false), plainTextMsgLayout("%level | %msg"), false, false),
+                toStringEncoder(labelCfg("l=%level", ",", "=", true, false, false), plainTextMsgLayout("%level | %msg"), false, false),
                 sender), appender -> {
             appender.append(eventsToOrder);
             appender.waitAllAppended();
@@ -222,7 +236,7 @@ public class AbstractLoki4jEncoderTest {
             appender(
                 6,
                 1000L,
-                toStringEncoder(labelCfg("l=%level", ",", "=", true, false), plainTextMsgLayout("%level | %msg"), true, false),
+                toStringEncoder(labelCfg("l=%level", ",", "=", true, false, false), plainTextMsgLayout("%level | %msg"), true, false),
                 sender), appender -> {
             appender.append(eventsToOrder);
             appender.waitAllAppended();
@@ -248,7 +262,7 @@ public class AbstractLoki4jEncoderTest {
     @Test
     public void testNanoCounter() {
         var enc = toStringEncoder(
-            labelCfg("app=my-app", ",", "=", true, false),
+            labelCfg("app=my-app", ",", "=", true, false, false),
             plainTextMsgLayout("l=%level c=%logger{20} t=%thread | %msg"),
             true,
             false);

@@ -119,7 +119,7 @@ public class Generators {
     public static JsonEncoder jsonEncoder(boolean staticLabels, String testLabel, Layout<ILoggingEvent> msgLayout) {
         var encoder = new JsonEncoder();
         encoder.setStaticLabels(staticLabels);
-        encoder.setLabel(labelCfg("test=" + testLabel + ",level=%level,app=my-app", ",", "=", true, false));
+        encoder.setLabel(labelCfg("test=" + testLabel + ",level=%level,app=my-app", ",", "=", true, false, false));
         encoder.setMessage(msgLayout);
         encoder.setSortByTime(true);
         return encoder;
@@ -132,7 +132,7 @@ public class Generators {
     public static ProtobufEncoder protobufEncoder(boolean staticLabels, String testLabel, Layout<ILoggingEvent> msgLayout) {
         var encoder = new ProtobufEncoder();
         encoder.setStaticLabels(staticLabels);
-        encoder.setLabel(labelCfg("test=" + testLabel + ",level=%level,app=my-app", ",", "=", true, false));
+        encoder.setLabel(labelCfg("test=" + testLabel + ",level=%level,app=my-app", ",", "=", true, false, false));
         encoder.setMessage(msgLayout);
         return encoder;
     }
@@ -151,7 +151,7 @@ public class Generators {
 
     public static AbstractLoki4jEncoder defaultToStringEncoder() {
         return toStringEncoder(
-            labelCfg("level=%level,app=my-app", ",", "=", true, false),
+            labelCfg("level=%level,app=my-app", ",", "=", true, false, false),
             plainTextMsgLayout("l=%level c=%logger{20} t=%thread | %msg %ex{1}"),
             true,
             false);
@@ -203,13 +203,15 @@ public class Generators {
             String pairSeparator,
             String keyValueSeparator,
             boolean nopex,
-            boolean readMarkers) {
+            boolean readMarkers,
+            boolean ignoreBlankLabel) {
         var label = new AbstractLoki4jEncoder.LabelCfg();
         label.setPattern(pattern);
         label.setPairSeparator(pairSeparator);
         label.setKeyValueSeparator(keyValueSeparator);
         label.setNopex(nopex);
         label.setReadMarkers(readMarkers);
+        label.setIgnoreBlankLabel(ignoreBlankLabel);
         return label;
     }
 

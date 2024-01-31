@@ -113,7 +113,7 @@ public class Loki4jAppenderTest {
                     failingWriterRef.set(failingWriter);
                     return failingWriter;
                 },
-                labelCfg("level=%level,app=my-app", ",", "=", true, false),
+                labelCfg("level=%level,app=my-app", ",", "=", true, false, false),
                 plainTextMsgLayout("l=%level c=%logger{20} t=%thread | %msg %ex{1}"),
                 true,
                 false);
