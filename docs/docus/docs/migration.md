@@ -4,6 +4,22 @@ title: Loki4j Migration Guide
 sidebar_label: Migration Guide
 ---
 
+## Upgrading from 1.4.x to 1.5.x
+
+The biggest breaking change in Loki4j v1.5.0 is an upgrade to Logback v1.3.x.
+
+#### Logback 1.2.x is no longer supported
+
+The minimum supported version of Logback is now 1.3.0.
+This version is not compatible with Logback v1.2.x series.
+
+If you use only Loki4j and some Logback classic appenders (console, file, etc.), the upgrade should go pretty smooth for you.
+However, if you project depends on other external Logback appenders, please make sure all of them are compatible with Logback v1.3.x before upgrading.
+
+#### Retry functionality changed
+
+...
+
 ## Upgrading from 1.3.x to 1.4.x
 
 Version 1.4.0 contains several new features that may break the existing behavior for some users.

@@ -16,10 +16,10 @@ If you have found this project helpful, please drop a :star:!
 
 ## Key features
 
-- Support for both JSON and Protobuf formats
+- Support for both JSON and Protobuf Loki API flavours
 - Compatibility with Grafana Cloud
 - Flexible management of Loki labels using MDC and SLF4J Markers
-- Logback formatting patterns are used for both labels and messages
+- Logback formatting patterns can be used for both labels and messages
 - Optional sorting of log records by timestamp before sending them to Loki
 - Zero-dependency (for Java 11+)
 - Logging performance metrics
