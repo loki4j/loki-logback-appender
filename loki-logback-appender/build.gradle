@@ -34,6 +34,7 @@ dependencies {
     testImplementation libs.bundles.pluggable
     testImplementation libs.junit
     testImplementation libs.jackson
+    testImplementation libs.logstash
 }
 
 compileJava {
