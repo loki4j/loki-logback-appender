@@ -204,14 +204,14 @@ public class Generators {
             String keyValueSeparator,
             boolean nopex,
             boolean readMarkers,
-            boolean ignoreBlankLabel) {
+            boolean ignoreParsingError) {
         var label = new AbstractLoki4jEncoder.LabelCfg();
         label.setPattern(pattern);
         label.setPairSeparator(pairSeparator);
         label.setKeyValueSeparator(keyValueSeparator);
         label.setNopex(nopex);
         label.setReadMarkers(readMarkers);
-        label.setIgnoreBlankLabel(ignoreBlankLabel);
+        label.setIgnoreParsingError(ignoreParsingError);
         return label;
     }
 

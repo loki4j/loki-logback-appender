@@ -56,6 +56,19 @@ public class AbstractLoki4jEncoderTest {
     }
 
     @Test
+    public void testExtractStreamKVPairsIgnoringInvalidValue() {
+        withEncoder(toStringEncoder(
+                labelCfg(",,level=%level,,app=\"my\"app,", ",", "=", true, false, true),
+                plainTextMsgLayout("l=%level c=%logger{20} t=%thread | %msg %ex{1}"),
+                false,
+                false), encoder -> {
+            var kvs1 = encoder.extractStreamKVPairs("level=INFO,,app=\"my\"app,test=test,blank==");
+            var kvse1 = new String[] {"level", "INFO", "app", "\"my\"app", "test", "test"};
+            assertArrayEquals("Split by ,=", kvse1, kvs1);
+        });
+    }
+
+    @Test
     public void testExtractStreamKVPairsByRegex() {
         withEncoder(toStringEncoder(
                 labelCfg(
