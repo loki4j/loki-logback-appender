@@ -178,13 +178,20 @@ public final class AsyncBufferPipeline {
         var startedNs = System.nanoTime();
         boolean accepted = false;
         if (acceptNewEvents.get()) {
-            var record = LogRecord.create(timestamp, nanos, stream.get(), message.get());
-            if (batcher.validateLogRecordSize(record)) {
+            LogRecord record = null;
+            try {
+                record = LogRecord.create(timestamp, nanos, stream.get(), message.get());
+            } catch (Exception e) {
+                log.error(e, "Error occurred while appending an event");
+                if (metrics != null) metrics.appendFailed(() -> e.getClass().getSimpleName());
+                accepted = true;
+            }
+            if (record != null && batcher.validateLogRecordSize(record)) {
                 buffer.offer(record);
                 unsentEvents.incrementAndGet();
                 accepted = true;
                 log.trace("Log record was accepted for sending: %s", record);
-            } else {
+            } else if (record != null) {
                 log.warn("Dropping the record that exceeds max batch size: %s", record);
             }
         }

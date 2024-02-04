@@ -19,24 +19,27 @@ import io.micrometer.core.instrument.Timer;
  */
 public class Loki4jMetrics {
 
-    private Timer appendTimer;
-    private Timer encodeTimer;
-    private Timer sendTimer;
+    private final Timer appendTimer;
+    private final Timer encodeTimer;
+    private final Timer sendTimer;
 
-    private DistributionSummary eventsEncodedSummary;
-    private DistributionSummary bytesSentSummary;
+    private final DistributionSummary eventsEncodedSummary;
+    private final DistributionSummary bytesSentSummary;
 
-    private Counter batchesEncodedCounter;
-    private Counter batchesSentCounter;
-    private Counter droppedEventsCounter;
+    private final Counter batchesEncodedCounter;
+    private final Counter batchesSentCounter;
+    private final Counter droppedEventsCounter;
 
-    private Builder encodeErrorsCounterBuilder;
+    private final Builder appendErrorsCounterBuilder;
+    private final UnboundAtomicMapCache<String, Counter> appendErrorsCounterCache = new UnboundAtomicMapCache<>();
+
+    private final Builder encodeErrorsCounterBuilder;
     private final UnboundAtomicMapCache<String, Counter> encodeErrorsCounterCache = new UnboundAtomicMapCache<>();
 
-    private Builder retryErrorsCounterBuilder;
+    private final Builder retryErrorsCounterBuilder;
     private final UnboundAtomicMapCache<String, Counter> retryErrorsCounterCache = new UnboundAtomicMapCache<>();
 
-    private Builder sendErrorsCounterBuilder;
+    private final Builder sendErrorsCounterBuilder;
     private final UnboundAtomicMapCache<String, Counter> sendErrorsCounterCache = new UnboundAtomicMapCache<>();
 
     public Loki4jMetrics(String appenderName, Supplier<Long> unsentEvents) {
@@ -98,6 +101,11 @@ public class Loki4jMetrics {
             .tags(tags)
             .register(Metrics.globalRegistry);
 
+        appendErrorsCounterBuilder = Counter
+            .builder("loki4j.append.errors")
+            .description("Number of errors occurred while appending events")
+            .tags(tags);
+
         encodeErrorsCounterBuilder = Counter
             .builder("loki4j.encode.errors")
             .description("Number of errors occurred while encoding batches")
@@ -127,6 +135,10 @@ public class Loki4jMetrics {
         recordTimer(encodeTimer, startedNs);
         eventsEncodedSummary.record(count);
         batchesEncodedCounter.increment();
+    }
+
+    public void appendFailed(Supplier<String> failure) {
+        incrementErrorCounter(appendErrorsCounterBuilder, appendErrorsCounterCache, failure);
     }
 
     public void batchEncodeFailed(Supplier<String> failure) {
