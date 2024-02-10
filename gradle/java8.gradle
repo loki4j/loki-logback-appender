@@ -21,8 +21,8 @@ sourceSets {
 }
 
 dependencies {
-    java8AnnotationProcessor 'com.github.bsideup.jabel:jabel-javac-plugin:0.3.0'
-    java8TestAnnotationProcessor 'com.github.bsideup.jabel:jabel-javac-plugin:0.3.0'
+    java8AnnotationProcessor 'com.github.bsideup.jabel:jabel-javac-plugin:1.0.0'
+    java8TestAnnotationProcessor 'com.github.bsideup.jabel:jabel-javac-plugin:1.0.0'
 }
 
 configurations {
