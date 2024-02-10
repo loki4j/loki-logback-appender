@@ -4,10 +4,13 @@ import static com.github.loki4j.logback.Generators.*;
 import static org.junit.Assert.*;
 
 import java.util.concurrent.atomic.AtomicReference;
+import java.util.concurrent.BrokenBarrierException;
+import java.util.concurrent.TimeoutException;
+import java.util.function.BiFunction;
 
-import org.junit.Ignore;
 import org.junit.Test;
 
+import com.github.loki4j.client.pipeline.PipelineConfig;
 import com.github.loki4j.logback.Generators.FailingHttpClient;
 import com.github.loki4j.logback.Generators.FailingStringWriter;
 import com.github.loki4j.logback.Generators.StoppableHttpClient;
@@ -240,11 +243,12 @@ public class Loki4jAppenderTest {
     }
 
     @Test
-    public void testRetry() {
-        var sender = new WrappingHttpSender<FailingHttpClient>(new FailingHttpClient());
+    public void testRetry() throws InterruptedException, BrokenBarrierException, TimeoutException {
+        var failingHttpClient = new FailingHttpClient();
+        var sender = new WrappingHttpSender<FailingHttpClient>(failingHttpClient);
         var encoder = defaultToStringEncoder();
         var appender = appender(1, 4000L, encoder, sender);
-        appender.setRetryTimeoutMs(200);
+        appender.setPipelineBuilder(PipelineConfig.builder().setSleep((a, b) -> true));
         appender.start();
 
         sender.client.fail.set(true);
@@ -256,13 +260,18 @@ public class Loki4jAppenderTest {
                 "ts=100 l=INFO c=test.TestApp t=thread-1 | Test message 1 ")
             .build();
 
-        try { Thread.sleep(100L); } catch (InterruptedException e1) { }
+        failingHttpClient.await();
+        failingHttpClient.await();
         assertEquals("send", 1, sender.client.sendCount);
         assertEquals("send", expectedPayload, StringPayload.parse(sender.client.lastBatch, encoder.charset));
-        try { Thread.sleep(200L); } catch (InterruptedException e1) { }
+
+        failingHttpClient.await();
+        failingHttpClient.await();
         assertEquals("retry1", 2, sender.client.sendCount);
         assertEquals("retry1", expectedPayload, StringPayload.parse(sender.client.lastBatch, encoder.charset));
-        try { Thread.sleep(200L); } catch (InterruptedException e1) { }
+
+        failingHttpClient.await();
+        failingHttpClient.await();
         assertEquals("retry2", 3, sender.client.sendCount);
         assertEquals("retry2", expectedPayload, StringPayload.parse(sender.client.lastBatch, encoder.charset));
 
@@ -273,12 +282,15 @@ public class Loki4jAppenderTest {
             .build();
         appender.append(events[1]);
 
-        try { Thread.sleep(50L); } catch (InterruptedException e1) { }
+        failingHttpClient.await();
+        failingHttpClient.await();
         assertEquals("send-2", 4, sender.client.sendCount);
         assertEquals("send-2", expected2, StringPayload.parse(sender.client.lastBatch, encoder.charset));
+        failingHttpClient.await();
 
         sender.client.fail.set(false);
-        try { Thread.sleep(500L); } catch (InterruptedException e1) { }
+
+        failingHttpClient.await();
         assertEquals("retry1-2", 5, sender.client.sendCount);
         assertEquals("retry1-2", expected2, StringPayload.parse(sender.client.lastBatch, encoder.charset));
 
@@ -286,12 +298,14 @@ public class Loki4jAppenderTest {
     }
 
     @Test
-    public void testRateLimitedRetry() {
+    public void testRateLimitedRetry() throws InterruptedException, BrokenBarrierException, TimeoutException {
+        var failingHttpClient = new FailingHttpClient();
+        var sender = new WrappingHttpSender<>(failingHttpClient);
         var encoder = defaultToStringEncoder();
-        var sender = new WrappingHttpSender<FailingHttpClient>(new FailingHttpClient());
 
         // retries rate limited requests by default
         var appender = buildRateLimitedAppender(false, encoder, sender);
+        appender.setPipelineBuilder(PipelineConfig.builder().setSleep((a, b) -> true));
         appender.start();
         appender.append(events[0]);
 
@@ -301,13 +315,18 @@ public class Loki4jAppenderTest {
                 "ts=100 l=INFO c=test.TestApp t=thread-1 | Test message 1 ")
             .build();
 
-        try { Thread.sleep(100L); } catch (InterruptedException e1) { }
+        failingHttpClient.await();
+        failingHttpClient.await();
         assertEquals("send", 1, sender.client.sendCount);
         assertEquals("send", expectedPayload, StringPayload.parse(sender.client.lastBatch, encoder.charset));
-        try { Thread.sleep(200L); } catch (InterruptedException e1) { }
+
+        failingHttpClient.await();
+        failingHttpClient.await();
         assertEquals("retry1", 2, sender.client.sendCount);
         assertEquals("retry1", expectedPayload, StringPayload.parse(sender.client.lastBatch, encoder.charset));
-        try { Thread.sleep(200L); } catch (InterruptedException e1) { }
+
+        failingHttpClient.await();
+        failingHttpClient.await();
         assertEquals("retry2", 3, sender.client.sendCount);
         assertEquals("retry2", expectedPayload, StringPayload.parse(sender.client.lastBatch, encoder.charset));
 
@@ -315,14 +334,18 @@ public class Loki4jAppenderTest {
     }
 
     @Test
-    @Ignore("Problematic test, failing probably due to race condition")
-    public void testRateLimitedNoRetries() {
+    public void testRateLimitedNoRetries() throws InterruptedException, BrokenBarrierException, TimeoutException {
         var encoder = defaultToStringEncoder();
-        var sender = new WrappingHttpSender<FailingHttpClient>(new FailingHttpClient());
+        var failingHttpClient = new FailingHttpClient();
+        var sender = new WrappingHttpSender<>(failingHttpClient);
 
         // retries rate limited requests
         var appender = buildRateLimitedAppender(true, encoder, sender);
         appender.setDropRateLimitedBatches(true);
+        BiFunction<Integer, Long, Boolean> failIfSleep = (i, j) -> {
+            throw new IllegalStateException("It should not attempt to retry.");
+        };
+        appender.setPipelineBuilder(PipelineConfig.builder().setSleep(failIfSleep));
         StringPayload expectedPayload = StringPayload.builder()
             .stream("[level, INFO, app, my-app]",
                 "ts=100 l=INFO c=test.TestApp t=thread-1 | Test message 1 ")
@@ -331,12 +354,10 @@ public class Loki4jAppenderTest {
         appender.start();
 
         appender.append(events[0]);
-        try { Thread.sleep(50L); } catch (InterruptedException e1) { }
+        failingHttpClient.await();
+        failingHttpClient.await();
         assertEquals("send-2", 1, sender.client.sendCount);
         assertEquals("send-2", expectedPayload, StringPayload.parse(sender.client.lastBatch, encoder.charset));
-
-        try { Thread.sleep(200L); } catch (InterruptedException e1) { }
-        assertEquals("no-retried", 1, sender.client.sendCount);
 
         appender.stop();
     }
@@ -347,7 +368,6 @@ public class Loki4jAppenderTest {
             WrappingHttpSender<FailingHttpClient> sender) {
         var appender = appender(1, 4000L, encoder, sender);
         appender.setDropRateLimitedBatches(dropRateLimitedBatches);
-        appender.setRetryTimeoutMs(200);
 
         sender.client.fail.set(true);
         sender.client.rateLimited.set(true);

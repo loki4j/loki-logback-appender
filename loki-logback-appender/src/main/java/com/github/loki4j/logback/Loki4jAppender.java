@@ -1,9 +1,11 @@
 package com.github.loki4j.logback;
 
+import java.util.Objects;
 import java.util.concurrent.atomic.AtomicLong;
 
 import com.github.loki4j.client.pipeline.AsyncBufferPipeline;
 import com.github.loki4j.client.pipeline.PipelineConfig;
+import com.github.loki4j.client.pipeline.PipelineConfig.Builder;
 
 import ch.qos.logback.classic.spi.ILoggingEvent;
 import ch.qos.logback.core.UnsynchronizedAppenderBase;
@@ -15,6 +17,11 @@ import ch.qos.logback.core.status.Status;
  */
 public class Loki4jAppender extends UnsynchronizedAppenderBase<ILoggingEvent> {
 
+    private static final int MAX_RETRIES = 30;
+    /**
+     * A day in milliseconds.
+     */
+    private static final long MAX_RETRY_TIMEOUT_MS = 86_400_000L;
     /**
      * Max number of events to put into a single batch before sending it to Loki.
      */
@@ -48,6 +55,11 @@ public class Loki4jAppender extends UnsynchronizedAppenderBase<ILoggingEvent> {
      * Time in milliseconds to wait before the next attempt to re-send a failed batch.
      */
     private long retryTimeoutMs = 60 * 1000;
+
+    /**
+     * Upper bound in milliseconds for a jitter added to the retries.
+     */
+    private int maxJitterMs = 1000;
 
     /**
      * Disables retries of batches that Loki responds to with a 429 status code (TooManyRequests).
@@ -104,6 +116,8 @@ public class Loki4jAppender extends UnsynchronizedAppenderBase<ILoggingEvent> {
      */
     private AtomicLong droppedEventsCount = new AtomicLong(0L);
 
+    private PipelineConfig.Builder pipelineBuilder = PipelineConfig.builder();
+
     @Override
     public void start() {
         if (getStatusManager() != null && getStatusManager().getCopyOfStatusListenerList().isEmpty()) {
@@ -134,7 +148,7 @@ public class Loki4jAppender extends UnsynchronizedAppenderBase<ILoggingEvent> {
             sender = new JavaHttpSender();
         }
 
-        PipelineConfig pipelineConf = PipelineConfig.builder()
+        PipelineConfig pipelineConf = pipelineBuilder
             .setName(this.getName() == null ? "none" : this.getName())
             .setBatchMaxItems(batchMaxItems)
             .setBatchMaxBytes(batchMaxBytes)
@@ -144,6 +158,7 @@ public class Loki4jAppender extends UnsynchronizedAppenderBase<ILoggingEvent> {
             .setSendQueueMaxBytes(sendQueueMaxBytes)
             .setMaxRetries(maxRetries)
             .setRetryTimeoutMs(retryTimeoutMs)
+            .setMaxJitterMs(maxJitterMs)
             .setDropRateLimitedBatches(dropRateLimitedBatches)
             .setInternalQueuesCheckTimeoutMs(internalQueuesCheckTimeoutMs)
             .setUseDirectBuffers(useDirectBuffers)
@@ -231,10 +246,24 @@ public class Loki4jAppender extends UnsynchronizedAppenderBase<ILoggingEvent> {
     }
 
     public void setMaxRetries(int maxRetries) {
-        this.maxRetries = maxRetries;
+        if (maxRetries > MAX_RETRIES) {
+            addWarn("Invalid value for `maxRetries`, using " + MAX_RETRIES + " instead.");
+            this.maxRetries = MAX_RETRIES;
+        } else {
+            this.maxRetries = maxRetries;
+        }
     }
     public void setRetryTimeoutMs(long retryTimeoutMs) {
-        this.retryTimeoutMs = retryTimeoutMs;
+        if (retryTimeoutMs > MAX_RETRY_TIMEOUT_MS) {
+            addWarn("Invalid value for `retryTimeoutMs`, using " + MAX_RETRY_TIMEOUT_MS + " instead.");
+            this.retryTimeoutMs = MAX_RETRY_TIMEOUT_MS;
+        } else {
+            this.retryTimeoutMs = retryTimeoutMs;
+        }
+    }
+
+    public void setMaxJitterMs(int maxJitterMs) {
+        this.maxJitterMs = maxJitterMs;
     }
 
     public void setDropRateLimitedBatches(boolean dropRateLimitedBatches) {
@@ -244,7 +273,7 @@ public class Loki4jAppender extends UnsynchronizedAppenderBase<ILoggingEvent> {
     /**
      * "format" instead of "encoder" in the name allows to specify
      * the default implementation, so users don't have to write
-     * full-qualified class name by default
+     * full-qualified class name by default.
      */
     @DefaultClass(JsonEncoder.class)
     public void setFormat(Loki4jEncoder encoder) {
@@ -257,7 +286,7 @@ public class Loki4jAppender extends UnsynchronizedAppenderBase<ILoggingEvent> {
 
     /**
      * "http" instead of "sender" is just to have a more clear name
-     * for the configuration section
+     * for the configuration section.
      */
     @DefaultClass(JavaHttpSender.class)
     public void setHttp(HttpSender sender) {
@@ -275,6 +304,16 @@ public class Loki4jAppender extends UnsynchronizedAppenderBase<ILoggingEvent> {
     }
     public void setUseDirectBuffers(boolean useDirectBuffers) {
         this.useDirectBuffers = useDirectBuffers;
+    }
+
+    /**
+     * Sets the PipelineBuilder, this method is intended for testing
+     * purpose exclusively.
+     *
+     * @param pipelineBuilder the pipeline builder
+     */
+    void setPipelineBuilder(Builder pipelineBuilder) {
+        this.pipelineBuilder = Objects.requireNonNull(pipelineBuilder);
     }
 
 }

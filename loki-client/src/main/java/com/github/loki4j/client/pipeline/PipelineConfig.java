@@ -2,6 +2,7 @@ package com.github.loki4j.client.pipeline;
 
 import java.util.function.BiFunction;
 import java.util.function.Function;
+import java.util.function.Supplier;
 
 import com.github.loki4j.client.http.ApacheHttpClient;
 import com.github.loki4j.client.http.HttpConfig;
@@ -96,6 +97,12 @@ public class PipelineConfig {
     public final long retryTimeoutMs;
 
     /**
+     * Sleep function that receives attempts and a timeout and sleeps depending on the
+     * value of those parameters.
+     */
+    public final BiFunction<Integer, Long, Boolean> sleep;
+
+    /**
      * Disables retries of batches that Loki responds to with a 429 status code (TooManyRequests).
      * This reduces impacts on batches from other tenants, which could end up being delayed or dropped
      * due to backoff.
@@ -147,10 +154,11 @@ public class PipelineConfig {
      */
     public final Function<Object, Loki4jLogger> internalLoggingFactory;
 
-    public PipelineConfig(String name, int batchMaxItems, int batchMaxBytes, long batchTimeoutMs, boolean sortByTime,
-            boolean staticLabels, long sendQueueMaxBytes, int maxRetries, long retryTimeoutMs, boolean dropRateLimitedBatches,
-            long internalQueuesCheckTimeoutMs, boolean useDirectBuffers, boolean drainOnStop, boolean metricsEnabled,
-            WriterFactory writerFactory, HttpConfig httpConfig, Function<HttpConfig, Loki4jHttpClient> httpClientFactory,
+    private PipelineConfig(String name, int batchMaxItems, int batchMaxBytes, long batchTimeoutMs, boolean sortByTime,
+            boolean staticLabels, long sendQueueMaxBytes, int maxRetries, long retryTimeoutMs,
+            BiFunction<Integer, Long, Boolean> sleep, boolean dropRateLimitedBatches, long internalQueuesCheckTimeoutMs,
+            boolean useDirectBuffers, boolean drainOnStop, boolean metricsEnabled, WriterFactory writerFactory,
+            HttpConfig httpConfig, Function<HttpConfig, Loki4jHttpClient> httpClientFactory,
             Function<Object, Loki4jLogger> internalLoggingFactory) {
         this.name = name;
         this.batchMaxItems = batchMaxItems;
@@ -161,6 +169,7 @@ public class PipelineConfig {
         this.sendQueueMaxBytes = sendQueueMaxBytes;
         this.maxRetries = maxRetries;
         this.retryTimeoutMs = retryTimeoutMs;
+        this.sleep = sleep;
         this.dropRateLimitedBatches = dropRateLimitedBatches;
         this.internalQueuesCheckTimeoutMs = internalQueuesCheckTimeoutMs;
         this.useDirectBuffers = useDirectBuffers;
@@ -187,6 +196,17 @@ public class PipelineConfig {
         private long sendQueueMaxBytes = batchMaxBytes * 10;
         private int maxRetries = 2;
         private long retryTimeoutMs = 60 * 1000;
+        private Jitter jitter = new Jitter(1000);
+        private BiFunction<Integer, Long, Boolean> sleep = (attempt, timeoutMs) -> {
+            try {
+                long backoffMs = timeoutMs * (1 << (attempt - 1));
+                Thread.sleep(backoffMs + jitter.generate());
+                return true;
+            } catch (InterruptedException e) {
+                Thread.currentThread().interrupt();
+                return false;
+            }
+        };
         private boolean dropRateLimitedBatches = false;
         private long internalQueuesCheckTimeoutMs = 25;
         private boolean useDirectBuffers = true;
@@ -199,24 +219,25 @@ public class PipelineConfig {
 
         public PipelineConfig build() {
             return new PipelineConfig(
-                name,
-                batchMaxItems,
-                batchMaxBytes,
-                batchTimeoutMs,
-                sortByTime,
-                staticLabels,
-                sendQueueMaxBytes,
-                maxRetries,
-                retryTimeoutMs,
-                dropRateLimitedBatches,
-                internalQueuesCheckTimeoutMs,
-                useDirectBuffers,
-                drainOnStop,
-                metricsEnabled,
-                writer,
-                httpConfigBuilder.build(writer.contentType),
-                httpClientFactory,
-                internalLoggingFactory);
+                    name,
+                    batchMaxItems,
+                    batchMaxBytes,
+                    batchTimeoutMs,
+                    sortByTime,
+                    staticLabels,
+                    sendQueueMaxBytes,
+                    maxRetries,
+                    retryTimeoutMs,
+                    sleep,
+                    dropRateLimitedBatches,
+                    internalQueuesCheckTimeoutMs,
+                    useDirectBuffers,
+                    drainOnStop,
+                    metricsEnabled,
+                    writer,
+                    httpConfigBuilder.build(writer.contentType),
+                    httpClientFactory,
+                    internalLoggingFactory);
         }
 
         public Builder setName(String name) {
@@ -261,6 +282,16 @@ public class PipelineConfig {
 
         public Builder setRetryTimeoutMs(long retryTimeoutMs) {
             this.retryTimeoutMs = retryTimeoutMs;
+            return this;
+        }
+
+        public Builder setMaxJitterMs(int maxJitterMs) {
+            this.jitter = new Jitter(maxJitterMs);
+            return this;
+        }
+
+        public Builder setSleep(BiFunction<Integer, Long, Boolean> sleep) {
+            this.sleep = sleep;
             return this;
         }
 
