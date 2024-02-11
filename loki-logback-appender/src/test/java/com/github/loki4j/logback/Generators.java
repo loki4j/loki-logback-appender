@@ -1,7 +1,6 @@
 package com.github.loki4j.logback;
 
 import java.io.IOException;
-import java.net.ConnectException;
 import java.nio.ByteBuffer;
 import java.nio.charset.StandardCharsets;
 import java.time.Instant;
@@ -11,11 +10,6 @@ import java.util.HashMap;
 import java.util.Iterator;
 import java.util.concurrent.ThreadLocalRandom;
 import java.util.concurrent.atomic.AtomicBoolean;
-import java.util.concurrent.locks.LockSupport;
-import java.util.concurrent.BrokenBarrierException;
-import java.util.concurrent.CyclicBarrier;
-import java.util.concurrent.TimeUnit;
-import java.util.concurrent.TimeoutException;
 import java.util.function.BiFunction;
 import java.util.function.Consumer;
 import java.util.function.Function;
@@ -27,13 +21,14 @@ import com.github.loki4j.client.batch.LogRecord;
 import com.github.loki4j.client.batch.LogRecordBatch;
 import com.github.loki4j.client.http.HttpConfig;
 import com.github.loki4j.client.http.Loki4jHttpClient;
-import com.github.loki4j.client.http.LokiResponse;
 import com.github.loki4j.client.pipeline.PipelineConfig;
 import com.github.loki4j.client.util.ByteBufferFactory;
 import com.github.loki4j.client.writer.Writer;
+import com.github.loki4j.testkit.dummy.DummyHttpClient;
 import com.github.loki4j.testkit.dummy.ExceptionGenerator;
 import com.github.loki4j.testkit.dummy.LokiHttpServerMock;
 import com.github.loki4j.testkit.dummy.StringPayload;
+import com.github.loki4j.testkit.dummy.DummyHttpClient.SendInvocation;
 
 import ch.qos.logback.classic.Level;
 import ch.qos.logback.classic.LoggerContext;
@@ -424,82 +419,19 @@ public class Generators {
         }
     }
 
-    public static class DummyHttpSender extends AbstractHttpSender {
-        private final DummyHttpClient client = new DummyHttpClient();
+    public static class DummyHttpSender extends WrappingHttpSender<DummyHttpClient> {
 
-        public byte[] lastBatch() {
-            return client.lastBatch;
+        public DummyHttpSender() {
+            super(new DummyHttpClient());
         }
 
-        @Override
-        public HttpConfig.Builder getConfig() {
-            return defaultHttpConfig;
+        public SendInvocation captureSendInvocation() {
+            return client.captureSendInvocation();
         }
 
-        @Override
-        public Function<HttpConfig, Loki4jHttpClient> getHttpClientFactory() {
-            return cfg -> client;
+        public byte[] lastSendData() {
+            return client.lastSendData();
         }
-    }
-
-    public static class DummyHttpClient implements Loki4jHttpClient {
-        public byte[] lastBatch;
-
-        @Override
-        public void close() throws Exception { }
-
-        @Override
-        public HttpConfig getConfig() {
-            return defaultHttpConfig.build("test");
-        }
-
-        @Override
-        public LokiResponse send(ByteBuffer batch) throws Exception {
-            lastBatch = new byte[batch.remaining()];
-            batch.get(lastBatch);
-            return new LokiResponse(204, "");
-        }
-    }
-
-    public static class StoppableHttpClient extends DummyHttpClient {
-        public AtomicBoolean wait = new AtomicBoolean(false);
-        @Override
-        public LokiResponse send(ByteBuffer batch) throws Exception {
-            while(wait.get())
-                LockSupport.parkNanos(1000);
-            return super.send(batch);
-        }
-    }
-
-    public static class FailingHttpClient extends DummyHttpClient {
-        private static final LokiResponse RATE_LIMITED = new LokiResponse(429, "Rate Limited Request");
-        public final AtomicBoolean fail = new AtomicBoolean(false);
-        public final AtomicBoolean rateLimited = new AtomicBoolean(false);
-        public volatile int sendCount = 0;
-        private final CyclicBarrier requestSent = new CyclicBarrier(2);
-
-        @Override
-        public LokiResponse send(ByteBuffer batch) throws Exception {
-            // ensures data is not updated until assertions are done
-            await();
-            sendCount++;
-            var response = super.send(batch);
-            // ensures the code has run before running the assertions
-            await();
-            if (fail.get() && !rateLimited.get())
-                throw new ConnectException("Text exception");
-            else if (fail.get() && rateLimited.get())
-                return RATE_LIMITED;
-            return response;
-        }
-
-        void await() throws InterruptedException, BrokenBarrierException, TimeoutException {
-            try {
-                requestSent.await(1L, TimeUnit.MINUTES);
-            } catch (InterruptedException | BrokenBarrierException ex) {
-                Thread.currentThread().interrupt();
-            }
-        };
     }
 
     public static class WrappingHttpSender<T extends Loki4jHttpClient> extends AbstractHttpSender {

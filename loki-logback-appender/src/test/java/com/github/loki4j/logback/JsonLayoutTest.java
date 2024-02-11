@@ -49,7 +49,7 @@ public class JsonLayoutTest {
             appender.append(events);
             appender.waitAllAppended();
 
-            var actual = StringPayload.parse(sender.lastBatch(), encoder.charset);
+            var actual = StringPayload.parse(sender.lastSendData(), encoder.charset);
             //System.out.println(expected);
             //System.out.println(actual);
             assertEquals("jsonLayout", expected, actual);
