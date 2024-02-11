@@ -55,14 +55,18 @@ public class DummyHttpClient implements Loki4jHttpClient {
     } 
 
     public static class SendInvocation {
-        public int sendNo;
-        public byte[] data;
-        private CompletableFuture<SendInvocation> next;
+
+        public final int sendNo;
+        public final byte[] data;
+
+        private final CompletableFuture<SendInvocation> next;
+
         public SendInvocation(int sendNo, byte[] batch, CompletableFuture<SendInvocation> next) {
             this.sendNo = sendNo;
             this.data = batch;
             this.next = next;
         }
+
         public SendInvocation waitForNextSend(long timeoutMs) {
             return waitForFuture(next, timeoutMs);
         }
