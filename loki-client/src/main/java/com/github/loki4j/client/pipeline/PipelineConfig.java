@@ -2,7 +2,6 @@ package com.github.loki4j.client.pipeline;
 
 import java.util.function.BiFunction;
 import java.util.function.Function;
-import java.util.function.Supplier;
 
 import com.github.loki4j.client.http.ApacheHttpClient;
 import com.github.loki4j.client.http.HttpConfig;
