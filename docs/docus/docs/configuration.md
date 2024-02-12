@@ -34,7 +34,7 @@ Most Loki4j appender settings are optional. These few that are required are mark
 |minRetryBackoffMs|500|Initial backoff delay before the next attempt to re-send a failed batch. Batches are retried with an exponential backoff (e.g. 0.5s, 1s, 2s, 4s, etc.) and jitter|
 |maxRetryBackoffMs|60000|Maximum backoff delay before the next attempt to re-send a failed batch|
 |maxRetryJitterMs|500|Upper bound for a jitter added to the retry delays|
-|dropRateLimitedBatches|false|Disables retries of batches that Loki responds to with a 429 status code (TooManyRequests). This reduces impacts on batches from other tenants, which could end up being delayed or dropped due to backoff.|
+|dropRateLimitedBatches|false|If true, batches that Loki responds to with a `429` status code (TooManyRequests) will be dropped rather than retried|
 |internalQueuesCheckTimeoutMs|25|A timeout for Loki4j threads to sleep if encode or send queues are empty. Decreasing this value means lower latency at cost of higher CPU usage|
 |useDirectBuffers|true|Use off-heap memory for storing intermediate data|
 |drainOnStop|true|If true, the appender will try to send all the remaining events on shutdown, so the proper shutdown procedure might take longer. Otherwise, the appender will drop the unsent events|
