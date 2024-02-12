@@ -5,6 +5,7 @@ import java.util.concurrent.CompletableFuture;
 import java.util.concurrent.TimeUnit;
 
 import com.github.loki4j.client.http.HttpConfig;
+import com.github.loki4j.client.http.HttpStatus;
 import com.github.loki4j.client.http.Loki4jHttpClient;
 import com.github.loki4j.client.http.LokiResponse;
 
@@ -31,7 +32,7 @@ public class DummyHttpClient implements Loki4jHttpClient {
         nextSendFuture.complete(send);
         nextSendFuture = newSendFuture;
         lastSend = send;
-        return new LokiResponse(204, "");
+        return new LokiResponse(HttpStatus.NO_CONTENT, "");
     }
 
     public SendInvocation lastSend() {

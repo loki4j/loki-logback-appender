@@ -10,7 +10,6 @@ import java.util.concurrent.TimeoutException;
 
 import org.junit.Test;
 
-import com.github.loki4j.client.pipeline.PipelineConfig;
 import com.github.loki4j.logback.Generators.FailingStringWriter;
 import com.github.loki4j.logback.Generators.WrappingHttpSender;
 import com.github.loki4j.testkit.dummy.FailingHttpClient;
@@ -259,8 +258,10 @@ public class Loki4jAppenderTest {
         var failingHttpClient = new FailingHttpClient();
         var sender = new WrappingHttpSender<>(failingHttpClient);
         var encoder = defaultToStringEncoder();
+
         var appender = appender(1, 4000L, encoder, sender);
-        appender.setPipelineBuilder(PipelineConfig.builder().setSleep((a, b) -> true));
+        appender.setMinRetryBackoffMs(50);
+        appender.setMaxRetryJitterMs(10);
         appender.start();
 
         // all retries failed
@@ -270,7 +271,7 @@ public class Loki4jAppenderTest {
         var sendCapture = sender.client.captureSendInvocation();
         appender.append(events[0]);
 
-        var send1 =  sendCapture.waitForNextSend(100);
+        var send1 =  sendCapture.waitForNextSend(50);
         assertEquals("send", 1, send1.sendNo);
         assertEquals("send", expectedPayload, StringPayload.parse(send1.data, encoder.charset));
 
@@ -278,7 +279,7 @@ public class Loki4jAppenderTest {
         assertEquals("retry1", 2, send2.sendNo);
         assertEquals("retry1", expectedPayload, StringPayload.parse(send2.data, encoder.charset));
 
-        var send3 = send2.waitForNextSend(100);
+        var send3 = send2.waitForNextSend(150);
         assertEquals("retry2", 3, send3.sendNo);
         assertEquals("retry2", expectedPayload, StringPayload.parse(send3.data, encoder.charset));
 
@@ -286,7 +287,7 @@ public class Loki4jAppenderTest {
 
         appender.append(events[1]);
 
-        var send4 =  send3.waitForNextSend(100);
+        var send4 =  send3.waitForNextSend(50);
         assertEquals("send-2", 4, send4.sendNo);
         assertEquals("send-2", expectedPayload2, StringPayload.parse(send4.data, encoder.charset));
 
@@ -311,9 +312,8 @@ public class Loki4jAppenderTest {
         var encoder = defaultToStringEncoder();
 
         var appender = appender(1, 4000L, encoder, sender);
-        // retries rate limited requests by default
-        appender.setDropRateLimitedBatches(false);
-        appender.setPipelineBuilder(PipelineConfig.builder().setSleep((a, b) -> true));
+        appender.setMinRetryBackoffMs(50);
+        appender.setMaxRetryJitterMs(10);
         appender.start();
 
         sender.client.setFailure(FailureType.RATE_LIMITED);
@@ -325,11 +325,11 @@ public class Loki4jAppenderTest {
         assertEquals("send", 1, send1.sendNo);
         assertEquals("send", expectedPayload, StringPayload.parse(send1.data, encoder.charset));
 
-        var send2 = send1.waitForNextSend(100);
+        var send2 = send1.waitForNextSend(150);
         assertEquals("retry1", 2, send2.sendNo);
         assertEquals("retry1", expectedPayload, StringPayload.parse(send2.data, encoder.charset));
 
-        var send3 = send2.waitForNextSend(100);
+        var send3 = send2.waitForNextSend(200);
         assertEquals("retry2", 3, send3.sendNo);
         assertEquals("retry2", expectedPayload, StringPayload.parse(send3.data, encoder.charset));
 

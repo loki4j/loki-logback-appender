@@ -48,10 +48,10 @@ public final class JavaHttpClient implements Loki4jHttpClient {
             .newBuilder()
             .timeout(Duration.ofMillis(conf.requestTimeoutMs))
             .uri(URI.create(conf.pushUrl))
-            .header(HttpHeaders.CONTENT_TYPE, conf.contentType);
+            .header(HttpHeader.CONTENT_TYPE, conf.contentType);
 
-        conf.tenantId.ifPresent(tenant -> requestBuilder.setHeader(HttpHeaders.X_SCOPE_ORGID, tenant));
-        conf.basicAuthToken().ifPresent(token -> requestBuilder.setHeader(HttpHeaders.AUTHORIZATION, "Basic " + token));
+        conf.tenantId.ifPresent(tenant -> requestBuilder.setHeader(HttpHeader.X_SCOPE_ORGID, tenant));
+        conf.basicAuthToken().ifPresent(token -> requestBuilder.setHeader(HttpHeader.AUTHORIZATION, "Basic " + token));
     }
 
     @Override

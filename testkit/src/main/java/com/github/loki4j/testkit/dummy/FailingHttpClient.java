@@ -3,6 +3,7 @@ package com.github.loki4j.testkit.dummy;
 import java.net.ConnectException;
 import java.nio.ByteBuffer;
 
+import com.github.loki4j.client.http.HttpStatus;
 import com.github.loki4j.client.http.LokiResponse;
 
 public class FailingHttpClient extends DummyHttpClient {
@@ -15,7 +16,7 @@ public class FailingHttpClient extends DummyHttpClient {
         if (failureType == FailureType.CONNECTION_EXCEPTION)
             throw new ConnectException("Text exception");
         else if (failureType == FailureType.RATE_LIMITED)
-            return new LokiResponse(429, "Rate Limited Request");
+            return new LokiResponse(HttpStatus.TOO_MANY_REQUESTS, "Rate Limited Request");
         return response;
     }
 
