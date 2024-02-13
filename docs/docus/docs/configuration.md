@@ -30,9 +30,11 @@ Most Loki4j appender settings are optional. These few that are required are mark
 |batchMaxBytes|4194304|Max number of bytes a single batch can contain (as counted by Loki). This value should not be greater than `server.grpc_server_max_recv_msg_size` in your Loki config|
 |batchTimeoutMs|60000|Max time in milliseconds to keep a batch before sending it to Loki, even if max items/bytes limits for this batch are not reached|
 |sendQueueMaxBytes|41943040|Max number of bytes to keep in the send queue. When the queue is full, incoming log events are dropped|
-|maxRetries|2|Max number of attempts to send a batch to Loki before it will be dropped. A failed batch send could be retried in case of `ConnectException` or `503` status from Loki. Also, if `dropRateLimitedBatches=false` and status code is `429`, the request will be retried. All other exceptions and 4xx-5xx statuses do not cause a retry in order to avoid duplicates|
-|retryTimeoutMs|60000|Time in milliseconds to wait before the next attempt to re-send the failed batch|
-|dropRateLimitedBatches|false|Disables retries of batches that Loki responds to with a 429 status code (TooManyRequests). This reduces impacts on batches from other tenants, which could end up being delayed or dropped due to backoff.|
+|maxRetries|2|Max number of attempts to send a batch to Loki before it will be dropped. A failed batch send could be retried in case of `ConnectException`, or receiving statuses `429`, `503` from Loki. All other exceptions and 4xx-5xx statuses do not cause a retry in order to avoid duplicates|
+|minRetryBackoffMs|500|Initial backoff delay before the next attempt to re-send a failed batch. Batches are retried with an exponential backoff (e.g. 0.5s, 1s, 2s, 4s, etc.) and jitter|
+|maxRetryBackoffMs|60000|Maximum backoff delay before the next attempt to re-send a failed batch|
+|maxRetryJitterMs|500|Upper bound for a jitter added to the retry delays|
+|dropRateLimitedBatches|false|If true, batches that Loki responds to with a `429` status code (TooManyRequests) will be dropped rather than retried|
 |internalQueuesCheckTimeoutMs|25|A timeout for Loki4j threads to sleep if encode or send queues are empty. Decreasing this value means lower latency at cost of higher CPU usage|
 |useDirectBuffers|true|Use off-heap memory for storing intermediate data|
 |drainOnStop|true|If true, the appender will try to send all the remaining events on shutdown, so the proper shutdown procedure might take longer. Otherwise, the appender will drop the unsent events|

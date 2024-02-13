@@ -15,14 +15,14 @@ First you need to make sure that Micrometer dependency is added to your project:
 <dependency>
     <groupId>io.micrometer</groupId>
     <artifactId>micrometer-core</artifactId>
-    <version>1.9.15</version>
+    <version>1.12.2</version>
 </dependency>
 ```
 
 <!--Gradle-->
 
 ```groovy
-implementation 'io.micrometer:micrometer-core:1.9.15'
+implementation 'io.micrometer:micrometer-core:1.12.2'
 ```
 <!--END_DOCUSAURUS_CODE_TABS-->
 
@@ -40,6 +40,7 @@ You will be able to monitor the following Loki4j metrics:
 Metric|Description
 -------|-------
 loki4j.append.time|Time for a single event append operation
+loki4j.append.errors|Number of errors occurred while appending events
 loki4j.encode.time|Time for a batch encode operation
 loki4j.encode.events|Number of log events processed by encoder
 loki4j.encode.batches|Number of batches processed by encoder

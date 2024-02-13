@@ -36,7 +36,7 @@ public class PatternLayoutTest {
             "['100100002','l=INFO c=TestApp t=main | m3-line1\\rline2\\r ']]}]}"
             ).replace('\'', '"');
 
-        var actual = new String(sender.lastBatch(), encoder.charset);
+        var actual = new String(sender.lastSendData(), encoder.charset);
         //System.out.println(expected);
         //System.out.println(actual);
         assertEquals("escape", expected, actual);

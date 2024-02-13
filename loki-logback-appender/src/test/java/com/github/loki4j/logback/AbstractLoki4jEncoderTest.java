@@ -128,7 +128,7 @@ public class AbstractLoki4jEncoderTest {
                     .stream("[l, INFO, mrk1, v1, mrk2, v2]",
                         "ts=104 INFO | Test message 4")
                     .build(),
-                StringPayload.parse(sender.lastBatch()));
+                StringPayload.parse(sender.lastSendData()));
             //System.out.println(new String(sender.lastBatch()));
             return null;
         });
@@ -165,7 +165,7 @@ public class AbstractLoki4jEncoderTest {
                         "ts=103 ERROR | Test message 5",
                         "ts=110 INFO | Test message 6")
                     .build(),
-                StringPayload.parse(sender.lastBatch()));
+                StringPayload.parse(sender.lastSendData()));
             return null;
         });
 
@@ -188,7 +188,7 @@ public class AbstractLoki4jEncoderTest {
                         "ts=105 INFO | Test message 1",
                         "ts=110 INFO | Test message 6")
                     .build(),
-                StringPayload.parse(sender.lastBatch()));
+                StringPayload.parse(sender.lastSendData()));
             return null;
         });
 
@@ -214,7 +214,7 @@ public class AbstractLoki4jEncoderTest {
                     .stream("[l, ERROR]",
                         "ts=103 ERROR | Test message 5")
                     .build(),
-                StringPayload.parse(sender.lastBatch()));
+                StringPayload.parse(sender.lastSendData()));
             return null;
         });
 
@@ -240,7 +240,7 @@ public class AbstractLoki4jEncoderTest {
                     .stream("[l, ERROR]",
                         "ts=103 ERROR | Test message 5")
                     .build(),
-                StringPayload.parse(sender.lastBatch()));
+                StringPayload.parse(sender.lastSendData()));
             return null;
         });
     }

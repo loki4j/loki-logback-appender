@@ -85,20 +85,30 @@ public class PipelineConfig {
 
     /**
      * Max number of attempts to send a batch to Loki before it will be dropped.
-     * A failed batch send could be retried only in case of ConnectException or 503 status from Loki.
+     * A failed batch send could be retried only in case of ConnectException, or receiving statuses 429, 503 from Loki.
      * All other exceptions and 4xx-5xx statuses do not cause a retry in order to avoid duplicates.
      */
     public final int maxRetries;
 
     /**
-     * Time in milliseconds to wait before the next attempt to re-send a failed batch.
+     * Initial backoff delay before the next attempt to re-send a failed batch.
+     * Batches are retried with an exponential backoff (e.g. 0.5s, 1s, 2s, 4s, etc.) and jitter.
      */
-    public final long retryTimeoutMs;
+    public final long minRetryBackoffMs;
 
     /**
-     * Disables retries of batches that Loki responds to with a 429 status code (TooManyRequests).
-     * This reduces impacts on batches from other tenants, which could end up being delayed or dropped
-     * due to backoff.
+     * Maximum backoff delay before the next attempt to re-send a failed batch.
+     */
+    public final long maxRetryBackoffMs;
+
+    /**
+     * Upper bound for a jitter added to the retry delays.
+     */
+    public final int maxRetryJitterMs;
+
+    /**
+     * If true, batches that Loki responds to with a 429 status code (TooManyRequests)
+     * will be dropped rather than retried.
      */
     public final boolean dropRateLimitedBatches;
 
@@ -147,10 +157,25 @@ public class PipelineConfig {
      */
     public final Function<Object, Loki4jLogger> internalLoggingFactory;
 
-    public PipelineConfig(String name, int batchMaxItems, int batchMaxBytes, long batchTimeoutMs, boolean sortByTime,
-            boolean staticLabels, long sendQueueMaxBytes, int maxRetries, long retryTimeoutMs, boolean dropRateLimitedBatches,
-            long internalQueuesCheckTimeoutMs, boolean useDirectBuffers, boolean drainOnStop, boolean metricsEnabled,
-            WriterFactory writerFactory, HttpConfig httpConfig, Function<HttpConfig, Loki4jHttpClient> httpClientFactory,
+    private PipelineConfig(
+            String name,
+            int batchMaxItems,
+            int batchMaxBytes,
+            long batchTimeoutMs,
+            boolean sortByTime,
+            boolean staticLabels,
+            long sendQueueMaxBytes,
+            int maxRetries,
+            long minRetryBackoffMs,
+            long maxRetryBackoffMs,
+            int maxRetryJitterMs,
+            boolean dropRateLimitedBatches,
+            long internalQueuesCheckTimeoutMs,
+            boolean useDirectBuffers,
+            boolean drainOnStop,
+            boolean metricsEnabled,
+            WriterFactory writerFactory,
+            HttpConfig httpConfig, Function<HttpConfig, Loki4jHttpClient> httpClientFactory,
             Function<Object, Loki4jLogger> internalLoggingFactory) {
         this.name = name;
         this.batchMaxItems = batchMaxItems;
@@ -160,7 +185,9 @@ public class PipelineConfig {
         this.staticLabels = staticLabels;
         this.sendQueueMaxBytes = sendQueueMaxBytes;
         this.maxRetries = maxRetries;
-        this.retryTimeoutMs = retryTimeoutMs;
+        this.minRetryBackoffMs = minRetryBackoffMs;
+        this.maxRetryBackoffMs = maxRetryBackoffMs;
+        this.maxRetryJitterMs = maxRetryJitterMs;
         this.dropRateLimitedBatches = dropRateLimitedBatches;
         this.internalQueuesCheckTimeoutMs = internalQueuesCheckTimeoutMs;
         this.useDirectBuffers = useDirectBuffers;
@@ -186,7 +213,9 @@ public class PipelineConfig {
         private boolean staticLabels = false;
         private long sendQueueMaxBytes = batchMaxBytes * 10;
         private int maxRetries = 2;
-        private long retryTimeoutMs = 60 * 1000;
+        private long minRetryBackoffMs = 500;
+        private long maxRetryBackoffMs = 60 * 1000;
+        private int maxRetryJitterMs = 500;
         private boolean dropRateLimitedBatches = false;
         private long internalQueuesCheckTimeoutMs = 25;
         private boolean useDirectBuffers = true;
@@ -199,24 +228,26 @@ public class PipelineConfig {
 
         public PipelineConfig build() {
             return new PipelineConfig(
-                name,
-                batchMaxItems,
-                batchMaxBytes,
-                batchTimeoutMs,
-                sortByTime,
-                staticLabels,
-                sendQueueMaxBytes,
-                maxRetries,
-                retryTimeoutMs,
-                dropRateLimitedBatches,
-                internalQueuesCheckTimeoutMs,
-                useDirectBuffers,
-                drainOnStop,
-                metricsEnabled,
-                writer,
-                httpConfigBuilder.build(writer.contentType),
-                httpClientFactory,
-                internalLoggingFactory);
+                    name,
+                    batchMaxItems,
+                    batchMaxBytes,
+                    batchTimeoutMs,
+                    sortByTime,
+                    staticLabels,
+                    sendQueueMaxBytes,
+                    maxRetries,
+                    minRetryBackoffMs,
+                    maxRetryBackoffMs,
+                    maxRetryJitterMs,
+                    dropRateLimitedBatches,
+                    internalQueuesCheckTimeoutMs,
+                    useDirectBuffers,
+                    drainOnStop,
+                    metricsEnabled,
+                    writer,
+                    httpConfigBuilder.build(writer.contentType),
+                    httpClientFactory,
+                    internalLoggingFactory);
         }
 
         public Builder setName(String name) {
@@ -259,8 +290,18 @@ public class PipelineConfig {
             return this;
         }
 
-        public Builder setRetryTimeoutMs(long retryTimeoutMs) {
-            this.retryTimeoutMs = retryTimeoutMs;
+        public Builder setMinRetryBackoffMs(long minRetryBackoffMs) {
+            this.minRetryBackoffMs = minRetryBackoffMs;
+            return this;
+        }
+
+        public Builder setMaxRetryBackoffMs(long maxRetryBackoffMs) {
+            this.maxRetryBackoffMs = maxRetryBackoffMs;
+            return this;
+        }
+
+        public Builder setMaxRetryJitterMs(int maxRetryJitterMs) {
+            this.maxRetryJitterMs = maxRetryJitterMs;
             return this;
         }
 

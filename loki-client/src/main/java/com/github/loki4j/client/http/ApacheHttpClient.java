@@ -55,9 +55,9 @@ public final class ApacheHttpClient implements Loki4jHttpClient {
 
         requestBuilder = () -> {
             var request = new HttpPost(conf.pushUrl);
-            request.addHeader(HttpHeaders.CONTENT_TYPE, conf.contentType);
-            conf.tenantId.ifPresent(tenant -> request.addHeader(HttpHeaders.X_SCOPE_ORGID, tenant));
-            conf.basicAuthToken().ifPresent(token -> request.setHeader(HttpHeaders.AUTHORIZATION, "Basic " + token));
+            request.addHeader(HttpHeader.CONTENT_TYPE, conf.contentType);
+            conf.tenantId.ifPresent(tenant -> request.addHeader(HttpHeader.X_SCOPE_ORGID, tenant));
+            conf.basicAuthToken().ifPresent(token -> request.setHeader(HttpHeader.AUTHORIZATION, "Basic " + token));
             return request;
         };
     }
