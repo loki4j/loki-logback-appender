@@ -12,7 +12,6 @@ import java.util.concurrent.TimeUnit;
 import java.util.concurrent.atomic.AtomicBoolean;
 import java.util.concurrent.atomic.AtomicLong;
 import java.util.concurrent.locks.LockSupport;
-import java.util.function.BiFunction;
 import java.util.function.Supplier;
 
 import com.github.loki4j.client.batch.Batcher;
@@ -21,6 +20,7 @@ import com.github.loki4j.client.batch.ByteBufferQueue;
 import com.github.loki4j.client.batch.LogRecord;
 import com.github.loki4j.client.batch.LogRecordBatch;
 import com.github.loki4j.client.batch.LogRecordStream;
+import com.github.loki4j.client.http.HttpStatus;
 import com.github.loki4j.client.http.Loki4jHttpClient;
 import com.github.loki4j.client.http.LokiResponse;
 import com.github.loki4j.client.util.ByteBufferFactory;
@@ -32,8 +32,6 @@ import static com.github.loki4j.client.util.StringUtils.bytesAsBase64String;
 import static com.github.loki4j.client.util.StringUtils.bytesAsUtf8String;
 
 public final class AsyncBufferPipeline {
-
-    private static final int TOO_MANY_REQUEST_HTTP_STATUS = 429;
 
     private static final Comparator<LogRecord> compareByTime = (e1, e2) -> {
         var tsCmp = Long.compare(e1.timestampMs, e2.timestampMs);
@@ -67,17 +65,13 @@ public final class AsyncBufferPipeline {
 
     private final Loki4jLogger log;
 
+    private final ExponentialBackoff backoffMs;
+
+    private final Jitter jitterMs;
+
     private final boolean drainOnStop;
 
     private final int maxRetries;
-
-    private final long retryTimeoutMs;
-
-    /**
-     * Sleep function that receives attempts and a timeout and sleeps depending on the
-     * value of those parameters. Used when retries are enabled.
-     */
-    private final BiFunction<Integer, Long, Boolean> sleep;
 
     /**
      * Disables retries of batches that Loki responds to with a 429 status code (TooManyRequests).
@@ -118,10 +112,10 @@ public final class AsyncBufferPipeline {
         writer = conf.writerFactory.factory.apply(conf.batchMaxBytes, bufferFactory);
         sendQueue = new ByteBufferQueue(conf.sendQueueMaxBytes, bufferFactory);
         httpClient = conf.httpClientFactory.apply(conf.httpConfig);
+        backoffMs = new ExponentialBackoff(conf.minRetryBackoffMs, conf.maxRetryBackoffMs);
+        jitterMs = new Jitter(conf.maxRetryJitterMs);
         drainOnStop = conf.drainOnStop;
         maxRetries = conf.maxRetries;
-        retryTimeoutMs = conf.retryTimeoutMs;
-        sleep = conf.sleep;
         dropRateLimitedBatches = conf.dropRateLimitedBatches;
         parkTimeoutNs = TimeUnit.MILLISECONDS.toNanos(conf.internalQueuesCheckTimeoutMs);
         this.log = conf.internalLoggingFactory.apply(this);
@@ -341,7 +335,7 @@ public final class AsyncBufferPipeline {
             ++retry <= maxRetries
             && checkIfEligibleForRetry(e, r)
             && reportRetryFailed(e, r)
-            && sleep.apply(retry, retryTimeoutMs));
+            && backoffSleep(retry));
 
         if (metrics != null) metrics.batchSendFailed(sendErrorReasonProvider(e, r));
         return null;
@@ -376,11 +370,25 @@ public final class AsyncBufferPipeline {
     }
 
     private boolean checkIfEligibleForRetry(Exception e, LokiResponse r) {
-        return e instanceof ConnectException || (r != null && (r.status == 503 || shouldRetryRateLimitedBatches(r.status)));
+        return e instanceof ConnectException || (r != null && checkIfStatusEligibleForRetry(r.status));
     }
 
-    private boolean shouldRetryRateLimitedBatches(int status) {
-        return status == TOO_MANY_REQUEST_HTTP_STATUS && !dropRateLimitedBatches;
+    private boolean checkIfStatusEligibleForRetry(int status) {
+        return status == HttpStatus.SERVICE_UNAVAILABLE
+                || (status == HttpStatus.TOO_MANY_REQUESTS && !dropRateLimitedBatches);
+    }
+
+    private boolean backoffSleep(int retryNo) {
+        if (retryNo == 1)
+            backoffMs.reset();    // resetting backoff state on first retry
+        var timeoutMs = backoffMs.nextDelay() + jitterMs.nextJitter();
+        log.trace("Retry #%s backoff timeout: %s ms; state: %s", retryNo, timeoutMs, backoffMs);
+        try {
+            Thread.sleep(timeoutMs);
+        } catch (InterruptedException e) {
+            Thread.currentThread().interrupt();
+        }
+        return true;
     }
 
     void waitSendQueueLessThan(int size, long timeoutMs) {

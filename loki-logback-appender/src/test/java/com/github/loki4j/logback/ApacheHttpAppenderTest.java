@@ -2,7 +2,7 @@ package com.github.loki4j.logback;
 
 import java.util.Random;
 
-import com.github.loki4j.client.http.HttpHeaders;
+import com.github.loki4j.client.http.HttpHeader;
 import com.github.loki4j.testkit.dummy.LokiHttpServerMock;
 import com.github.loki4j.testkit.dummy.StringPayload;
 
@@ -82,7 +82,7 @@ public class ApacheHttpAppenderTest {
             a.waitAllAppended();
             assertEquals("http send", expected, StringPayload.parse(mockLoki.lastBatch));
             assertTrue(mockLoki.lastHeaders
-                .get(HttpHeaders.X_SCOPE_ORGID)
+                .get(HttpHeader.X_SCOPE_ORGID)
                 .contains("tenant1"));
             return null;
         });

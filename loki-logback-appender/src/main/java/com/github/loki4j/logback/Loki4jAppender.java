@@ -1,11 +1,9 @@
 package com.github.loki4j.logback;
 
-import java.util.Objects;
 import java.util.concurrent.atomic.AtomicLong;
 
 import com.github.loki4j.client.pipeline.AsyncBufferPipeline;
 import com.github.loki4j.client.pipeline.PipelineConfig;
-import com.github.loki4j.client.pipeline.PipelineConfig.Builder;
 
 import ch.qos.logback.classic.spi.ILoggingEvent;
 import ch.qos.logback.core.UnsynchronizedAppenderBase;
@@ -17,11 +15,6 @@ import ch.qos.logback.core.status.Status;
  */
 public class Loki4jAppender extends UnsynchronizedAppenderBase<ILoggingEvent> {
 
-    private static final int MAX_RETRIES = 30;
-    /**
-     * A day in milliseconds.
-     */
-    private static final long MAX_RETRY_TIMEOUT_MS = 86_400_000L;
     /**
      * Max number of events to put into a single batch before sending it to Loki.
      */
@@ -46,25 +39,30 @@ public class Loki4jAppender extends UnsynchronizedAppenderBase<ILoggingEvent> {
 
     /**
      * Max number of attempts to send a batch to Loki before it will be dropped.
-     * A failed batch send could be retried only in case of ConnectException or 503 status from Loki.
+     * A failed batch send could be retried only in case of ConnectException, or receiving statuses 429, 503 from Loki.
      * All other exceptions and 4xx-5xx statuses do not cause a retry in order to avoid duplicates.
      */
     private int maxRetries = 2;
 
     /**
-     * Time in milliseconds to wait before the next attempt to re-send a failed batch.
+     * Initial backoff delay before the next attempt to re-send a failed batch.
+     * Batches are retried with an exponential backoff (e.g. 0.5s, 1s, 2s, 4s, etc.) and jitter.
      */
-    private long retryTimeoutMs = 60 * 1000;
+    public long minRetryBackoffMs = 500;
 
     /**
-     * Upper bound in milliseconds for a jitter added to the retries.
+     * Maximum backoff delay before the next attempt to re-send a failed batch.
      */
-    private int maxJitterMs = 1000;
+    public long maxRetryBackoffMs = 60 * 1000;
 
     /**
-     * Disables retries of batches that Loki responds to with a 429 status code (TooManyRequests).
-     * This reduces impacts on batches from other tenants, which could end up being delayed or dropped
-     * due to backoff.
+     * Upper bound for a jitter added to the retry delays.
+     */
+    public int maxRetryJitterMs = 500;
+
+    /**
+     * If true, batches that Loki responds to with a 429 status code (TooManyRequests)
+     * will be dropped rather than retried.
      */
     private boolean dropRateLimitedBatches = false;
 
@@ -157,8 +155,9 @@ public class Loki4jAppender extends UnsynchronizedAppenderBase<ILoggingEvent> {
             .setStaticLabels(encoder.getStaticLabels())
             .setSendQueueMaxBytes(sendQueueMaxBytes)
             .setMaxRetries(maxRetries)
-            .setRetryTimeoutMs(retryTimeoutMs)
-            .setMaxJitterMs(maxJitterMs)
+            .setMinRetryBackoffMs(minRetryBackoffMs)
+            .setMaxRetryBackoffMs(maxRetryBackoffMs)
+            .setMaxRetryJitterMs(maxRetryJitterMs)
             .setDropRateLimitedBatches(dropRateLimitedBatches)
             .setInternalQueuesCheckTimeoutMs(internalQueuesCheckTimeoutMs)
             .setUseDirectBuffers(useDirectBuffers)
@@ -246,28 +245,22 @@ public class Loki4jAppender extends UnsynchronizedAppenderBase<ILoggingEvent> {
     }
 
     public void setMaxRetries(int maxRetries) {
-        if (maxRetries > MAX_RETRIES) {
-            addWarn("Invalid value for `maxRetries`, using " + MAX_RETRIES + " instead.");
-            this.maxRetries = MAX_RETRIES;
-        } else {
             this.maxRetries = maxRetries;
-        }
     }
-    public void setRetryTimeoutMs(long retryTimeoutMs) {
-        if (retryTimeoutMs > MAX_RETRY_TIMEOUT_MS) {
-            addWarn("Invalid value for `retryTimeoutMs`, using " + MAX_RETRY_TIMEOUT_MS + " instead.");
-            this.retryTimeoutMs = MAX_RETRY_TIMEOUT_MS;
-        } else {
-            this.retryTimeoutMs = retryTimeoutMs;
-        }
+    public void setMinRetryBackoffMs(long minRetryBackoffMs) {
+        this.minRetryBackoffMs = minRetryBackoffMs;
     }
-
-    public void setMaxJitterMs(int maxJitterMs) {
-        this.maxJitterMs = maxJitterMs;
+    public void setMaxRetryBackoffMs(long maxRetryBackoffMs) {
+        this.maxRetryBackoffMs = maxRetryBackoffMs;
     }
-
+    public void setMaxRetryJitterMs(int maxRetryJitterMs) {
+        this.maxRetryJitterMs = maxRetryJitterMs;
+    }
     public void setDropRateLimitedBatches(boolean dropRateLimitedBatches) {
         this.dropRateLimitedBatches = dropRateLimitedBatches;
+    }
+    public void setRetryTimeoutMs(long retryTimeoutMs) {
+        addWarn("The setting `retryTimeoutMs` is no longer supported. See `minRetryBackoffMs` and `maxRetryBackoffMs`");
     }
 
     /**
@@ -305,15 +298,8 @@ public class Loki4jAppender extends UnsynchronizedAppenderBase<ILoggingEvent> {
     public void setUseDirectBuffers(boolean useDirectBuffers) {
         this.useDirectBuffers = useDirectBuffers;
     }
-
-    /**
-     * Sets the PipelineBuilder, this method is intended for testing
-     * purpose exclusively.
-     *
-     * @param pipelineBuilder the pipeline builder
-     */
-    void setPipelineBuilder(Builder pipelineBuilder) {
-        this.pipelineBuilder = Objects.requireNonNull(pipelineBuilder);
+    public void setInternalQueuesCheckTimeoutMs(long internalQueuesCheckTimeoutMs) {
+        this.internalQueuesCheckTimeoutMs = internalQueuesCheckTimeoutMs;
     }
 
 }

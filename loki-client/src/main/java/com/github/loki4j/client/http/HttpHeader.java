@@ -1,6 +1,6 @@
 package com.github.loki4j.client.http;
 
-public class HttpHeaders {
+public class HttpHeader {
     
     public static final String CONTENT_TYPE = "Content-Type";
     public static final String AUTHORIZATION = "Authorization";
