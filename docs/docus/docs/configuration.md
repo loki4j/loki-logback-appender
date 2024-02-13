@@ -62,9 +62,41 @@ Most Loki4j appender settings are optional. These few that are required are mark
 |format.label.readMarkers|false|If true, Loki4j scans each log record for attached LabelMarker to add its values to record's labels|
 |format.label.nopex|true|If true, exception info is not added to labels. If false, you should take care of proper formatting|
 |format.label.streamCache|UnboundAtomicMapCache|An implementation of a Stream cache to use|
-|format.message.pattern||**Required**. Logback pattern to use for log record's message|
-|format.staticLabels|false|If you use only one label for all log records, you can set this flag to true and save some CPU time on grouping records by label|
+|format.staticLabels|false|If you use only a constant label set (e.g. same keys and values) for all log records, you can set this flag to true and save some CPU time on grouping records by label|
 |format.sortByTime|false|If true, log records in batch are sorted by timestamp. If false, records will be sent to Loki in arrival order. Enable this if you see 'entry out of order' error from Loki|
+
+#### Plain text message layout
+
+By default, the plain text layout (backed by Logback's `PatternLayout` class) is used.
+It supports the following settings:
+
+|Setting|Default|Description|
+|-------|-------|-----------|
+|format.message.pattern||**Required**. Logback pattern to use for log record's message|
+
+#### JSON message layout
+
+|Setting|Default|Description|
+|-------|-------|-----------|
+|format.message.loggerName.enabled|true|Allows to configure if the provider is enabled|
+|format.message.loggerName.fieldName|logger_name|A JSON field name to use for this provider|
+|format.message.loggerName.targetLength|-1|The desired target length of logger name: `-1` to disable abbreviation, `0` to print class name only, >`0` to abbreviate to the target length|
+|format.message.logLevel.enabled|true|Allows to configure if the provider is enabled|
+|format.message.logLevel.fieldName|level|A JSON field name to use for this provider|
+|format.message.mdc.enabled|true|Allows to configure if the provider is enabled|
+|format.message.mdc.fieldName|mdc_|A prefix added to each JSON field name written by this provider|
+|format.message.mdc.include||A set of MDC keys to include into JSON payload. If not specified, all keys are included|
+|format.message.mdc.exclude||A set of MDC keys to exclude from JSON payload. Exclude list has precedence over include list. If not specified, all keys are included|
+|format.message.message.enabled|true|Allows to configure if the provider is enabled|
+|format.message.message.fieldName|message|A JSON field name to use for this provider|
+|format.message.stackTrace.enabled|true|Allows to configure if the provider is enabled|
+|format.message.stackTrace.fieldName|stack_trace|A JSON field name to use for this provider|
+|format.message.stackTrace.throwableConverter||An optional custom stack trace formatter|
+|format.message.threadName.enabled|true|Allows to configure if the provider is enabled|
+|format.message.threadName.fieldName|thread_name|A JSON field name to use for this provider|
+|format.message.timestamp.enabled|true|Allows to configure if the provider is enabled|
+|format.message.timestamp.fieldName|timestamp_ms|A JSON field name to use for this provider|
+|format.message.customProvider||An optional list of custom JSON providers|
 
 ## Examples
 
