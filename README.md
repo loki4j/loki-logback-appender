@@ -21,7 +21,7 @@ If you have found this project helpful, please drop a :star:!
 - Flexible management of Loki labels using MDC and SLF4J Markers
 - Logback formatting patterns can be used for both labels and messages
 - Optional sorting of log records by timestamp before sending them to Loki
-- Zero-dependency (for Java 11+)
+- Zero-dependency
 - Logging performance metrics
 
 More details and links to examples can be found [here](https://loki4j.github.io/loki-logback-appender/#key-features).
