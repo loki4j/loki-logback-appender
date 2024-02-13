@@ -6,10 +6,13 @@ configuration and enjoy.
 
 ### Quick Start
 
-For Maven project add the following dependency to your `pom.xml`:
+The current stable version of Loki4j requires at least Java 11 and Logback v1.3.x.
+See the [compatibility matrix](/docs/compatibility) for more information about older versions support.
+
+Add the following dependency to your project:
 
 <!--DOCUSAURUS_CODE_TABS-->
-<!--Java 11+-->
+<!--Maven-->
 
 ```xml
 <dependency>
@@ -18,42 +21,14 @@ For Maven project add the following dependency to your `pom.xml`:
     <version>%version%</version>
 </dependency>
 ```
-<!--Java 8-->
-
-```xml
-<dependency>
-    <groupId>com.github.loki4j</groupId>
-    <artifactId>loki-logback-appender-jdk8</artifactId>
-    <version>%version%</version>
-</dependency>
-<dependency>
-    <groupId>org.apache.httpcomponents</groupId>
-    <artifactId>httpclient</artifactId>
-    <version>4.5.14</version>
-</dependency>
-```
-<!--END_DOCUSAURUS_CODE_TABS-->
-
-For Gradle project add the following dependency to your `build.gradle`:
-
-<!--DOCUSAURUS_CODE_TABS-->
-<!--Java 11+-->
+<!--Gradle-->
 
 ```groovy
 implementation 'com.github.loki4j:loki-logback-appender:%version%'
 ```
-<!--Java 8-->
-
-```groovy
-implementation 'com.github.loki4j:loki-logback-appender-jdk8:%version%'
-implementation 'org.apache.httpcomponents:httpclient:4.5.14'
-```
 <!--END_DOCUSAURUS_CODE_TABS-->
 
 Then add Loki appender to your `logback.xml`:
-
-<!--DOCUSAURUS_CODE_TABS-->
-<!--Java 11+-->
 
 ```xml
 <appender name="LOKI" class="com.github.loki4j.logback.Loki4jAppender">
@@ -76,33 +51,9 @@ Then add Loki appender to your `logback.xml`:
 </root>
 ```
 
-<!--Java 8-->
-
-```xml
-<appender name="LOKI" class="com.github.loki4j.logback.Loki4jAppender">
-    <http class="com.github.loki4j.logback.ApacheHttpSender">
-        <url>http://localhost:3100/loki/api/v1/push</url>
-    </http>
-    <format>
-        <label>
-            <pattern>app=my-app,host=${HOSTNAME},level=%level</pattern>
-        </label>
-        <message>
-            <pattern>l=%level h=${HOSTNAME} c=%logger{20} t=%thread | %msg %ex</pattern>
-        </message>
-        <sortByTime>true</sortByTime>
-    </format>
-</appender>
-
-<root level="DEBUG">
-    <appender-ref ref="LOKI" />
-</root>
-```
-<!--END_DOCUSAURUS_CODE_TABS-->
-
 For more details, please refer to [Docs](docs/configuration).
 
-Migrating from the previous version? Read the [Migration Guide](docs/migration).
+Migrating from the previous Loki4j version? Read the [Migration Guide](docs/migration).
 
 ### Key Features:
 

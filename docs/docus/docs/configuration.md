@@ -90,28 +90,6 @@ We need to define only required settings, leaving optional settings with their d
 </appender>
 ```
 
-### Minimalistic configuration compatible with Java 8
-
-For Java 8 we would need to modify the previous example a bit.
-We would have to use Apache HTTP sender because the default Java HTTP sender works only for Java 11+.
-Check the corresponding [configuration section](apacheclient) for details.
-
-```xml
-<appender name="LOKI" class="com.github.loki4j.logback.Loki4jAppender">
-    <http class="com.github.loki4j.logback.ApacheHttpSender">
-        <url>http://localhost:3100/loki/api/v1/push</url>
-    </http>
-    <format>
-        <label>
-            <pattern>app=my-app,host=${HOSTNAME},level=%level</pattern>
-        </label>
-        <message>
-            <pattern>l=%level h=${HOSTNAME} c=%logger{20} t=%thread | %msg %ex</pattern>
-        </message>
-    </format>
-</appender>
-```
-
 ### Overriding the default settings
 
 In this example we would like to change max batch size to 100 records, batch timeout to 10s, label key-value separator to `:`,
