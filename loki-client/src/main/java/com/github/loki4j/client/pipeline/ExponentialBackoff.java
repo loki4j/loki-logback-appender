@@ -24,4 +24,9 @@ public class ExponentialBackoff {
     public void reset() {
         currentDelay = minDelay;
     }
+
+    @Override
+    public String toString() {
+        return "ExponentialBackoff [minDelay=" + minDelay + ", maxDelay=" + maxDelay + ", currentDelay=" + currentDelay + "]";
+    }
 }

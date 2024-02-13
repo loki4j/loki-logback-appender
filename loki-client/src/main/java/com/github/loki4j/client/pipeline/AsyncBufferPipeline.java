@@ -382,7 +382,7 @@ public final class AsyncBufferPipeline {
         if (retryNo == 1)
             backoffMs.reset();    // resetting backoff state on first retry
         var timeoutMs = backoffMs.nextDelay() + jitterMs.nextJitter();
-        log.trace("Retry backoff: %s ms", timeoutMs);
+        log.trace("Retry #%s backoff timeout: %s ms; state: %s", retryNo, timeoutMs, backoffMs);
         try {
             Thread.sleep(timeoutMs);
         } catch (InterruptedException e) {
