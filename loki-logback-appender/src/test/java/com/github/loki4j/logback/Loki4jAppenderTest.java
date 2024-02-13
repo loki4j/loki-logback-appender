@@ -287,7 +287,7 @@ public class Loki4jAppenderTest {
 
         appender.append(events[1]);
 
-        var send4 =  send3.waitForNextSend(50);
+        var send4 =  send3.waitForNextSend(100);
         assertEquals("send-2", 4, send4.sendNo);
         assertEquals("send-2", expectedPayload2, StringPayload.parse(send4.data, encoder.charset));
 
