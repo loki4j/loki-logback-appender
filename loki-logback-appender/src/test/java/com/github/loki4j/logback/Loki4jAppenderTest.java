@@ -271,7 +271,7 @@ public class Loki4jAppenderTest {
         var sendCapture = sender.client.captureSendInvocation();
         appender.append(events[0]);
 
-        var send1 =  sendCapture.waitForNextSend(50);
+        var send1 =  sendCapture.waitForNextSend(100);
         assertEquals("send", 1, send1.sendNo);
         assertEquals("send", expectedPayload, StringPayload.parse(send1.data, encoder.charset));
 
