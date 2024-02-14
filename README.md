@@ -16,12 +16,12 @@ If you have found this project helpful, please drop a :star:!
 
 ## Key features
 
-- Support for both JSON and Protobuf Loki API flavours
-- Compatibility with Grafana Cloud
 - Flexible management of Loki labels using MDC and SLF4J Markers
-- Logback formatting patterns can be used for both labels and messages
-- Optional sorting of log records by timestamp before sending them to Loki
-- Zero-dependency
+- Out of the box JSON layout support for log message formatting
+- Logback plain text formatting patterns can be used for both labels and messages
+- Support for JSON and Protobuf Loki API flavours
+- Compatibility with Grafana Cloud
+- Zero-dependency, small size JAR
 - Logging performance metrics
 
 More details and links to examples can be found [here](https://loki4j.github.io/loki-logback-appender/#key-features).

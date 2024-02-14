@@ -57,29 +57,29 @@ Migrating from the previous Loki4j version? Read the [Migration Guide](docs/migr
 
 ### Key Features:
 
-- **Support for both JSON and Protobuf Loki API flavours.**
-With Loki4j you can try out both JSON and Protobuf API for sending log records to Loki.
-[Learn more...](docs/protobuf)
-
-- **Compatibility with Grafana Cloud.**
-Loki4j supports HTTP basic authentication, so you can use it for hosted Loki services (e.g. Grafana Cloud)
-as well as for on-premise Loki instances.
-See the [example](docs/grafanacloud)...
-
 - **Flexible management of Loki labels using MDC and SLF4J Markers.**
 You can specify Loki labels dynamically for any set of log records, and even on per-record basis.
 [Learn more...](docs/labels)
 
-- **Logback formatting patterns can be used for both labels and messages.**
+- **Out of the box JSON layout support for log message formatting.**
+You choose between plain text and JSON (Logstash-like) log message formatting.
+[Learn more...](docs/jsonlayout)
+
+- **Logback plain text formatting patterns can be used for both labels and messages.**
 Loki4j allows you to use all the power and flexibility of
 [Logback patterns](http://logback.qos.ch/manual/layouts.html#ClassicPatternLayout)
 both for labels and messages.
 Same patterns are used in Logback's standard `ConsoleAppender` or `FileAppender`,
 so you are probably familiar with the syntax.
 
-- **Optional sorting of log records by timestamp before sending them to Loki.**
-In Loki versions pre 2.4.0, to prevent log records loss, Loki4j can sort log records by timestamp inside each batch,
-so they will not be rejected by Loki with 'entry out of order' error.
+- **Support for JSON and Protobuf Loki API flavours.**
+With Loki4j you can try out either JSON or Protobuf API for sending log records to Loki.
+[Learn more...](docs/protobuf)
+
+- **Compatibility with Grafana Cloud.**
+Loki4j supports HTTP basic authentication, so you can use it for hosted Loki services (e.g. Grafana Cloud)
+as well as for on-premise Loki instances.
+See the [example](docs/grafanacloud)...
 
 - **No JSON library bundled.**
 Instead of bundling with any JSON library (e.g. Jackson),

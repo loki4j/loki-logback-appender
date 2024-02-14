@@ -43,6 +43,10 @@ Most Loki4j appender settings are optional. These few that are required are mark
 
 ### HTTP settings
 
+Loki4j uses Java HTTP client by default.
+If you want to switch to Apache HTTP client, please see [this](apacheclient.md) page.
+HTTP settings are the same for both Java And Apache clients:
+
 |Setting|Default|Description|
 |-------|-------|-----------|
 |http.url||**Required**. Loki endpoint to be used for sending batches|
@@ -53,6 +57,10 @@ Most Loki4j appender settings are optional. These few that are required are mark
 |http.tenantId||Tenant identifier. It is required only for sending logs directly to Loki operating in multi-tenant mode. Otherwise this setting has no effect|
 
 ### Format settings
+
+By default, Loki4j encodes log record batches to JSON before sending them to Loki API.
+If you want to use Protobuf encoding instead, please follow [this](protobuf.md) guide.
+Format settings do not depend on which encoding you use.
 
 |Setting|Default|Description|
 |-------|-------|-----------|
@@ -67,7 +75,7 @@ Most Loki4j appender settings are optional. These few that are required are mark
 
 #### Plain text message layout
 
-By default, the plain text layout (backed by Logback's `PatternLayout` class) is used.
+Plain text layout (backed by Logback's `PatternLayout` class) is used by default.
 It supports the following settings:
 
 |Setting|Default|Description|
@@ -76,26 +84,30 @@ It supports the following settings:
 
 #### JSON message layout
 
+This layout converts log messages to JSON.
+Please check the [instruction](jsonlayout.md) how to enable and use it.
+This layout has the following settings:
+
 |Setting|Default|Description|
 |-------|-------|-----------|
-|format.message.loggerName.enabled|true|Allows to configure if the provider is enabled|
-|format.message.loggerName.fieldName|logger_name|A JSON field name to use for this provider|
+|format.message.loggerName.enabled|true|Enable loggerName provider|
+|format.message.loggerName.fieldName|logger_name|A JSON field name to use for loggerName|
 |format.message.loggerName.targetLength|-1|The desired target length of logger name: `-1` to disable abbreviation, `0` to print class name only, >`0` to abbreviate to the target length|
-|format.message.logLevel.enabled|true|Allows to configure if the provider is enabled|
-|format.message.logLevel.fieldName|level|A JSON field name to use for this provider|
-|format.message.mdc.enabled|true|Allows to configure if the provider is enabled|
+|format.message.logLevel.enabled|true|Enable logLevel provider|
+|format.message.logLevel.fieldName|level|A JSON field name to use for logLevel|
+|format.message.mdc.enabled|true|Enable MDC provider|
 |format.message.mdc.fieldName|mdc_|A prefix added to each JSON field name written by this provider|
 |format.message.mdc.include||A set of MDC keys to include into JSON payload. If not specified, all keys are included|
 |format.message.mdc.exclude||A set of MDC keys to exclude from JSON payload. Exclude list has precedence over include list. If not specified, all keys are included|
-|format.message.message.enabled|true|Allows to configure if the provider is enabled|
-|format.message.message.fieldName|message|A JSON field name to use for this provider|
-|format.message.stackTrace.enabled|true|Allows to configure if the provider is enabled|
-|format.message.stackTrace.fieldName|stack_trace|A JSON field name to use for this provider|
+|format.message.message.enabled|true|Enable message provider|
+|format.message.message.fieldName|message|A JSON field name to use for message|
+|format.message.stackTrace.enabled|true|Enable stackTrace provider|
+|format.message.stackTrace.fieldName|stack_trace|A JSON field name to use for stackTrace|
 |format.message.stackTrace.throwableConverter||An optional custom stack trace formatter|
-|format.message.threadName.enabled|true|Allows to configure if the provider is enabled|
-|format.message.threadName.fieldName|thread_name|A JSON field name to use for this provider|
-|format.message.timestamp.enabled|true|Allows to configure if the provider is enabled|
-|format.message.timestamp.fieldName|timestamp_ms|A JSON field name to use for this provider|
+|format.message.threadName.enabled|true|Enable threadName provider|
+|format.message.threadName.fieldName|thread_name|A JSON field name to use for this threadName|
+|format.message.timestamp.enabled|true|Enable timestamp provider|
+|format.message.timestamp.fieldName|timestamp_ms|A JSON field name to use for timestamp|
 |format.message.customProvider||An optional list of custom JSON providers|
 
 ## Examples
@@ -126,7 +138,8 @@ We need to define only required settings, leaving optional settings with their d
 
 In this example we would like to change max batch size to 100 records, batch timeout to 10s, label key-value separator to `:`,
 and sort log records by time before sending them to Loki.
-Also, we would like to use [Apache HTTP sender](apacheclient) with a pool of 10 connections and [Protobuf API](protobuf).
+Messages should be in [JSON format](jsonlayout), without timestamp field, and with logger name abbreviated to 20 characters.
+Also, we would like to use [Apache HTTP sender](apacheclient) with request timeout 10s and [Protobuf API](protobuf).
 Finally, we want to see Loki4j debug output.
 
 ```xml
@@ -136,15 +149,20 @@ Finally, we want to see Loki4j debug output.
     <verbose>true</verbose>
     <http class="com.github.loki4j.logback.ApacheHttpSender">
         <url>http://localhost:3100/loki/api/v1/push</url>
-        <maxConnections>10</maxConnections>
+        <requestTimeoutMs>10000</requestTimeoutMs>
     </http>
     <format class="com.github.loki4j.logback.ProtobufEncoder">
         <label>
             <pattern>app:my-app,host:${HOSTNAME}</pattern>
             <keyValueSeparator>:</keyValueSeparator>
         </label>
-        <message>
-            <pattern>l=%level c=%logger{20} t=%thread | %msg %ex</pattern>
+        <message class="com.github.loki4j.logback.JsonLayout">
+            <timestamp>
+                <enabled>false</enabled>
+            </timestamp>
+            <loggerName>
+                <targetLength>20</targetLength>
+            </loggerName>
         </message>
         <sortByTime>true</sortByTime>
     </format>
