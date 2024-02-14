@@ -30,7 +30,6 @@ You can set an upper bound for a jitter value using a new setting `maxRetryJitte
 Along with previously existed retry on status `503` received from Loki, in this version Loki4j will by default retry sending batches after receiving `429` as well.
 You can turn this off using `dropRateLimitedBatches` setting.
 
-...
 
 ## Upgrading from 1.3.x to 1.4.x
 
