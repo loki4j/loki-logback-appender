@@ -21,7 +21,7 @@ If you have found this project helpful, please drop a :star:!
 - Logback plain text formatting patterns can be used for both labels and messages
 - Support for JSON and Protobuf Loki API flavours
 - Compatibility with Grafana Cloud
-- Zero-dependency, small size JAR
+- Zero-dependency
 - Logging performance metrics
 
 More details and links to examples can be found [here](https://loki4j.github.io/loki-logback-appender/#key-features).

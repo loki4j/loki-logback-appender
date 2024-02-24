@@ -3,12 +3,14 @@
     "Logback": [
       "configuration",
       "labels",
+      "jsonlayout",
       "protobuf",
       "apacheclient",
       "grafanacloud",
       "performance",
       "tracing",
       "migration",
+      "compatibility",
       "olddocs"
     ]
   },

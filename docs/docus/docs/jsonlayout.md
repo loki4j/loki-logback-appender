@@ -6,14 +6,13 @@ sidebar_label: JSON Message Layout
 
 ## Enabling the JSON layout
 
-By default, the plain text layout (backed by Logback's `PatternLayout` class) is used.
-But you can override this by specifying a `class` attribute for a `message` section:
+You can enable JSON layout for log messages by specifying a corresponding `class` attribute for a `message` section:
 
 ```xml
 <appender name="LOKI" class="com.github.loki4j.logback.Loki4jAppender">
     <format>
-        <message class="com.github.loki4j.logback.JsonLayout" />
         ...
+        <message class="com.github.loki4j.logback.JsonLayout" />
     </format>
     ...
 </appender>
@@ -75,8 +74,9 @@ Please check the [reference](configuration#json-message-layout) for a complete l
 
 ## Custom JSON providers
 
-If standard providers don't cover all your needs, you may consider to create your own provider.
+If standard providers don't cover all your needs, you may consider creating your own provider.
 All providers must implement interface `com.github.loki4j.logback.json.JsonProvider`.
+The easiest way to build one field provider is to extend it from `AbstractFieldJsonProvider` from the same package.
 Here is the example implementation:
 
 ```java

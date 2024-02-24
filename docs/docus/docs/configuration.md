@@ -60,7 +60,7 @@ HTTP settings are the same for both Java And Apache clients:
 
 By default, Loki4j encodes log record batches to JSON before sending them to Loki API.
 If you want to use Protobuf encoding instead, please follow [this](protobuf.md) guide.
-Format settings do not depend on which encoding you use.
+Format settings do not depend on the encoding you use.
 
 |Setting|Default|Description|
 |-------|-------|-----------|
@@ -75,7 +75,7 @@ Format settings do not depend on which encoding you use.
 
 #### Plain text message layout
 
-Plain text layout (backed by Logback's `PatternLayout` class) is used by default.
+Plain text log message layout (backed by Logback's `PatternLayout` class) is used by default.
 It supports the following settings:
 
 |Setting|Default|Description|

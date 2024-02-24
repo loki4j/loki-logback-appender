@@ -4,7 +4,7 @@ title: Loki4j Compatibility Matrix
 sidebar_label: Compatibility Matrix
 ---
 
-The versions of Loki4j that introduced major (and mostly backward-incompatible) upgrades are listed in a table below.
+The versions of Loki4j that had introduced backward-incompatible platform upgrades are listed in a table below.
 
 |Loki4j|Java|Logback|
 |-------|-------|-----------|
@@ -16,8 +16,8 @@ The versions of Loki4j that introduced major (and mostly backward-incompatible) 
 ### Java 8 support
 
 Loki4j ships a separate artifact with `-jdk8` suffix that is built specially for Java 8.
-Futhermore, we would need to use Apache HTTP sender with Java 8, as the default Java HTTP sender works only for Java 11+.
-So you would need to add the following dependencies to your project:
+Futhermore, we would need to use the Apache HTTP client with Java 8, as the default Java HTTP client works only for Java 11+.
+So please add the following dependencies to your project:
 
 <!--DOCUSAURUS_CODE_TABS-->
 <!--Maven-->
@@ -26,7 +26,7 @@ So you would need to add the following dependencies to your project:
 <dependency>
     <groupId>com.github.loki4j</groupId>
     <artifactId>loki-logback-appender-jdk8</artifactId>
-    <version>%version%</version>
+    <version>1.5.0</version>
 </dependency>
 <dependency>
     <groupId>org.apache.httpcomponents</groupId>
@@ -38,7 +38,7 @@ So you would need to add the following dependencies to your project:
 <!--Gradle-->
 
 ```groovy
-implementation 'com.github.loki4j:loki-logback-appender-jdk8:%version%'
+implementation 'com.github.loki4j:loki-logback-appender-jdk8:1.5.0'
 implementation 'org.apache.httpcomponents:httpclient:4.5.14'
 ```
 <!--END_DOCUSAURUS_CODE_TABS-->
@@ -53,7 +53,7 @@ Then you need to explicitly specify `ApacheHttpSender` by setting `class` attrib
 </appender>
 ```
 
-The minimalistic appender configuration compatible with Java 8 might look like this:
+A minimalistic appender configuration compatible with Java 8 might look like this:
 
 ```xml
 <appender name="LOKI" class="com.github.loki4j.logback.Loki4jAppender">
