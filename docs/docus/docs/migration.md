@@ -4,6 +4,33 @@ title: Loki4j Migration Guide
 sidebar_label: Migration Guide
 ---
 
+## Upgrading from 1.4.x to 1.5.x
+
+The biggest breaking change in Loki4j v1.5.0 is an upgrade to Logback v1.3.x.
+
+#### Logback 1.2.x is no longer supported
+
+The minimum supported version of Logback is now 1.3.0.
+This version is not compatible with Logback v1.2.x series.
+
+If you use only Loki4j and some Logback classic appenders (console, file, etc.), the upgrade should go pretty smooth for you.
+However, if you project depends on other external Logback appenders, please make sure all of them are compatible with Logback v1.3.x before upgrading.
+
+#### Retry functionality changed
+
+Previously you could set only constant value for a timeout between retries.
+Now you can switch between constant and exponential backoff using two new settings `minRetryBackoffMs` and `maxRetryBackoffMs`.
+If both of them have the same value, this value will be used as a constant timeout.
+Otherwise, the timeout value will exponentially grow on each retry from `minRetryBackoffMs` to `maxRetryBackoffMs`.
+The previous setting `retryTimeoutMs` was removed.
+
+Also, in 1.5.0 a jitter (i.e. a small random value) is added to the retry backoff delay.
+You can set an upper bound for a jitter value using a new setting `maxRetryJitterMs`.
+
+Along with previously existed retry on status `503` received from Loki, in this version Loki4j will by default retry sending batches after receiving `429` as well.
+You can turn this off using `dropRateLimitedBatches` setting.
+
+
 ## Upgrading from 1.3.x to 1.4.x
 
 Version 1.4.0 contains several new features that may break the existing behavior for some users.

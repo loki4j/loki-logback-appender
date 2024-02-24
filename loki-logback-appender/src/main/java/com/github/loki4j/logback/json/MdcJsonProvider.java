@@ -12,13 +12,14 @@ public class MdcJsonProvider extends AbstractFieldJsonProvider {
 
     /**
      * A set of MDC keys to exclude from JSON payload.
-     * Exclude list has a precedence over include list
+     * Exclude list has a precedence over include list.
+     * If not specified, all keys are included.
      */
     private Set<String> excludeKeys = new HashSet<>();
 
     /**
      * A set of MDC keys to include into JSON payload.
-     * Exclude list has a precedence over include list
+     * If not specified, all keys are included.
      */
     private Set<String> includeKeys = new HashSet<>();
 

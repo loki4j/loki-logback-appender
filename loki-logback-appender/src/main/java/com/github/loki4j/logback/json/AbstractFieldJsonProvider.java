@@ -10,6 +10,9 @@ public abstract class AbstractFieldJsonProvider extends ContextAwareBase impleme
 
     private boolean enabled = true;
 
+    /**
+     * A JSON field name to use for this provider.
+     */
     private String fieldName;
 
     private volatile boolean started;

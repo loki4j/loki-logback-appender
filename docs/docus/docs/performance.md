@@ -1,7 +1,7 @@
 ---
 id: performance
 title: Performance Monitoring
-sidebar_label: Performance Monitoring
+sidebar_label: Monitoring
 ---
 
 You can monitor Loki4j's performance by enabling an instrumentation powered by [Micrometer](https://micrometer.io/).
