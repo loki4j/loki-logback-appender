@@ -12,7 +12,7 @@ public class MessageJsonProvider extends AbstractFieldJsonProvider {
 
     @Override
     protected void writeExactlyOneField(JsonEventWriter writer, ILoggingEvent event) {
-        writer.writeStringField(getFieldName(), event.getMessage());
+        writer.writeStringField(getFieldName(), event.getFormattedMessage());
     }
     
 }
