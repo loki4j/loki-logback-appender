@@ -27,7 +27,7 @@ That's it! After running your application you should see your log messages are s
 ## Fine-tuning the standard providers
 
 Loki4j comes with a predefined set of standard JSON providers, each of them can write zero, one, or more fields to the resulting JSON object.
-All standard provides are enabled by default, but you can disable them using a corresponding setting:
+All standard provides are enabled by default, but you can disable them using the `enabled` setting:
 
 ```xml
 <message class="com.github.loki4j.logback.JsonLayout">
@@ -43,7 +43,7 @@ This will remove a timestamp from the log record:
 {"logger_name":"io.my.App","level":"INFO","thread_name":"main","message":"42"}
 ```
 
-Most of the providers have a `fieldName` setting that allows you to customize a JSON field name they will write to:
+Most of the providers have a `fieldName` setting that allows you to customize the JSON field name they will write to:
 
 ```xml
 <message class="com.github.loki4j.logback.JsonLayout">
@@ -75,8 +75,8 @@ Please check the [reference](configuration#json-message-layout) for a complete l
 ## Custom JSON providers
 
 If standard providers don't cover all your needs, you may consider creating your own provider.
-All providers must implement interface `com.github.loki4j.logback.json.JsonProvider`.
-The easiest way to build one field provider is to extend it from `AbstractFieldJsonProvider` from the same package.
+All providers must implement the `com.github.loki4j.logback.json.JsonProvider` interface.
+The easiest way to build one-field provider is to derive it from the `AbstractFieldJsonProvider` from the same package.
 Here is the example implementation:
 
 ```java
@@ -93,7 +93,7 @@ public class ConstantProvider extends AbstractFieldJsonProvider {
 }
 ```
 
-Then you need to enable this new provider in the configuration:
+Then you need to register this new provider in the configuration:
 
 ```xml
 <message class="com.github.loki4j.logback.JsonLayout">

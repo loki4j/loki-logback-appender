@@ -22,6 +22,9 @@ If both of them have the same value, this value will be used as a constant timeo
 Otherwise, the timeout value will exponentially grow on each retry from `minRetryBackoffMs` to `maxRetryBackoffMs`.
 The previous setting `retryTimeoutMs` was removed.
 
+Please note that by default retry delays are exponential now, and they start from 0.5s (1s, 2s, 4s, etc.).
+Previously by default there was a constant delay 60s.
+
 Also, in 1.5.0 a jitter (i.e. a small random variation) is added to the retry backoff delay.
 You can set an upper bound for a jitter value using a new setting `maxRetryJitterMs`.
 
