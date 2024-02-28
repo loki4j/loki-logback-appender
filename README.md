@@ -17,9 +17,9 @@ If you have found this project helpful, please drop a :star:!
 ## Key features
 
 - Flexible management of Loki labels using MDC and SLF4J Markers
-- Out of the box JSON layout support for log message formatting
+- Out-of-the-box JSON layout support for log message formatting
 - Logback plain text formatting patterns can be used for both labels and messages
-- Support for JSON and Protobuf Loki API flavours
+- Support for JSON and Protobuf Loki API flavors
 - Compatibility with Grafana Cloud
 - Zero-dependency
 - Logging performance metrics
@@ -37,7 +37,7 @@ so you can build and test the project:
 
 - Java 11 or later
 
-Check out the project to the directory on your local machine and run:
+Check out the project in the directory on your local machine and run:
 
 ```sh
 ./gradlew check
@@ -45,7 +45,7 @@ Check out the project to the directory on your local machine and run:
 
 ## Project status
 
-At the moment all the main logging features are implemented and stabilized.
+At the moment all the main logging features have been implemented and stabilized.
 
 Further development will be concentrated on bug fixes (if any), keeping up with new versions of Loki, and
 improving the codebase so it's easier to maintain.

@@ -7,7 +7,7 @@ configuration and enjoy.
 ### Quick Start
 
 The current stable version of Loki4j requires at least Java 11 and Logback v1.3.x.
-See the [compatibility matrix](docs/compatibility) for more information about older versions support.
+See the [compatibility matrix](docs/compatibility) for more information about older versions' support.
 
 Add the following dependency to your project:
 
@@ -58,11 +58,11 @@ Migrating from the previous Loki4j version? Read the [Migration Guide](docs/migr
 ### Key Features:
 
 - **Flexible management of Loki labels using MDC and SLF4J Markers.**
-You can specify Loki labels dynamically for any set of log records, and even on per-record basis.
+You can specify Loki labels dynamically for any set of log records and even on a per-record basis.
 [Learn more...](docs/labels)
 
-- **Out of the box JSON layout support for log message formatting.**
-You choose between plain text and JSON (Logstash-like) log message formatting.
+- **Out-of-the-box JSON layout support for log message formatting.**
+You can choose between plain text and JSON (Logstash-like) log message formatting.
 [Learn more...](docs/jsonlayout)
 
 - **Logback plain text formatting patterns can be used for both labels and messages.**
@@ -72,32 +72,32 @@ both for labels and messages.
 Same patterns are used in Logback's standard `ConsoleAppender` or `FileAppender`,
 so you are probably familiar with the syntax.
 
-- **Support for JSON and Protobuf Loki API flavours.**
-With Loki4j you can try out either JSON or Protobuf API for sending log records to Loki.
+- **Support for JSON and Protobuf Loki API flavors.**
+With Loki4j, you can try out either JSON or Protobuf API to send log records to Loki.
 [Learn more...](docs/protobuf)
 
 - **Compatibility with Grafana Cloud.**
-Loki4j supports HTTP basic authentication, so you can use it for hosted Loki services (e.g. Grafana Cloud)
+Loki4j supports HTTP basic authentication, so you can use it for hosted Loki services (e.g., Grafana Cloud)
 as well as for on-premise Loki instances.
 See the [example](docs/grafanacloud)...
 
 - **No JSON library bundled.**
-Instead of bundling with any JSON library (e.g. Jackson),
+Instead of bundling with any JSON library (e.g., Jackson),
 Loki4j comes with a small part of JSON rendering functionality borrowed from [DSL-JSON](https://github.com/ngs-doo/dsl-json/).
 
 - **Zero-dependency.**
 Loki4j does not bring any new transitive dependencies to your project,
-assuming that you already use `logback-classic` for logging.
+assuming you already use `logback-classic` for logging.
 See the [example](docs/configuration#minimalistic-zero-dependency-configuration)...
 
 - **Logging performance metrics.**
-You can monitor Loki4j's performance (e.g. encode/send duration, number of batches sent, etc.)
+You can monitor Loki4j's performance (e.g., encode/send duration, number of batches sent, etc.)
 by enabling instrumentation powered by [Micrometer](https://micrometer.io/).
 [Learn more...](docs/performance)
 
 ### Project Status
 
-At the moment all the main logging features are implemented and stabilized.
+At the moment all the main logging features have been implemented and stabilized.
 
 Further development will be concentrated on bug fixes (if any), keeping up with new versions of Loki, and
 improving the codebase so it's easier to maintain.
