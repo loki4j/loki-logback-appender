@@ -10,7 +10,7 @@ No extra tools needed, just add Loki4j appender to your <a href="http://logback.
 configuration and enjoy.</p>
 <h3><a class="anchor" aria-hidden="true" id="quick-start"></a><a href="#quick-start" aria-hidden="true" class="hash-link"><svg class="hash-link-icon" aria-hidden="true" height="16" version="1.1" viewBox="0 0 16 16" width="16"><path fill-rule="evenodd" d="M4 9h1v1H4c-1.5 0-3-1.69-3-3.5S2.55 3 4 3h4c1.45 0 3 1.69 3 3.5 0 1.41-.91 2.72-2 3.25V8.59c.58-.45 1-1.27 1-2.09C10 5.22 8.98 4 8 4H4c-.98 0-2 1.22-2 2.5S3 9 4 9zm9-3h-1v1h1c1 0 2 1.22 2 2.5S13.98 12 13 12H9c-.98 0-2-1.22-2-2.5 0-.83.42-1.64 1-2.09V6.25c-1.09.53-2 1.84-2 3.25C6 11.31 7.55 13 9 13h4c1.45 0 3-1.69 3-3.5S14.5 6 13 6z"></path></svg></a>Quick Start</h3>
 <p>The current stable version of Loki4j requires at least Java 11 and Logback v1.3.x.
-See the <a href="docs/compatibility">compatibility matrix</a> for more information about older versions support.</p>
+See the <a href="docs/compatibility">compatibility matrix</a> for more information about older versions' support.</p>
 <p>Add the following dependency to your project:</p>
 <div class="tabs"><div class="nav-tabs"><div id="tab-group-16-tab-17" class="nav-link active" data-group="group_16" data-tab="tab-group-16-content-17">Maven</div><div id="tab-group-16-tab-18" class="nav-link" data-group="group_16" data-tab="tab-group-16-content-18">Gradle</div></div><div class="tab-content"><div id="tab-group-16-content-17" class="tab-pane active" data-group="group_16" tabindex="-1"><div><span><pre><code class="hljs css language-xml"><span class="hljs-tag">&lt;<span class="hljs-name">dependency</span>&gt;</span><br />    <span class="hljs-tag">&lt;<span class="hljs-name">groupId</span>&gt;</span>com.github.loki4j<span class="hljs-tag">&lt;/<span class="hljs-name">groupId</span>&gt;</span><br />    <span class="hljs-tag">&lt;<span class="hljs-name">artifactId</span>&gt;</span>loki-logback-appender<span class="hljs-tag">&lt;/<span class="hljs-name">artifactId</span>&gt;</span><br />    <span class="hljs-tag">&lt;<span class="hljs-name">version</span>&gt;</span>1.5.0<span class="hljs-tag">&lt;/<span class="hljs-name">version</span>&gt;</span><br /><span class="hljs-tag">&lt;/<span class="hljs-name">dependency</span>&gt;</span><br /></code></pre>
 </span></div></div><div id="tab-group-16-content-18" class="tab-pane" data-group="group_16" tabindex="-1"><div><span><pre><code class="hljs css language-groovy">implementation <span class="hljs-string">'com.github.loki4j:loki-logback-appender:1.5.0'</span><br /></code></pre>
@@ -40,10 +40,10 @@ See the <a href="docs/compatibility">compatibility matrix</a> for more informati
 <h3><a class="anchor" aria-hidden="true" id="key-features"></a><a href="#key-features" aria-hidden="true" class="hash-link"><svg class="hash-link-icon" aria-hidden="true" height="16" version="1.1" viewBox="0 0 16 16" width="16"><path fill-rule="evenodd" d="M4 9h1v1H4c-1.5 0-3-1.69-3-3.5S2.55 3 4 3h4c1.45 0 3 1.69 3 3.5 0 1.41-.91 2.72-2 3.25V8.59c.58-.45 1-1.27 1-2.09C10 5.22 8.98 4 8 4H4c-.98 0-2 1.22-2 2.5S3 9 4 9zm9-3h-1v1h1c1 0 2 1.22 2 2.5S13.98 12 13 12H9c-.98 0-2-1.22-2-2.5 0-.83.42-1.64 1-2.09V6.25c-1.09.53-2 1.84-2 3.25C6 11.31 7.55 13 9 13h4c1.45 0 3-1.69 3-3.5S14.5 6 13 6z"></path></svg></a>Key Features:</h3>
 <ul>
 <li><p><strong>Flexible management of Loki labels using MDC and SLF4J Markers.</strong>
-You can specify Loki labels dynamically for any set of log records, and even on per-record basis.
+You can specify Loki labels dynamically for any set of log records and even on a per-record basis.
 <a href="docs/labels">Learn more...</a></p></li>
-<li><p><strong>Out of the box JSON layout support for log message formatting.</strong>
-You choose between plain text and JSON (Logstash-like) log message formatting.
+<li><p><strong>Out-of-the-box JSON layout support for log message formatting.</strong>
+You can choose between plain text and JSON (Logstash-like) log message formatting.
 <a href="docs/jsonlayout">Learn more...</a></p></li>
 <li><p><strong>Logback plain text formatting patterns can be used for both labels and messages.</strong>
 Loki4j allows you to use all the power and flexibility of
@@ -51,27 +51,27 @@ Loki4j allows you to use all the power and flexibility of
 both for labels and messages.
 Same patterns are used in Logback's standard <code>ConsoleAppender</code> or <code>FileAppender</code>,
 so you are probably familiar with the syntax.</p></li>
-<li><p><strong>Support for JSON and Protobuf Loki API flavours.</strong>
-With Loki4j you can try out either JSON or Protobuf API for sending log records to Loki.
+<li><p><strong>Support for JSON and Protobuf Loki API flavors.</strong>
+With Loki4j, you can try out either JSON or Protobuf API to send log records to Loki.
 <a href="docs/protobuf">Learn more...</a></p></li>
 <li><p><strong>Compatibility with Grafana Cloud.</strong>
-Loki4j supports HTTP basic authentication, so you can use it for hosted Loki services (e.g. Grafana Cloud)
+Loki4j supports HTTP basic authentication, so you can use it for hosted Loki services (e.g., Grafana Cloud)
 as well as for on-premise Loki instances.
 See the <a href="docs/grafanacloud">example</a>...</p></li>
 <li><p><strong>No JSON library bundled.</strong>
-Instead of bundling with any JSON library (e.g. Jackson),
+Instead of bundling with any JSON library (e.g., Jackson),
 Loki4j comes with a small part of JSON rendering functionality borrowed from <a href="https://github.com/ngs-doo/dsl-json/">DSL-JSON</a>.</p></li>
 <li><p><strong>Zero-dependency.</strong>
 Loki4j does not bring any new transitive dependencies to your project,
-assuming that you already use <code>logback-classic</code> for logging.
+assuming you already use <code>logback-classic</code> for logging.
 See the <a href="docs/configuration#minimalistic-zero-dependency-configuration">example</a>...</p></li>
 <li><p><strong>Logging performance metrics.</strong>
-You can monitor Loki4j's performance (e.g. encode/send duration, number of batches sent, etc.)
+You can monitor Loki4j's performance (e.g., encode/send duration, number of batches sent, etc.)
 by enabling instrumentation powered by <a href="https://micrometer.io/">Micrometer</a>.
 <a href="docs/performance">Learn more...</a></p></li>
 </ul>
 <h3><a class="anchor" aria-hidden="true" id="project-status"></a><a href="#project-status" aria-hidden="true" class="hash-link"><svg class="hash-link-icon" aria-hidden="true" height="16" version="1.1" viewBox="0 0 16 16" width="16"><path fill-rule="evenodd" d="M4 9h1v1H4c-1.5 0-3-1.69-3-3.5S2.55 3 4 3h4c1.45 0 3 1.69 3 3.5 0 1.41-.91 2.72-2 3.25V8.59c.58-.45 1-1.27 1-2.09C10 5.22 8.98 4 8 4H4c-.98 0-2 1.22-2 2.5S3 9 4 9zm9-3h-1v1h1c1 0 2 1.22 2 2.5S13.98 12 13 12H9c-.98 0-2-1.22-2-2.5 0-.83.42-1.64 1-2.09V6.25c-1.09.53-2 1.84-2 3.25C6 11.31 7.55 13 9 13h4c1.45 0 3-1.69 3-3.5S14.5 6 13 6z"></path></svg></a>Project Status</h3>
-<p>At the moment all the main logging features are implemented and stabilized.</p>
+<p>At the moment all the main logging features have been implemented and stabilized.</p>
 <p>Further development will be concentrated on bug fixes (if any), keeping up with new versions of Loki, and
 improving the codebase so it's easier to maintain.</p>
 <p>If you have found this project helpful, please drop a ☆ on <a href="https://github.com/loki4j/loki-logback-appender">GitHub</a>.</p>
