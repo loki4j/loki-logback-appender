@@ -87,7 +87,7 @@
 <tr><td>maxRetryBackoffMs</td><td>60000</td><td>Maximum backoff delay before the next attempt to re-send a failed batch</td></tr>
 <tr><td>maxRetryJitterMs</td><td>500</td><td>Upper bound for a jitter added to the retry delays</td></tr>
 <tr><td>dropRateLimitedBatches</td><td>false</td><td>If true, batches that Loki responds to with a <code>429</code> status code (TooManyRequests) will be dropped rather than retried</td></tr>
-<tr><td>internalQueuesCheckTimeoutMs</td><td>25</td><td>A timeout for Loki4j threads to sleep if encode or send queues are empty. Decreasing this value means lower latency at cost of higher CPU usage</td></tr>
+<tr><td>internalQueuesCheckTimeoutMs</td><td>25</td><td>A timeout for Loki4j threads to sleep if encode or send queues are empty. Decreasing this value means lower latency at the cost of higher CPU usage</td></tr>
 <tr><td>useDirectBuffers</td><td>true</td><td>Use off-heap memory for storing intermediate data</td></tr>
 <tr><td>drainOnStop</td><td>true</td><td>If true, the appender will try to send all the remaining events on shutdown, so the proper shutdown procedure might take longer. Otherwise, the appender will drop the unsent events</td></tr>
 <tr><td>metricsEnabled</td><td>false</td><td>If true, the appender will report its metrics using Micrometer</td></tr>
@@ -105,10 +105,10 @@ HTTP settings are the same for both Java And Apache clients:</p>
 <tbody>
 <tr><td>http.url</td><td></td><td><strong>Required</strong>. Loki endpoint to be used for sending batches</td></tr>
 <tr><td>http.connectionTimeoutMs</td><td>30000</td><td>Time in milliseconds to wait for HTTP connection to Loki to be established before reporting an error</td></tr>
-<tr><td>http.requestTimeoutMs</td><td>5000</td><td>Time in milliseconds to wait for HTTP request to Loki to be responded before reporting an error</td></tr>
+<tr><td>http.requestTimeoutMs</td><td>5000</td><td>Time in milliseconds to wait for HTTP request to Loki to be responded to before reporting an error</td></tr>
 <tr><td>http.auth.username</td><td></td><td>Username to use for basic auth</td></tr>
 <tr><td>http.auth.password</td><td></td><td>Password to use for basic auth</td></tr>
-<tr><td>http.tenantId</td><td></td><td>Tenant identifier. It is required only for sending logs directly to Loki operating in multi-tenant mode. Otherwise this setting has no effect</td></tr>
+<tr><td>http.tenantId</td><td></td><td>Tenant identifier. It is required only for sending logs directly to Loki operating in multi-tenant mode. Otherwise, this setting has no effect</td></tr>
 </tbody>
 </table>
 <h3><a class="anchor" aria-hidden="true" id="format-settings"></a><a href="#format-settings" aria-hidden="true" class="hash-link"><svg class="hash-link-icon" aria-hidden="true" height="16" version="1.1" viewBox="0 0 16 16" width="16"><path fill-rule="evenodd" d="M4 9h1v1H4c-1.5 0-3-1.69-3-3.5S2.55 3 4 3h4c1.45 0 3 1.69 3 3.5 0 1.41-.91 2.72-2 3.25V8.59c.58-.45 1-1.27 1-2.09C10 5.22 8.98 4 8 4H4c-.98 0-2 1.22-2 2.5S3 9 4 9zm9-3h-1v1h1c1 0 2 1.22 2 2.5S13.98 12 13 12H9c-.98 0-2-1.22-2-2.5 0-.83.42-1.64 1-2.09V6.25c-1.09.53-2 1.84-2 3.25C6 11.31 7.55 13 9 13h4c1.45 0 3-1.69 3-3.5S14.5 6 13 6z"></path></svg></a>Format settings</h3>
@@ -121,13 +121,13 @@ Format settings do not depend on the encoding you use.</p>
 </thead>
 <tbody>
 <tr><td>format.label.pattern</td><td></td><td><strong>Required</strong>. Logback pattern to use for log record's label</td></tr>
-<tr><td>format.label.pairSeparator</td><td>,</td><td>Character sequence to use as a separator between labels. If starts with &quot;regex:&quot; prefix, the remainder is applied as a regular expression separator. Otherwise, the provided char sequence is used as a separator literally</td></tr>
+<tr><td>format.label.pairSeparator</td><td>,</td><td>Character sequence to use as a separator between labels. If it starts with the &quot;regex:&quot; prefix, the remainder is applied as a regular expression separator. Otherwise, the provided char sequence is used as a separator literally</td></tr>
 <tr><td>format.label.keyValueSeparator</td><td>=</td><td>Character to use as a separator between label's name and its value</td></tr>
-<tr><td>format.label.readMarkers</td><td>false</td><td>If true, Loki4j scans each log record for attached LabelMarker to add its values to record's labels</td></tr>
+<tr><td>format.label.readMarkers</td><td>false</td><td>If true, Loki4j scans each log record for the attached LabelMarker to add its values to the record's labels</td></tr>
 <tr><td>format.label.nopex</td><td>true</td><td>If true, exception info is not added to labels. If false, you should take care of proper formatting</td></tr>
 <tr><td>format.label.streamCache</td><td>UnboundAtomicMapCache</td><td>An implementation of a Stream cache to use</td></tr>
-<tr><td>format.staticLabels</td><td>false</td><td>If you use only a constant label set (e.g. same keys and values) for all log records, you can set this flag to true and save some CPU time on grouping records by label</td></tr>
-<tr><td>format.sortByTime</td><td>false</td><td>If true, log records in batch are sorted by timestamp. If false, records will be sent to Loki in arrival order. Enable this if you see 'entry out of order' error from Loki</td></tr>
+<tr><td>format.staticLabels</td><td>false</td><td>If you use only a constant label set (e.g., same keys and values) for all log records, you can set this flag to true and save some CPU time on grouping records by label</td></tr>
+<tr><td>format.sortByTime</td><td>false</td><td>If true, log records in batch are sorted by timestamp. If false, records will be sent to Loki in arrival order. Enable this if you see an 'entry out of order' error from Loki</td></tr>
 </tbody>
 </table>
 <h4><a class="anchor" aria-hidden="true" id="plain-text-message-layout"></a><a href="#plain-text-message-layout" aria-hidden="true" class="hash-link"><svg class="hash-link-icon" aria-hidden="true" height="16" version="1.1" viewBox="0 0 16 16" width="16"><path fill-rule="evenodd" d="M4 9h1v1H4c-1.5 0-3-1.69-3-3.5S2.55 3 4 3h4c1.45 0 3 1.69 3 3.5 0 1.41-.91 2.72-2 3.25V8.59c.58-.45 1-1.27 1-2.09C10 5.22 8.98 4 8 4H4c-.98 0-2 1.22-2 2.5S3 9 4 9zm9-3h-1v1h1c1 0 2 1.22 2 2.5S13.98 12 13 12H9c-.98 0-2-1.22-2-2.5 0-.83.42-1.64 1-2.09V6.25c-1.09.53-2 1.84-2 3.25C6 11.31 7.55 13 9 13h4c1.45 0 3-1.69 3-3.5S14.5 6 13 6z"></path></svg></a>Plain text message layout</h4>
@@ -143,7 +143,7 @@ It supports the following settings:</p>
 </table>
 <h4><a class="anchor" aria-hidden="true" id="json-message-layout"></a><a href="#json-message-layout" aria-hidden="true" class="hash-link"><svg class="hash-link-icon" aria-hidden="true" height="16" version="1.1" viewBox="0 0 16 16" width="16"><path fill-rule="evenodd" d="M4 9h1v1H4c-1.5 0-3-1.69-3-3.5S2.55 3 4 3h4c1.45 0 3 1.69 3 3.5 0 1.41-.91 2.72-2 3.25V8.59c.58-.45 1-1.27 1-2.09C10 5.22 8.98 4 8 4H4c-.98 0-2 1.22-2 2.5S3 9 4 9zm9-3h-1v1h1c1 0 2 1.22 2 2.5S13.98 12 13 12H9c-.98 0-2-1.22-2-2.5 0-.83.42-1.64 1-2.09V6.25c-1.09.53-2 1.84-2 3.25C6 11.31 7.55 13 9 13h4c1.45 0 3-1.69 3-3.5S14.5 6 13 6z"></path></svg></a>JSON message layout</h4>
 <p>This layout converts log messages to JSON.
-Please check the <a href="/loki-logback-appender/docs/jsonlayout">instruction</a> how to enable and use it.
+Please check the <a href="/loki-logback-appender/docs/jsonlayout">instruction</a> on how to enable and use it.
 This layout has the following settings:</p>
 <table>
 <thead>
@@ -157,8 +157,8 @@ This layout has the following settings:</p>
 <tr><td>format.message.logLevel.fieldName</td><td>level</td><td>A JSON field name to use for logLevel</td></tr>
 <tr><td>format.message.mdc.enabled</td><td>true</td><td>Enable MDC provider</td></tr>
 <tr><td>format.message.mdc.fieldName</td><td>mdc_</td><td>A prefix added to each JSON field name written by this provider</td></tr>
-<tr><td>format.message.mdc.include</td><td></td><td>A set of MDC keys to include into JSON payload. If not specified, all keys are included</td></tr>
-<tr><td>format.message.mdc.exclude</td><td></td><td>A set of MDC keys to exclude from JSON payload. Exclude list has precedence over include list. If not specified, all keys are included</td></tr>
+<tr><td>format.message.mdc.include</td><td></td><td>A set of MDC keys to include in JSON payload. If not specified, all keys are included</td></tr>
+<tr><td>format.message.mdc.exclude</td><td></td><td>A set of MDC keys to exclude from JSON payload. The exclude list has precedence over the include list. If not specified, all keys are included</td></tr>
 <tr><td>format.message.message.enabled</td><td>true</td><td>Enable message provider</td></tr>
 <tr><td>format.message.message.fieldName</td><td>message</td><td>A JSON field name to use for message</td></tr>
 <tr><td>format.message.stackTrace.enabled</td><td>true</td><td>Enable stackTrace provider</td></tr>
@@ -173,7 +173,7 @@ This layout has the following settings:</p>
 </table>
 <h2><a class="anchor" aria-hidden="true" id="examples"></a><a href="#examples" aria-hidden="true" class="hash-link"><svg class="hash-link-icon" aria-hidden="true" height="16" version="1.1" viewBox="0 0 16 16" width="16"><path fill-rule="evenodd" d="M4 9h1v1H4c-1.5 0-3-1.69-3-3.5S2.55 3 4 3h4c1.45 0 3 1.69 3 3.5 0 1.41-.91 2.72-2 3.25V8.59c.58-.45 1-1.27 1-2.09C10 5.22 8.98 4 8 4H4c-.98 0-2 1.22-2 2.5S3 9 4 9zm9-3h-1v1h1c1 0 2 1.22 2 2.5S13.98 12 13 12H9c-.98 0-2-1.22-2-2.5 0-.83.42-1.64 1-2.09V6.25c-1.09.53-2 1.84-2 3.25C6 11.31 7.55 13 9 13h4c1.45 0 3-1.69 3-3.5S14.5 6 13 6z"></path></svg></a>Examples</h2>
 <h3><a class="anchor" aria-hidden="true" id="minimalistic-zero-dependency-configuration"></a><a href="#minimalistic-zero-dependency-configuration" aria-hidden="true" class="hash-link"><svg class="hash-link-icon" aria-hidden="true" height="16" version="1.1" viewBox="0 0 16 16" width="16"><path fill-rule="evenodd" d="M4 9h1v1H4c-1.5 0-3-1.69-3-3.5S2.55 3 4 3h4c1.45 0 3 1.69 3 3.5 0 1.41-.91 2.72-2 3.25V8.59c.58-.45 1-1.27 1-2.09C10 5.22 8.98 4 8 4H4c-.98 0-2 1.22-2 2.5S3 9 4 9zm9-3h-1v1h1c1 0 2 1.22 2 2.5S13.98 12 13 12H9c-.98 0-2-1.22-2-2.5 0-.83.42-1.64 1-2.09V6.25c-1.09.53-2 1.84-2 3.25C6 11.31 7.55 13 9 13h4c1.45 0 3-1.69 3-3.5S14.5 6 13 6z"></path></svg></a>Minimalistic zero-dependency configuration</h3>
-<p>In Java 11 and later we can use standard HTTP client and Loki JSON API.
+<p>In Java 11 and later, we can use standard HTTP client and Loki JSON API.
 This setup is supported natively by Loki4j and does not require any extra dependencies.
 We need to define only required settings, leaving optional settings with their default values.</p>
 <pre><code class="hljs css language-xml"><span class="hljs-tag">&lt;<span class="hljs-name">appender</span> <span class="hljs-attr">name</span>=<span class="hljs-string">"LOKI"</span> <span class="hljs-attr">class</span>=<span class="hljs-string">"com.github.loki4j.logback.Loki4jAppender"</span>&gt;</span>
@@ -191,7 +191,7 @@ We need to define only required settings, leaving optional settings with their d
 <span class="hljs-tag">&lt;/<span class="hljs-name">appender</span>&gt;</span>
 </code></pre>
 <h3><a class="anchor" aria-hidden="true" id="overriding-the-default-settings"></a><a href="#overriding-the-default-settings" aria-hidden="true" class="hash-link"><svg class="hash-link-icon" aria-hidden="true" height="16" version="1.1" viewBox="0 0 16 16" width="16"><path fill-rule="evenodd" d="M4 9h1v1H4c-1.5 0-3-1.69-3-3.5S2.55 3 4 3h4c1.45 0 3 1.69 3 3.5 0 1.41-.91 2.72-2 3.25V8.59c.58-.45 1-1.27 1-2.09C10 5.22 8.98 4 8 4H4c-.98 0-2 1.22-2 2.5S3 9 4 9zm9-3h-1v1h1c1 0 2 1.22 2 2.5S13.98 12 13 12H9c-.98 0-2-1.22-2-2.5 0-.83.42-1.64 1-2.09V6.25c-1.09.53-2 1.84-2 3.25C6 11.31 7.55 13 9 13h4c1.45 0 3-1.69 3-3.5S14.5 6 13 6z"></path></svg></a>Overriding the default settings</h3>
-<p>In this example we would like to change max batch size to 100 records, batch timeout to 10s, label key-value separator to <code>:</code>,
+<p>In this example, we would like to change max batch size to 100 records, batch timeout to 10s, label key-value separator to <code>:</code>,
 and sort log records by time before sending them to Loki.
 Messages should be in <a href="jsonlayout">JSON format</a>, without timestamp field, and with logger name abbreviated to 20 characters.
 Also, we would like to use <a href="apacheclient">Apache HTTP sender</a> with request timeout 10s and <a href="protobuf">Protobuf API</a>.

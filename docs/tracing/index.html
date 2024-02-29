@@ -60,32 +60,32 @@
               }
             });
         </script></nav></div><div class="container mainContainer docsContainer"><div class="wrapper"><div class="post"><header class="postHeader"><h1 id="__docusaurus" class="postHeaderTitle">Tracing and debugging</h1></header><article><div><span><h2><a class="anchor" aria-hidden="true" id="verbose-flag"></a><a href="#verbose-flag" aria-hidden="true" class="hash-link"><svg class="hash-link-icon" aria-hidden="true" height="16" version="1.1" viewBox="0 0 16 16" width="16"><path fill-rule="evenodd" d="M4 9h1v1H4c-1.5 0-3-1.69-3-3.5S2.55 3 4 3h4c1.45 0 3 1.69 3 3.5 0 1.41-.91 2.72-2 3.25V8.59c.58-.45 1-1.27 1-2.09C10 5.22 8.98 4 8 4H4c-.98 0-2 1.22-2 2.5S3 9 4 9zm9-3h-1v1h1c1 0 2 1.22 2 2.5S13.98 12 13 12H9c-.98 0-2-1.22-2-2.5 0-.83.42-1.64 1-2.09V6.25c-1.09.53-2 1.84-2 3.25C6 11.31 7.55 13 9 13h4c1.45 0 3-1.69 3-3.5S14.5 6 13 6z"></path></svg></a>Verbose flag</h2>
-<p>By default Loki4j logs only errors to stderr.
-You can make Loki4j print out more details on encoding/sending process by setting <code>verbose</code> flag to <code>true</code> in your <code>logback.xml</code>:</p>
+<p>By default, Loki4j logs only errors to stderr.
+You can make Loki4j print out more details on the encoding/sending process by setting the <code>verbose</code> flag to <code>true</code> in your <code>logback.xml</code>:</p>
 <pre><code class="hljs css language-xml"><span class="hljs-tag">&lt;<span class="hljs-name">appender</span> <span class="hljs-attr">name</span>=<span class="hljs-string">"LOKI"</span> <span class="hljs-attr">class</span>=<span class="hljs-string">"com.github.loki4j.logback.Loki4jAppender"</span>&gt;</span>
     ...
     <span class="hljs-tag">&lt;<span class="hljs-name">verbose</span>&gt;</span>true<span class="hljs-tag">&lt;/<span class="hljs-name">verbose</span>&gt;</span>
 <span class="hljs-tag">&lt;/<span class="hljs-name">appender</span>&gt;</span>
 </code></pre>
-<p>However, it is not recommended to have <code>verbose</code> flag enabled on a regular basis.</p>
+<p>However, it is not recommended to have a <code>verbose</code> flag enabled on a regular basis.</p>
 <h2><a class="anchor" aria-hidden="true" id="tracing-mode"></a><a href="#tracing-mode" aria-hidden="true" class="hash-link"><svg class="hash-link-icon" aria-hidden="true" height="16" version="1.1" viewBox="0 0 16 16" width="16"><path fill-rule="evenodd" d="M4 9h1v1H4c-1.5 0-3-1.69-3-3.5S2.55 3 4 3h4c1.45 0 3 1.69 3 3.5 0 1.41-.91 2.72-2 3.25V8.59c.58-.45 1-1.27 1-2.09C10 5.22 8.98 4 8 4H4c-.98 0-2 1.22-2 2.5S3 9 4 9zm9-3h-1v1h1c1 0 2 1.22 2 2.5S13.98 12 13 12H9c-.98 0-2-1.22-2-2.5 0-.83.42-1.64 1-2.09V6.25c-1.09.53-2 1.84-2 3.25C6 11.31 7.55 13 9 13h4c1.45 0 3-1.69 3-3.5S14.5 6 13 6z"></path></svg></a>Tracing mode</h2>
 <p>If you've encountered an issue that can not be properly traced in the verbose mode, you can enable the trace mode.
-In the trace mode Loki4j will be printing out a lot of its internal behavior, so this can be a good option for a deep debugging.</p>
+In the trace mode, Loki4j will be printing out a lot of its internal behavior, so this can be a good option for deep debugging.</p>
 <h3><a class="anchor" aria-hidden="true" id="when-to-use"></a><a href="#when-to-use" aria-hidden="true" class="hash-link"><svg class="hash-link-icon" aria-hidden="true" height="16" version="1.1" viewBox="0 0 16 16" width="16"><path fill-rule="evenodd" d="M4 9h1v1H4c-1.5 0-3-1.69-3-3.5S2.55 3 4 3h4c1.45 0 3 1.69 3 3.5 0 1.41-.91 2.72-2 3.25V8.59c.58-.45 1-1.27 1-2.09C10 5.22 8.98 4 8 4H4c-.98 0-2 1.22-2 2.5S3 9 4 9zm9-3h-1v1h1c1 0 2 1.22 2 2.5S13.98 12 13 12H9c-.98 0-2-1.22-2-2.5 0-.83.42-1.64 1-2.09V6.25c-1.09.53-2 1.84-2 3.25C6 11.31 7.55 13 9 13h4c1.45 0 3-1.69 3-3.5S14.5 6 13 6z"></path></svg></a>When to use</h3>
-<p>Tracing mode allows you to observe Loki4j internal logic in more details.
+<p>Tracing mode allows you to observe Loki4j's internal logic in more detail.
 It can be helpful in case of:</p>
 <ul>
 <li>Batching issues: some log records are lost or not sent to Loki</li>
-<li>Encoding issues: some labels missing, incorrect message formatting, or Loki sends 4xx error statuses and complains about batch format</li>
+<li>Encoding issues: some labels are missing, incorrect message formatting, or Loki sends 4xx error statuses and complains about batch format</li>
 <li>Delivery issues: Loki4j suddenly stopped sending logs, unhandled/unexpected exceptions in stderr</li>
 </ul>
-<p>Tracing mode is unlikely to help with:</p>
+<p>Tracing mode is unlikely to help with the following:</p>
 <ul>
 <li>Connectivity/access issues - check the correctness of your HTTP configuration instead</li>
 </ul>
 <p><strong>Warning! Trace mode may cause significant performance penalties. It's not intended for production usage.</strong></p>
 <h3><a class="anchor" aria-hidden="true" id="preparations"></a><a href="#preparations" aria-hidden="true" class="hash-link"><svg class="hash-link-icon" aria-hidden="true" height="16" version="1.1" viewBox="0 0 16 16" width="16"><path fill-rule="evenodd" d="M4 9h1v1H4c-1.5 0-3-1.69-3-3.5S2.55 3 4 3h4c1.45 0 3 1.69 3 3.5 0 1.41-.91 2.72-2 3.25V8.59c.58-.45 1-1.27 1-2.09C10 5.22 8.98 4 8 4H4c-.98 0-2 1.22-2 2.5S3 9 4 9zm9-3h-1v1h1c1 0 2 1.22 2 2.5S13.98 12 13 12H9c-.98 0-2-1.22-2-2.5 0-.83.42-1.64 1-2.09V6.25c-1.09.53-2 1.84-2 3.25C6 11.31 7.55 13 9 13h4c1.45 0 3-1.69 3-3.5S14.5 6 13 6z"></path></svg></a>Preparations</h3>
-<p>Typically you would want to reduce the amount of data printed out while Loki4j is in the trace mode.</p>
+<p>Typically, you would want to reduce the amount of data printed out while Loki4j is in trace mode.</p>
 <ol>
 <li>Make sure your main logs are not printed to stderr</li>
 <li>Disable logging for all Java packages except the problematic ones (if any)</li>
@@ -93,11 +93,11 @@ It can be helpful in case of:</p>
 </ol>
 <h3><a class="anchor" aria-hidden="true" id="enabling-tracing-mode"></a><a href="#enabling-tracing-mode" aria-hidden="true" class="hash-link"><svg class="hash-link-icon" aria-hidden="true" height="16" version="1.1" viewBox="0 0 16 16" width="16"><path fill-rule="evenodd" d="M4 9h1v1H4c-1.5 0-3-1.69-3-3.5S2.55 3 4 3h4c1.45 0 3 1.69 3 3.5 0 1.41-.91 2.72-2 3.25V8.59c.58-.45 1-1.27 1-2.09C10 5.22 8.98 4 8 4H4c-.98 0-2 1.22-2 2.5S3 9 4 9zm9-3h-1v1h1c1 0 2 1.22 2 2.5S13.98 12 13 12H9c-.98 0-2-1.22-2-2.5 0-.83.42-1.64 1-2.09V6.25c-1.09.53-2 1.84-2 3.25C6 11.31 7.55 13 9 13h4c1.45 0 3-1.69 3-3.5S14.5 6 13 6z"></path></svg></a>Enabling tracing mode</h3>
 <p>To enable the trace mode you need to set Java's system property <code>loki4j.trace=AsyncBufferPipeline</code>.
-This can be done in various ways depending on frameworks you use.
+This can be done in various ways depending on the frameworks you use.
 One of the simplest ways is to provide it in the command line when starting your app:</p>
 <pre><code class="hljs"><span class="hljs-keyword">java </span>-Dloki4j.trace=AsyncBufferPipeline -<span class="hljs-keyword">jar </span>my-app.<span class="hljs-keyword">jar
 </span></code></pre>
-<p>Typically, there would be a lot information, so you might want to redirect stderr to file:</p>
+<p>Typically, there would be a lot of information, so you might want to redirect stderr to file:</p>
 <pre><code class="hljs">java -Dloki4j.<span class="hljs-built_in">trace</span>=AsyncBufferPipeline -jar my-app.jar <span class="hljs-number">2</span>&gt;loki4j-<span class="hljs-built_in">trace</span>.<span class="hljs-built_in">log</span>
 </code></pre>
 <p>Feel free to attach trace logs to the issue if you have found a bug in Loki4j.</p>
