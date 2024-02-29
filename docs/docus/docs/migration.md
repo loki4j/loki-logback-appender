@@ -6,30 +6,30 @@ sidebar_label: Migration Guide
 
 ## Upgrading from 1.4.x to 1.5.x
 
-The biggest breaking change in Loki4j v1.5.0 is an upgrade to Logback v1.3.x.
+The most significant breaking change in Loki4j v1.5.0 is an upgrade to Logback v1.3.x.
 
 #### Logback 1.2.x is no longer supported
 
 The minimum supported version of Logback is now 1.3.0.
 This version is not compatible with Logback v1.2.x series.
-If you project depends on other external Logback appenders, please make sure all of them are compatible with Logback v1.3.x before upgrading.
+If your project depends on other external Logback appenders, please make sure all of them are compatible with Logback v1.3.x before upgrading.
 
 #### Retry functionality changed
 
-Previously you could set only constant value for a timeout between batch send retries.
-Now you can switch between constant and exponential backoff using two new settings `minRetryBackoffMs` and `maxRetryBackoffMs`.
+Previously, you could set only a constant value for a timeout between batch send retries.
+Now you can switch between constant and exponential backoff using two new settings, `minRetryBackoffMs` and `maxRetryBackoffMs`.
 If both of them have the same value, this value will be used as a constant timeout.
 Otherwise, the timeout value will exponentially grow on each retry from `minRetryBackoffMs` to `maxRetryBackoffMs`.
-The previous setting `retryTimeoutMs` was removed.
+The previous setting, `retryTimeoutMs`, was removed.
 
-Please note that by default retry delays are exponential now, and they start from 0.5s (1s, 2s, 4s, etc.).
-Previously by default there was a constant delay 60s.
+Please note that by default retry delays are exponential now, starting from 0.5s (1s, 2s, 4s, etc.).
+Previously, by default, there was a constant delay 60s.
 
-Also, in 1.5.0 a jitter (i.e. a small random variation) is added to the retry backoff delay.
-You can set an upper bound for a jitter value using a new setting `maxRetryJitterMs`.
+Also, in 1.5.0 a jitter (i.e., a small random variation) is added to the retry backoff delay.
+You can set an upper bound for a jitter value using a new setting, `maxRetryJitterMs`.
 
-Along with previously existed retry on status `503` received from Loki, in this version Loki4j will by default retry sending batches after receiving `429` as well.
-You can turn this off using `dropRateLimitedBatches` setting.
+Along with previously existing retry on status `503` received from Loki, in this version, Loki4j will, by default, retry sending batches after receiving `429` as well.
+You can turn this off using the `dropRateLimitedBatches` setting.
 
 
 ## Upgrading from 1.3.x to 1.4.x
@@ -49,36 +49,36 @@ If you use Protobuf format, now you need to add a new dependency to your project
 </dependency>
 ```
 
-A part `_pbX.Y.0` in version means that now you can use any supported PB version by substituting it here.
+A part `_pbX.Y.0` in the version means you can now use any supported PB version by substituting it here.
 E.g. for Protobuf v3.21.x it should be `_pb3.21.0`.
 
-In previous versions of Loki4j you were required to add `protobuf-java` and `snappy-java` as dependencies to you project.
-In 1.4.0 it's no longer required as the proper versions of these libs come as transitive dependencies of `loki-protobuf`.
+In previous versions of Loki4j, you were required to add `protobuf-java` and `snappy-java` as dependencies to your project.
+In 1.4.0, it's no longer required as the proper versions of these libs come as transitive dependencies of `loki-protobuf`.
 
 #### Retry functionality added
 
-Loki4j is designed to operate in presence of various errors and connection failures returned from Loki.
+Loki4j is designed to operate in the presence of various errors and connection failures returned from Loki.
 However, the previous versions tried to send each log batch only once, so all batches sent during
-unavailability of Loki are lost.
+the unavailability of Loki are lost.
 
-In 1.4.0 Loki4j can try to send a log batch to Loki again, if the previous attempt failed.
-Please note, that re-send is done only in case of `ConnectException` or `503` HTTP status from Loki.
-All other exceptions as well as 4xx-5xx statuses are not retried in order to avoid duplicates.
+In 1.4.0, Loki4j can try to send a log batch to Loki again if the previous attempt failed.
+Please note that re-send is done only in case of `ConnectException` or `503` HTTP status from Loki.
+All other exceptions, as well as 4xx-5xx statuses, are not retried to avoid duplicates.
 
 #### Deprecated "batchSize" setting is removed
 
-The `batchSize` setting was renamed to `batchMaxItems` back in 1.2.0, but you still could use the old name until 1.4.0.
-Now the old name support was completely dropped, so please make sure you use `batchMaxItems` instead.
+The `batchSize` setting was renamed to `batchMaxItems` back in 1.2.0, but you could still use the old name until 1.4.0.
+Now, the old name support has completely dropped, so please make sure you use `batchMaxItems` instead.
 
 
 ## Upgrading from 1.2.x to 1.3.x
 
 Version 1.3.0 was focused on internal refactoring and bug fixing.
-For most users 1.3.0 could be used as a drop-in replacement of 1.2.0.
+For most users, 1.3.0 could be used as a drop-in replacement of 1.2.0.
 
-The only breaking change that could affect these who use Loki4j performance metrics
+The only breaking change that could affect those who use Loki4j performance metrics
 is that the tag `host` is no longer hardcoded for all the reported Loki4j metrics.
-This hardcoding was redundant as you always can set up `host` tag for any metric in your custom
+This hardcoding was redundant as you can always set up a `host` tag for any metric in your custom
 Micrometer config on the application level.
 
 

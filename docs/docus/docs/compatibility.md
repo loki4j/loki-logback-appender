@@ -4,7 +4,7 @@ title: Loki4j Compatibility Matrix
 sidebar_label: Compatibility Matrix
 ---
 
-The versions of Loki4j that had introduced backward-incompatible platform upgrades are listed in a table below.
+The versions of Loki4j that had introduced backward-incompatible platform upgrades are listed in the table below.
 
 |Loki4j|Java|Logback|
 |-------|-------|-----------|
@@ -15,8 +15,8 @@ The versions of Loki4j that had introduced backward-incompatible platform upgrad
 
 ### Java 8 support
 
-Loki4j ships a separate artifact with `-jdk8` suffix that is built specially for Java 8.
-Futhermore, we would need to use the Apache HTTP client with Java 8, as the default Java HTTP client works only for Java 11+.
+Loki4j ships a separate artifact with the `-jdk8` suffix built specially for Java 8.
+Furthermore, we would need to use the Apache HTTP client with Java 8, as the default Java HTTP client works only for Java 11+.
 So please add the following dependencies to your project:
 
 <!--DOCUSAURUS_CODE_TABS-->

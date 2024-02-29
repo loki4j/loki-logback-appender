@@ -6,7 +6,7 @@ sidebar_label: Monitoring
 
 You can monitor Loki4j's performance by enabling an instrumentation powered by [Micrometer](https://micrometer.io/).
 
-First you need to make sure that Micrometer dependency is added to your project:
+First, you need to make sure that Micrometer dependency is added to your project:
 
 <!--DOCUSAURUS_CODE_TABS-->
 <!--Maven-->
@@ -26,7 +26,7 @@ implementation 'io.micrometer:micrometer-core:1.12.2'
 ```
 <!--END_DOCUSAURUS_CODE_TABS-->
 
-Then you need to enable metrics in your `logback.xml`:
+Then, you need to enable metrics in your `logback.xml`:
 
 ```xml
 <appender name="LOKI" class="com.github.loki4j.logback.Loki4jAppender">

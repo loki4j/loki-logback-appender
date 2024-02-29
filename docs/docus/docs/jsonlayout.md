@@ -18,7 +18,7 @@ You can enable JSON layout for log messages by specifying a corresponding `class
 </appender>
 ```
 
-That's it! After running your application you should see your log messages are sent to Loki as JSON objects:
+That's it! After running your application, you should see your log messages are sent to Loki as JSON objects:
 
 ```json
 {"timestamp_ms":1707947657247,"logger_name":"io.my.App","level":"INFO","thread_name":"main","message":"42"}
@@ -26,7 +26,8 @@ That's it! After running your application you should see your log messages are s
 
 ## Fine-tuning the standard providers
 
-Loki4j comes with a predefined set of standard JSON providers, each of them can write zero, one, or more fields to the resulting JSON object.
+Loki4j comes with a predefined set of standard JSON providers.
+Each of them can write zero, one, or more fields to the resulting JSON object.
 All standard provides are enabled by default, but you can disable them using the `enabled` setting:
 
 ```xml
@@ -59,7 +60,8 @@ Applying this configuration will give you:
 {"timestamp_ms":1707947657247,"class":"io.my.App","level":"INFO","thread_name":"main","message":"42"}
 ```
 
-Some providers have their own specific properties, for example you can configure MDC provider to include only specified keys into the log record:
+Some providers have their own specific properties.
+For example, you can configure the MDC provider to include only specified keys in the log record:
 
 ```xml
 <message class="com.github.loki4j.logback.JsonLayout">
@@ -74,9 +76,9 @@ Please check the [reference](configuration#json-message-layout) for a complete l
 
 ## Custom JSON providers
 
-If standard providers don't cover all your needs, you may consider creating your own provider.
+If standard providers don't cover all your needs, consider creating your own provider.
 All providers must implement the `com.github.loki4j.logback.json.JsonProvider` interface.
-The easiest way to build one-field provider is to derive it from the `AbstractFieldJsonProvider` from the same package.
+The easiest way to build a one-field provider is to derive it from the `AbstractFieldJsonProvider` from the same package.
 Here is the example implementation:
 
 ```java
@@ -93,7 +95,7 @@ public class ConstantProvider extends AbstractFieldJsonProvider {
 }
 ```
 
-Then you need to register this new provider in the configuration:
+Then, you need to register this new provider in the configuration:
 
 ```xml
 <message class="com.github.loki4j.logback.JsonLayout">
@@ -101,7 +103,7 @@ Then you need to register this new provider in the configuration:
 </message>
 ```
 
-After applying this configuration you will see the following:
+After applying this configuration, you will see the following:
 
 ```json
 {"timestamp_ms":1707947657247,"logger_name":"io.my.App","level":"INFO","thread_name":"main","message":"42","constant_name":"constant_value"}

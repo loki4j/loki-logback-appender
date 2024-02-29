@@ -7,7 +7,7 @@ sidebar_label: Old Docs
 We strongly encourage you to upgrade to the latest version of Lok4j.
 It should not take much time, just follow the [Migration Guide](migration).
 
-However, the docs for previous Loki4j versions are still available in GitHub:
+However, the docs for previous Loki4j versions are still available on GitHub:
 
 - [v1.4.0](https://github.com/loki4j/loki-logback-appender/tree/v1.4.0/docs/docus/docs)
 - [v1.3.0](https://github.com/loki4j/loki-logback-appender/tree/v1.3.0/docs/docus/docs)

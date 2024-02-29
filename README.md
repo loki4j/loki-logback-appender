@@ -4,7 +4,7 @@
 ![Maven Central](https://img.shields.io/maven-central/v/com.github.loki4j/loki-logback-appender?color=blue)
 
 Loki4j aims to be the fastest and the most lightweight implementation of
-[Logback](http://logback.qos.ch/) appender for [Loki](https://grafana.com/oss/loki/).
+[Logback](http://logback.qos.ch/) appender for [Grafana Loki](https://grafana.com/oss/loki/).
 This project is unofficial and community-driven.
 
 Please proceed to the microsite for more information:

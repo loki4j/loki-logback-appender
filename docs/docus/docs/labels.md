@@ -6,7 +6,7 @@ sidebar_label: Managing Loki Labels
 
 ## Organizing labels
 
-Logs in Loki are indexed using labels that have key-value format.
+Logs in Loki are indexed using labels that have a key-value format.
 In Loki4j you can specify labels on per-record level using all the benefits Logback has to offer.
 
 Labels are set in `format.label` section of `Loki4jAppender`'s config:
@@ -23,9 +23,9 @@ Labels are set in `format.label` section of `Loki4jAppender`'s config:
 </appender>
 ```
 
-Below we will go through some tips and tricks you can use in `format.label` section to make your life a bit easier.
+Below, we will go through some tips and tricks you can use in the `format.label` section to make your life a bit easier.
 
-By default labels are defined as `key=value` pairs separated by comma.
+By default labels are defined as `key=value` pairs separated by commas.
 
 ```xml
 <label>
@@ -50,7 +50,7 @@ For example, if you have many labels, it's better to have each of them on a sepa
 </label>
 ```
 
-Please note, that in the example above the regular expression in `pairSeparator` defines lines starting with `//` a part of a separator.
+Please note that in the example above the regular expression in `pairSeparator` defines lines starting with `//` a part of a separator.
 So now we have a `// comment` feature here as well.
 
 ## Using MDC in labels
@@ -66,7 +66,7 @@ So now we have a `// comment` feature here as well.
 ## Adding dynamic labels using Markers
 
 In classic Logback, markers are typically used to [filter](https://logback.qos.ch/manual/filters.html#TurboFilter) log records.
-In Loki4j you can also use markers to dynamically set Loki labels for any particular log message.
+With Loki4j you can also use markers to set Loki labels dynamically for any particular log message.
 
 First, you need to make Loki4j scan markers attached to each log event by enabling `readMarkers` flag:
 

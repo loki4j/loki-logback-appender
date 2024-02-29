@@ -4,8 +4,8 @@ title: Sending logs to Grafana Cloud
 sidebar_label: Grafana Cloud
 ---
 
-In this example we will see how to send log records to hosted Loki service (e.g. Grafana Cloud).
-We will need to specify the credentials and increase the request timeout to 15s.
+This example shows how to send log records to the hosted Loki service (e.g., Grafana Cloud).
+We would need to specify the credentials and increase the request timeout to 15s.
 Also, Grafana Cloud limit for batch length is 65536 bytes, while for standalone Loki it's 4 MB by default,
 so we need to specify this explicitly.
 

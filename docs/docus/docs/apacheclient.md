@@ -4,12 +4,12 @@ title: Using Apache HttpClient
 sidebar_label: Apache HttpClient
 ---
 
-By default Loki4j uses `JavaHttpSender`, backed by `java.net.http.HttpClient` available in Java 11 and later.
+By default, Loki4j uses `JavaHttpSender`, backed by `java.net.http.HttpClient` available in Java 11 and later.
 This sender does not require any extra dependencies.
-So it should be a good fit for the most users.
+So, it should be a good fit for most users.
 
 However, you may want to switch to `ApacheHttpSender`, backed by `org.apache.http.client.HttpClient` available for Java 8+ projects.
-In this case you need to ensure you have added the required dependencies to your project:
+In this case, you need to ensure you have added the required dependencies to your project:
 
 <!--DOCUSAURUS_CODE_TABS-->
 <!--Maven-->
@@ -45,4 +45,4 @@ However, there are some specific settings available only for `ApacheHttpSender`:
 Setting|Default|Description
 -------|-------|-----------
 http.maxConnections|1|Maximum number of HTTP connections to keep in the pool
-http.connectionKeepAliveMs|120000|A duration of time in milliseconds which the connection can be safely kept idle for later reuse. This value should not be greater than `server.http-idle-timeout` in your Loki config
+http.connectionKeepAliveMs|120000|A duration of time in milliseconds in which the connection can be safely kept idle for later reuse. This value should not be greater than `server.http-idle-timeout` in your Loki config
