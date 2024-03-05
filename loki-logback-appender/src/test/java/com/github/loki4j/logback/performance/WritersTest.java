@@ -23,7 +23,7 @@ import org.junit.experimental.categories.Category;
 
 import ch.qos.logback.classic.LoggerContext;
 
-public class EncodersTest {
+public class WritersTest {
 
     private static int CAPACITY_BYTES = 4 * 1024 * 1024;
 
