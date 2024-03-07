@@ -10,7 +10,7 @@ import java.util.regex.Pattern;
 import com.github.loki4j.client.batch.LogRecordStream;
 import com.github.loki4j.client.util.Cache;
 import com.github.loki4j.client.util.StringUtils;
-import com.github.loki4j.client.util.Cache.UnboundAtomicMapCache;
+import com.github.loki4j.client.util.Cache.BoundAtomicMapCache;
 import com.github.loki4j.slf4j.marker.LabelMarker;
 
 import ch.qos.logback.classic.PatternLayout;
@@ -58,6 +58,7 @@ public abstract class AbstractLoki4jEncoder extends ContextAwareBase implements 
          * An implementation of a Stream cache to use.
          */
         Cache<String, LogRecordStream> streamCache;
+
         public void setPattern(String pattern) {
             this.pattern = pattern;
         }
@@ -73,7 +74,7 @@ public abstract class AbstractLoki4jEncoder extends ContextAwareBase implements 
         public void setNopex(boolean nopex) {
             this.nopex = nopex;
         }
-        @DefaultClass(UnboundAtomicMapCache.class)
+        @DefaultClass(BoundAtomicMapCache.class)
         public void setStreamCache(Cache<String, LogRecordStream> streamCache) {
             this.streamCache = streamCache;
         }
@@ -134,7 +135,7 @@ public abstract class AbstractLoki4jEncoder extends ContextAwareBase implements 
 
         // if streamCache is not set in the config
         if (label.streamCache == null) {
-            label.streamCache = new UnboundAtomicMapCache<>();
+            label.streamCache = new BoundAtomicMapCache<>();
         }
 
         labelPatternLayout = initPatternLayout(labelPattern);
@@ -263,6 +264,9 @@ public abstract class AbstractLoki4jEncoder extends ContextAwareBase implements 
         return markerLabels;
     }
 
+    public LabelCfg getLabel() {
+        return label;
+    }
     public void setLabel(LabelCfg label) {
         this.label = label;
     }

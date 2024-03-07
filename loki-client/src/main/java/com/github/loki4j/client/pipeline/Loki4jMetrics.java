@@ -4,7 +4,7 @@ import java.time.Duration;
 import java.util.Arrays;
 import java.util.function.Supplier;
 
-import com.github.loki4j.client.util.Cache.UnboundAtomicMapCache;
+import com.github.loki4j.client.util.Cache.BoundAtomicMapCache;
 
 import io.micrometer.core.instrument.Counter;
 import io.micrometer.core.instrument.Counter.Builder;
@@ -31,16 +31,16 @@ public class Loki4jMetrics {
     private final Counter droppedEventsCounter;
 
     private final Builder appendErrorsCounterBuilder;
-    private final UnboundAtomicMapCache<String, Counter> appendErrorsCounterCache = new UnboundAtomicMapCache<>();
+    private final BoundAtomicMapCache<String, Counter> appendErrorsCounterCache = new BoundAtomicMapCache<>();
 
     private final Builder encodeErrorsCounterBuilder;
-    private final UnboundAtomicMapCache<String, Counter> encodeErrorsCounterCache = new UnboundAtomicMapCache<>();
+    private final BoundAtomicMapCache<String, Counter> encodeErrorsCounterCache = new BoundAtomicMapCache<>();
 
     private final Builder retryErrorsCounterBuilder;
-    private final UnboundAtomicMapCache<String, Counter> retryErrorsCounterCache = new UnboundAtomicMapCache<>();
+    private final BoundAtomicMapCache<String, Counter> retryErrorsCounterCache = new BoundAtomicMapCache<>();
 
     private final Builder sendErrorsCounterBuilder;
-    private final UnboundAtomicMapCache<String, Counter> sendErrorsCounterCache = new UnboundAtomicMapCache<>();
+    private final BoundAtomicMapCache<String, Counter> sendErrorsCounterCache = new BoundAtomicMapCache<>();
 
     public Loki4jMetrics(String appenderName, Supplier<Long> unsentEvents) {
         var tags = Arrays.asList(
@@ -159,7 +159,7 @@ public class Loki4jMetrics {
         batchesSentCounter.increment();
     }
 
-    private void incrementErrorCounter(Builder builder, UnboundAtomicMapCache<String, Counter> counterCache, Supplier<String> failure) {
+    private void incrementErrorCounter(Builder builder, BoundAtomicMapCache<String, Counter> counterCache, Supplier<String> failure) {
         var failKey = failure.get();
         var errorCounter = counterCache.get(failKey, () -> {
             return builder
