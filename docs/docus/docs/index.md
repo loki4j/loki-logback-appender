@@ -30,6 +30,9 @@ implementation 'com.github.loki4j:loki-logback-appender:%version%'
 
 Then add Loki appender to your `logback.xml`:
 
+<!--DOCUSAURUS_CODE_TABS-->
+<!--Plain text layout-->
+
 ```xml
 <appender name="LOKI" class="com.github.loki4j.logback.Loki4jAppender">
     <http>
@@ -37,12 +40,11 @@ Then add Loki appender to your `logback.xml`:
     </http>
     <format>
         <label>
-            <pattern>app=my-app,host=${HOSTNAME},level=%level</pattern>
+            <pattern>app=my-app,host=${HOSTNAME}</pattern>
         </label>
         <message>
-            <pattern>l=%level h=${HOSTNAME} c=%logger{20} t=%thread | %msg %ex</pattern>
+            <pattern>%-5level [%.5(${HOSTNAME})] %.10thread %logger{20} | %msg %ex</pattern>
         </message>
-        <sortByTime>true</sortByTime>
     </format>
 </appender>
 
@@ -50,6 +52,27 @@ Then add Loki appender to your `logback.xml`:
     <appender-ref ref="LOKI" />
 </root>
 ```
+
+<!--JSON layout-->
+
+```xml
+<appender name="LOKI" class="com.github.loki4j.logback.Loki4jAppender">
+    <http>
+        <url>http://localhost:3100/loki/api/v1/push</url>
+    </http>
+    <format>
+        <label>
+            <pattern>app=my-app,host=${HOSTNAME}</pattern>
+        </label>
+        <message class="com.github.loki4j.logback.JsonLayout" />
+    </format>
+</appender>
+
+<root level="DEBUG">
+    <appender-ref ref="LOKI" />
+</root>
+```
+<!--END_DOCUSAURUS_CODE_TABS-->
 
 For more details, please refer to [Docs](docs/configuration).
 
