@@ -125,7 +125,7 @@ Format settings do not depend on the encoding you use.</p>
 <tr><td>format.label.keyValueSeparator</td><td>=</td><td>Character to use as a separator between label's name and its value</td></tr>
 <tr><td>format.label.readMarkers</td><td>false</td><td>If true, Loki4j scans each log record for the attached LabelMarker to add its values to the record's labels</td></tr>
 <tr><td>format.label.nopex</td><td>true</td><td>If true, exception info is not added to labels. If false, you should take care of proper formatting</td></tr>
-<tr><td>format.label.streamCache</td><td>UnboundAtomicMapCache</td><td>An implementation of a Stream cache to use</td></tr>
+<tr><td>format.label.streamCache</td><td>BoundAtomicMapCache</td><td>An implementation of a stream cache to use. By default, caches up to 1000 unique label sets</td></tr>
 <tr><td>format.staticLabels</td><td>false</td><td>If you use only a constant label set (e.g., same keys and values) for all log records, you can set this flag to true and save some CPU time on grouping records by label</td></tr>
 <tr><td>format.sortByTime</td><td>false</td><td>If true, log records in batch are sorted by timestamp. If false, records will be sent to Loki in arrival order. Enable this if you see an 'entry out of order' error from Loki</td></tr>
 </tbody>
