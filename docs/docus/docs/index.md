@@ -6,7 +6,7 @@ configuration and enjoy.
 
 ### Quick Start
 
-The current stable version of Loki4j requires at least Java 11 and Logback v1.3.x.
+The current stable version of Loki4j requires Java 11+ and Logback v1.3.x.
 See the [compatibility matrix](docs/compatibility) for more information about older versions' support.
 
 Add the following dependency to your project:
