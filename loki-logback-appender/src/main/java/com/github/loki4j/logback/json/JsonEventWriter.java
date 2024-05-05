@@ -31,10 +31,13 @@ public class JsonEventWriter {
     public void writeStringField(String fieldName, String value) {
         raw.writeAsciiString(fieldName);
         raw.writeByte(SEMI);
-        raw.writeString(value);
+        if (value != null)
+            raw.writeString(value);
+        else
+            raw.writeNull();
     }
 
-    public void writeNumberField(String fieldName, Long value) {
+    public void writeNumberField(String fieldName, long value) {
         raw.writeAsciiString(fieldName);
         raw.writeByte(SEMI);
         NumberConverter.serialize(value, raw);
