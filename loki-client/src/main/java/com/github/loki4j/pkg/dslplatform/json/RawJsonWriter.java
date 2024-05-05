@@ -309,7 +309,7 @@ public class RawJsonWriter {
      * @param value ascii string
      */
     @SuppressWarnings("deprecation")
-    public final void writeAsciiString(final String value) {
+    public final void writeQuotedAscii(final String value) {
         final int len = value.length() + 2;
         if (position + len >= buffer.length) {
             enlargeOrFlush(position, len);
@@ -319,6 +319,46 @@ public class RawJsonWriter {
         value.getBytes(0, len - 2, _result, position + 1);
         _result[position + len - 1] = QUOTE;
         position += len;
+    }
+
+    /**
+     * Write an unquoted string consisting of only ascii characters.
+     * String will not be escaped according to JSON escaping rules.
+     *
+     * @param value ascii string
+     */
+    @SuppressWarnings("deprecation")
+    public final void writeRawAscii(final String value) {
+        final int len = value.length();
+        if (position + len >= buffer.length) {
+            enlargeOrFlush(position, len);
+        }
+        value.getBytes(0, len, buffer, position);
+        position += len;
+    }
+
+    public final void writeBoolean(final boolean value) {
+        if (value)
+            writeRawAscii("true");
+        else
+            writeRawAscii("false");
+    }
+
+    /**
+     * Convert Java double to JSON double on a best-effort basis.
+     */
+    public final void writeDouble(final double value) {
+        if (value == Double.POSITIVE_INFINITY) {
+            writeQuotedAscii("Infinity");
+        } else if (value == Double.NEGATIVE_INFINITY) {
+            writeQuotedAscii("-Infinity");
+        } else if (value != value) {
+            writeQuotedAscii("NaN");
+        } else if (value == 0.0) {
+            writeRawAscii("0.0");
+        } else {
+            writeRawAscii(Double.toString(value));
+        }
     }
 
     /**

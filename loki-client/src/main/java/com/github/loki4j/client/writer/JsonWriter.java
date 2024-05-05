@@ -53,7 +53,7 @@ public final class JsonWriter implements Writer {
 
     private void beginStreams(LogRecord firstRecord, String[] firstLabels) {
         raw.writeByte(OBJECT_START);
-        raw.writeAsciiString("streams");
+        raw.writeQuotedAscii("streams");
         raw.writeByte(SEMI);
         raw.writeByte(ARRAY_START);
         stream(firstRecord, firstLabels);
@@ -68,11 +68,11 @@ public final class JsonWriter implements Writer {
 
     private void stream(LogRecord firstRecord, String[] labels) {
         raw.writeByte(OBJECT_START);
-        raw.writeAsciiString("stream");
+        raw.writeQuotedAscii("stream");
         raw.writeByte(SEMI);
         labels(labels);
         raw.writeByte(COMMA);
-        raw.writeAsciiString("values");
+        raw.writeQuotedAscii("values");
         raw.writeByte(SEMI);
         raw.writeByte(ARRAY_START);
         record(firstRecord);
@@ -99,7 +99,7 @@ public final class JsonWriter implements Writer {
 
     private void record(LogRecord record) {
         raw.writeByte(ARRAY_START);
-        raw.writeAsciiString("" + record.timestampMs + nanosToStr(record.nanos));
+        raw.writeQuotedAscii("" + record.timestampMs + nanosToStr(record.nanos));
         raw.writeByte(COMMA);
         raw.writeString(record.message);
         raw.writeByte(ARRAY_END);
