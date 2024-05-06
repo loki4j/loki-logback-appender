@@ -37,11 +37,9 @@ public class JsonEventWriterTest {
         writer.writeObjectField("num", 123);
         writer.writeFieldSeparator();
         writer.writeObjectField("bul", false);
-        writer.writeFieldSeparator();
-        writer.writeObjectField("dub", 0.987);
         writer.writeEndObject();
 
-        assertEquals("{\"str\":\"abc\",\"num\":123,\"bul\":false,\"dub\":0.987}", writer.toString());
+        assertEquals("{\"str\":\"abc\",\"num\":123,\"bul\":false}", writer.toString());
     }
 
     @Test
@@ -52,5 +50,25 @@ public class JsonEventWriterTest {
         writer.writeEndObject();
 
         assertEquals("{\"nul\":null}", writer.toString());
+    }
+
+    @Test
+    public void testWriteToStringObject() {
+        var writer = new JsonEventWriter(10);
+        writer.writeBeginObject();
+        writer.writeObjectField("dub", 0.987);
+        writer.writeEndObject();
+
+        assertEquals("{\"dub\":\"0.987\"}", writer.toString());
+    }
+
+    @Test
+    public void testWriteRawJsonStringObject() {
+        var writer = new JsonEventWriter(10);
+        writer.writeBeginObject();
+        writer.writeObjectField("raw", RawJsonString.from("{\"arr\":[1,2,3],\"val\":null}"));
+        writer.writeEndObject();
+
+        assertEquals("{\"raw\":{\"arr\":[1,2,3],\"val\":null}}", writer.toString());
     }
 }

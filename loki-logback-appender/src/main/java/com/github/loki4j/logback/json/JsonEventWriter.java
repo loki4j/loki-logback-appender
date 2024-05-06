@@ -45,8 +45,6 @@ public final class JsonEventWriter {
             NumberConverter.serialize((long) value, raw);
         else if (value instanceof Boolean)
             raw.writeBoolean((boolean) value);
-        else if (value instanceof Double)
-            raw.writeDouble((double) value);
         else if (value instanceof RawJsonString)
             raw.writeRawAscii(((RawJsonString) value).value);
         else
@@ -74,21 +72,5 @@ public final class JsonEventWriter {
 
     public String toString() {
         return raw.toString();
-    }
-
-    /**
-     * A string that will be serialized to JSON as-is, i.e., no quoting and no escaping will be applied.
-     * This string has to be a valid JSON expression.
-     */
-    public static final class RawJsonString {
-        final String value;
-
-        public RawJsonString(String value) {
-            this.value = value;
-        }
-
-        public String toString() {
-            return value;
-        }
     }
 }

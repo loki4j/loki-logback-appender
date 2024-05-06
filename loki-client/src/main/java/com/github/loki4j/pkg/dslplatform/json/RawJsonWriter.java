@@ -345,23 +345,6 @@ public class RawJsonWriter {
     }
 
     /**
-     * Convert Java double to JSON double on a best-effort basis.
-     */
-    public final void writeDouble(final double value) {
-        if (value == Double.POSITIVE_INFINITY) {
-            writeQuotedAscii("Infinity");
-        } else if (value == Double.NEGATIVE_INFINITY) {
-            writeQuotedAscii("-Infinity");
-        } else if (value != value) {
-            writeQuotedAscii("NaN");
-        } else if (value == 0.0) {
-            writeRawAscii("0.0");
-        } else {
-            writeRawAscii(Double.toString(value));
-        }
-    }
-
-    /**
      * Optimized method for writing 'null' into the JSON.
      */
     public final void writeNull() {
