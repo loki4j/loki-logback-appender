@@ -9,7 +9,6 @@ import com.github.loki4j.testkit.categories.CIOnlyTests;
 
 import org.junit.AfterClass;
 import org.junit.BeforeClass;
-import org.junit.Ignore;
 import org.junit.Test;
 import org.junit.experimental.categories.Category;
 
@@ -50,6 +49,19 @@ public class GrafanaCloudTest {
         return sender;
     }
 
+    @Test
+    @Category({CIOnlyTests.class})
+    public void testApacheJsonOneEventCloud() throws Exception {
+        var label = label("testApacheJsonOneEventCloud");
+        var encoder = jsonEncoder(false, label);
+        var sender = authorize(apacheHttpSender(urlPush));
+        var appender = appender(10, 1000, encoder, sender);
+
+        var events = generateEvents(1, 20);
+        client.testHttpSend(label, events, appender, jsonEncoder(false, label));
+
+        assertTrue(true);
+    }
 
     @Test
     @Category({CIOnlyTests.class})
@@ -144,7 +156,6 @@ public class GrafanaCloudTest {
 
     @Test
     @Category({CIOnlyTests.class})
-    @Ignore("Disabled due to unpredictable stream sharding on Grafana Cloud Loki side")
     public void testJavaProtobufMaxBytesSend() throws Exception {
         var label = label("testJavaProtobufMaxBytesSendCloud");
         var encoder = protobufEncoder(false, label);

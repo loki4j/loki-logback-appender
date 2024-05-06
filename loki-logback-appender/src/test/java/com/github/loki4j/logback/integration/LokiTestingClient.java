@@ -83,7 +83,7 @@ public class LokiTestingClient {
     public String queryRecords(String testLabel, int limit, String time) {
 
         try {
-            var query = URLEncoder.encode("{test=\"" + testLabel + "\"}", "utf-8");
+            var query = URLEncoder.encode("{test=\"" + testLabel + "\"}|drop service_name", "utf-8");  // ignore "service_name" feature of Loki
             var url = URI.create(String.format(
                 "%s?query=%s&limit=%s&time=%s&direction=forward", urlQuery, query, limit, time));
             //System.err.println(url);
