@@ -81,9 +81,8 @@ public class LokiTestingClient {
     }
 
     public String queryRecords(String testLabel, int limit, String time) {
-
         try {
-            var lokiServiceLabels = "service_name, __stream_shard__"; // ignore "service_name" and stream sharding features of Loki
+            var lokiServiceLabels = "service_name"; // ignore "service_name" and stream sharding features of Loki
             var query = URLEncoder.encode("{test=\"" + testLabel + "\"}|drop " + lokiServiceLabels, "utf-8");
             var url = URI.create(String.format(
                 "%s?query=%s&limit=%s&time=%s&direction=forward", urlQuery, query, limit, time));

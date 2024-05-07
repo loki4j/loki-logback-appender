@@ -20,7 +20,8 @@ jobs:
               -distributor.ingestion-rate-limit-mb=160 -distributor.ingestion-burst-size-mb=240 \
               -ingester.per-stream-rate-limit="80MB" -ingester.per-stream-rate-limit-burst="160MB" \
               -server.grpc-max-recv-msg-size-bytes=4194304000 \
-              -querier.frontend-client.grpc-max-send-msg-size=167772160
+              -querier.frontend-client.grpc-max-send-msg-size=167772160 \
+              -shard-streams.enabled=false
     steps:
       - uses: actions/checkout@v3
       - name: Set up JDK
