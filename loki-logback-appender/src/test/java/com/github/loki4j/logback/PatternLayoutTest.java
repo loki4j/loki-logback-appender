@@ -30,7 +30,7 @@ public class PatternLayoutTest {
         try { Thread.sleep(100L); } catch (InterruptedException e1) { }
 
         var expected = (
-            "{'streams':[{'stream':{'test':'testEncodeEscapes','level':'INFO','app':'my-app'}," +
+            "{'streams':[{'stream':{'test':'testEncodeEscapes','level':'INFO','service_name':'my-app'}," +
             "'values':[['100100000','l=INFO c=TestApp t=main | m1-line1\\r\\nline2\\r\\n ']," +
             "['100100001','l=INFO c=TestApp t=main | m2-line1\\nline2\\n ']," +
             "['100100002','l=INFO c=TestApp t=main | m3-line1\\rline2\\r ']]}]}"
