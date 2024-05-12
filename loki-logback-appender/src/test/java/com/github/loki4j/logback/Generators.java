@@ -132,7 +132,7 @@ public class Generators {
     public static ProtobufEncoder protobufEncoder(boolean staticLabels, String testLabel, Layout<ILoggingEvent> msgLayout) {
         var encoder = new ProtobufEncoder();
         encoder.setStaticLabels(staticLabels);
-        encoder.setLabel(labelCfg("test=" + testLabel + ",level=%level,app=my-app", ",", "=", true, false));
+        encoder.setLabel(labelCfg("test=" + testLabel + ",level=%level,service_name=my-app", ",", "=", true, false));
         encoder.setMessage(msgLayout);
         return encoder;
     }

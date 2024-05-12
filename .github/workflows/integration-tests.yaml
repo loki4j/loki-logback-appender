@@ -40,7 +40,7 @@ jobs:
             -config.file=/etc/loki/local-config.yaml -auth.enabled=true
           sleep 5s
 
-          gradle check integTests
+          gradle -Dorg.gradle.jvmargs=-Xmx2G check integTests
           gradle ciOnlyTests --tests "*MultitenantSupportTest"
 
           docker stop loki
