@@ -81,7 +81,6 @@ public class LokiTestingClient {
     }
 
     public String queryRecords(String testLabel, int limit, String time) {
-
         try {
             var query = URLEncoder.encode("{test=\"" + testLabel + "\"}", "utf-8");
             var url = URI.create(String.format(

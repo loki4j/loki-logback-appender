@@ -28,6 +28,18 @@ public class FastSendTest {
         client.close();
     }
 
+    @Test
+    @Category({IntegrationTests.class})
+    public void testJavaJsonOneEventSend() throws Exception {
+        var label = "testJavaJsonOneEventSend";
+        var encoder = jsonEncoder(false, label);
+        var sender = javaHttpSender(urlPush);
+        var appender = appender(10, 1000, encoder, sender);
+
+        var events = generateEvents(1, 10);
+        client.testHttpSend(label, events, appender, jsonEncoder(false, label));
+    }
+
 
     @Test
     @Category({IntegrationTests.class})
