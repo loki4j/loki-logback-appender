@@ -9,8 +9,8 @@ include 'loki-logback-appender'
 dependencyResolutionManagement {
     versionCatalogs {
         libs {
-            version('protobuf', '3.24.0')
-            version('loki-protobuf', '0.0.2_pb3.24.0-m1')
+            version('protobuf', '4.26.0')
+            version('loki-protobuf', '0.0.2_pb4.26.0-m1')
             version('jacoco', '0.8.11')
 
             library('logback', 'ch.qos.logback:logback-classic:1.3.14')
