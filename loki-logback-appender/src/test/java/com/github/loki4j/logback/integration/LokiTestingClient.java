@@ -1,5 +1,6 @@
 package com.github.loki4j.logback.integration;
 
+import static java.util.stream.Collectors.toSet;
 import static com.github.loki4j.logback.Generators.*;
 import static org.junit.Assert.*;
 
@@ -161,7 +162,9 @@ public class LokiTestingClient {
         //System.out.println(resp);
         assertEquals(lbl + " status", "success", resp.status);
         assertEquals(lbl + " result type", "streams", resp.data.resultType);
-        assertEquals(lbl + " stream count", req.streams.size(), resp.data.result.size());
+        assertEquals(lbl + " stream",
+            req.streams.stream().map(s -> s.stream).collect(toSet()),
+            resp.data.result.stream().map(s -> s.stream).collect(toSet()));
         assertEquals(lbl + " event count",
             req.streams.stream().mapToInt(s -> s.values.size()).sum(),
             resp.data.result.stream().mapToInt(s -> s.values.size()).sum());
