@@ -1,6 +1,6 @@
 ---
 id: configuration
-title: Loki4j Configuration
+title: Loki4j configuration
 sidebar_label: Configuration
 ---
 

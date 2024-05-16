@@ -1,6 +1,6 @@
 ---
 id: compatibility
-title: Loki4j Compatibility Matrix
+title: Loki4j compatibility matrix
 sidebar_label: Compatibility Matrix
 ---
 

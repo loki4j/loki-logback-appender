@@ -1,8 +1,15 @@
 ---
 id: migration
-title: Loki4j Migration Guide
+title: Loki4j migration guide
 sidebar_label: Migration Guide
 ---
+
+## Upgrading from 1.5.x to 1.6.x
+
+#### loki-protobuf version updated to 0.0.2
+
+Loki `.proto` files were updated to the latest version from the upstream.
+If you use protobuf API for sending logs to Loki, please switch to loki-protobuf v0.0.2.
 
 ## Upgrading from 1.4.x to 1.5.x
 

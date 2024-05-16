@@ -1,6 +1,6 @@
 ---
 id: jsonlayout
-title: Configuring JSON Message Layout
+title: Configuring JSON message layout
 sidebar_label: JSON Message Layout
 ---
 

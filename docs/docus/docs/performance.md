@@ -1,6 +1,6 @@
 ---
 id: performance
-title: Performance Monitoring
+title: Performance monitoring
 sidebar_label: Monitoring
 ---
 
