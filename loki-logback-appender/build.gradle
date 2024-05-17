@@ -8,29 +8,16 @@ plugins {
 group = "com.github.loki4j"
 version = "${file("VERSION").text.trim()}"
 
-evaluationDependsOn(":testkit")
-
 repositories {
      mavenCentral()
 }
 
-sourceSets {
-    main {
-        java {
-            srcDirs += [files(project(":loki-client").sourceSets.main.java.srcDirs)]
-        }
-    }
-    test {
-        java {
-            srcDirs += [files(project(":testkit").sourceSets.main.java.srcDirs)]
-        }
-    }
-}
-
 dependencies {
     api libs.logback
+    implementation project(":loki-client")
     compileOnly libs.bundles.pluggable
 
+    testImplementation project(":testkit")
     testImplementation libs.bundles.pluggable
     testImplementation libs.junit
     testImplementation libs.jackson
@@ -112,10 +99,6 @@ publishing {
 
 signing {
     sign publishing.publications.mavenJava
-}
-
-if (rootProject.hasProperty('java8')) {
-    apply from: '../gradle/java8.gradle'
 }
 
 tasks.withType(GenerateModuleMetadata) {
