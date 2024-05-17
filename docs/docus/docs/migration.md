@@ -11,6 +11,10 @@ sidebar_label: Migration Guide
 Starting from v1.6.0, Loki4j no longer provides `-jdk8` artifact.
 Please upgrade your project at least to Java 11 before switching to Loki4j v1.6.0.
 
+#### Logback version switched to 1.4.x
+
+If your project depends on other external Logback appenders, please make sure all of them are compatible with Logback v1.4.x before upgrading.
+
 #### loki-protobuf version updated to 0.0.2
 
 Loki `.proto` files were updated to the latest version from the upstream.
