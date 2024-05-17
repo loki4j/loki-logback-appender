@@ -6,6 +6,11 @@ sidebar_label: Migration Guide
 
 ## Upgrading from 1.5.x to 1.6.x
 
+#### No Java 8 support
+
+Starting from v1.6.0, Loki4j no longer provides `-jdk8` artifact.
+Please upgrade your project at least to Java 11 before switching to Loki4j v1.6.0.
+
 #### loki-protobuf version updated to 0.0.2
 
 Loki `.proto` files were updated to the latest version from the upstream.

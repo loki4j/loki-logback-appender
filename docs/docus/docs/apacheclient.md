@@ -4,11 +4,11 @@ title: Using Apache HttpClient
 sidebar_label: Apache HttpClient
 ---
 
-By default, Loki4j uses `JavaHttpSender`, backed by `java.net.http.HttpClient` available in Java 11 and later.
+By default, Loki4j uses `JavaHttpSender`, backed by `java.net.http.HttpClient`.
 This sender does not require any extra dependencies.
 So, it should be a good fit for most users.
 
-However, you may want to switch to `ApacheHttpSender`, backed by `org.apache.http.client.HttpClient` available for Java 8+ projects.
+However, you may want to switch to `ApacheHttpSender`, backed by `org.apache.http.client.HttpClient`.
 In this case, you need to ensure you have added the required dependencies to your project:
 
 <!--DOCUSAURUS_CODE_TABS-->
