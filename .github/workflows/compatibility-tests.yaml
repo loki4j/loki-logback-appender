@@ -1,0 +1,25 @@
+name: compatibility
+
+on:
+  pull_request:
+    paths-ignore:
+      # Do not trigger if docs changed
+      - 'docs/**'
+
+jobs:
+  unit-tests:
+    runs-on: ubuntu-latest
+    strategy:
+      matrix:
+        jdk: [11, 17, 21]
+    steps:
+      - uses: actions/checkout@v4
+      - name: Set up JDK
+        uses: actions/setup-java@v4
+        with:
+          distribution: temurin
+          java-version: ${{ matrix.jdk }}
+      - name: Setup Gradle
+        uses: gradle/actions/setup-gradle@v3
+      - name: Build and Run Integration Tests
+        run: gradle check
