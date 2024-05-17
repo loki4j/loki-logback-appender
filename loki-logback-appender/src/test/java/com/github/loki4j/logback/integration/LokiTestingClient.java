@@ -143,7 +143,7 @@ public class LokiTestingClient {
                 final var idx = i;
                 records[i] = LogRecord.create(
                     events[i].getTimeStamp(),
-                    encoder.timestampToNanos(events[i].getTimeStamp()),
+                    events[i].getNanoseconds() % 1_000_000,
                     encoder.eventToStream(events[idx]),
                     encoder.eventToMessage(events[idx]));
             }

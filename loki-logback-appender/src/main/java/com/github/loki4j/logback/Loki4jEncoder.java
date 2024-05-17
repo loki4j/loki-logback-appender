@@ -12,8 +12,6 @@ import ch.qos.logback.core.spi.LifeCycle;
  */
 public interface Loki4jEncoder extends ContextAware, LifeCycle {
 
-    int timestampToNanos(long timestampMs);
-
     LogRecordStream eventToStream(ILoggingEvent e);
 
     String eventToMessage(ILoggingEvent e);

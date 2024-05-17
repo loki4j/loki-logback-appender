@@ -99,7 +99,7 @@ public final class JsonWriter implements Writer {
 
     private void record(LogRecord record) {
         raw.writeByte(ARRAY_START);
-        raw.writeAsciiString("" + record.timestampMs + nanosToStr(record.nanos));
+        raw.writeAsciiString("" + record.timestampMs + nanosToStr(record.nanosInMs));
         raw.writeByte(COMMA);
         raw.writeString(record.message);
         raw.writeByte(ARRAY_END);

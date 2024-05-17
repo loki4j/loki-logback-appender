@@ -81,7 +81,7 @@ public final class ProtobufWriter implements Writer {
         stream.addEntries(EntryAdapter.newBuilder()
             .setTimestamp(Timestamp.newBuilder()
                 .setSeconds(record.timestampMs / 1000)
-                .setNanos((int)(record.timestampMs % 1000) * 1_000_000 + record.nanos))
+                .setNanos((int)(record.timestampMs % 1000) * 1_000_000 + record.nanosInMs))
             .setLine(record.message));
     }
 
