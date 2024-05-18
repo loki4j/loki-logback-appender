@@ -196,7 +196,7 @@ public class Loki4jAppender extends UnsynchronizedAppenderBase<ILoggingEvent> {
     protected void append(ILoggingEvent event) {
         var appended = pipeline.append(
             event.getTimeStamp(),
-            encoder.timestampToNanos(event.getTimeStamp()),
+            event.getNanoseconds() % 1_000_000, // take only nanos, not ms
             () -> encoder.eventToStream(event),
             () -> encoder.eventToMessage(event));
 

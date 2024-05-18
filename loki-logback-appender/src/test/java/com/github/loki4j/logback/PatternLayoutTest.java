@@ -31,9 +31,9 @@ public class PatternLayoutTest {
 
         var expected = (
             "{'streams':[{'stream':{'test':'testEncodeEscapes','level':'INFO','service_name':'my-app'}," +
-            "'values':[['100100000','l=INFO c=TestApp t=main | m1-line1\\r\\nline2\\r\\n ']," +
-            "['100100001','l=INFO c=TestApp t=main | m2-line1\\nline2\\n ']," +
-            "['100100002','l=INFO c=TestApp t=main | m3-line1\\rline2\\r ']]}]}"
+            "'values':[['100000000','l=INFO c=TestApp t=main | m1-line1\\r\\nline2\\r\\n ']," +
+            "['100000000','l=INFO c=TestApp t=main | m2-line1\\nline2\\n ']," +
+            "['100000000','l=INFO c=TestApp t=main | m3-line1\\rline2\\r ']]}]}"
             ).replace('\'', '"');
 
         var actual = new String(sender.lastSendData(), encoder.charset);
