@@ -23,14 +23,14 @@ jobs:
               -querier.frontend-client.grpc-max-send-msg-size=167772160 \
               -shard-streams.enabled=false
     steps:
-      - uses: actions/checkout@v3
+      - uses: actions/checkout@v4
       - name: Set up JDK
-        uses: actions/setup-java@v3
+        uses: actions/setup-java@v4
         with:
           distribution: 'temurin'
           java-version: 11
       - name: Setup Gradle
-        uses: gradle/gradle-build-action@v2
+        uses: gradle/actions/setup-gradle@v3
       - name: Build and Run Integration Tests
         run: |
           docker run --name loki -d -p 3100:3100 grafana/loki:${{ matrix.loki }} \
@@ -61,14 +61,14 @@ jobs:
       matrix:
         jdk: [11, 21]
     steps:
-      - uses: actions/checkout@v3
+      - uses: actions/checkout@v4
       - name: Set up JDK
-        uses: actions/setup-java@v3
+        uses: actions/setup-java@v4
         with:
           distribution: 'temurin'
           java-version: ${{ matrix.jdk }}
       - name: Setup Gradle
-        uses: gradle/gradle-build-action@v2
+        uses: gradle/actions/setup-gradle@v3
       - name: Build and Run Integration Tests
         env:
           GRAFANA_CLOUD_URL_BASE: ${{ vars.GRAFANA_CLOUD_URL_BASE }}

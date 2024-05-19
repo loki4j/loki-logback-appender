@@ -7,9 +7,9 @@ import com.github.loki4j.client.batch.LogRecord;
 import com.github.loki4j.client.batch.LogRecordBatch;
 import com.github.loki4j.client.util.ByteBufferFactory;
 import com.github.loki4j.pkg.google.protobuf.Timestamp;
-import com.github.loki4j.pkg.loki.protobuf.Logproto.EntryAdapter;
-import com.github.loki4j.pkg.loki.protobuf.Logproto.PushRequest;
-import com.github.loki4j.pkg.loki.protobuf.Logproto.StreamAdapter;
+import com.github.loki4j.pkg.loki.protobuf.Push.EntryAdapter;
+import com.github.loki4j.pkg.loki.protobuf.Push.PushRequest;
+import com.github.loki4j.pkg.loki.protobuf.Push.StreamAdapter;
 import com.google.protobuf.CodedOutputStream;
 
 import org.xerial.snappy.Snappy;
@@ -81,7 +81,7 @@ public final class ProtobufWriter implements Writer {
         stream.addEntries(EntryAdapter.newBuilder()
             .setTimestamp(Timestamp.newBuilder()
                 .setSeconds(record.timestampMs / 1000)
-                .setNanos((int)(record.timestampMs % 1000) * 1_000_000 + record.nanos))
+                .setNanos((int)(record.timestampMs % 1000) * 1_000_000 + record.nanosInMs))
             .setLine(record.message));
     }
 

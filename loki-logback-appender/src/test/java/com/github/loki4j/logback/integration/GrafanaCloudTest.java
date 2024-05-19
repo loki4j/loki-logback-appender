@@ -9,6 +9,7 @@ import com.github.loki4j.testkit.categories.CIOnlyTests;
 
 import org.junit.AfterClass;
 import org.junit.BeforeClass;
+import org.junit.Ignore;
 import org.junit.Test;
 import org.junit.experimental.categories.Category;
 
@@ -156,6 +157,7 @@ public class GrafanaCloudTest {
 
     @Test
     @Category({CIOnlyTests.class})
+    @Ignore("Disabled due to unpredictable stream sharding on Grafana Cloud Loki side")
     public void testJavaProtobufMaxBytesSend() throws Exception {
         var label = label("testJavaProtobufMaxBytesSendCloud");
         var encoder = protobufEncoder(false, label);
