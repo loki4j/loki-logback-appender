@@ -41,14 +41,13 @@ public class JsonLayout extends ContextAwareBase implements Layout<ILoggingEvent
 
     private volatile boolean started;
 
-    private JsonEventWriter jsonWriter;
-
     private List<JsonProvider<ILoggingEvent>> providers;
 
     private List<JsonProvider<ILoggingEvent>> customProviders = new ArrayList<>();
 
     @Override
     public String doLayout(ILoggingEvent event) {
+        var jsonWriter = new JsonEventWriter(INIT_WRITER_CAPACITY_BYTES);
         var standard = providers.iterator();
         var custom = customProviders.iterator();
         var firstFieldWritten = false;
@@ -66,8 +65,6 @@ public class JsonLayout extends ContextAwareBase implements Layout<ILoggingEvent
 
     @Override
     public void start() {
-        jsonWriter = new JsonEventWriter(INIT_WRITER_CAPACITY_BYTES);
-
         timestamp = ensureProvider(timestamp, TimestampJsonProvider::new);
         loggerName = ensureProvider(loggerName, LoggerNameJsonProvider::new);
         logLevel = ensureProvider(logLevel, LogLevelJsonProvider::new);
