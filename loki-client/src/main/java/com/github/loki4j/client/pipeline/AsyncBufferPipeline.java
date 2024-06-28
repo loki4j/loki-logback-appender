@@ -1,6 +1,7 @@
 package com.github.loki4j.client.pipeline;
 
 import java.net.ConnectException;
+import java.net.http.HttpTimeoutException;
 import java.util.Comparator;
 import java.util.Optional;
 import java.util.concurrent.ConcurrentLinkedQueue;
@@ -370,7 +371,9 @@ public final class AsyncBufferPipeline {
     }
 
     private boolean checkIfEligibleForRetry(Exception e, LokiResponse r) {
-        return e instanceof ConnectException || (r != null && checkIfStatusEligibleForRetry(r.status));
+        return e instanceof ConnectException
+                || e instanceof HttpTimeoutException
+                || (r != null && checkIfStatusEligibleForRetry(r.status));
     }
 
     private boolean checkIfStatusEligibleForRetry(int status) {
