@@ -309,7 +309,7 @@ public class RawJsonWriter {
      * @param value ascii string
      */
     @SuppressWarnings("deprecation")
-    public final void writeAsciiString(final String value) {
+    public final void writeQuotedAscii(final String value) {
         final int len = value.length() + 2;
         if (position + len >= buffer.length) {
             enlargeOrFlush(position, len);
@@ -319,6 +319,29 @@ public class RawJsonWriter {
         value.getBytes(0, len - 2, _result, position + 1);
         _result[position + len - 1] = QUOTE;
         position += len;
+    }
+
+    /**
+     * Write an unquoted string consisting of only ascii characters.
+     * String will not be escaped according to JSON escaping rules.
+     *
+     * @param value ascii string
+     */
+    @SuppressWarnings("deprecation")
+    public final void writeRawAscii(final String value) {
+        final int len = value.length();
+        if (position + len >= buffer.length) {
+            enlargeOrFlush(position, len);
+        }
+        value.getBytes(0, len, buffer, position);
+        position += len;
+    }
+
+    public final void writeBoolean(final boolean value) {
+        if (value)
+            writeRawAscii("true");
+        else
+            writeRawAscii("false");
     }
 
     /**

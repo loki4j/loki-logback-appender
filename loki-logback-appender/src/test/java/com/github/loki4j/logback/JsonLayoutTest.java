@@ -86,7 +86,7 @@ public class JsonLayoutTest {
         layout.addCustomProvider(new AbstractFieldJsonProvider() {
             @Override
             protected void writeExactlyOneField(JsonEventWriter writer, ILoggingEvent event) {
-                writer.writeNumberField("msg_length", Long.valueOf(event.getMessage().length()));
+                writer.writeNumericField("msg_length", Long.valueOf(event.getMessage().length()));
             }
         });
         

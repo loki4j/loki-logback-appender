@@ -8,7 +8,7 @@ import com.github.loki4j.pkg.dslplatform.json.RawJsonWriter;
 /**
  * A wrapper around {@link RawJsonWriter} that supports basic high-level write operations
  */
-public class JsonEventWriter {
+public final class JsonEventWriter {
     
     private final RawJsonWriter raw;
 
@@ -28,19 +28,46 @@ public class JsonEventWriter {
         raw.writeByte(COMMA);
     }
 
-    public void writeStringField(String fieldName, String value) {
-        raw.writeAsciiString(fieldName);
-        raw.writeByte(SEMI);
-        if (value != null)
-            raw.writeString(value);
-        else
+    public void writeObjectField(String fieldName, Object value) {
+        serializeFieldName(fieldName);
+
+        // Object is a reference type, first check the value for null
+        if (value == null) {
             raw.writeNull();
+            return;
+        }
+
+        if (value instanceof String)
+            raw.writeString((String) value);
+        else if (value instanceof Integer)
+            NumberConverter.serialize(((Integer) value).longValue(), raw);
+        else if (value instanceof Long)
+            NumberConverter.serialize((long) value, raw);
+        else if (value instanceof Boolean)
+            raw.writeBoolean((boolean) value);
+        else if (value instanceof RawJsonString)
+            raw.writeRawAscii(((RawJsonString) value).value);
+        else
+            raw.writeString(value.toString());
     }
 
-    public void writeNumberField(String fieldName, long value) {
-        raw.writeAsciiString(fieldName);
-        raw.writeByte(SEMI);
+    public void writeStringField(String fieldName, String value) {
+        serializeFieldName(fieldName);
+        // String is a reference type, first check the value for null
+        if (value == null)
+            raw.writeNull();
+        else
+            raw.writeString(value);
+    }
+
+    public void writeNumericField(String fieldName, long value) {
+        serializeFieldName(fieldName);
         NumberConverter.serialize(value, raw);
+    }
+
+    private void serializeFieldName(String fieldName) {
+        raw.writeString(fieldName);
+        raw.writeByte(SEMI);
     }
 
     public String toString() {

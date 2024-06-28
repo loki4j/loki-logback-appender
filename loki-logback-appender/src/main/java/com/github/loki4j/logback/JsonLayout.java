@@ -7,6 +7,7 @@ import java.util.function.Supplier;
 
 import com.github.loki4j.logback.json.JsonEventWriter;
 import com.github.loki4j.logback.json.JsonProvider;
+import com.github.loki4j.logback.json.KeyValuePairsJsonProvider;
 import com.github.loki4j.logback.json.LogLevelJsonProvider;
 import com.github.loki4j.logback.json.LoggerNameJsonProvider;
 import com.github.loki4j.logback.json.MdcJsonProvider;
@@ -36,6 +37,7 @@ public class JsonLayout extends ContextAwareBase implements Layout<ILoggingEvent
     private MessageJsonProvider message;
     private StackTraceJsonProvider stackTrace;
     private MdcJsonProvider mdc;
+    private KeyValuePairsJsonProvider keyValuePairs;
 
     private volatile boolean started;
 
@@ -73,6 +75,7 @@ public class JsonLayout extends ContextAwareBase implements Layout<ILoggingEvent
         message = ensureProvider(message, MessageJsonProvider::new);
         stackTrace = ensureProvider(stackTrace, StackTraceJsonProvider::new);
         mdc = ensureProvider(mdc, MdcJsonProvider::new);
+        keyValuePairs = ensureProvider(keyValuePairs, KeyValuePairsJsonProvider::new);
 
         providers = Arrays.asList(
                 timestamp,
@@ -81,7 +84,8 @@ public class JsonLayout extends ContextAwareBase implements Layout<ILoggingEvent
                 threadName,
                 message,
                 stackTrace,
-                mdc
+                mdc,
+                keyValuePairs
         );
 
         for (var provider : providers) {
@@ -146,6 +150,10 @@ public class JsonLayout extends ContextAwareBase implements Layout<ILoggingEvent
 
     public void setMdc(MdcJsonProvider mdc) {
         this.mdc = mdc;
+    }
+
+    public void setKeyValuePairs(KeyValuePairsJsonProvider keyValuePairs) {
+        this.keyValuePairs = keyValuePairs;
     }
 
     @Override
