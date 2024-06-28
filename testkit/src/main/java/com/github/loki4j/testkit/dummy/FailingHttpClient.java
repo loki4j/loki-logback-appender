@@ -1,6 +1,7 @@
 package com.github.loki4j.testkit.dummy;
 
 import java.net.ConnectException;
+import java.net.http.HttpConnectTimeoutException;
 import java.nio.ByteBuffer;
 
 import com.github.loki4j.client.http.HttpStatus;
@@ -14,7 +15,9 @@ public class FailingHttpClient extends DummyHttpClient {
     public LokiResponse send(ByteBuffer batch) throws Exception {
         var response = super.send(batch);
         if (failureType == FailureType.CONNECTION_EXCEPTION)
-            throw new ConnectException("Text exception");
+            throw new ConnectException("Text ConnectException");
+        else if (failureType == FailureType.HTTP_CONNECT_TIMEOUT_EXCEPTION)
+            throw new HttpConnectTimeoutException("Test HttpConnectTimeoutException");
         else if (failureType == FailureType.RATE_LIMITED)
             return new LokiResponse(HttpStatus.TOO_MANY_REQUESTS, "Rate Limited Request");
         return response;
@@ -27,6 +30,7 @@ public class FailingHttpClient extends DummyHttpClient {
     public enum FailureType {
         NONE,
         CONNECTION_EXCEPTION,
+        HTTP_CONNECT_TIMEOUT_EXCEPTION,
         RATE_LIMITED
     }
 
