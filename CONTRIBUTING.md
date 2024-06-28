@@ -18,7 +18,7 @@ If you don't know or are unsure - consider asking a question (see the section ab
 Before submitting a bug report:
 
 - Check if you can reproduce the problem in the latest version of Loki4j
-- Check if this issue is already reported in Loki4j's Issue tracker in Github; in this case, please add a comment to the existing issue instead of creating a new one
+- Check if this issue is already reported in Loki4j's Issue tracker on Github; in this case, please add a comment to the existing issue instead of creating a new one
 
 What information to include in the bug report:
 
@@ -58,8 +58,16 @@ What information to include in the enhancement suggestion:
 - Provide specific examples to demonstrate different aspects of the feature (configs, code snippets, etc.)
 - Explain why this enhancement would be useful to most Loki4j users
 - Optionally list some other Loki clients (or Logback appenders) where this enhancement exists
+- Explicitly specify if you would like to prepare a PR for it. It's not recommended to start working on the code change before your enhancement request is accepted
 
 ## Prepare a pull request
+
+You pull request should explicitly reference the issue it addresses.
+This issue should be preliminary submitted to Loki4j's Issue tracker on Github, and be accepted by project's core contributor.
+It's not recommended to start working on the code change before your bug report or enhancement request is accepted.
+However, you can omit creating an issue for PRs that change only docs, configs, tests, or comments.
+
+Please follow the next steps to create a pull request:
 
 1. Fork the project to your GitHub account using the fork button in the upper right corner of GitHub UI.
 1. Make sure the project compiles and tests pass.
@@ -68,7 +76,7 @@ What information to include in the enhancement suggestion:
 1. When finished, again make sure the project compiles with your changes and tests pass.
 1. Create a pull request to the main project using GitHub UI.
 
-Please follow the guidelines below for your PRs:
+Consider the guidelines below for your PRs:
 
 - Use a clear and descriptive title
 - Use the present tense ("Add feature" not "Added feature")
