@@ -1,4 +1,4 @@
-package com.github.loki4j.logback.performance.reg_v152;
+package com.github.loki4j.logback.performance.reg_v160;
 
 import static com.github.loki4j.logback.Generators.generateEvents;
 
