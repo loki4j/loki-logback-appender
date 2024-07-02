@@ -3,6 +3,13 @@ package com.github.loki4j.logback;
 import static com.github.loki4j.logback.Generators.*;
 import static org.junit.Assert.*;
 
+import java.util.ArrayList;
+import java.util.Collections;
+import java.util.List;
+import java.util.concurrent.CountDownLatch;
+import java.util.concurrent.ExecutorService;
+import java.util.concurrent.Executors;
+import java.util.concurrent.TimeUnit;
 import java.util.function.Supplier;
 
 import org.junit.Test;
@@ -13,8 +20,10 @@ import com.github.loki4j.logback.json.JsonProvider;
 import com.github.loki4j.logback.json.LogLevelJsonProvider;
 import com.github.loki4j.logback.json.LoggerNameJsonProvider;
 import com.github.loki4j.logback.json.MessageJsonProvider;
+import com.github.loki4j.logback.json.StackTraceJsonProvider;
 import com.github.loki4j.logback.json.ThreadNameJsonProvider;
 import com.github.loki4j.logback.json.TimestampJsonProvider;
+
 import com.github.loki4j.testkit.dummy.StringPayload;
 
 import ch.qos.logback.classic.Level;
@@ -50,8 +59,6 @@ public class JsonLayoutTest {
             appender.waitAllAppended();
 
             var actual = StringPayload.parse(sender.lastSendData(), encoder.charset);
-            //System.out.println(expected);
-            //System.out.println(actual);
             assertEquals("jsonLayout", expected, actual);
             return null;
         });
@@ -97,10 +104,70 @@ public class JsonLayoutTest {
         layout.stop();
     }
 
-    private <T extends JsonProvider<?>> T disable(Supplier<T> ctor) {
-        var provider = ctor.get();
+    @Test
+    public void testThreadSafety() throws Exception {
+        class Result {
+            final String expected;
+            final String actual;
+
+            public Result(final String expected, final String actual) {
+                this.expected = expected;
+                this.actual = actual;
+            }
+        }
+
+        final List<Result> results = Collections.synchronizedList(new ArrayList<>());
+
+        final var layout = jsonMsgLayout();
+        try {
+            layout.setLogLevel(disable(LogLevelJsonProvider::new));
+            layout.setLoggerName(disable(LoggerNameJsonProvider::new));
+            layout.setTimestamp(disable(TimestampJsonProvider::new));
+            layout.setStackTrace(disable(StackTraceJsonProvider::new));
+
+            layout.start();
+
+            // ready...
+            final CountDownLatch latch = new CountDownLatch(1);
+            final ExecutorService executorService = Executors.newFixedThreadPool(16);
+            // set...
+            for (final var event : generateEvents(256, 4)) {
+                executorService.submit(() -> {
+                    awaitLatch(latch);
+                    final String formatted = layout.doLayout(event);
+                    final String expected = String.format("{'thread_name':'%s','message':'%s'}", event.getThreadName(), event.getMessage())
+                            .replace("\n", "\\n")
+                            .replace('\'', '"');
+                    results.add(new Result(expected, formatted));
+                });
+            }
+
+            // go!
+            latch.countDown();
+            executorService.shutdown();
+            assertTrue(executorService.awaitTermination(10L, TimeUnit.SECONDS));
+
+            for (final Result result : results) {
+                assertEquals(result.expected, result.actual);
+            }
+        } finally {
+            layout.stop();
+        }
+    }
+
+    private static void awaitLatch(final CountDownLatch latch) {
+        try {
+            latch.await();
+        } catch (final InterruptedException ex) {
+            Thread.currentThread().interrupt();
+            throw new RuntimeException(ex);
+        }
+    }
+
+    private <T extends JsonProvider<?>> T disable(final Supplier<T> ctor) {
+        final var provider = ctor.get();
         provider.setEnabled(false);
         return provider;
     }
-    
+
 }
