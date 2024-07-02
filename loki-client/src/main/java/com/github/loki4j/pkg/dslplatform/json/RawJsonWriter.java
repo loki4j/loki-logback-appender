@@ -321,6 +321,21 @@ public class RawJsonWriter {
         position += len;
     }
 
+    /**
+     * Optimized method for writing 'null' into the JSON.
+     */
+    public final void writeNull() {
+        if ((position + 4) >= buffer.length) {
+            enlargeOrFlush(position, 0);
+        }
+        final int s = position;
+        final byte[] _result = buffer;
+        _result[s] = 'n';
+        _result[s + 1] = 'u';
+        _result[s + 2] = 'l';
+        _result[s + 3] = 'l';
+        position += 4;
+    }
 
     /**
      * Content of buffer can be copied to another array of appropriate size.
