@@ -27,7 +27,7 @@ public class LayoutsTest {
         l.start();
         return l;
     }
-    
+
     @Test
     @Category({PerformanceTests.class})
     public void layoutPerformance() throws Exception {
@@ -51,6 +51,37 @@ public class LayoutsTest {
                     (layout, e) -> layout.doLayout(e),
                     layout -> {},
                     layout -> layout.stop())
+            );
+        }});
+        statsLayouts.forEach(System.out::println);
+    }
+
+    @Test
+    @Category({PerformanceTests.class})
+    public void multiThreadedLayoutPerformance() throws Exception {
+        var statsLayouts = Benchmarker.run(new Benchmarker.Config<ILoggingEvent>() {{
+            this.runs = 100;
+            this.parFactor = 4;
+            this.generator = () -> InfiniteEventIterator.from(generateEvents(10_000, 10)).limited(100_000);
+            this.benchmarks = Arrays.asList(
+                    Benchmark.of(
+                            "patternLayout",
+                            () -> initLayout(new PatternLayout()),
+                            Layout::doLayout,
+                            layout -> {},
+                            Layout::stop),
+                    Benchmark.of(
+                            "jsonLayout",
+                            () -> initLayout(new JsonLayout()),
+                            Layout::doLayout,
+                            layout -> {},
+                            Layout::stop),
+                    Benchmark.of(
+                            "logstashLayout",
+                            () -> initLayout(new LogstashLayout()),
+                            Layout::doLayout,
+                            layout -> {},
+                            Layout::stop)
             );
         }});
         statsLayouts.forEach(System.out::println);
