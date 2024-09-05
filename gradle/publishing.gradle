@@ -8,7 +8,7 @@ plugins.withType(MavenPublishPlugin) {
                     licenses {
                         license {
                             name = 'BSD Software License, 2-clause version'
-                            url = 'https://github.com/loki4j/loki-logback-appender/blob/master/LICENSE.md'
+                            url = 'https://github.com/loki4j/loki-logback-appender/blob/master/LICENSE'
                         }
                     }
                     developers {
