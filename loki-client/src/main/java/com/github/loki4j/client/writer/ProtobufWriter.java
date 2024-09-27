@@ -8,6 +8,7 @@ import com.github.loki4j.client.batch.LogRecordBatch;
 import com.github.loki4j.client.util.ByteBufferFactory;
 import com.github.loki4j.pkg.google.protobuf.Timestamp;
 import com.github.loki4j.pkg.loki.protobuf.Push.EntryAdapter;
+import com.github.loki4j.pkg.loki.protobuf.Push.LabelPairAdapter;
 import com.github.loki4j.pkg.loki.protobuf.Push.PushRequest;
 import com.github.loki4j.pkg.loki.protobuf.Push.StreamAdapter;
 import com.google.protobuf.CodedOutputStream;
@@ -78,11 +79,18 @@ public final class ProtobufWriter implements Writer {
     }
 
     private void nextEntry(LogRecord record) {
-        stream.addEntries(EntryAdapter.newBuilder()
+        var entry = EntryAdapter.newBuilder()
             .setTimestamp(Timestamp.newBuilder()
                 .setSeconds(record.timestampMs / 1000)
                 .setNanos((int)(record.timestampMs % 1000) * 1_000_000 + record.nanosInMs))
-            .setLine(record.message));
+            .setLine(record.message);
+        for (int i = 0; i < record.metadata.length; i+=2) {
+            entry.addStructuredMetadata(LabelPairAdapter.newBuilder()
+                .setName(record.metadata[i])
+                .setValue(record.metadata[i+1])
+            );
+        }
+        stream.addEntries(entry);
     }
 
     private void endStreams() throws IOException {

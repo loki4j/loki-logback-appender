@@ -39,7 +39,10 @@ public final class Batcher {
      * This method is thread-safe.
      */
     public boolean validateLogRecordSize(LogRecord r) {
-        return (r.messageUtf8SizeBytes + 24 + r.stream.utf8SizeBytes + 8) <= maxSizeBytes;
+        var messageSize = r.messageUtf8SizeBytes + 24;
+        var metadataSize = r.metadataUtf8SizeBytes + 24 + r.metadata.length * 2;
+        var streamSize = r.stream.utf8SizeBytes + 8;
+        return messageSize + metadataSize + streamSize <= maxSizeBytes;
     }
 
     /**
@@ -55,6 +58,7 @@ public final class Batcher {
      */
     private long estimateSizeBytes(LogRecord r, boolean dryRun) {
         long size = r.messageUtf8SizeBytes + 24;
+        size += r.metadataUtf8SizeBytes + 24 + r.metadata.length * 2;
         if (!streams.contains(r.stream)) {
             size += r.stream.utf8SizeBytes + 8;
             if (!dryRun) streams.add(r.stream);

@@ -10,6 +10,7 @@ import com.github.loki4j.client.batch.LogRecordStream;
 import com.github.loki4j.client.util.Cache;
 import com.github.loki4j.client.util.StringUtils;
 import com.github.loki4j.client.util.Cache.BoundAtomicMapCache;
+import com.github.loki4j.slf4j.marker.AbstractKeyValueMarker;
 import com.github.loki4j.slf4j.marker.LabelMarker;
 
 import ch.qos.logback.classic.PatternLayout;
@@ -25,7 +26,7 @@ import ch.qos.logback.core.spi.ContextAwareBase;
 public abstract class AbstractLoki4jEncoder extends ContextAwareBase implements Loki4jEncoder {
 
     private static final String REGEX_STARTER = "regex:";
-    private static final String[] EMPTY_LABELS = new String[0];
+    private static final String[] EMPTY_KV_PAIRS = new String[0];
     private static final String DEFAULT_MSG_PATTERN = "l=%level c=%logger{20} t=%thread | %msg %ex";
     
     public static final class LabelCfg {
@@ -33,6 +34,10 @@ public abstract class AbstractLoki4jEncoder extends ContextAwareBase implements 
          * Logback pattern to use for log record's label
          */
         String pattern;
+        /**
+         * Logback pattern to use for log record's structured metadata
+         */
+        String structuredMetadataPattern;
         /**
          * Character sequence to use as a separator between labels.
          * If starts with "regex:" prefix, the remainder is used as a regular expression separator.
@@ -60,6 +65,9 @@ public abstract class AbstractLoki4jEncoder extends ContextAwareBase implements 
 
         public void setPattern(String pattern) {
             this.pattern = pattern;
+        }
+        public void setStructuredMetadataPattern(String structuredMetadataPattern) {
+            this.structuredMetadataPattern = structuredMetadataPattern;
         }
         public void setKeyValueSeparator(String keyValueSeparator) {
             this.keyValueSeparator = keyValueSeparator;
@@ -100,6 +108,7 @@ public abstract class AbstractLoki4jEncoder extends ContextAwareBase implements 
     private Pattern compiledLabelKeyValueSeparator;
 
     private PatternLayout labelPatternLayout;
+    private PatternLayout metadataPatternLayout;
     private Layout<ILoggingEvent> messageLayout;
 
     private LogRecordStream staticLabelStream = null;
@@ -132,6 +141,12 @@ public abstract class AbstractLoki4jEncoder extends ContextAwareBase implements 
         labelPatternLayout.setContext(context);
         labelPatternLayout.start();
 
+        if (label.structuredMetadataPattern != null) {
+            metadataPatternLayout = initPatternLayout(label.structuredMetadataPattern);
+            metadataPatternLayout.setContext(context);
+            metadataPatternLayout.start();
+        }
+
         if (messageLayout == null) {
             addWarn("No message layout specified in the config. Using PatternLayout with default settings");
             messageLayout = initPatternLayout(DEFAULT_MSG_PATTERN);
@@ -146,6 +161,9 @@ public abstract class AbstractLoki4jEncoder extends ContextAwareBase implements 
         this.started = false;
         messageLayout.stop();
         labelPatternLayout.stop();
+        if (metadataPatternLayout != null) {
+            metadataPatternLayout.stop();
+        }
     }
 
     @Override
@@ -163,11 +181,11 @@ public abstract class AbstractLoki4jEncoder extends ContextAwareBase implements 
 
         final var renderedLayout = labelPatternLayout.doLayout(e).intern();
         var streamKey = renderedLayout;
-        var markerLabelsVar = EMPTY_LABELS;
+        var markerLabelsVar = EMPTY_KV_PAIRS;
         if (label.readMarkers && e.getMarkerList() != null) {
             for (var marker: e.getMarkerList()) {
                 if (marker != null && marker instanceof LabelMarker) {
-                    markerLabelsVar = extractLabelsFromMarker((LabelMarker) marker);
+                    markerLabelsVar = extractKVPairsFromMarker((LabelMarker) marker);
                     streamKey = streamKey + "!markers!" + Arrays.toString(markerLabelsVar);
                     break; // only one LabelMarker is supported per event
                 }
@@ -176,7 +194,7 @@ public abstract class AbstractLoki4jEncoder extends ContextAwareBase implements 
         final var markerLabels = markerLabelsVar;
         return label.streamCache.get(streamKey, () -> {
             var layoutLabels = extractStreamKVPairs(renderedLayout);
-            if (markerLabels == EMPTY_LABELS) {
+            if (markerLabels == EMPTY_KV_PAIRS) {
                 return LogRecordStream.create(layoutLabels);
             }
             var allLabels = Arrays.copyOf(layoutLabels, layoutLabels.length + markerLabels.length);
@@ -187,6 +205,13 @@ public abstract class AbstractLoki4jEncoder extends ContextAwareBase implements 
 
     public String eventToMessage(ILoggingEvent e) {
         return messageLayout.doLayout(e);
+    }
+
+    public String[] eventToMetadata(ILoggingEvent e) {
+        if (metadataPatternLayout == null)
+            return EMPTY_KV_PAIRS;
+        var renderedMetadata = metadataPatternLayout.doLayout(e);
+        return extractStreamKVPairs(renderedMetadata);
     }
 
     private PatternLayout initPatternLayout(String pattern) {
@@ -216,16 +241,16 @@ public abstract class AbstractLoki4jEncoder extends ContextAwareBase implements 
         return Arrays.copyOf(result, pos);
     }
 
-    String[] extractLabelsFromMarker(LabelMarker marker) {
-        var labelMap = marker.getLabels();
-        var markerLabels = new String[labelMap.size() * 2];
+    String[] extractKVPairsFromMarker(AbstractKeyValueMarker marker) {
+        var map = marker.getKeyValuePairs();
+        var markerKVPairs = new String[map.size() * 2];
         var pos = 0;
-        for (Entry<String, String> entry : labelMap.entrySet()) {
-            markerLabels[pos] = entry.getKey();
-            markerLabels[pos + 1] = entry.getValue();
+        for (Entry<String, String> entry : map.entrySet()) {
+            markerKVPairs[pos] = entry.getKey();
+            markerKVPairs[pos + 1] = entry.getValue();
             pos += 2;
         }
-        return markerLabels;
+        return markerKVPairs;
     }
 
     public LabelCfg getLabel() {
