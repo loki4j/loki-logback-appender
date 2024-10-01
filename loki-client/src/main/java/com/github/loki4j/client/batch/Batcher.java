@@ -40,7 +40,7 @@ public final class Batcher {
      */
     public boolean validateLogRecordSize(LogRecord r) {
         var messageSize = r.messageUtf8SizeBytes + 24;
-        var metadataSize = r.metadataUtf8SizeBytes + 24 + r.metadata.length * 2;
+        var metadataSize = r.metadataUtf8SizeBytes + (r.metadata.length == 0 ? 0 : 1) * 24 + r.metadata.length * 2;
         var streamSize = r.stream.utf8SizeBytes + 8;
         return messageSize + metadataSize + streamSize <= maxSizeBytes;
     }
@@ -58,7 +58,7 @@ public final class Batcher {
      */
     private long estimateSizeBytes(LogRecord r, boolean dryRun) {
         long size = r.messageUtf8SizeBytes + 24;
-        size += r.metadataUtf8SizeBytes + 24 + r.metadata.length * 2;
+        size += r.metadataUtf8SizeBytes + (r.metadata.length == 0 ? 0 : 1) * 24 + r.metadata.length * 2;
         if (!streams.contains(r.stream)) {
             size += r.stream.utf8SizeBytes + 8;
             if (!dryRun) streams.add(r.stream);

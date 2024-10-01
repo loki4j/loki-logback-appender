@@ -55,7 +55,7 @@ public class LogRecord {
                 + ", nanos=" + nanosInMs
                 + ", stream=" + stream
                 + ", message=" + message
-                + ", metadata=" + metadata
+                + ", metadata=" + Arrays.toString(metadata)
                 + "]";
     }
 

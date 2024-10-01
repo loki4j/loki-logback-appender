@@ -24,8 +24,8 @@ public class LabelMarker extends AbstractKeyValueMarker {
      * Creates a Marker containing a set of Loki labels, where each label is a key-value pair.
      * @param labels Labels will be created at time when they are first accessed (i.e. deferred creation).
      */
-    public static StructuredMetadataMarker of(Supplier<Map<String, String>> labels) {
-        return new StructuredMetadataMarker(labels);
+    public static LabelMarker of(Supplier<Map<String, String>> labels) {
+        return new LabelMarker(labels);
     }
 
     /**
@@ -33,7 +33,7 @@ public class LabelMarker extends AbstractKeyValueMarker {
      * @param key Key of the label (assumed to be static).
      * @param value Value od the label will be created at time when it is first accessed (i.e. deferred creation).
      */
-    public static StructuredMetadataMarker of(String key, Supplier<String> value) {
+    public static LabelMarker of(String key, Supplier<String> value) {
         return of(() -> Collections.singletonMap(key, value.get()));
     }
     
