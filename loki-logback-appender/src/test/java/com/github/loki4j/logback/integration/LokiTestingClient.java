@@ -49,7 +49,7 @@ public class LokiTestingClient {
     private ObjectMapper json = new ObjectMapper();
 
     public LokiTestingClient(String urlBase) {
-        urlQuery = urlBase + "/query";
+        urlQuery = urlBase + "/query_range";
 
         client = HttpClient
             .newBuilder()
@@ -83,9 +83,9 @@ public class LokiTestingClient {
 
     public String queryRecords(String testLabel, int limit, String time) {
         try {
-            var query = URLEncoder.encode("{test=\"" + testLabel + "\"}", "utf-8");
+            var query = URLEncoder.encode("{test=\"" + testLabel + "\"} | drop detected_level", "utf-8");
             var url = URI.create(String.format(
-                "%s?query=%s&limit=%s&time=%s&direction=forward", urlQuery, query, limit, time));
+                "%s?query=%s&limit=%s&end=%s&direction=forward", urlQuery, query, limit, time));
             //System.err.println(url);
             var req = requestBuilder.copy()
                 .uri(url)
