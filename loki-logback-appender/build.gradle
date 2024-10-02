@@ -12,9 +12,16 @@ repositories {
      mavenCentral()
 }
 
+sourceSets {
+    main {
+        java {
+            srcDirs += [files(project(":loki-client").sourceSets.main.java.srcDirs)]
+        }
+    }
+}
+
 dependencies {
     api libs.logback
-    implementation project(":loki-client")
     compileOnly libs.bundles.pluggable
 
     testImplementation project(":testkit")

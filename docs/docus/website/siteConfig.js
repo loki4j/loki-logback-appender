@@ -74,7 +74,7 @@ const siteConfig = {
   */
 
   // This copyright info is used in /core/Footer.js and blog RSS/Atom feeds.
-  copyright: `Copyright © ${new Date().getFullYear()} Anton Nehaev`,
+  copyright: `Copyright © 2020-${new Date().getFullYear()} Anton Nekhaev and Contributors`,
 
   highlight: {
     // Highlight.js theme to use for syntax highlighting in code blocks.
@@ -112,7 +112,7 @@ const siteConfig = {
   repoUrl: ghUrl,
   startDoc: defaultDoc,
 
-  artifactVersion: '1.5.1',
+  artifactVersion: '1.5.2',
 };
 
 module.exports = siteConfig;

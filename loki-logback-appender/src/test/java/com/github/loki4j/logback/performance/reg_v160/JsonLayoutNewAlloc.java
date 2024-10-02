@@ -1,4 +1,4 @@
-package com.github.loki4j.logback;
+package com.github.loki4j.logback.performance.reg_v160;
 
 import java.util.ArrayList;
 import java.util.Arrays;
@@ -25,7 +25,7 @@ import ch.qos.logback.core.spi.ContextAwareBase;
  * A layout that converts a logback event to a string in JSON format.
  * This layout can be used as an alternative to the default {@link PatternLayout}
  */
-public class JsonLayout extends ContextAwareBase implements Layout<ILoggingEvent> {
+public class JsonLayoutNewAlloc extends ContextAwareBase implements Layout<ILoggingEvent> {
 
     private static final String EMPTY_STRING = "";
     private static final int INIT_WRITER_CAPACITY_BYTES = 1_000;
@@ -47,10 +47,10 @@ public class JsonLayout extends ContextAwareBase implements Layout<ILoggingEvent
 
     @Override
     public String doLayout(ILoggingEvent event) {
-        var jsonWriter = new JsonEventWriter(INIT_WRITER_CAPACITY_BYTES);
         var standard = providers.iterator();
         var custom = customProviders.iterator();
         var firstFieldWritten = false;
+        var jsonWriter = new JsonEventWriter(INIT_WRITER_CAPACITY_BYTES);
         jsonWriter.writeBeginObject();
         while (standard.hasNext() || custom.hasNext()) {
             var provider = standard.hasNext() ? standard.next() : custom.next();

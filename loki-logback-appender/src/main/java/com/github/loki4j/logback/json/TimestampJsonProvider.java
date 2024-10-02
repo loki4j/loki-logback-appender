@@ -12,7 +12,7 @@ public class TimestampJsonProvider extends AbstractFieldJsonProvider {
 
     @Override
     protected void writeExactlyOneField(JsonEventWriter writer, ILoggingEvent event) {
-        writer.writeNumberField(getFieldName(), event.getTimeStamp());
+        writer.writeNumericField(getFieldName(), event.getTimeStamp());
     }
     
 }

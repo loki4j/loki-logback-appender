@@ -1,6 +1,7 @@
 package com.github.loki4j.client.pipeline;
 
 import java.net.ConnectException;
+import java.net.http.HttpTimeoutException;
 import java.util.Comparator;
 import java.util.Optional;
 import java.util.concurrent.ConcurrentLinkedQueue;
@@ -35,7 +36,7 @@ public final class AsyncBufferPipeline {
 
     private static final Comparator<LogRecord> compareByTime = (e1, e2) -> {
         var tsCmp = Long.compare(e1.timestampMs, e2.timestampMs);
-        return tsCmp == 0 ? Integer.compare(e1.nanos, e2.nanos) : tsCmp;
+        return tsCmp == 0 ? Integer.compare(e1.nanosInMs, e2.nanosInMs) : tsCmp;
     };
 
     private static final Comparator<LogRecord> compareByStream = (e1, e2) ->
@@ -176,13 +177,13 @@ public final class AsyncBufferPipeline {
         waitSendQueueLessThan(1, timeoutMs);
     }
 
-    public boolean append(long timestamp, int nanos, Supplier<LogRecordStream> stream, Supplier<String> message) {
+    public boolean append(long timestampMs, int nanosInMs, Supplier<LogRecordStream> stream, Supplier<String> message) {
         var startedNs = System.nanoTime();
         boolean accepted = false;
         if (acceptNewEvents.get()) {
             LogRecord record = null;
             try {
-                record = LogRecord.create(timestamp, nanos, stream.get(), message.get());
+                record = LogRecord.create(timestampMs, nanosInMs, stream.get(), message.get());
             } catch (Exception e) {
                 log.error(e, "Error occurred while appending an event");
                 if (metrics != null) metrics.appendFailed(() -> e.getClass().getSimpleName());
@@ -370,7 +371,9 @@ public final class AsyncBufferPipeline {
     }
 
     private boolean checkIfEligibleForRetry(Exception e, LokiResponse r) {
-        return e instanceof ConnectException || (r != null && checkIfStatusEligibleForRetry(r.status));
+        return e instanceof ConnectException
+                || e instanceof HttpTimeoutException
+                || (r != null && checkIfStatusEligibleForRetry(r.status));
     }
 
     private boolean checkIfStatusEligibleForRetry(int status) {

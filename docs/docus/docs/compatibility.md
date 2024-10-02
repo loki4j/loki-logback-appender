@@ -27,7 +27,7 @@ So please add the following dependencies to your project:
 <dependency>
     <groupId>com.github.loki4j</groupId>
     <artifactId>loki-logback-appender-jdk8</artifactId>
-    <version>1.5.1</version>
+    <version>1.5.2</version>
 </dependency>
 <dependency>
     <groupId>org.apache.httpcomponents</groupId>
@@ -39,7 +39,7 @@ So please add the following dependencies to your project:
 <!--Gradle-->
 
 ```groovy
-implementation 'com.github.loki4j:loki-logback-appender-jdk8:1.5.1'
+implementation 'com.github.loki4j:loki-logback-appender-jdk8:1.5.2'
 implementation 'org.apache.httpcomponents:httpclient:4.5.14'
 ```
 <!--END_DOCUSAURUS_CODE_TABS-->

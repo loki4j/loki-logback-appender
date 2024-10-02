@@ -301,6 +301,42 @@ public class Loki4jAppenderTest {
     }
 
     @Test
+    public void testHttpTimeoutRetry() throws InterruptedException, BrokenBarrierException, TimeoutException, ExecutionException {
+        StringPayload expectedPayload = StringPayload.builder()
+            .stream("[level, INFO, app, my-app]",
+                "ts=100 l=INFO c=test.TestApp t=thread-1 | Test message 1 ")
+            .build();
+
+        var failingHttpClient = new FailingHttpClient();
+        var sender = new WrappingHttpSender<>(failingHttpClient);
+        var encoder = defaultToStringEncoder();
+
+        var appender = appender(1, 4000L, encoder, sender);
+        appender.setMinRetryBackoffMs(50);
+        appender.setMaxRetryJitterMs(10);
+        appender.start();
+
+        sender.client.setFailure(FailureType.HTTP_CONNECT_TIMEOUT_EXCEPTION);
+        var sendCapture = sender.client.captureSendInvocation();
+
+        appender.append(events[0]);
+
+        var send1 =  sendCapture.waitForNextSend(100);
+        assertEquals("send", 1, send1.sendNo);
+        assertEquals("send", expectedPayload, StringPayload.parse(send1.data, encoder.charset));
+
+        var send2 = send1.waitForNextSend(150);
+        assertEquals("retry1", 2, send2.sendNo);
+        assertEquals("retry1", expectedPayload, StringPayload.parse(send2.data, encoder.charset));
+
+        var send3 = send2.waitForNextSend(200);
+        assertEquals("retry2", 3, send3.sendNo);
+        assertEquals("retry2", expectedPayload, StringPayload.parse(send3.data, encoder.charset));
+
+        appender.stop();
+    }
+
+    @Test
     public void testRateLimitedRetry() throws InterruptedException, BrokenBarrierException, TimeoutException, ExecutionException {
         StringPayload expectedPayload = StringPayload.builder()
             .stream("[level, INFO, app, my-app]",

@@ -4,7 +4,6 @@ import java.nio.charset.Charset;
 import java.nio.charset.StandardCharsets;
 import java.util.Arrays;
 import java.util.Map.Entry;
-import java.util.concurrent.atomic.AtomicInteger;
 import java.util.regex.Pattern;
 
 import com.github.loki4j.client.batch.LogRecordStream;
@@ -82,8 +81,6 @@ public abstract class AbstractLoki4jEncoder extends ContextAwareBase implements 
 
     protected final Charset charset = StandardCharsets.UTF_8;
 
-    private final AtomicInteger nanoCounter = new AtomicInteger(0);
-
     private LabelCfg label = new LabelCfg();
 
     /**
@@ -98,13 +95,6 @@ public abstract class AbstractLoki4jEncoder extends ContextAwareBase implements 
      * set this flag to true and save some CPU time on grouping records by label.
      */
     private volatile boolean staticLabels = false;
-
-    /**
-     * Max seen timestamp at the moment.
-     * We can not send an event with timestamp less than this,
-     * just to avoid 'out of order' from Loki.
-     */
-    private volatile long maxTimestampMs = 0;
 
     private Pattern compiledLabelPairSeparator;
     private Pattern compiledLabelKeyValueSeparator;
@@ -197,32 +187,6 @@ public abstract class AbstractLoki4jEncoder extends ContextAwareBase implements 
 
     public String eventToMessage(ILoggingEvent e) {
         return messageLayout.doLayout(e);
-    }
-
-    public int timestampToNanos(long timestampMs) {
-        final long nextMs = timestampMs % 1000; // nextMs=nnn
-
-        if (maxTimestampMs > timestampMs)
-            // nnn_999 - can not track the order of events for the previous milliseconds
-            return (int)nextMs * 1000 + 999;
-
-        var nanos = nanoCounter.updateAndGet(i -> { // counter structure: i=ccc_xxx
-            if (maxTimestampMs == timestampMs) {
-                if (i % 1000 < 999)
-                    // ccc_xxx+1 - next event in current millisecond
-                    return i + 1;
-                else
-                    // ccc_999 - 999 events already passed
-                    // can not track the order of events for the current millisecond anymore
-                    return i;
-            } else {
-                // nnn_000 - advance the counter to the next millisecond
-                return (int)nextMs * 1000;
-            }
-        });
-        maxTimestampMs = timestampMs;
-        //System.out.println("ts: " + timestampMs + ", ns: " + x);
-        return nanos;
     }
 
     private PatternLayout initPatternLayout(String pattern) {
