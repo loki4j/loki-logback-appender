@@ -20,6 +20,12 @@ If your project depends on other external Logback appenders, please make sure al
 Loki `.proto` files were updated to the latest version from the upstream.
 If you use protobuf API for sending logs to Loki, please switch to loki-protobuf v0.0.2.
 
+#### Loki lowest supported version updated to 2.8.0
+
+Loki v2.8.0 is the first version that supports label drop functionality that is now mandatory for Loki4j's integration tests.
+Because of that Loki v1.6.1 was excluded from the integration tests and the compatibility matrix was updated.
+However, Loki4j should still work fine with versions prior to 2.8.0.
+
 ## Upgrading from 1.4.x to 1.5.x
 
 The most significant breaking change in Loki4j v1.5.0 is an upgrade to Logback v1.3.x.
