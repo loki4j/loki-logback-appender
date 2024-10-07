@@ -48,14 +48,14 @@ public class Generators {
     public static String batchToString(LogRecordBatch batch) {
         var s = new StringBuilder();
         for (int i = 0; i < batch.size(); i++) {
-            var b = batch.get(i);
+            var r = batch.get(i);
             s
-                .append(Arrays.toString(b.stream.labels))
+                .append(Arrays.toString(r.stream.labels))
                 .append(StringPayload.LABELS_MESSAGE_SEPARATOR)
                 .append("ts=")
-                .append(b.timestampMs)
+                .append(r.timestampMs)
                 .append(" ")
-                .append(b.message)
+                .append(r.message)
                 .append('\n');
         }
         return s.toString();
@@ -305,7 +305,8 @@ public class Generators {
             e.getTimeStamp(),
             0,
             enc.eventToStream(e),
-            enc.eventToMessage(e));
+            enc.eventToMessage(e),
+            enc.eventToMetadata(e));
     }
 
     public static class AppenderWrapper {

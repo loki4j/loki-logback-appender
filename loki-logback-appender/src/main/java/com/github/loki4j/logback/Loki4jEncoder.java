@@ -16,6 +16,8 @@ public interface Loki4jEncoder extends ContextAware, LifeCycle {
 
     String eventToMessage(ILoggingEvent e);
 
+    String[] eventToMetadata(ILoggingEvent e);
+
     WriterFactory getWriterFactory();
 
     boolean getSortByTime();

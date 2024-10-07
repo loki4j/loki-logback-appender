@@ -22,12 +22,15 @@ import ch.qos.logback.classic.spi.ILoggingEvent;
 
 public class BatchBufferTest {
 
+    private static final String[] EMPTY_METADATA = new String[0];
+
     public static LogRecord eventToRecord(ILoggingEvent e) {
         return LogRecord.create(
             e.getTimeStamp(),
             0,
             LogRecordStream.create("test","dlkjafh"),
-            e.getMessage());
+            e.getMessage(),
+            EMPTY_METADATA);
     }
 
     @Test
