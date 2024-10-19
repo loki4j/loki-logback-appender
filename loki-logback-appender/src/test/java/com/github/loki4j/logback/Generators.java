@@ -1,16 +1,12 @@
 package com.github.loki4j.logback;
 
 import java.io.IOException;
-import java.nio.ByteBuffer;
-import java.nio.charset.StandardCharsets;
 import java.time.Instant;
 import java.util.ArrayList;
-import java.util.Arrays;
 import java.util.HashMap;
 import java.util.Iterator;
 import java.util.List;
 import java.util.concurrent.ThreadLocalRandom;
-import java.util.concurrent.atomic.AtomicBoolean;
 import java.util.function.BiFunction;
 import java.util.function.Consumer;
 import java.util.function.Function;
@@ -19,7 +15,6 @@ import java.util.stream.StreamSupport;
 import org.slf4j.Marker;
 
 import com.github.loki4j.client.batch.LogRecord;
-import com.github.loki4j.client.batch.LogRecordBatch;
 import com.github.loki4j.client.http.HttpConfig;
 import com.github.loki4j.client.http.Loki4jHttpClient;
 import com.github.loki4j.client.pipeline.PipelineConfig;
@@ -28,7 +23,7 @@ import com.github.loki4j.client.writer.Writer;
 import com.github.loki4j.testkit.dummy.DummyHttpClient;
 import com.github.loki4j.testkit.dummy.ExceptionGenerator;
 import com.github.loki4j.testkit.dummy.LokiHttpServerMock;
-import com.github.loki4j.testkit.dummy.StringPayload;
+import com.github.loki4j.testkit.dummy.StringWriter;
 import com.github.loki4j.testkit.dummy.DummyHttpClient.SendInvocation;
 
 import ch.qos.logback.classic.Level;
@@ -45,28 +40,6 @@ import static com.github.loki4j.testkit.dummy.Generators.genMessage;
 public class Generators {
 
     static HttpConfig.Builder defaultHttpConfig = HttpConfig.builder();
-
-    public static String batchToString(LogRecordBatch batch) {
-        var s = new StringBuilder();
-        for (int i = 0; i < batch.size(); i++) {
-            var r = batch.get(i);
-            s
-                .append(Arrays.toString(r.stream.labels))
-                .append(StringPayload.LABELS_MESSAGE_SEPARATOR)
-                .append(Arrays.toString(r.metadata))
-                .append(StringPayload.LABELS_MESSAGE_SEPARATOR)
-                .append("ts=")
-                .append(r.timestampMs)
-                .append(" ")
-                .append(r.message)
-                .append('\n');
-        }
-        return s.toString();
-    }
-
-    public static String batchToString(LogRecord[] records) {
-        return batchToString(new LogRecordBatch(records));
-    }
 
     public static LokiHttpServerMock lokiMock(int port) {
         try {
@@ -374,63 +347,6 @@ public class Generators {
         }
         public static InfiniteEventIterator from(LoggingEvent[] sampleEvents) {
             return new InfiniteEventIterator(sampleEvents);
-        }
-    }
-
-    public static class StringWriter implements Writer {
-        private final ByteBufferFactory bf;
-        private ByteBuffer b;
-        private int size = 0;
-        public StringWriter(int capacity, ByteBufferFactory bufferFactory) {
-            bf = bufferFactory;
-            b = bf.allocate(capacity);
-        }
-        @Override
-        public void serializeBatch(LogRecordBatch batch) {
-            b.clear();
-            var str = batchToString(batch);
-            var data = str.getBytes(StandardCharsets.UTF_8);
-            if (b.capacity() < data.length) b = bf.allocate(data.length);
-            b.put(data);
-            b.flip();
-            size = data.length;
-        }
-        @Override
-        public int size() {
-            return size;
-        }
-        @Override
-        public void toByteBuffer(ByteBuffer buffer) {
-            buffer.put(b);
-            buffer.flip();
-        }
-        @Override
-        public byte[] toByteArray() {
-            byte[] r = new byte[b.remaining()];
-            b.get(r);
-            return r;
-        }
-        @Override
-        public void reset() {
-            size = 0;
-            b.clear();
-        }
-        @Override
-        public boolean isBinary() {
-            return false;
-        }
-    }
-
-    public static class FailingStringWriter extends StringWriter {
-        public AtomicBoolean fail = new AtomicBoolean(false);
-        public FailingStringWriter(int capacity, ByteBufferFactory bufferFactory) {
-            super(capacity, bufferFactory);
-        }
-        @Override
-        public void serializeBatch(LogRecordBatch batch) {
-            if (fail.get())
-                throw new RuntimeException("Text exception");
-            super.serializeBatch(batch);
         }
     }
 

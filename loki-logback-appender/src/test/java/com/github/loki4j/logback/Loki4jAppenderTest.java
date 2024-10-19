@@ -10,9 +10,9 @@ import java.util.concurrent.TimeoutException;
 
 import org.junit.Test;
 
-import com.github.loki4j.logback.Generators.FailingStringWriter;
 import com.github.loki4j.logback.Generators.WrappingHttpSender;
 import com.github.loki4j.testkit.dummy.FailingHttpClient;
+import com.github.loki4j.testkit.dummy.FailingStringWriter;
 import com.github.loki4j.testkit.dummy.StringPayload;
 import com.github.loki4j.testkit.dummy.SuspendableHttpClient;
 import com.github.loki4j.testkit.dummy.FailingHttpClient.FailureType;
