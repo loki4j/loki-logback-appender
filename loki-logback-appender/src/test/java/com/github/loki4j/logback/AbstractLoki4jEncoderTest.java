@@ -3,7 +3,9 @@ package com.github.loki4j.logback;
 import org.junit.Test;
 
 import com.github.loki4j.slf4j.marker.LabelMarker;
+import com.github.loki4j.slf4j.marker.StructuredMetadataMarker;
 import com.github.loki4j.testkit.dummy.StringPayload;
+import com.github.loki4j.testkit.dummy.StringPayload.StringLogRecord;
 
 import ch.qos.logback.classic.Level;
 import ch.qos.logback.classic.spi.ILoggingEvent;
@@ -11,6 +13,7 @@ import ch.qos.logback.classic.spi.ILoggingEvent;
 import static org.junit.Assert.*;
 
 import java.util.LinkedHashMap;
+import java.util.List;
 
 import static com.github.loki4j.logback.Generators.*;
 
@@ -94,18 +97,18 @@ public class AbstractLoki4jEncoderTest {
     }
 
     @Test
-    public void testMarker() {
+    public void testLabelMarker() {
         var staticMarker = LabelMarker.of("stcmrk", () -> "stat-val");
         var events = new ILoggingEvent[] {
-            loggingEvent(100L, Level.INFO, "test.TestApp", "thread-1", "Test message 1", null, staticMarker),
-            loggingEvent(103L, Level.INFO, "test.TestApp", "thread-2", "Test message 2", null, LabelMarker.of("mrk", () -> "mrk-val")),
-            loggingEvent(105L, Level.INFO, "test.TestApp", "thread-1", "Test message 3", null, staticMarker),
-            loggingEvent(104L, Level.INFO, "test.TestApp", "thread-1", "Test message 4", null, LabelMarker.of(() -> {
+            loggingEvent(100L, Level.INFO, "test.TestApp", "thread-1", "Test message 1", null, List.of(staticMarker)),
+            loggingEvent(103L, Level.INFO, "test.TestApp", "thread-2", "Test message 2", null, List.of(LabelMarker.of("mrk", () -> "mrk-val"))),
+            loggingEvent(105L, Level.INFO, "test.TestApp", "thread-1", "Test message 3", null, List.of(staticMarker)),
+            loggingEvent(104L, Level.INFO, "test.TestApp", "thread-1", "Test message 4", null, List.of(LabelMarker.of(() -> {
                 var multipleLabels = new LinkedHashMap<String, String>();
                 multipleLabels.put("mrk1", "v1");
                 multipleLabels.put("mrk2", "v2");
                 return multipleLabels;
-            })),
+            }))),
         };
 
         var sender = dummySender();
@@ -127,6 +130,72 @@ public class AbstractLoki4jEncoderTest {
                         "ts=103 INFO | Test message 2")
                     .stream("[l, INFO, mrk1, v1, mrk2, v2]",
                         "ts=104 INFO | Test message 4")
+                    .build(),
+                StringPayload.parse(sender.lastSendData()));
+            //System.out.println(new String(sender.lastBatch()));
+            return null;
+        });
+    }
+
+    @Test
+    public void testMetadataMarker() {
+        var events = new ILoggingEvent[] {
+            loggingEvent(103L, Level.INFO, "test.TestApp", "thread-2", "Test message 2", null, List.of(StructuredMetadataMarker.of("mrk", () -> "mrk-val"))),
+            loggingEvent(104L, Level.INFO, "test.TestApp", "thread-1", "Test message 4", null, List.of(StructuredMetadataMarker.of(() -> {
+                var multipleLabels = new LinkedHashMap<String, String>();
+                multipleLabels.put("mrk1", "v1");
+                multipleLabels.put("mrk2", "v2");
+                return multipleLabels;
+            }))),
+        };
+
+        var sender = dummySender();
+        withAppender(
+            appender(
+                4,
+                1000L,
+                toStringEncoder(labelMetadataCfg("l=%level", "t=%thread,c=%logger", true), plainTextMsgLayout("%level | %msg"), false, false),
+                sender), appender -> {
+            appender.append(events);
+            appender.waitAllAppended();
+            assertEquals(
+                "dynamic labels, no sort",
+                StringPayload.builder()
+                    .streamWithMeta("[l, INFO]",
+                        StringLogRecord.of("[t, thread-2, c, test.TestApp, mrk, mrk-val]", "ts=103 INFO | Test message 2"))
+                    .streamWithMeta("[l, INFO]",
+                        StringLogRecord.of("[t, thread-1, c, test.TestApp, mrk1, v1, mrk2, v2]", "ts=104 INFO | Test message 4"))
+                    .build(),
+                StringPayload.parse(sender.lastSendData()));
+            //System.out.println(new String(sender.lastBatch()));
+            return null;
+        });
+    }
+
+    @Test
+    public void testLabelAndMetadataMarker() {
+        var events = new ILoggingEvent[] {
+            loggingEvent(103L, Level.INFO, "test.TestApp", "thread-2", "Test message 2", null, List.of(
+                    LabelMarker.of("label", () -> "label-val"),
+                    StructuredMetadataMarker.of("meta", () -> "meta-val")
+                )
+            ),
+        };
+
+        var sender = dummySender();
+        withAppender(
+            appender(
+                4,
+                1000L,
+                toStringEncoder(labelMetadataCfg("l=%level", "t=%thread,c=%logger", true), plainTextMsgLayout("%level | %msg"), false, false),
+                sender), appender -> {
+            appender.append(events);
+            appender.waitAllAppended();
+            assertEquals(
+                "dynamic labels, no sort",
+                StringPayload.builder()
+                    .streamWithMeta("[l, INFO, label, label-val]",
+                        StringLogRecord.of("[t, thread-2, c, test.TestApp, meta, meta-val]", "ts=103 INFO | Test message 2"))
                     .build(),
                 StringPayload.parse(sender.lastSendData()));
             //System.out.println(new String(sender.lastBatch()));

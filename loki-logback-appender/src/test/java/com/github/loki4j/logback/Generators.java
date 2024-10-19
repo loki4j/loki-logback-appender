@@ -8,6 +8,7 @@ import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.HashMap;
 import java.util.Iterator;
+import java.util.List;
 import java.util.concurrent.ThreadLocalRandom;
 import java.util.concurrent.atomic.AtomicBoolean;
 import java.util.function.BiFunction;
@@ -51,6 +52,8 @@ public class Generators {
             var r = batch.get(i);
             s
                 .append(Arrays.toString(r.stream.labels))
+                .append(StringPayload.LABELS_MESSAGE_SEPARATOR)
+                .append(Arrays.toString(r.metadata))
                 .append(StringPayload.LABELS_MESSAGE_SEPARATOR)
                 .append("ts=")
                 .append(r.timestampMs)
@@ -213,6 +216,17 @@ public class Generators {
         return label;
     }
 
+    public static AbstractLoki4jEncoder.LabelCfg labelMetadataCfg(
+            String pattern,
+            String metadataPattern,
+            boolean readMarkers) {
+        var label = new AbstractLoki4jEncoder.LabelCfg();
+        label.setPattern(pattern);
+        label.setStructuredMetadataPattern(metadataPattern);
+        label.setReadMarkers(readMarkers);
+        return label;
+    }
+
     public static PatternLayout plainTextMsgLayout(String pattern) {
         var message = new PatternLayout();
         message.setPattern(pattern);
@@ -275,7 +289,7 @@ public class Generators {
             String threadName,
             String message,
             Throwable throwable,
-            Marker marker) {
+            List<Marker> markers) {
         var e = new LoggingEvent();
         e.setTimeStamp(timestamp);
         e.setLevel(level);
@@ -285,8 +299,8 @@ public class Generators {
         e.setMDCPropertyMap(new HashMap<>());
         if (throwable != null)
             e.setThrowableProxy(new ThrowableProxy(throwable));
-        if (marker != null)
-            e.addMarker(marker);
+        if (markers != null)
+            markers.forEach(e::addMarker);
         return e;
     }
 

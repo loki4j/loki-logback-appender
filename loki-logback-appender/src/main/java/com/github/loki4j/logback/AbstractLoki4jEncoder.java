@@ -3,8 +3,11 @@ package com.github.loki4j.logback;
 import java.nio.charset.Charset;
 import java.nio.charset.StandardCharsets;
 import java.util.Arrays;
+import java.util.List;
 import java.util.Map.Entry;
 import java.util.regex.Pattern;
+
+import org.slf4j.Marker;
 
 import com.github.loki4j.client.batch.LogRecordStream;
 import com.github.loki4j.client.util.Cache;
@@ -12,6 +15,7 @@ import com.github.loki4j.client.util.StringUtils;
 import com.github.loki4j.client.util.Cache.BoundAtomicMapCache;
 import com.github.loki4j.slf4j.marker.AbstractKeyValueMarker;
 import com.github.loki4j.slf4j.marker.LabelMarker;
+import com.github.loki4j.slf4j.marker.StructuredMetadataMarker;
 
 import ch.qos.logback.classic.PatternLayout;
 import ch.qos.logback.classic.spi.ILoggingEvent;
@@ -181,17 +185,13 @@ public abstract class AbstractLoki4jEncoder extends ContextAwareBase implements 
 
         final var renderedLayout = labelPatternLayout.doLayout(e).intern();
         var streamKey = renderedLayout;
-        var markerLabelsVar = EMPTY_KV_PAIRS;
-        if (label.readMarkers && e.getMarkerList() != null) {
-            for (var marker: e.getMarkerList()) {
-                if (marker != null && marker instanceof LabelMarker) {
-                    markerLabelsVar = extractKVPairsFromMarker((LabelMarker) marker);
-                    streamKey = streamKey + "!markers!" + Arrays.toString(markerLabelsVar);
-                    break; // only one LabelMarker is supported per event
-                }
-            }
+        var markerLabels = label.readMarkers && e.getMarkerList() != null
+            ? extractMarkers(e.getMarkerList(), LabelMarker.class)
+            : EMPTY_KV_PAIRS;
+        if (markerLabels.length > 0) {
+            streamKey = streamKey + "!markers!" + Arrays.toString(markerLabels);
         }
-        final var markerLabels = markerLabelsVar;
+
         return label.streamCache.get(streamKey, () -> {
             var layoutLabels = extractStreamKVPairs(renderedLayout);
             if (markerLabels == EMPTY_KV_PAIRS) {
@@ -208,10 +208,20 @@ public abstract class AbstractLoki4jEncoder extends ContextAwareBase implements 
     }
 
     public String[] eventToMetadata(ILoggingEvent e) {
-        if (metadataPatternLayout == null)
+        var markerKVs = label.readMarkers && e.getMarkerList() != null
+            ? extractMarkers(e.getMarkerList(), StructuredMetadataMarker.class)
+            : EMPTY_KV_PAIRS;
+        var patternKVs = EMPTY_KV_PAIRS;
+        if (metadataPatternLayout != null) {
+            var renderedMetadata = metadataPatternLayout.doLayout(e);
+            patternKVs = extractStreamKVPairs(renderedMetadata);
+        }
+        if (markerKVs.length == 0 && patternKVs.length == 0) {
             return EMPTY_KV_PAIRS;
-        var renderedMetadata = metadataPatternLayout.doLayout(e);
-        return extractStreamKVPairs(renderedMetadata);
+        }
+        var allKVs = Arrays.copyOf(patternKVs, patternKVs.length + markerKVs.length);
+        System.arraycopy(markerKVs, 0, allKVs, patternKVs.length, markerKVs.length);
+        return allKVs;
     }
 
     private PatternLayout initPatternLayout(String pattern) {
@@ -241,7 +251,16 @@ public abstract class AbstractLoki4jEncoder extends ContextAwareBase implements 
         return Arrays.copyOf(result, pos);
     }
 
-    String[] extractKVPairsFromMarker(AbstractKeyValueMarker marker) {
+    private <T extends AbstractKeyValueMarker> String[] extractMarkers(List<Marker> markers, Class<T> clazz) {
+        for (var marker: markers) {
+            if (marker != null && clazz.isAssignableFrom(marker.getClass())) {
+                return extractKVPairsFromMarker((AbstractKeyValueMarker) marker);  // only one Marker is supported per event
+            }
+        }
+        return EMPTY_KV_PAIRS;
+    }
+
+    private String[] extractKVPairsFromMarker(AbstractKeyValueMarker marker) {
         var map = marker.getKeyValuePairs();
         var markerKVPairs = new String[map.size() * 2];
         var pos = 0;

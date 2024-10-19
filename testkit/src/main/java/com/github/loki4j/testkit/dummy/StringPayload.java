@@ -9,9 +9,9 @@ public class StringPayload {
 
     public static final String LABELS_MESSAGE_SEPARATOR = " %%% ";
 
-    public final HashMap<String, ArrayList<String>> data;
+    public final HashMap<String, ArrayList<StringLogRecord>> data;
 
-    private StringPayload(HashMap<String, ArrayList<String>> data) {
+    private StringPayload(HashMap<String, ArrayList<StringLogRecord>> data) {
         this.data = data;
     }
 
@@ -46,12 +46,12 @@ public class StringPayload {
     }
 
     public static StringPayload parse(String input) {
-        HashMap<String, ArrayList<String>> data = new HashMap<>();
+        HashMap<String, ArrayList<StringLogRecord>> data = new HashMap<>();
         var lines = input.split("\n");
         for (String line : lines) {
             var pair = line.split(LABELS_MESSAGE_SEPARATOR);
             var recs = data.computeIfAbsent(pair[0], x -> new ArrayList<>());
-            recs.add(pair[1]);
+            recs.add(new StringLogRecord(pair[1], pair[2]));
         }
         return new StringPayload(data);
     }
@@ -69,14 +69,65 @@ public class StringPayload {
     }
 
     public static class StringPayloadBuilder {
-        private HashMap<String, ArrayList<String>> data = new HashMap<>();
+        private static final String[] EMPTY = new String[0];
+        private HashMap<String, ArrayList<StringLogRecord>> data = new HashMap<>();
         public StringPayloadBuilder stream(String stream, String... records) {
+            var recs = data.computeIfAbsent(stream, x -> new ArrayList<>());
+            recs.addAll(Arrays.asList(records).stream().map(r -> new StringLogRecord(Arrays.toString(EMPTY), r)).toList());
+            return this;
+        }
+        public StringPayloadBuilder streamWithMeta(String stream, StringLogRecord... records) {
             var recs = data.computeIfAbsent(stream, x -> new ArrayList<>());
             recs.addAll(Arrays.asList(records));
             return this;
         }
         public StringPayload build() {
             return new StringPayload(data);
+        }
+    }
+
+    public static class StringLogRecord {
+        private String metadata;
+        private String line;
+        public StringLogRecord(String metadata, String line) {
+            this.metadata = metadata;
+            this.line = line;
+        }
+        public static StringLogRecord of(String metadata, String line) {
+            return new StringLogRecord(metadata, line);
+        }
+        @Override
+        public int hashCode() {
+            final int prime = 31;
+            int result = 1;
+            result = prime * result + ((metadata == null) ? 0 : metadata.hashCode());
+            result = prime * result + ((line == null) ? 0 : line.hashCode());
+            return result;
+        }
+        @Override
+        public boolean equals(Object obj) {
+            if (this == obj)
+                return true;
+            if (obj == null)
+                return false;
+            if (getClass() != obj.getClass())
+                return false;
+            StringLogRecord other = (StringLogRecord) obj;
+            if (metadata == null) {
+                if (other.metadata != null)
+                    return false;
+            } else if (!metadata.equals(other.metadata))
+                return false;
+            if (line == null) {
+                if (other.line != null)
+                    return false;
+            } else if (!line.equals(other.line))
+                return false;
+            return true;
+        }
+        @Override
+        public String toString() {
+            return "LogRecord [metadata=" + metadata + ", line=" + line + "]";
         }
     }
 }
