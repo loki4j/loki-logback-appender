@@ -4,6 +4,7 @@ import java.nio.charset.Charset;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.HashMap;
+import java.util.stream.Collectors;
 
 public class StringPayload {
 
@@ -73,7 +74,10 @@ public class StringPayload {
         private HashMap<String, ArrayList<StringLogRecord>> data = new HashMap<>();
         public StringPayloadBuilder stream(String stream, String... records) {
             var recs = data.computeIfAbsent(stream, x -> new ArrayList<>());
-            recs.addAll(Arrays.asList(records).stream().map(r -> new StringLogRecord(Arrays.toString(EMPTY), r)).toList());
+            recs.addAll(Arrays.asList(records).stream()
+                    .map(r -> new StringLogRecord(Arrays.toString(EMPTY), r))
+                    .collect(Collectors.toList())
+            );
             return this;
         }
         public StringPayloadBuilder streamWithMeta(String stream, StringLogRecord... records) {
