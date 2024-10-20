@@ -102,7 +102,23 @@ public final class JsonWriter implements Writer {
         raw.writeQuotedAscii("" + record.timestampMs + nanosToStr(record.nanosInMs));
         raw.writeByte(COMMA);
         raw.writeString(record.message);
+        if (record.metadata.length > 0) {
+            raw.writeByte(COMMA);
+            metadata(record.metadata);
+        }
         raw.writeByte(ARRAY_END);
+    }
+
+    private void metadata(String[] metadata) {
+        raw.writeByte(OBJECT_START);
+        for (int i = 0; i < metadata.length; i+=2) {
+            raw.writeString(metadata[i]);
+            raw.writeByte(SEMI);
+            raw.writeString(metadata[i + 1]);
+            if (i < metadata.length - 2)
+                raw.writeByte(COMMA);
+        }
+        raw.writeByte(OBJECT_END);
     }
 
     private String nanosToStr(int nanos) {

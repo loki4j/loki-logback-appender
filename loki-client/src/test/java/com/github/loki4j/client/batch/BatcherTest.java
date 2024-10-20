@@ -5,12 +5,14 @@ import static org.junit.Assert.*;
 
 public class BatcherTest {
 
+    private static String[] EMPTY_METADATA = new String[0];
+
     private static LogRecord logRecord(long ts) {
-        return LogRecord.create(ts, 0, LogRecordStream.create("testkey", "testval"), ("message" + ts));
+        return LogRecord.create(ts, 0, LogRecordStream.create("testkey", "testval"), ("message" + ts), EMPTY_METADATA);
     }
 
     private static LogRecord logRecord(long ts, LogRecordStream stream, String message) {
-        return LogRecord.create(ts, 0, stream, message);
+        return LogRecord.create(ts, 0, stream, message, EMPTY_METADATA);
     }
 
     @Test 

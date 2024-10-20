@@ -145,7 +145,8 @@ public class LokiTestingClient {
                     events[i].getTimeStamp(),
                     events[i].getNanoseconds() % 1_000_000,
                     encoder.eventToStream(events[idx]),
-                    encoder.eventToMessage(events[idx]));
+                    encoder.eventToMessage(events[idx]),
+                    encoder.eventToMetadata(events[idx]));
             }
             var batch = new LogRecordBatch(records);
             batch.sort(lokiLogsSorting);
