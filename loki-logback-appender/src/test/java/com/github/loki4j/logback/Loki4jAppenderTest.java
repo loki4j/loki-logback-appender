@@ -92,17 +92,29 @@ public class Loki4jAppenderTest {
 
     @Test
     public void testLabelParsingFailed() {
-        var encoder = toStringEncoder(
+        var encoder1 = toStringEncoder(
                 labelCfg("level=%level,app=", ",", "=", true, false),
                 plainTextMsgLayout("l=%level c=%logger{20} t=%thread | %msg %ex{1}"),
                 true,
                 false);
         var sender = dummySender();
-        withAppender(appender(30, 400L, encoder, sender), appender -> {
-            appender.append(events[0]);
-            return null;
-        });
-        // test should not fail with exception on append()
+        assertThrows("KV separation failed", IllegalArgumentException.class, () ->
+            withAppender(appender(30, 400L, encoder1, sender), appender -> {
+                appender.append(events[0]);
+                return null;
+            })
+        );
+        var encoder2 = toStringEncoder(
+                labelCfg("level=%lev{,app=x", ",", "=", true, false),
+                plainTextMsgLayout("l=%level c=%logger{20} t=%thread | %msg %ex{1}"),
+                true,
+                false);
+                assertThrows("Converter parsing failed", IllegalArgumentException.class, () ->
+        withAppender(appender(30, 400L, encoder2, sender), appender -> {
+                appender.append(events[0]);
+                return null;
+            })
+        );
     }
 
     @Test

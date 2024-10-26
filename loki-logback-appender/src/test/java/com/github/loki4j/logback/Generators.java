@@ -184,7 +184,6 @@ public class Generators {
         label.setPattern(pattern);
         label.setPairSeparator(pairSeparator);
         label.setKeyValueSeparator(keyValueSeparator);
-        label.setNopex(nopex);
         label.setReadMarkers(readMarkers);
         return label;
     }
