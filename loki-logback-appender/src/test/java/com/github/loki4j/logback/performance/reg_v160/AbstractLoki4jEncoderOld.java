@@ -1,4 +1,4 @@
-package com.github.loki4j.logback;
+package com.github.loki4j.logback.performance.reg_v160;
 
 import java.nio.charset.Charset;
 import java.nio.charset.StandardCharsets;
@@ -6,16 +6,14 @@ import java.util.Arrays;
 import java.util.List;
 import java.util.Map.Entry;
 import java.util.regex.Pattern;
-import java.util.stream.Collectors;
-import java.util.stream.IntStream;
 
 import org.slf4j.Marker;
 
 import com.github.loki4j.client.batch.LogRecordStream;
-import com.github.loki4j.client.util.ArrayUtils;
 import com.github.loki4j.client.util.Cache;
 import com.github.loki4j.client.util.StringUtils;
 import com.github.loki4j.client.util.Cache.BoundAtomicMapCache;
+import com.github.loki4j.logback.Loki4jEncoder;
 import com.github.loki4j.slf4j.marker.AbstractKeyValueMarker;
 import com.github.loki4j.slf4j.marker.LabelMarker;
 import com.github.loki4j.slf4j.marker.StructuredMetadataMarker;
@@ -26,12 +24,11 @@ import ch.qos.logback.core.CoreConstants;
 import ch.qos.logback.core.Layout;
 import ch.qos.logback.core.joran.spi.DefaultClass;
 import ch.qos.logback.core.spi.ContextAwareBase;
-import ch.qos.logback.core.spi.ScanException;
 
 /**
  * Abstract class that provides basic Loki4j batch encoding functionality
  */
-public abstract class AbstractLoki4jEncoder extends ContextAwareBase implements Loki4jEncoder {
+public abstract class AbstractLoki4jEncoderOld extends ContextAwareBase implements Loki4jEncoder {
 
     private static final String REGEX_STARTER = "regex:";
     private static final String[] EMPTY_KV_PAIRS = new String[0];
@@ -62,6 +59,11 @@ public abstract class AbstractLoki4jEncoder extends ContextAwareBase implements 
          */
         boolean readMarkers = false;
         /**
+         * If true, exception info is not added to label.
+         * If false, you should take care of proper formatting.
+         */
+        boolean nopex = true;
+        /**
          * An implementation of a Stream cache to use.
          */
         Cache<String, LogRecordStream> streamCache;
@@ -80,6 +82,9 @@ public abstract class AbstractLoki4jEncoder extends ContextAwareBase implements 
         }
         public void setReadMarkers(boolean readMarkers) {
             this.readMarkers = readMarkers;
+        }
+        public void setNopex(boolean nopex) {
+            this.nopex = nopex;
         }
         @DefaultClass(BoundAtomicMapCache.class)
         public void setStreamCache(Cache<String, LogRecordStream> streamCache) {
@@ -104,12 +109,11 @@ public abstract class AbstractLoki4jEncoder extends ContextAwareBase implements 
      */
     private volatile boolean staticLabels = false;
 
-    private List<String> labelKeys;
-    private MultiPatternExtractor<ILoggingEvent> labelValuesExtractor;
+    private Pattern compiledLabelPairSeparator;
+    private Pattern compiledLabelKeyValueSeparator;
 
-    private List<String> metadataKeys;
-    private MultiPatternExtractor<ILoggingEvent> metadataValuesExtractor;
-
+    private PatternLayout labelPatternLayout;
+    private PatternLayout metadataPatternLayout;
     private Layout<ILoggingEvent> messageLayout;
 
     private LogRecordStream staticLabelStream = null;
@@ -118,35 +122,34 @@ public abstract class AbstractLoki4jEncoder extends ContextAwareBase implements 
 
     public void start() {
         // init with default label pattern if not set in config
-        var labelPattern = label.pattern == null
+        var resolvedLblPat = label.pattern == null
             ? "level=%level,host=" + context.getProperty(CoreConstants.HOSTNAME_KEY)
             : label.pattern;
+        // check nopex flag
+        var labelPattern = label.nopex
+            ? resolvedLblPat + "%nopex"
+            : resolvedLblPat;
+
+        // check if label pair separator is RegEx or literal string
+        compiledLabelPairSeparator = label.pairSeparator.startsWith(REGEX_STARTER)
+            ? Pattern.compile(label.pairSeparator.substring(REGEX_STARTER.length()))
+            : Pattern.compile(Pattern.quote(label.pairSeparator));
+        // label key-value separator supports only literal strings
+        compiledLabelKeyValueSeparator = Pattern.compile(Pattern.quote(label.keyValueSeparator));
 
         // if streamCache is not set in the config
         if (label.streamCache == null) {
             label.streamCache = new BoundAtomicMapCache<>();
         }
 
-        // init label KV extraction
-        var labelKVPatterns = extractKVPairsFromPattern(labelPattern, label.pairSeparator, label.keyValueSeparator);
-        labelKeys = extractIndexesMod2(labelKVPatterns, 0);
-        var labelPatterns = extractIndexesMod2(labelKVPatterns, 1);
-        try {
-            labelValuesExtractor = new MultiPatternExtractor<>(labelPatterns, context);
-        } catch (ScanException e) {
-            throw new IllegalArgumentException("Unable to parse label pattern: \"" + labelPattern + "\"", e);
-        }
+        labelPatternLayout = initPatternLayout(labelPattern);
+        labelPatternLayout.setContext(context);
+        labelPatternLayout.start();
 
-        // init structured metadata KV extraction
         if (label.structuredMetadataPattern != null) {
-            var metadataKVPatterns = extractKVPairsFromPattern(label.structuredMetadataPattern, label.pairSeparator, label.keyValueSeparator);
-            metadataKeys = extractIndexesMod2(metadataKVPatterns, 0);
-            var metadataPatterns = extractIndexesMod2(metadataKVPatterns, 1);
-            try {
-                metadataValuesExtractor = new MultiPatternExtractor<>(metadataPatterns, context);
-            } catch (ScanException e) {
-                throw new IllegalArgumentException("Unable to parse structured metadata pattern: \"" + label.structuredMetadataPattern + "\"", e);
-            }
+            metadataPatternLayout = initPatternLayout(label.structuredMetadataPattern);
+            metadataPatternLayout.setContext(context);
+            metadataPatternLayout.start();
         }
 
         if (messageLayout == null) {
@@ -162,6 +165,10 @@ public abstract class AbstractLoki4jEncoder extends ContextAwareBase implements 
     public void stop() {
         this.started = false;
         messageLayout.stop();
+        labelPatternLayout.stop();
+        if (metadataPatternLayout != null) {
+            metadataPatternLayout.stop();
+        }
     }
 
     @Override
@@ -172,19 +179,27 @@ public abstract class AbstractLoki4jEncoder extends ContextAwareBase implements 
     public LogRecordStream eventToStream(ILoggingEvent e) {
         if (staticLabels) {
             if (staticLabelStream == null) {
-                staticLabelStream = LogRecordStream.create(mergeKVPairs(labelKeys, labelValuesExtractor.extract(e)));
+                staticLabelStream = LogRecordStream.create(extractKVPairsFromRenderedPattern(labelPatternLayout.doLayout(e)));
             }
             return staticLabelStream;
         }
 
-        final var labelValues = labelValuesExtractor.extract(e);
+        final var renderedLayout = labelPatternLayout.doLayout(e).intern();
+        var streamKey = renderedLayout;
         var markerLabels = label.readMarkers && e.getMarkerList() != null
             ? extractMarkers(e.getMarkerList(), LabelMarker.class)
             : EMPTY_KV_PAIRS;
-        var streamKey = ArrayUtils.join2(labelValues, markerLabels, " !%! ");//.intern();
+        if (markerLabels.length > 0) {
+            streamKey = streamKey + "!markers!" + Arrays.toString(markerLabels);
+        }
+
         return label.streamCache.get(streamKey, () -> {
-            var layoutLabels = mergeKVPairs(labelKeys, labelValues);
-            var allLabels = ArrayUtils.concat(layoutLabels, markerLabels);
+            var layoutLabels = extractKVPairsFromRenderedPattern(renderedLayout);
+            if (markerLabels == EMPTY_KV_PAIRS) {
+                return LogRecordStream.create(layoutLabels);
+            }
+            var allLabels = Arrays.copyOf(layoutLabels, layoutLabels.length + markerLabels.length);
+            System.arraycopy(markerLabels, 0, allLabels, layoutLabels.length, markerLabels.length);
             return LogRecordStream.create(allLabels);
         });
     }
@@ -198,11 +213,15 @@ public abstract class AbstractLoki4jEncoder extends ContextAwareBase implements 
             ? extractMarkers(e.getMarkerList(), StructuredMetadataMarker.class)
             : EMPTY_KV_PAIRS;
         var patternKVs = EMPTY_KV_PAIRS;
-        if (metadataValuesExtractor != null) {
-            var metadataValues = metadataValuesExtractor.extract(e);
-            patternKVs = mergeKVPairs(metadataKeys, metadataValues);
+        if (metadataPatternLayout != null) {
+            var renderedMetadata = metadataPatternLayout.doLayout(e);
+            patternKVs = extractKVPairsFromRenderedPattern(renderedMetadata);
         }
-        var allKVs = ArrayUtils.concat(patternKVs, markerKVs);
+        if (markerKVs.length == 0 && patternKVs.length == 0) {
+            return EMPTY_KV_PAIRS;
+        }
+        var allKVs = Arrays.copyOf(patternKVs, patternKVs.length + markerKVs.length);
+        System.arraycopy(markerKVs, 0, allKVs, patternKVs.length, markerKVs.length);
         return allKVs;
     }
 
@@ -212,34 +231,24 @@ public abstract class AbstractLoki4jEncoder extends ContextAwareBase implements 
         return patternLayout;
     }
 
-    static String[] extractKVPairsFromPattern(String pattern, String pairSeparator, String keyValueSeparator) {
-        // check if label pair separator is RegEx or literal string
-        var pairSeparatorPattern = pairSeparator.startsWith(REGEX_STARTER)
-            ? Pattern.compile(pairSeparator.substring(REGEX_STARTER.length()))
-            : Pattern.compile(Pattern.quote(pairSeparator));
-        // label key-value separator supports only literal strings
-        var keyValueSeparatorPattern = Pattern.compile(Pattern.quote(keyValueSeparator));
-
-        var pairs = pairSeparatorPattern.split(pattern);
+    String[] extractKVPairsFromRenderedPattern(String rendered) {
+        var pairs = compiledLabelPairSeparator.split(rendered);
         var result = new String[pairs.length * 2];
         var pos = 0;
         for (int i = 0; i < pairs.length; i++) {
             if (StringUtils.isBlank(pairs[i])) continue;
 
-            var kv = keyValueSeparatorPattern.split(pairs[i]);
+            var kv = compiledLabelKeyValueSeparator.split(pairs[i]);
             if (kv.length == 2) {
                 result[pos] = kv[0];
                 result[pos + 1] = kv[1];
                 pos += 2;
             } else {
                 throw new IllegalArgumentException(String.format(
-                    "Unable to split '%s' in '%s' to key-value pairs, pairSeparator=%s, keyValueSeparator=%s",
-                    pairs[i], pattern, pairSeparator, keyValueSeparator));
+                    "Unable to split '%s' in '%s' to label key-value pairs, pairSeparator=%s, keyValueSeparator=%s",
+                    pairs[i], rendered, label.pairSeparator, label.keyValueSeparator));
             }
         }
-        if (pos == 0)
-            throw new IllegalArgumentException("Empty of blank patterns are not supported");
-        // we skip blank pairs, so need to shrink the array to the actual size
         return Arrays.copyOf(result, pos);
     }
 
@@ -262,23 +271,6 @@ public abstract class AbstractLoki4jEncoder extends ContextAwareBase implements 
             pos += 2;
         }
         return markerKVPairs;
-    }
-
-    private static List<String> extractIndexesMod2(String[] array, int mod2) {
-        return IntStream.range(0, array.length)
-            .filter(i -> i % 2 == mod2)
-            .mapToObj(i -> array[i])
-            .collect(Collectors.toList());
-    }
-
-    private static String[] mergeKVPairs(List<String> keys, String[] values) {
-        var resultLen = values.length * 2;
-        var result = new String[resultLen];
-        for (int i = 0; i < resultLen; i += 2) {
-            result[i] = keys.get(i / 2);
-            result[i + 1] = values[i / 2];
-        }
-        return result;
     }
 
     public LabelCfg getLabel() {

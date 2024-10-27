@@ -8,6 +8,7 @@ import com.github.loki4j.testkit.dummy.StringPayload;
 import com.github.loki4j.testkit.dummy.StringPayload.StringLogRecord;
 
 import ch.qos.logback.classic.Level;
+import ch.qos.logback.classic.LoggerContext;
 import ch.qos.logback.classic.spi.ILoggingEvent;
 
 import static org.junit.Assert.*;
@@ -20,80 +21,118 @@ import static com.github.loki4j.logback.Generators.*;
 public class AbstractLoki4jEncoderTest {
 
     @Test(expected = IllegalArgumentException.class)
-    public void testExtractStreamKVPairsIncorrectFormat() {
-        withEncoder(toStringEncoder(
-                labelCfg("level=%level,app=\"my\"app", "|", "~", true, false),
-                plainTextMsgLayout("l=%level c=%logger{20} t=%thread | %msg %ex{1}"),
-                false,
-                false), encoder -> {
-            var kvs1 = encoder.extractStreamKVPairs("level=INFO,app=\"my\"app,test=test");
-            var kvse1 = new String[] {"level", "INFO", "app", "\"my\"app", "test", "test"};
-            assertArrayEquals("Split by |~", kvse1, kvs1);
-        });
+    public void testExtractStreamKVPairsEmptyPattern() {
+        AbstractLoki4jEncoder.extractKVPairsFromPattern("", ",", "=");
+    }
+
+    @Test(expected = IllegalArgumentException.class)
+    public void testExtractStreamKVPairsEmptyValue() {
+        AbstractLoki4jEncoder.extractKVPairsFromPattern("level=,app=\"my\"app", ",", "=");
+    }
+
+    @Test(expected = IllegalArgumentException.class)
+    public void testExtractStreamKVPairsIncorrectValue() {
+        AbstractLoki4jEncoder.extractKVPairsFromPattern("level=%level app=\"my\"app", ",", "=");
     }
 
     @Test
     public void testExtractStreamKVPairsIgnoringEmpty() {
-        withEncoder(toStringEncoder(
-                labelCfg(",,level=%level,,app=\"my\"app,", ",", "=", true, false),
-                plainTextMsgLayout("l=%level c=%logger{20} t=%thread | %msg %ex{1}"),
-                false,
-                false), encoder -> {
-            var kvs1 = encoder.extractStreamKVPairs(",,level=INFO,,app=\"my\"app,test=test,");
-            var kvse1 = new String[] {"level", "INFO", "app", "\"my\"app", "test", "test"};
-            assertArrayEquals("Split by ,=", kvse1, kvs1);
-        });
+        var kvs1 = AbstractLoki4jEncoder.extractKVPairsFromPattern(",,level=%level,,app=\"my\"app,", ",", "=");
+        var kvse1 = new String[] {"level", "%level", "app", "\"my\"app"};
+        assertArrayEquals("Split by ,=", kvse1, kvs1);
     }
 
     @Test
     public void testExtractStreamKVPairsByRegex() {
-        withEncoder(toStringEncoder(
-                labelCfg(
-                    "\n\n// level is label\nlevel=%level\n// another comment\n\napp=\"my\"app\n\n// end comment",
-                    "regex:(\n|//[^\n]+)+",
-                    "=",
-                    true,
-                    false),
-                plainTextMsgLayout("l=%level c=%logger{20} t=%thread | %msg %ex{1}"),
-                false,
-                false), encoder -> {
-            var kvs1 = encoder.extractStreamKVPairs("\n\n// level is label\nlevel=INFO\n// another comment\n\napp=\"my\"app\n\n// end comment");
-            var kvse1 = new String[] {"level", "INFO", "app", "\"my\"app"};
-            assertArrayEquals("Split by ,=", kvse1, kvs1);
-        });
+        var kvs1 = AbstractLoki4jEncoder.extractKVPairsFromPattern(
+            "\n\n// level is label\nlevel=%level\n// another comment\n\napp=\"my\"app\n\n// end comment",
+            "regex:(\n|//[^\n]+)+",
+            "=");
+        var kvse1 = new String[] {"level", "%level", "app", "\"my\"app"};
+        assertArrayEquals("Split by ,=", kvse1, kvs1);
     }
 
     @Test
     public void testExtractStreamKVPairs() {
-        withEncoder(toStringEncoder(
-                labelCfg("level=%level,app=\"my\"app", ",", "=", true, false),
-                plainTextMsgLayout("l=%level c=%logger{20} t=%thread | %msg %ex{1}"),
-                false,
-                false), encoder -> {
-            var kvs1 = encoder.extractStreamKVPairs("level=INFO,app=\"my\"app,test=test");
-            var kvse1 = new String[] {"level", "INFO", "app", "\"my\"app", "test", "test"};
-            assertArrayEquals("Split by ,=", kvse1, kvs1);
-        });
+        var kvs1 = AbstractLoki4jEncoder.extractKVPairsFromPattern("level=%level,app=\"my\"app,test=test", ",", "=");
+        var kvse1 = new String[] {"level", "%level", "app", "\"my\"app", "test", "test"};
+        assertArrayEquals("Split by ,=", kvse1, kvs1);
 
-        withEncoder(toStringEncoder(
-                labelCfg("level:%level;app:\"my\"app", ";", ":", true, false),
-                plainTextMsgLayout("l=%level c=%logger{20} t=%thread | %msg %ex{1}"),
-                false,
-                false), encoder -> {
-            var kvs2 = encoder.extractStreamKVPairs("level:INFO;app:\"my\"app;test:test");
-            var kvse1 = new String[] {"level", "INFO", "app", "\"my\"app", "test", "test"};
-            assertArrayEquals("Split by ;:", kvse1, kvs2);
-        });
+        var kvs2 = AbstractLoki4jEncoder.extractKVPairsFromPattern("level:%level;app:\"my\"app;test:test", ";", ":");
+        assertArrayEquals("Split by ;:", kvse1, kvs2);
 
-        withEncoder(toStringEncoder(
-                labelCfg("level.%level|app.\"my\"app", "|", ".", true, false),
+        var kvs3 = AbstractLoki4jEncoder.extractKVPairsFromPattern("level.%level|app.\"my\"app|test.test", "|", ".");
+        assertArrayEquals("Split by |.", kvse1, kvs3);
+    }
+
+    @Test
+    public void testLabelParsingFailed() {
+        var event = loggingEvent(105L, Level.INFO, "test.TestApp", "thread-1", "Test message 1", null);
+
+        var encoder1 = toStringEncoder(
+                labelCfg("level=%level,app=", ",", "=", true, false),
                 plainTextMsgLayout("l=%level c=%logger{20} t=%thread | %msg %ex{1}"),
-                false,
-                false), encoder -> {
-            var kvs3 = encoder.extractStreamKVPairs("level.INFO|app.\"my\"app|test.test");
-            var kvse1 = new String[] {"level", "INFO", "app", "\"my\"app", "test", "test"};
-            assertArrayEquals("Split by |.", kvse1, kvs3);
-        });
+                true,
+                false);
+        var sender = dummySender();
+        assertThrows("KV separation failed", IllegalArgumentException.class, () ->
+            withAppender(appender(30, 400L, encoder1, sender), appender -> {
+                appender.append(event);
+                return null;
+            })
+        );
+        var encoder2 = toStringEncoder(
+                labelCfg("level=%lev{,app=x", ",", "=", true, false),
+                plainTextMsgLayout("l=%level c=%logger{20} t=%thread | %msg %ex{1}"),
+                true,
+                false);
+                assertThrows("Converter parsing failed", IllegalArgumentException.class, () ->
+        withAppender(appender(30, 400L, encoder2, sender), appender -> {
+                appender.append(event);
+                return null;
+            })
+        );
+    }
+
+    @Test
+    public void testLogRecordStreams() {
+        var encoder = toStringEncoder(
+                labelCfg("level=%level,app=my-app,thread=%thread", ",", "=", true, false),
+                plainTextMsgLayout("l=%level | %msg %ex{1}"),
+                true,
+                false);
+        encoder.setContext(new LoggerContext());
+        encoder.start();
+
+        var stream1 = encoder.eventToStream(loggingEvent(100L, Level.INFO, "test.TestApp", "thread-1", "Test message 1", null));
+        assertArrayEquals(new String[] { "level", "INFO", "app", "my-app", "thread", "thread-1" }, stream1.labels);
+
+        var stream2 = encoder.eventToStream(loggingEvent(103L, Level.WARN, "test.TestApp", "thread-5", "Test message 2", null));
+        assertArrayEquals(new String[] { "level", "WARN", "app", "my-app", "thread", "thread-5" }, stream2.labels);
+
+        var stream3 = encoder.eventToStream(loggingEvent(108L, Level.INFO, "test.TestApp", "thread-1", "Test message 3", null));
+        assertArrayEquals(new String[] { "level", "INFO", "app", "my-app", "thread", "thread-1" }, stream3.labels);
+
+        assertTrue("Same labels resolved to one stream", stream1 == stream3);
+        assertFalse("Different labels resolved to different streams", stream1 == stream2);
+
+        encoder.stop();
+    }
+
+    @Test
+    public void testLabelValuesUnaffectedByKVSeparation() {
+        var encoder = toStringEncoder(
+                labelCfg("level=%level.class=%logger.thread=%thread", ".", "=", true, false),
+                plainTextMsgLayout("l=%level | %msg %ex{1}"),
+                true,
+                false);
+        encoder.setContext(new LoggerContext());
+        encoder.start();
+
+        var stream1 = encoder.eventToStream(loggingEvent(100L, Level.INFO, "test.TestApp", "th=1", "Test message 1", null));
+        assertArrayEquals(new String[] { "level", "INFO", "class", "test.TestApp", "thread", "th=1" }, stream1.labels);
+
+        encoder.stop();
     }
 
     @Test

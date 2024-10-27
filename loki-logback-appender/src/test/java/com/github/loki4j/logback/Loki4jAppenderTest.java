@@ -91,21 +91,6 @@ public class Loki4jAppenderTest {
     }
 
     @Test
-    public void testLabelParsingFailed() {
-        var encoder = toStringEncoder(
-                labelCfg("level=%level,app=", ",", "=", true, false),
-                plainTextMsgLayout("l=%level c=%logger{20} t=%thread | %msg %ex{1}"),
-                true,
-                false);
-        var sender = dummySender();
-        withAppender(appender(30, 400L, encoder, sender), appender -> {
-            appender.append(events[0]);
-            return null;
-        });
-        // test should not fail with exception on append()
-    }
-
-    @Test
     public void testDrainOnStop() {
         var encoder = defaultToStringEncoder();
         var sender = dummySender();
