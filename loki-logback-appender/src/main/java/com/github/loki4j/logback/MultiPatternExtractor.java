@@ -41,7 +41,7 @@ public class MultiPatternExtractor<E> {
         }
     }
 
-    protected String[] extract(E event) {
+    public String[] extract(E event) {
         StringBuilder strBuilder = new StringBuilder(INITIAL_STRING_BUILDER_SIZE);
         var result = new String[converters.size()];
         for (var i = 0; i < converters.size(); i++) {
@@ -55,5 +55,4 @@ public class MultiPatternExtractor<E> {
         }
         return result;
     }
-    
 }

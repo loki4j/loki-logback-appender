@@ -8,6 +8,7 @@ import com.github.loki4j.testkit.dummy.StringPayload;
 import com.github.loki4j.testkit.dummy.StringPayload.StringLogRecord;
 
 import ch.qos.logback.classic.Level;
+import ch.qos.logback.classic.LoggerContext;
 import ch.qos.logback.classic.spi.ILoggingEvent;
 
 import static org.junit.Assert.*;
@@ -91,6 +92,47 @@ public class AbstractLoki4jEncoderTest {
                 return null;
             })
         );
+    }
+
+    @Test
+    public void testLogRecordStreams() {
+        var encoder = toStringEncoder(
+                labelCfg("level=%level,app=my-app,thread=%thread", ",", "=", true, false),
+                plainTextMsgLayout("l=%level | %msg %ex{1}"),
+                true,
+                false);
+        encoder.setContext(new LoggerContext());
+        encoder.start();
+
+        var stream1 = encoder.eventToStream(loggingEvent(100L, Level.INFO, "test.TestApp", "thread-1", "Test message 1", null));
+        assertArrayEquals(new String[] { "level", "INFO", "app", "my-app", "thread", "thread-1" }, stream1.labels);
+
+        var stream2 = encoder.eventToStream(loggingEvent(103L, Level.WARN, "test.TestApp", "thread-5", "Test message 2", null));
+        assertArrayEquals(new String[] { "level", "WARN", "app", "my-app", "thread", "thread-5" }, stream2.labels);
+
+        var stream3 = encoder.eventToStream(loggingEvent(108L, Level.INFO, "test.TestApp", "thread-1", "Test message 3", null));
+        assertArrayEquals(new String[] { "level", "INFO", "app", "my-app", "thread", "thread-1" }, stream3.labels);
+
+        assertTrue("Same labels resolved to one stream", stream1 == stream3);
+        assertFalse("Different labels resolved to different streams", stream1 == stream2);
+
+        encoder.stop();
+    }
+
+    @Test
+    public void testLabelValuesUnaffectedByKVSeparation() {
+        var encoder = toStringEncoder(
+                labelCfg("level=%level.class=%logger.thread=%thread", ".", "=", true, false),
+                plainTextMsgLayout("l=%level | %msg %ex{1}"),
+                true,
+                false);
+        encoder.setContext(new LoggerContext());
+        encoder.start();
+
+        var stream1 = encoder.eventToStream(loggingEvent(100L, Level.INFO, "test.TestApp", "th=1", "Test message 1", null));
+        assertArrayEquals(new String[] { "level", "INFO", "class", "test.TestApp", "thread", "th=1" }, stream1.labels);
+
+        encoder.stop();
     }
 
     @Test
