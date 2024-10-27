@@ -6,6 +6,7 @@ import java.util.Arrays;
 import java.util.List;
 import java.util.Map.Entry;
 import java.util.regex.Pattern;
+import java.util.stream.Collectors;
 import java.util.stream.IntStream;
 
 import org.slf4j.Marker;
@@ -121,20 +122,13 @@ public abstract class AbstractLoki4jEncoder extends ContextAwareBase implements 
             ? "level=%level,host=" + context.getProperty(CoreConstants.HOSTNAME_KEY)
             : label.pattern;
 
-        // check if label pair separator is RegEx or literal string
-        var pairSeparator = label.pairSeparator.startsWith(REGEX_STARTER)
-            ? Pattern.compile(label.pairSeparator.substring(REGEX_STARTER.length()))
-            : Pattern.compile(Pattern.quote(label.pairSeparator));
-        // label key-value separator supports only literal strings
-        var keyValueSeparator = Pattern.compile(Pattern.quote(label.keyValueSeparator));
-
         // if streamCache is not set in the config
         if (label.streamCache == null) {
             label.streamCache = new BoundAtomicMapCache<>();
         }
 
         // init label KV extraction
-        var labelKVPatterns = extractKVPairsFromPattern(pairSeparator, keyValueSeparator, labelPattern);
+        var labelKVPatterns = extractKVPairsFromPattern(labelPattern, label.pairSeparator, label.keyValueSeparator);
         labelKeys = extractIndexesMod2(labelKVPatterns, 0);
         var labelPatterns = extractIndexesMod2(labelKVPatterns, 1);
         try {
@@ -145,7 +139,7 @@ public abstract class AbstractLoki4jEncoder extends ContextAwareBase implements 
 
         // init structured metadata KV extraction
         if (label.structuredMetadataPattern != null) {
-            var metadataKVPatterns = extractKVPairsFromPattern(pairSeparator, keyValueSeparator, label.structuredMetadataPattern);
+            var metadataKVPatterns = extractKVPairsFromPattern(label.structuredMetadataPattern, label.pairSeparator, label.keyValueSeparator);
             metadataKeys = extractIndexesMod2(metadataKVPatterns, 0);
             var metadataPatterns = extractIndexesMod2(metadataKVPatterns, 1);
             try {
@@ -218,24 +212,34 @@ public abstract class AbstractLoki4jEncoder extends ContextAwareBase implements 
         return patternLayout;
     }
 
-    String[] extractKVPairsFromPattern(Pattern compiledLabelPairSeparator, Pattern compiledLabelKeyValueSeparator, String rendered) {
-        var pairs = compiledLabelPairSeparator.split(rendered);
+    static String[] extractKVPairsFromPattern(String pattern, String pairSeparator, String keyValueSeparator) {
+        // check if label pair separator is RegEx or literal string
+        var pairSeparatorPattern = pairSeparator.startsWith(REGEX_STARTER)
+            ? Pattern.compile(pairSeparator.substring(REGEX_STARTER.length()))
+            : Pattern.compile(Pattern.quote(pairSeparator));
+        // label key-value separator supports only literal strings
+        var keyValueSeparatorPattern = Pattern.compile(Pattern.quote(keyValueSeparator));
+
+        var pairs = pairSeparatorPattern.split(pattern);
         var result = new String[pairs.length * 2];
         var pos = 0;
         for (int i = 0; i < pairs.length; i++) {
             if (StringUtils.isBlank(pairs[i])) continue;
 
-            var kv = compiledLabelKeyValueSeparator.split(pairs[i]);
+            var kv = keyValueSeparatorPattern.split(pairs[i]);
             if (kv.length == 2) {
                 result[pos] = kv[0];
                 result[pos + 1] = kv[1];
                 pos += 2;
             } else {
                 throw new IllegalArgumentException(String.format(
-                    "Unable to split '%s' in '%s' to label key-value pairs, pairSeparator=%s, keyValueSeparator=%s",
-                    pairs[i], rendered, label.pairSeparator, label.keyValueSeparator));
+                    "Unable to split '%s' in '%s' to key-value pairs, pairSeparator=%s, keyValueSeparator=%s",
+                    pairs[i], pattern, pairSeparator, keyValueSeparator));
             }
         }
+        if (pos == 0)
+            throw new IllegalArgumentException("Empty of blank patterns are not supported");
+        // we skip blank pairs, so need to shrink the array to the actual size
         return Arrays.copyOf(result, pos);
     }
 
@@ -264,7 +268,7 @@ public abstract class AbstractLoki4jEncoder extends ContextAwareBase implements 
         return IntStream.range(0, array.length)
             .filter(i -> i % 2 == mod2)
             .mapToObj(i -> array[i])
-            .toList();
+            .collect(Collectors.toList());
     }
 
     private static String[] mergeKVPairs(List<String> keys, String[] values) {

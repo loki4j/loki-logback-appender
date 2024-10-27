@@ -19,83 +19,79 @@ import static com.github.loki4j.logback.Generators.*;
 
 public class AbstractLoki4jEncoderTest {
 
-    /*@Test(expected = IllegalArgumentException.class)
-    public void testExtractStreamKVPairsIncorrectFormat() {
-        withEncoder(toStringEncoder(
-                labelCfg("level=%level,app=\"my\"app", "|", "~", true, false),
-                plainTextMsgLayout("l=%level c=%logger{20} t=%thread | %msg %ex{1}"),
-                false,
-                false), encoder -> {
-            var kvs1 = encoder.extractKVPairsFromRenderedPattern("level=INFO,app=\"my\"app,test=test");
-            var kvse1 = new String[] {"level", "INFO", "app", "\"my\"app", "test", "test"};
-            assertArrayEquals("Split by |~", kvse1, kvs1);
-        });
+    @Test(expected = IllegalArgumentException.class)
+    public void testExtractStreamKVPairsEmptyPattern() {
+        AbstractLoki4jEncoder.extractKVPairsFromPattern("", ",", "=");
+    }
+
+    @Test(expected = IllegalArgumentException.class)
+    public void testExtractStreamKVPairsEmptyValue() {
+        AbstractLoki4jEncoder.extractKVPairsFromPattern("level=,app=\"my\"app", ",", "=");
+    }
+
+    @Test(expected = IllegalArgumentException.class)
+    public void testExtractStreamKVPairsIncorrectValue() {
+        AbstractLoki4jEncoder.extractKVPairsFromPattern("level=%level app=\"my\"app", ",", "=");
     }
 
     @Test
     public void testExtractStreamKVPairsIgnoringEmpty() {
-        withEncoder(toStringEncoder(
-                labelCfg(",,level=%level,,app=\"my\"app,", ",", "=", true, false),
-                plainTextMsgLayout("l=%level c=%logger{20} t=%thread | %msg %ex{1}"),
-                false,
-                false), encoder -> {
-            var kvs1 = encoder.extractKVPairsFromRenderedPattern(",,level=INFO,,app=\"my\"app,test=test,");
-            var kvse1 = new String[] {"level", "INFO", "app", "\"my\"app", "test", "test"};
-            assertArrayEquals("Split by ,=", kvse1, kvs1);
-        });
+        var kvs1 = AbstractLoki4jEncoder.extractKVPairsFromPattern(",,level=%level,,app=\"my\"app,", ",", "=");
+        var kvse1 = new String[] {"level", "%level", "app", "\"my\"app"};
+        assertArrayEquals("Split by ,=", kvse1, kvs1);
     }
 
     @Test
     public void testExtractStreamKVPairsByRegex() {
-        withEncoder(toStringEncoder(
-                labelCfg(
-                    "\n\n// level is label\nlevel=%level\n// another comment\n\napp=\"my\"app\n\n// end comment",
-                    "regex:(\n|//[^\n]+)+",
-                    "=",
-                    true,
-                    false),
-                plainTextMsgLayout("l=%level c=%logger{20} t=%thread | %msg %ex{1}"),
-                false,
-                false), encoder -> {
-            var kvs1 = encoder.extractKVPairsFromRenderedPattern("\n\n// level is label\nlevel=INFO\n// another comment\n\napp=\"my\"app\n\n// end comment");
-            var kvse1 = new String[] {"level", "INFO", "app", "\"my\"app"};
-            assertArrayEquals("Split by ,=", kvse1, kvs1);
-        });
+        var kvs1 = AbstractLoki4jEncoder.extractKVPairsFromPattern(
+            "\n\n// level is label\nlevel=%level\n// another comment\n\napp=\"my\"app\n\n// end comment",
+            "regex:(\n|//[^\n]+)+",
+            "=");
+        var kvse1 = new String[] {"level", "%level", "app", "\"my\"app"};
+        assertArrayEquals("Split by ,=", kvse1, kvs1);
     }
 
     @Test
     public void testExtractStreamKVPairs() {
-        withEncoder(toStringEncoder(
-                labelCfg("level=%level,app=\"my\"app", ",", "=", true, false),
-                plainTextMsgLayout("l=%level c=%logger{20} t=%thread | %msg %ex{1}"),
-                false,
-                false), encoder -> {
-            var kvs1 = encoder.extractKVPairsFromRenderedPattern("level=INFO,app=\"my\"app,test=test");
-            var kvse1 = new String[] {"level", "INFO", "app", "\"my\"app", "test", "test"};
-            assertArrayEquals("Split by ,=", kvse1, kvs1);
-        });
+        var kvs1 = AbstractLoki4jEncoder.extractKVPairsFromPattern("level=%level,app=\"my\"app,test=test", ",", "=");
+        var kvse1 = new String[] {"level", "%level", "app", "\"my\"app", "test", "test"};
+        assertArrayEquals("Split by ,=", kvse1, kvs1);
 
-        withEncoder(toStringEncoder(
-                labelCfg("level:%level;app:\"my\"app", ";", ":", true, false),
-                plainTextMsgLayout("l=%level c=%logger{20} t=%thread | %msg %ex{1}"),
-                false,
-                false), encoder -> {
-            var kvs2 = encoder.extractKVPairsFromRenderedPattern("level:INFO;app:\"my\"app;test:test");
-            var kvse1 = new String[] {"level", "INFO", "app", "\"my\"app", "test", "test"};
-            assertArrayEquals("Split by ;:", kvse1, kvs2);
-        });
+        var kvs2 = AbstractLoki4jEncoder.extractKVPairsFromPattern("level:%level;app:\"my\"app;test:test", ";", ":");
+        assertArrayEquals("Split by ;:", kvse1, kvs2);
 
-        withEncoder(toStringEncoder(
-                labelCfg("level.%level|app.\"my\"app", "|", ".", true, false),
-                plainTextMsgLayout("l=%level c=%logger{20} t=%thread | %msg %ex{1}"),
-                false,
-                false), encoder -> {
-            var kvs3 = encoder.extractKVPairsFromRenderedPattern("level.INFO|app.\"my\"app|test.test");
-            var kvse1 = new String[] {"level", "INFO", "app", "\"my\"app", "test", "test"};
-            assertArrayEquals("Split by |.", kvse1, kvs3);
-        });
+        var kvs3 = AbstractLoki4jEncoder.extractKVPairsFromPattern("level.%level|app.\"my\"app|test.test", "|", ".");
+        assertArrayEquals("Split by |.", kvse1, kvs3);
     }
-        */
+
+    @Test
+    public void testLabelParsingFailed() {
+        var event = loggingEvent(105L, Level.INFO, "test.TestApp", "thread-1", "Test message 1", null);
+
+        var encoder1 = toStringEncoder(
+                labelCfg("level=%level,app=", ",", "=", true, false),
+                plainTextMsgLayout("l=%level c=%logger{20} t=%thread | %msg %ex{1}"),
+                true,
+                false);
+        var sender = dummySender();
+        assertThrows("KV separation failed", IllegalArgumentException.class, () ->
+            withAppender(appender(30, 400L, encoder1, sender), appender -> {
+                appender.append(event);
+                return null;
+            })
+        );
+        var encoder2 = toStringEncoder(
+                labelCfg("level=%lev{,app=x", ",", "=", true, false),
+                plainTextMsgLayout("l=%level c=%logger{20} t=%thread | %msg %ex{1}"),
+                true,
+                false);
+                assertThrows("Converter parsing failed", IllegalArgumentException.class, () ->
+        withAppender(appender(30, 400L, encoder2, sender), appender -> {
+                appender.append(event);
+                return null;
+            })
+        );
+    }
 
     @Test
     public void testLabelMarker() {
