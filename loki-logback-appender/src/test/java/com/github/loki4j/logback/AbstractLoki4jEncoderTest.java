@@ -43,6 +43,13 @@ public class AbstractLoki4jEncoderTest {
     }
 
     @Test
+    public void testExtractStreamKVPairsIgnoringWhitespace() {
+        var kvs1 = AbstractLoki4jEncoder.extractKVPairsFromPattern("\tlevel = %level,\n\tapp=\"my\"app,\n", ",", "=");
+        var kvse1 = new String[] {"level", "%level", "app", "\"my\"app"};
+        assertArrayEquals("Split by ,=", kvse1, kvs1);
+    }
+
+    @Test
     public void testExtractStreamKVPairsByRegex() {
         var kvs1 = AbstractLoki4jEncoder.extractKVPairsFromPattern(
             "\n\n// level is label\nlevel=%level\n// another comment\n\napp=\"my\"app\n\n// end comment",

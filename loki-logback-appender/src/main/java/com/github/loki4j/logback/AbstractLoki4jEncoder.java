@@ -228,8 +228,8 @@ public abstract class AbstractLoki4jEncoder extends ContextAwareBase implements 
 
             var kv = keyValueSeparatorPattern.split(pairs[i]);
             if (kv.length == 2) {
-                result[pos] = kv[0];
-                result[pos + 1] = kv[1];
+                result[pos] = kv[0].trim();
+                result[pos + 1] = kv[1].trim();
                 pos += 2;
             } else {
                 throw new IllegalArgumentException(String.format(
