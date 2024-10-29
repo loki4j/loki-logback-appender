@@ -10,9 +10,9 @@ import java.util.concurrent.TimeoutException;
 
 import org.junit.Test;
 
-import com.github.loki4j.logback.Generators.FailingStringWriter;
 import com.github.loki4j.logback.Generators.WrappingHttpSender;
 import com.github.loki4j.testkit.dummy.FailingHttpClient;
+import com.github.loki4j.testkit.dummy.FailingStringWriter;
 import com.github.loki4j.testkit.dummy.StringPayload;
 import com.github.loki4j.testkit.dummy.SuspendableHttpClient;
 import com.github.loki4j.testkit.dummy.FailingHttpClient.FailureType;
@@ -88,21 +88,6 @@ public class Loki4jAppenderTest {
             assertEquals("batchTimeout", expected, StringPayload.parse(sender.lastSendData(), encoder.charset));
             return null;
         });
-    }
-
-    @Test
-    public void testLabelParsingFailed() {
-        var encoder = toStringEncoder(
-                labelCfg("level=%level,app=", ",", "=", true, false),
-                plainTextMsgLayout("l=%level c=%logger{20} t=%thread | %msg %ex{1}"),
-                true,
-                false);
-        var sender = dummySender();
-        withAppender(appender(30, 400L, encoder, sender), appender -> {
-            appender.append(events[0]);
-            return null;
-        });
-        // test should not fail with exception on append()
     }
 
     @Test

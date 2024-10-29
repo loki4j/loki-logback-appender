@@ -198,7 +198,8 @@ public class Loki4jAppender extends UnsynchronizedAppenderBase<ILoggingEvent> {
             event.getTimeStamp(),
             event.getNanoseconds() % 1_000_000, // take only nanos, not ms
             () -> encoder.eventToStream(event),
-            () -> encoder.eventToMessage(event));
+            () -> encoder.eventToMessage(event),
+            () -> encoder.eventToMetadata(event));
 
         if (!appended)
             reportDroppedEvents();

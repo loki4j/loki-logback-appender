@@ -177,13 +177,18 @@ public final class AsyncBufferPipeline {
         waitSendQueueLessThan(1, timeoutMs);
     }
 
-    public boolean append(long timestampMs, int nanosInMs, Supplier<LogRecordStream> stream, Supplier<String> message) {
+    public boolean append(
+            long timestampMs,
+            int nanosInMs,
+            Supplier<LogRecordStream> stream,
+            Supplier<String> message,
+            Supplier<String[]> metadata) {
         var startedNs = System.nanoTime();
         boolean accepted = false;
         if (acceptNewEvents.get()) {
             LogRecord record = null;
             try {
-                record = LogRecord.create(timestampMs, nanosInMs, stream.get(), message.get());
+                record = LogRecord.create(timestampMs, nanosInMs, stream.get(), message.get(), metadata.get());
             } catch (Exception e) {
                 log.error(e, "Error occurred while appending an event");
                 if (metrics != null) metrics.appendFailed(() -> e.getClass().getSimpleName());
