@@ -15,14 +15,14 @@ First, you need to make sure that Micrometer dependency is added to your project
 <dependency>
     <groupId>io.micrometer</groupId>
     <artifactId>micrometer-core</artifactId>
-    <version>1.13.0</version>
+    <version>1.13.6</version>
 </dependency>
 ```
 
 <!--Gradle-->
 
 ```groovy
-implementation 'io.micrometer:micrometer-core:1.13.0'
+implementation 'io.micrometer:micrometer-core:1.13.6'
 ```
 <!--END_DOCUSAURUS_CODE_TABS-->
 

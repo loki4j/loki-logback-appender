@@ -26,6 +26,17 @@ Loki v2.8.0 is the first version that supports label drop functionality that is 
 Because of that Loki v1.6.1 was excluded from the integration tests and the compatibility matrix was updated.
 However, Loki4j should still work fine with versions prior to 2.8.0.
 
+#### Regex pair separators deprecated
+
+Now you can use multiline strings to declare your key-value pairs in label and structured metadata patterns.
+From now on, this will work even if the pair separator is a character (by default it's `,`) or a literal string.
+A prefix `regex:` is still supported in `format.label.pairSeparator` for compatibility, but it might be removed in future versions.
+
+#### 'nopex' label setting removed
+
+Previously `format.label.nopex` was used to suppress exception output into label pattern.
+In v1.6.0 we have re-worked label formatting code, so that this setting is no longer needed.
+
 ## Upgrading from 1.4.x to 1.5.x
 
 The most significant breaking change in Loki4j v1.5.0 is an upgrade to Logback v1.3.x.
