@@ -65,13 +65,6 @@ public class PipelineConfig {
     public final long batchTimeoutMs;
 
     /**
-     * If true, log records in batch are sorted by timestamp.
-     * If false, records will be sent to Loki in arrival order.
-     * Turn this on if you see 'entry out of order' error from Loki.
-     */
-    public final boolean sortByTime;
-
-    /**
      * If you use only one label for all log records, you can
      * set this flag to true and save some CPU time on grouping records by label.
      */
@@ -162,7 +155,6 @@ public class PipelineConfig {
             int batchMaxItems,
             int batchMaxBytes,
             long batchTimeoutMs,
-            boolean sortByTime,
             boolean staticLabels,
             long sendQueueMaxBytes,
             int maxRetries,
@@ -181,7 +173,6 @@ public class PipelineConfig {
         this.batchMaxItems = batchMaxItems;
         this.batchMaxBytes = batchMaxBytes;
         this.batchTimeoutMs = batchTimeoutMs;
-        this.sortByTime = sortByTime;
         this.staticLabels = staticLabels;
         this.sendQueueMaxBytes = sendQueueMaxBytes;
         this.maxRetries = maxRetries;
@@ -209,7 +200,6 @@ public class PipelineConfig {
         private int batchMaxItems = 1000;
         private int batchMaxBytes = 4 * 1024 * 1024;
         private long batchTimeoutMs = 60 * 1000;
-        private boolean sortByTime = false;
         private boolean staticLabels = false;
         private long sendQueueMaxBytes = batchMaxBytes * 10;
         private int maxRetries = 2;
@@ -232,7 +222,6 @@ public class PipelineConfig {
                     batchMaxItems,
                     batchMaxBytes,
                     batchTimeoutMs,
-                    sortByTime,
                     staticLabels,
                     sendQueueMaxBytes,
                     maxRetries,
@@ -267,11 +256,6 @@ public class PipelineConfig {
 
         public Builder setBatchTimeoutMs(long batchTimeoutMs) {
             this.batchTimeoutMs = batchTimeoutMs;
-            return this;
-        }
-
-        public Builder setSortByTime(boolean sortByTime) {
-            this.sortByTime = sortByTime;
             return this;
         }
 
