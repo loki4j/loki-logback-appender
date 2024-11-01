@@ -119,7 +119,6 @@ public class Loki4jAppenderTest {
                 },
                 labelCfg("level=%level,app=my-app", ",", "=", true, false),
                 plainTextMsgLayout("l=%level c=%logger{20} t=%thread | %msg %ex{1}"),
-                true,
                 false);
         var sender = dummySender();
         var appender = appender(4, 4000L, encoder, sender);

@@ -26,7 +26,6 @@ public class StructuredMetadataTest {
         var e = toStringEncoder(
             labelCfg,
             plainTextMsgLayout("l=%level c=%logger{20} t=%thread | %msg %ex{1}"),
-            true,
             false);
         var a = appender(1000, 60_000L, e, dummySender());
         a.setSendQueueMaxBytes(Long.MAX_VALUE);

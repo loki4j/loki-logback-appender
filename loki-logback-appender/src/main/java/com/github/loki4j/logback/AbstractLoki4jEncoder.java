@@ -92,13 +92,6 @@ public abstract class AbstractLoki4jEncoder extends ContextAwareBase implements 
     private LabelCfg label = new LabelCfg();
 
     /**
-     * If true, log records in batch are sorted by timestamp.
-     * If false, records will be sent to Loki in arrival order.
-     * Turn this on if you see 'entry out of order' error from Loki.
-     */
-    private boolean sortByTime = false;
-
-    /**
      * If you use only one label for all log records, you can
      * set this flag to true and save some CPU time on grouping records by label.
      */
@@ -291,13 +284,6 @@ public abstract class AbstractLoki4jEncoder extends ContextAwareBase implements 
     @DefaultClass(PatternLayout.class)
     public void setMessage(Layout<ILoggingEvent> message) {
         this.messageLayout = message;
-    }
-
-    public boolean getSortByTime() {
-        return sortByTime;
-    }
-    public void setSortByTime(boolean sortByTime) {
-        this.sortByTime = sortByTime;
     }
 
     public boolean getStaticLabels() {

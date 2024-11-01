@@ -50,7 +50,6 @@ public class JsonLayoutTest {
         var encoder = toStringEncoder(
                 labelCfg("app=my-app", ",", "=", true, false),
                 jsonMsgLayout(),
-                false,
                 false
         );
         var sender = dummySender();

@@ -79,7 +79,6 @@ public class AbstractLoki4jEncoderTest {
         var encoder1 = toStringEncoder(
                 labelCfg("level=%level,app=", ",", "=", true, false),
                 plainTextMsgLayout("l=%level c=%logger{20} t=%thread | %msg %ex{1}"),
-                true,
                 false);
         var sender = dummySender();
         assertThrows("KV separation failed", IllegalArgumentException.class, () ->
@@ -91,7 +90,6 @@ public class AbstractLoki4jEncoderTest {
         var encoder2 = toStringEncoder(
                 labelCfg("level=%lev{,app=x", ",", "=", true, false),
                 plainTextMsgLayout("l=%level c=%logger{20} t=%thread | %msg %ex{1}"),
-                true,
                 false);
                 assertThrows("Converter parsing failed", IllegalArgumentException.class, () ->
         withAppender(appender(30, 400L, encoder2, sender), appender -> {
@@ -106,7 +104,6 @@ public class AbstractLoki4jEncoderTest {
         var encoder = toStringEncoder(
                 labelCfg("level=%level,app=my-app,thread=%thread", ",", "=", true, false),
                 plainTextMsgLayout("l=%level | %msg %ex{1}"),
-                true,
                 false);
         encoder.setContext(new LoggerContext());
         encoder.start();
@@ -131,7 +128,6 @@ public class AbstractLoki4jEncoderTest {
         var encoder = toStringEncoder(
                 labelCfg("level=%level.class=%logger.thread=%thread", ".", "=", true, false),
                 plainTextMsgLayout("l=%level | %msg %ex{1}"),
-                true,
                 false);
         encoder.setContext(new LoggerContext());
         encoder.start();
@@ -162,7 +158,7 @@ public class AbstractLoki4jEncoderTest {
             appender(
                 4,
                 1000L,
-                toStringEncoder(labelCfg("l=%level", ",", "=", true, true), plainTextMsgLayout("%level | %msg"), false, false),
+                toStringEncoder(labelCfg("l=%level", ",", "=", true, true), plainTextMsgLayout("%level | %msg"), false),
                 sender), appender -> {
             appender.append(events);
             appender.waitAllAppended();
@@ -200,7 +196,7 @@ public class AbstractLoki4jEncoderTest {
             appender(
                 4,
                 1000L,
-                toStringEncoder(labelMetadataCfg("l=%level", "t=%thread,c=%logger", true), plainTextMsgLayout("%level | %msg"), false, false),
+                toStringEncoder(labelMetadataCfg("l=%level", "t=%thread,c=%logger", true), plainTextMsgLayout("%level | %msg"), false),
                 sender), appender -> {
             appender.append(events);
             appender.waitAllAppended();
@@ -233,7 +229,7 @@ public class AbstractLoki4jEncoderTest {
             appender(
                 4,
                 1000L,
-                toStringEncoder(labelMetadataCfg("l=%level", "t=%thread,c=%logger", true), plainTextMsgLayout("%level | %msg"), false, false),
+                toStringEncoder(labelMetadataCfg("l=%level", "t=%thread,c=%logger", true), plainTextMsgLayout("%level | %msg"), false),
                 sender), appender -> {
             appender.append(events);
             appender.waitAllAppended();
@@ -265,7 +261,7 @@ public class AbstractLoki4jEncoderTest {
             appender(
                 6,
                 1000L,
-                toStringEncoder(labelCfg("l=%level", ",", "=", true, false), plainTextMsgLayout("%level | %msg"), false, true),
+                toStringEncoder(labelCfg("l=%level", ",", "=", true, false), plainTextMsgLayout("%level | %msg"), true),
                 sender), appender -> {
             appender.append(eventsToOrder);
             appender.waitAllAppended();
@@ -288,30 +284,7 @@ public class AbstractLoki4jEncoderTest {
             appender(
                 6,
                 1000L,
-                toStringEncoder(labelCfg("l=%level", ",", "=", true, false), plainTextMsgLayout("%level | %msg"), true, true),
-                sender), appender -> {
-            appender.append(eventsToOrder);
-            appender.waitAllAppended();
-            assertEquals(
-                "static labels, sort by time",
-                StringPayload.builder()
-                    .stream("[l, INFO]",
-                        "ts=100 INFO | Test message 3",
-                        "ts=103 DEBUG | Test message 2",
-                        "ts=103 ERROR | Test message 5",
-                        "ts=104 WARN | Test message 4",
-                        "ts=105 INFO | Test message 1",
-                        "ts=110 INFO | Test message 6")
-                    .build(),
-                StringPayload.parse(sender.lastSendData()));
-            return null;
-        });
-
-        withAppender(
-            appender(
-                6,
-                1000L,
-                toStringEncoder(labelCfg("l=%level", ",", "=", true, false), plainTextMsgLayout("%level | %msg"), false, false),
+                toStringEncoder(labelCfg("l=%level", ",", "=", true, false), plainTextMsgLayout("%level | %msg"), false),
                 sender), appender -> {
             appender.append(eventsToOrder);
             appender.waitAllAppended();
@@ -321,32 +294,6 @@ public class AbstractLoki4jEncoderTest {
                     .stream("[l, INFO]",
                         "ts=105 INFO | Test message 1",
                         "ts=100 INFO | Test message 3",
-                        "ts=110 INFO | Test message 6")
-                    .stream("[l, DEBUG]",
-                        "ts=103 DEBUG | Test message 2")
-                    .stream("[l, WARN]",
-                        "ts=104 WARN | Test message 4")
-                    .stream("[l, ERROR]",
-                        "ts=103 ERROR | Test message 5")
-                    .build(),
-                StringPayload.parse(sender.lastSendData()));
-            return null;
-        });
-
-        withAppender(
-            appender(
-                6,
-                1000L,
-                toStringEncoder(labelCfg("l=%level", ",", "=", true, false), plainTextMsgLayout("%level | %msg"), true, false),
-                sender), appender -> {
-            appender.append(eventsToOrder);
-            appender.waitAllAppended();
-            assertEquals(
-                "dynamic labels, sort by time",
-                StringPayload.builder()
-                    .stream("[l, INFO]",
-                        "ts=100 INFO | Test message 3",
-                        "ts=105 INFO | Test message 1",
                         "ts=110 INFO | Test message 6")
                     .stream("[l, DEBUG]",
                         "ts=103 DEBUG | Test message 2")
