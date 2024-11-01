@@ -25,7 +25,6 @@ public class StreamCachesTest {
         var e = toStringEncoder(
             labelCfg("level=%level,app=my-app,date=%date{HH:mm:ss.SSS}", ",", "=", true, false),
             plainTextMsgLayout("l=%level c=%logger{20} t=%thread | %msg %ex{1}"),
-            false,
             false);
         e.setContext(new LoggerContext());
         e.getLabel().setStreamCache(streamCache);

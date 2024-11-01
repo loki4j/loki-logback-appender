@@ -20,8 +20,6 @@ public interface Loki4jEncoder extends ContextAware, LifeCycle {
 
     WriterFactory getWriterFactory();
 
-    boolean getSortByTime();
-
     boolean getStaticLabels();
 
 }

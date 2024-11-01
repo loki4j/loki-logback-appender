@@ -34,11 +34,6 @@ import static com.github.loki4j.client.util.StringUtils.bytesAsUtf8String;
 
 public final class AsyncBufferPipeline {
 
-    private static final Comparator<LogRecord> compareByTime = (e1, e2) -> {
-        var tsCmp = Long.compare(e1.timestampMs, e2.timestampMs);
-        return tsCmp == 0 ? Integer.compare(e1.nanosInMs, e2.nanosInMs) : tsCmp;
-    };
-
     private static final Comparator<LogRecord> compareByStream = (e1, e2) ->
         Long.compare(e1.stream.hash, e2.stream.hash);
 
@@ -98,14 +93,10 @@ public final class AsyncBufferPipeline {
     private ScheduledFuture<?> drainScheduledFuture;
 
     public AsyncBufferPipeline(PipelineConfig conf) {
-        Optional<Comparator<LogRecord>> logRecordComparator = Optional.empty();
-        if (conf.staticLabels) {
-            if (conf.sortByTime)
-                logRecordComparator = Optional.of(compareByTime);
-        } else {
-            logRecordComparator = Optional.of(
-                conf.sortByTime ? compareByStream.thenComparing(compareByTime) : compareByStream);
-        }
+        Optional<Comparator<LogRecord>> logRecordComparator = conf.staticLabels
+            ? Optional.empty()
+            : Optional.of(compareByStream);
+
         ByteBufferFactory bufferFactory = new ByteBufferFactory(conf.useDirectBuffers);
 
         batcher = new Batcher(conf.batchMaxItems, conf.batchMaxBytes, conf.batchTimeoutMs);

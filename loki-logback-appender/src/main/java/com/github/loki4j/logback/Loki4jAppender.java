@@ -151,7 +151,6 @@ public class Loki4jAppender extends UnsynchronizedAppenderBase<ILoggingEvent> {
             .setBatchMaxItems(batchMaxItems)
             .setBatchMaxBytes(batchMaxBytes)
             .setBatchTimeoutMs(batchTimeoutMs)
-            .setSortByTime(encoder.getSortByTime())
             .setStaticLabels(encoder.getStaticLabels())
             .setSendQueueMaxBytes(sendQueueMaxBytes)
             .setMaxRetries(maxRetries)
