@@ -20,11 +20,18 @@ If your project depends on other external Logback appenders, please make sure al
 Loki `.proto` files were updated to the latest version from the upstream.
 If you use protobuf API for sending logs to Loki, please switch to loki-protobuf v0.0.2.
 
-#### Loki lowest supported version updated to 2.8.0
+#### Minimal supported Loki version is 2.8.0
 
 Loki v2.8.0 is the first version that supports label drop functionality that is now mandatory for Loki4j's integration tests.
 Because of that Loki v1.6.1 was excluded from the integration tests and the compatibility matrix was updated.
-However, Loki4j should still work fine with versions prior to 2.8.0.
+However, in most cases Loki4j should still work fine with versions prior to 2.8.0.
+
+#### "sortByTime" format setting removed
+
+Since Loki v2.4.0 'entry out of order' is no longer an issue.
+Now that minimal supported Loki version is 2.8.0, there is no point in keeping `format.sortByTime` setting.
+Furthermore, having this property set to `true` might impose negative effect on performance.
+That's why `format.sortByTime` is removed in v1.6.0.
 
 #### Regex pair separators deprecated
 
@@ -32,7 +39,7 @@ Now you can use multiline strings to declare your key-value pairs in label and s
 From now on, this will work even if the pair separator is a character (by default it's `,`) or a literal string.
 A prefix `regex:` is still supported in `format.label.pairSeparator` for compatibility, but it might be removed in future versions.
 
-#### 'nopex' label setting removed
+#### "nopex" label setting removed
 
 Previously `format.label.nopex` was used to suppress exception output into label pattern.
 In v1.6.0 we have re-worked label formatting code, so that this setting is no longer needed.
