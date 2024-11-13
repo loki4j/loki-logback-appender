@@ -30,7 +30,7 @@ However, in most cases Loki4j should still work fine with versions prior to 2.8.
 
 Since Loki v2.4.0 'entry out of order' is no longer an issue.
 Now that minimal supported Loki version is 2.8.0, there is no point in keeping `format.sortByTime` setting.
-Furthermore, having this property set to `true` might impose negative effect on performance.
+Furthermore, having this property set to `true` in some cases might impose negative effect on performance.
 That's why `format.sortByTime` is removed in v1.6.0.
 
 #### Regex pair separators deprecated

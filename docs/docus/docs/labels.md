@@ -83,3 +83,22 @@ void handleException(Exception ex) {
     log.error(marker, "Unexpected error", ex);
 }
 ```
+
+## Best practices
+
+We encourage you to follow the [Label best practices](https://grafana.com/docs/loki/latest/get-started/labels/bp-labels/) collected by Grafana Loki team. Loki4j provides several settings to facilitate these recommendations.
+
+First, make sure you have `format.staticLabels` flag enabled.
+This will prevent Loki4j from calculating labels for each particular log record:
+
+```xml
+<appender name="LOKI" class="com.github.loki4j.logback.Loki4jAppender">
+    ...
+    <format>
+        <staticLabels>true</staticLabels>
+        ...
+     </format>
+</appender>
+```
+
+Second, make sure you put all the high-cardinality metadata to [structured metadata](metadata.md) instead of labels.
