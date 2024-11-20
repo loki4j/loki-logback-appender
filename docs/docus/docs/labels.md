@@ -33,25 +33,19 @@ By default labels are defined as `key=value` pairs separated by commas.
 </label>
 ```
 
-But you can override `pairSeparator` to organize them in a different way.
-For example, if you have many labels, it's better to have each of them on a separate line:
+If you have many labels, you can put them in multiple lines (a trailing comma is optional):
 
 ```xml
 <label>
     <pattern>
-        job=loki4j
-        app=my-app
-        // you even can write comments here
-        namespace_name=${NAMESCAPE_NAME}
-        pod_name=${POD_NAME}
-        level=%level
+        job = loki4j,
+        app = my-app,
+        namespace_name = ${NAMESCAPE_NAME},
+        pod_name = ${POD_NAME},
+        level=%level,
     </pattern>
-    <pairSeparator>regex:(\n|//[^\n]+)+</pairSeparator>
 </label>
 ```
-
-Please note that in the example above the regular expression in `pairSeparator` defines lines starting with `//` a part of a separator.
-So now we have a `// comment` feature here as well.
 
 ## Using MDC in labels
 
@@ -89,3 +83,22 @@ void handleException(Exception ex) {
     log.error(marker, "Unexpected error", ex);
 }
 ```
+
+## Best practices
+
+We encourage you to follow the [Label best practices](https://grafana.com/docs/loki/latest/get-started/labels/bp-labels/) collected by Grafana Loki team. Loki4j provides several settings to facilitate these recommendations.
+
+First, make sure you have `format.staticLabels` flag enabled.
+This will prevent Loki4j from calculating labels for each particular log record:
+
+```xml
+<appender name="LOKI" class="com.github.loki4j.logback.Loki4jAppender">
+    ...
+    <format>
+        <staticLabels>true</staticLabels>
+        ...
+     </format>
+</appender>
+```
+
+Second, make sure you put all the high-cardinality metadata to [structured metadata](metadata.md) instead of labels.
