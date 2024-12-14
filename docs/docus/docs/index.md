@@ -91,8 +91,11 @@ Migrating from the previous Loki4j version? Read the [Migration Guide](docs/migr
 
 ### Key Features:
 
-- **Flexible management of Loki labels using MDC and SLF4J Markers.**
-You can specify Loki labels dynamically for any set of log records and even on a per-record basis.
+- **Structured metadata support.**
+Pass any non-label metadata along with your log lines using [structured metadata](docs/metadata).
+
+- **Flexible management of Loki labels and metadata using MDC and SLF4J Markers.**
+You can specify Loki labels as well as structured metadata dynamically, even on a per-record basis.
 [Learn more...](docs/labels)
 
 - **Out-of-the-box JSON layout support for log message formatting.**

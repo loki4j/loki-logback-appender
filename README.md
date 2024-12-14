@@ -17,6 +17,7 @@ If you have found this project helpful, please drop a :star:!
 
 ## Key features
 
+- Structured metadata support
 - Flexible management of Loki labels using MDC and SLF4J Markers
 - Out-of-the-box JSON layout support for log message formatting
 - Logback plain text formatting patterns can be used for both labels and messages
