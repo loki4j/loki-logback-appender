@@ -6,6 +6,7 @@ import static org.junit.Assert.assertFalse;
 import static org.junit.Assert.assertTrue;
 
 import java.util.Arrays;
+import java.util.List;
 
 import org.junit.Test;
 import org.slf4j.event.KeyValuePair;
@@ -123,12 +124,7 @@ public class KeyValuePairsJsonProviderTest {
         var provider = new KeyValuePairsJsonProvider();
         provider.setFieldSerializer(
                 (writer, name, value) -> {
-                    writer.writeFieldName(name + "_arr");
-                    writer.writeBeginArray();
-                    writer.writeStringValue(name);
-                    writer.writeArraySeparator();
-                    writer.writeStringValue(value.toString());
-                    writer.writeEndArray();
+                    writer.writeArrayField(name + "_arr", new String[] { name, value.toString() });
                 }
         );
         provider.start();
@@ -144,5 +140,49 @@ public class KeyValuePairsJsonProviderTest {
         );
 
         provider.stop();
+    }
+
+    @Test
+    @SuppressWarnings("unchecked")
+    public void testCustomIterableSerializer() {
+        var event = loggingEvent(101L, Level.DEBUG, "io.test.TestApp", "thread-1", "m2-line1", null);
+        event.setKeyValuePairs(Arrays.asList(
+                new KeyValuePair("prop", List.of(new TestData("Aaaa", 10), new TestData("Bbbb", 20)))
+        ));
+
+        var provider = new KeyValuePairsJsonProvider();
+        provider.setFieldSerializer(
+                (writer, name, value) -> {
+                    writer.writeArrayField(name, (Iterable<TestData>)value, (w, o) -> {
+                        w.writeBeginObject();
+                        w.writeStringField("name", o.name);
+                        w.writeFieldSeparator();
+                        w.writeNumericField("age", o.age);
+                        w.writeEndObject();
+                    });
+                }
+        );
+        provider.start();
+
+        assertTrue("canWrite", provider.canWrite(event));
+
+        var writer = new JsonEventWriter(0);
+        provider.writeTo(writer, event, false);
+
+        assertEquals("writeTo",
+                "\"kvp_prop\":[{\"name\":\"Aaaa\",\"age\":10},{\"name\":\"Bbbb\",\"age\":20}]",
+                writer.toString()
+        );
+
+        provider.stop();
+    }
+
+    private class TestData {
+        public String name;
+        public int age;
+        public TestData(String name, int age) {
+            this.name = name;
+            this.age = age;
+        }
     }
 }

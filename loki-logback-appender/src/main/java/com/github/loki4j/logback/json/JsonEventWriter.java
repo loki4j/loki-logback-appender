@@ -2,6 +2,10 @@ package com.github.loki4j.logback.json;
 
 import static com.github.loki4j.pkg.dslplatform.json.RawJsonWriter.*;
 
+import java.util.Arrays;
+import java.util.Iterator;
+import java.util.function.BiConsumer;
+
 import com.github.loki4j.pkg.dslplatform.json.NumberConverter;
 import com.github.loki4j.pkg.dslplatform.json.RawJsonWriter;
 
@@ -24,19 +28,7 @@ public final class JsonEventWriter {
         raw.writeByte(OBJECT_END);
     }
 
-    public void writeBeginArray() {
-        raw.writeByte(ARRAY_START);
-    }
-
-    public void writeEndArray() {
-        raw.writeByte(ARRAY_END);
-    }
-
     public void writeFieldSeparator() {
-        raw.writeByte(COMMA);
-    }
-
-    public void writeArraySeparator() {
         raw.writeByte(COMMA);
     }
 
@@ -45,7 +37,44 @@ public final class JsonEventWriter {
         writeObjectValue(value);
     }
 
-    public void writeObjectValue(Object value) {
+    public void writeStringField(String fieldName, String value) {
+        writeFieldName(fieldName);
+        writeStringValue(value);
+    }
+
+    public void writeNumericField(String fieldName, long value) {
+        writeFieldName(fieldName);
+        writeNumericValue(value);
+    }
+
+    public <T> void writeArrayField(String fieldName, T[] values) {
+        writeArrayField(fieldName, values, (w, o) -> w.writeObjectValue(o));
+    }
+
+    public <T> void writeArrayField(String fieldName, T[] values, BiConsumer<JsonEventWriter, T> write) {
+        writeArrayField(fieldName, Arrays.asList(values), write);
+    }
+
+    public <T> void writeArrayField(String fieldName, Iterable<T> values) {
+        writeArrayField(fieldName, values, (w, o) -> w.writeObjectValue(o));
+    }
+
+    public <T> void writeArrayField(String fieldName, Iterable<T> values, BiConsumer<JsonEventWriter, T> write) {
+        writeFieldName(fieldName);
+        writeIteratorValue(values.iterator(), write);
+    }
+
+    public void writeRawJsonField(String fieldName, String rawJson) {
+        writeFieldName(fieldName);
+        writeObjectValue(new RawJsonString(rawJson));
+    }
+
+    private void writeFieldName(String fieldName) {
+        raw.writeString(fieldName);
+        raw.writeByte(SEMI);
+    }
+
+    private void writeObjectValue(Object value) {
         // Object is a reference type, first check the value for null
         if (value == null) {
             raw.writeNull();
@@ -60,20 +89,17 @@ public final class JsonEventWriter {
             writeNumericValue((long) value);
         else if (value instanceof Boolean)
             raw.writeBoolean((boolean) value);
+        else if (value instanceof Iterator<?>)
+            writeIteratorValue((Iterator<?>) value, (w, o) -> w.writeObjectValue(o));
         else if (value instanceof Iterable)
-            serializeIterable((Iterable<?>) value);
+            writeIteratorValue(((Iterable<?>) value).iterator(), (w, o) -> w.writeObjectValue(o));
         else if (value instanceof RawJsonString)
             raw.writeRawAscii(((RawJsonString) value).value);
         else
             raw.writeString(value.toString());
     }
 
-    public void writeStringField(String fieldName, String value) {
-        writeFieldName(fieldName);
-        writeStringValue(value);
-    }
-
-    public void writeStringValue(String value) {
+    private void writeStringValue(String value) {
         // String is a reference type, first check the value for null
         if (value == null) {
             raw.writeNull();
@@ -82,29 +108,30 @@ public final class JsonEventWriter {
         }
     }
 
-    public void writeNumericField(String fieldName, long value) {
-        writeFieldName(fieldName);
-        writeNumericValue(value);
-    }
-
-    public void writeNumericValue(long value) {
+    private void writeNumericValue(long value) {
         NumberConverter.serialize(value, raw);
     }
 
-    public void writeFieldName(String fieldName) {
-        raw.writeString(fieldName);
-        raw.writeByte(SEMI);
-    }
-
-    private void serializeIterable(Iterable<?> iterable) {
+    private <T> void writeIteratorValue(Iterator<T> it, BiConsumer<JsonEventWriter, T> write) {
         writeBeginArray();
-        var it = iterable.iterator();
         while (it.hasNext()) {
-            writeObjectValue(it.next());
+            write.accept(this, it.next());
             if (it.hasNext())
                 writeArraySeparator();
         }
         writeEndArray();
+    }
+
+    private void writeBeginArray() {
+        raw.writeByte(ARRAY_START);
+    }
+
+    private void writeEndArray() {
+        raw.writeByte(ARRAY_END);
+    }
+
+    private void writeArraySeparator() {
+        raw.writeByte(COMMA);
     }
 
     public String toString() {

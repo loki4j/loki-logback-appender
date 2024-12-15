@@ -13,7 +13,7 @@ public class KeyValuePairsJsonProvider extends AbstractFieldCollectionJsonProvid
     /**
      * Json serializer to use for each field specified for this KVP provider.
      */
-    private JsonFieldSerializer fieldSerializer = (writer, name, value) -> writer.writeObjectField(name, value);
+    private JsonFieldSerializer<Object> fieldSerializer = (writer, name, value) -> writer.writeObjectField(name, value);
 
     public KeyValuePairsJsonProvider() {
         setPrefix(FIELD_KVP_PREFIX);
@@ -39,11 +39,11 @@ public class KeyValuePairsJsonProvider extends AbstractFieldCollectionJsonProvid
         fieldSerializer.writeField(writer, fieldName, fieldValue);
     }
 
-    public JsonFieldSerializer getFieldSerializer() {
+    public JsonFieldSerializer<Object> getFieldSerializer() {
         return fieldSerializer;
     }
 
-    public void setFieldSerializer(JsonFieldSerializer fieldSerializer) {
+    public void setFieldSerializer(JsonFieldSerializer<Object> fieldSerializer) {
         this.fieldSerializer = fieldSerializer;
     }
 }
