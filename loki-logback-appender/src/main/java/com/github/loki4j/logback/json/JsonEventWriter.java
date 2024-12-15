@@ -41,7 +41,7 @@ public final class JsonEventWriter {
     }
 
     public void writeObjectField(String fieldName, Object value) {
-        serializeFieldName(fieldName);
+        writeFieldName(fieldName);
         writeObjectValue(value);
     }
 
@@ -69,7 +69,7 @@ public final class JsonEventWriter {
     }
 
     public void writeStringField(String fieldName, String value) {
-        serializeFieldName(fieldName);
+        writeFieldName(fieldName);
         writeStringValue(value);
     }
 
@@ -83,7 +83,7 @@ public final class JsonEventWriter {
     }
 
     public void writeNumericField(String fieldName, long value) {
-        serializeFieldName(fieldName);
+        writeFieldName(fieldName);
         writeNumericValue(value);
     }
 
@@ -91,7 +91,7 @@ public final class JsonEventWriter {
         NumberConverter.serialize(value, raw);
     }
 
-    private void serializeFieldName(String fieldName) {
+    public void writeFieldName(String fieldName) {
         raw.writeString(fieldName);
         raw.writeByte(SEMI);
     }

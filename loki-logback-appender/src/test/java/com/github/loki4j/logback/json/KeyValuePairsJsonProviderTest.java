@@ -111,4 +111,38 @@ public class KeyValuePairsJsonProviderTest {
 
         provider.stop();
     }
+
+    @Test
+    public void testCustomFieldSerializer() {
+        var event = loggingEvent(101L, Level.DEBUG, "io.test.TestApp", "thread-1", "m2-line1", null);
+        event.setKeyValuePairs(Arrays.asList(
+                new KeyValuePair("property1", "value1"),
+                new KeyValuePair("property2", "value2")
+        ));
+
+        var provider = new KeyValuePairsJsonProvider();
+        provider.setFieldSerializer(
+                (writer, name, value) -> {
+                    writer.writeFieldName(name + "_arr");
+                    writer.writeBeginArray();
+                    writer.writeStringValue(name);
+                    writer.writeArraySeparator();
+                    writer.writeStringValue(value.toString());
+                    writer.writeEndArray();
+                }
+        );
+        provider.start();
+
+        assertTrue("canWrite", provider.canWrite(event));
+
+        var writer = new JsonEventWriter(0);
+        provider.writeTo(writer, event, false);
+
+        assertEquals("writeTo",
+                "\"kvp_property1_arr\":[\"kvp_property1\",\"value1\"],\"kvp_property2_arr\":[\"kvp_property2\",\"value2\"]",
+                writer.toString()
+        );
+
+        provider.stop();
+    }
 }
