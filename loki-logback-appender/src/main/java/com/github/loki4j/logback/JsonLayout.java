@@ -37,7 +37,7 @@ public class JsonLayout extends ContextAwareBase implements Layout<ILoggingEvent
     private MessageJsonProvider message;
     private StackTraceJsonProvider stackTrace;
     private MdcJsonProvider mdc;
-    private KeyValuePairsJsonProvider keyValuePairs;
+    private KeyValuePairsJsonProvider kvp;
 
     private volatile boolean started;
 
@@ -72,7 +72,7 @@ public class JsonLayout extends ContextAwareBase implements Layout<ILoggingEvent
         message = ensureProvider(message, MessageJsonProvider::new);
         stackTrace = ensureProvider(stackTrace, StackTraceJsonProvider::new);
         mdc = ensureProvider(mdc, MdcJsonProvider::new);
-        keyValuePairs = ensureProvider(keyValuePairs, KeyValuePairsJsonProvider::new);
+        kvp = ensureProvider(kvp, KeyValuePairsJsonProvider::new);
 
         providers = Arrays.asList(
                 timestamp,
@@ -82,7 +82,7 @@ public class JsonLayout extends ContextAwareBase implements Layout<ILoggingEvent
                 message,
                 stackTrace,
                 mdc,
-                keyValuePairs
+                kvp
         );
 
         for (var provider : providers) {
@@ -149,8 +149,8 @@ public class JsonLayout extends ContextAwareBase implements Layout<ILoggingEvent
         this.mdc = mdc;
     }
 
-    public void setKeyValuePairs(KeyValuePairsJsonProvider keyValuePairs) {
-        this.keyValuePairs = keyValuePairs;
+    public void setKvp(KeyValuePairsJsonProvider keyValuePairs) {
+        this.kvp = keyValuePairs;
     }
 
     @Override
