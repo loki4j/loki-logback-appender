@@ -8,8 +8,12 @@ import ch.qos.logback.classic.spi.ILoggingEvent;
 
 /**
  * An abstract provider that writes a collection of JSON fields
+ *
+ * @param <V> Type of the field value supported by this provider.
+ * @param <E> Type of key-value entry served by this provider.
+ * @param <T> Type of key-value collection served by this provider.
  */
-public abstract class AbstractFieldCollectionJsonProvider<E, T extends Collection<E>> extends AbstractJsonProvider {
+public abstract class AbstractFieldCollectionJsonProvider<V, E, T extends Collection<E>> extends AbstractJsonProvider {
 
     /**
      * A prefix added to all the keys (field names) in this collection.
@@ -62,7 +66,7 @@ public abstract class AbstractFieldCollectionJsonProvider<E, T extends Collectio
             if (startWithSeparator || firstFieldWritten)
                 writer.writeFieldSeparator();
             var name = noPrefix ? key : prefix + key;
-            writer.writeObjectField(name, value);
+            writeField(writer, name, value);
             firstFieldWritten = true;
         }
         return firstFieldWritten;
@@ -82,7 +86,15 @@ public abstract class AbstractFieldCollectionJsonProvider<E, T extends Collectio
     /**
      * Extract the value (i.e. field value) from the collection entry.
      */
-    protected abstract Object extractValue(E entry);
+    protected abstract V extractValue(E entry);
+
+    /**
+     * Write a field into JSON event layout.
+     * @param writer JSON writer to use.
+     * @param fieldName Name of the field to write.
+     * @param fieldValue Value of the field to write.
+     */
+    protected abstract void writeField(JsonEventWriter writer, String fieldName, V fieldValue);
 
     public void addExclude(String key) {
         excludeKeys.add(key);

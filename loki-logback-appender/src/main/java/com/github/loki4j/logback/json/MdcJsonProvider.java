@@ -6,7 +6,7 @@ import java.util.Set;
 
 import ch.qos.logback.classic.spi.ILoggingEvent;
 
-public class MdcJsonProvider extends AbstractFieldCollectionJsonProvider<Map.Entry<String, String>, Set<Map.Entry<String, String>>> {
+public class MdcJsonProvider extends AbstractFieldCollectionJsonProvider<String, Map.Entry<String, String>, Set<Map.Entry<String, String>>> {
 
     public static final String FIELD_MDC_PREFIX = "mdc_";
 
@@ -30,4 +30,8 @@ public class MdcJsonProvider extends AbstractFieldCollectionJsonProvider<Map.Ent
         return entry.getValue();
     }
 
+    @Override
+    protected void writeField(JsonEventWriter writer, String fieldName, String fieldValue) {
+        writer.writeStringField(fieldName, fieldValue);
+    }
 }
