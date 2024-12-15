@@ -95,7 +95,8 @@ This layout has the following settings:
 |format.message.logLevel.enabled|true|Enable logLevel provider|
 |format.message.logLevel.fieldName|level|A JSON field name to use for logLevel|
 |format.message.mdc.enabled|true|Enable MDC provider|
-|format.message.mdc.fieldName|mdc_|A prefix added to each JSON field name written by this provider|
+|format.message.mdc.prefix|mdc_|A prefix added to each JSON field name written by this provider|
+|format.message.mdc.noPrefix|false|Whether to omit prefix for this provider|
 |format.message.mdc.include||A set of MDC keys to include in JSON payload. If not specified, all keys are included|
 |format.message.mdc.exclude||A set of MDC keys to exclude from JSON payload. The exclude list has precedence over the include list. If not specified, all keys are included|
 |format.message.message.enabled|true|Enable message provider|

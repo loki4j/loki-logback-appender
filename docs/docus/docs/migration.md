@@ -44,6 +44,10 @@ A prefix `regex:` is still supported in `format.label.pairSeparator` for compati
 Previously `format.label.nopex` was used to suppress exception output into label pattern.
 In v1.6.0 we have re-worked label formatting code, so that this setting is no longer needed.
 
+#### "mdc.fieldName" setting replaced with "mdc.prefix"
+
+JSON message layout setting `format.message.mdc.fieldName` is replaced with `format.message.mdc.prefix` as it better reflects its semantics.
+
 ## Upgrading from 1.4.x to 1.5.x
 
 The most significant breaking change in Loki4j v1.5.0 is an upgrade to Logback v1.3.x.
