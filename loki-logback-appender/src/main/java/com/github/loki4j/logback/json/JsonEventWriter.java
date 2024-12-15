@@ -24,13 +24,28 @@ public final class JsonEventWriter {
         raw.writeByte(OBJECT_END);
     }
 
+    public void writeBeginArray() {
+        raw.writeByte(ARRAY_START);
+    }
+
+    public void writeEndArray() {
+        raw.writeByte(ARRAY_END);
+    }
+
     public void writeFieldSeparator() {
+        raw.writeByte(COMMA);
+    }
+
+    public void writeArraySeparator() {
         raw.writeByte(COMMA);
     }
 
     public void writeObjectField(String fieldName, Object value) {
         serializeFieldName(fieldName);
+        writeObjectValue(value);
+    }
 
+    public void writeObjectValue(Object value) {
         // Object is a reference type, first check the value for null
         if (value == null) {
             raw.writeNull();
@@ -40,11 +55,13 @@ public final class JsonEventWriter {
         if (value instanceof String)
             raw.writeString((String) value);
         else if (value instanceof Integer)
-            NumberConverter.serialize(((Integer) value).longValue(), raw);
+            writeNumericValue(((Integer) value).longValue());
         else if (value instanceof Long)
-            NumberConverter.serialize((long) value, raw);
+            writeNumericValue((long) value);
         else if (value instanceof Boolean)
             raw.writeBoolean((boolean) value);
+        else if (value instanceof Iterable)
+            serializeIterable((Iterable<?>) value);
         else if (value instanceof RawJsonString)
             raw.writeRawAscii(((RawJsonString) value).value);
         else
@@ -53,21 +70,41 @@ public final class JsonEventWriter {
 
     public void writeStringField(String fieldName, String value) {
         serializeFieldName(fieldName);
+        writeStringValue(value);
+    }
+
+    public void writeStringValue(String value) {
         // String is a reference type, first check the value for null
-        if (value == null)
+        if (value == null) {
             raw.writeNull();
-        else
+        } else {
             raw.writeString(value);
+        }
     }
 
     public void writeNumericField(String fieldName, long value) {
         serializeFieldName(fieldName);
+        writeNumericValue(value);
+    }
+
+    public void writeNumericValue(long value) {
         NumberConverter.serialize(value, raw);
     }
 
     private void serializeFieldName(String fieldName) {
         raw.writeString(fieldName);
         raw.writeByte(SEMI);
+    }
+
+    private void serializeIterable(Iterable<?> iterable) {
+        writeBeginArray();
+        var it = iterable.iterator();
+        while (it.hasNext()) {
+            writeObjectValue(it.next());
+            if (it.hasNext())
+                writeArraySeparator();
+        }
+        writeEndArray();
     }
 
     public String toString() {
