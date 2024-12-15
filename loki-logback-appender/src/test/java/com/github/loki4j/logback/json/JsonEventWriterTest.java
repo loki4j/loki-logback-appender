@@ -3,7 +3,7 @@ package com.github.loki4j.logback.json;
 import static org.junit.Assert.assertEquals;
 
 import java.util.List;
-import java.util.Set;
+import java.util.TreeSet;
 
 import org.junit.Test;
 
@@ -89,7 +89,7 @@ public class JsonEventWriterTest {
     public void testWriteSetOfInts() {
         var writer = new JsonEventWriter(10);
         writer.writeBeginObject();
-        writer.writeObjectField("it", Set.of(1, 2, 3));
+        writer.writeObjectField("it", new TreeSet<Integer>(List.of(1, 2, 3)));
         writer.writeEndObject();
 
         assertEquals("{\"it\":[1,2,3]}", writer.toString());
