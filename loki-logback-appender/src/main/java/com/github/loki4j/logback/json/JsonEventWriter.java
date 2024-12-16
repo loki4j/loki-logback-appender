@@ -38,7 +38,7 @@ public final class JsonEventWriter {
         writeObjectValue(value);
     }
 
-    public void writeObjectField(String fieldName, Consumer<JsonEventWriter> write) {
+    public void writeCustomField(String fieldName, Consumer<JsonEventWriter> write) {
         writeFieldName(fieldName);
         write.accept(this);
     }
