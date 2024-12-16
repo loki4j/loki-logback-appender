@@ -5,6 +5,7 @@ import static com.github.loki4j.pkg.dslplatform.json.RawJsonWriter.*;
 import java.util.Arrays;
 import java.util.Iterator;
 import java.util.function.BiConsumer;
+import java.util.function.Consumer;
 
 import com.github.loki4j.pkg.dslplatform.json.NumberConverter;
 import com.github.loki4j.pkg.dslplatform.json.RawJsonWriter;
@@ -35,6 +36,11 @@ public final class JsonEventWriter {
     public void writeObjectField(String fieldName, Object value) {
         writeFieldName(fieldName);
         writeObjectValue(value);
+    }
+
+    public void writeObjectField(String fieldName, Consumer<JsonEventWriter> write) {
+        writeFieldName(fieldName);
+        write.accept(this);
     }
 
     public void writeStringField(String fieldName, String value) {
