@@ -94,6 +94,12 @@ This layout has the following settings:
 |format.message.loggerName.targetLength|-1|The desired target length of logger name: `-1` to disable abbreviation, `0` to print class name only, >`0` to abbreviate to the target length|
 |format.message.logLevel.enabled|true|Enable logLevel provider|
 |format.message.logLevel.fieldName|level|A JSON field name to use for logLevel|
+|format.message.kvp.enabled|true|Enable keyValuePair provider|
+|format.message.kvp.prefix|kvp_|A prefix added to each JSON field name written by this provider|
+|format.message.kvp.noPrefix|false|Whether to omit prefix for this provider|
+|format.message.kvp.fieldSerializer||An implementation of field JSON serializer. By default, `writeObjectField()` is used|
+|format.message.kvp.include||A set of keys to include in JSON payload. If not specified, all keys are included|
+|format.message.kvp.exclude||A set of keys to exclude from JSON payload. The exclude list has precedence over the include list. If not specified, all keys are included|
 |format.message.mdc.enabled|true|Enable MDC provider|
 |format.message.mdc.prefix|mdc_|A prefix added to each JSON field name written by this provider|
 |format.message.mdc.noPrefix|false|Whether to omit prefix for this provider|

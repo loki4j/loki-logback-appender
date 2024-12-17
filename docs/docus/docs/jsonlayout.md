@@ -135,3 +135,117 @@ You can add as many custom providers as you want:
     <customProvider class="io.my.ConstantProvider3" />
 </message>
 ```
+
+For more insights on how `JsonEventWriter` works, please check the next section.
+
+## Serializing an arbitrary object
+
+Our recommendation is to use plain structure of the log message (i.e., no nested objects), and only some basic types for fields (e.g.: string, number, boolean).
+Following this recommendation will give you both maximum performance and simplicity.
+
+However, Logback allows you to attach arbitrary objects to you log record as key-value pairs:
+
+```java
+log.atInfo().setMessage("Test KVP")
+    .addKeyValue("flow", "ingest")
+    .addKeyValue("msgId", 123456)
+    .addKeyValue("bool", true)
+    .addKeyValue("list", List.of(0, 1, 2))
+    .addKeyValue("date", ZonedDateTime.now())
+    .addKeyValue("obj", new TestJsonKvData(1001L, "admin", UUID.randomUUID()))
+    .log();
+```
+
+Loki4j uses fast and compact JSON serialization algorithm that is [3.5x](https://github.com/loki4j/loki-logback-appender/pull/210#issue-2113540494) faster than logstash-logback-encoder backed by jackson.
+But that speed comes with the cost: no runtime reflection is used, no complex type conversion is implemented.
+Which means we don't provide a built-in mechanism to serialize arbitrary object into JSON right away.
+Instead, we offer you several options, so you can choose the one that better fits your use case.
+
+Loki4j has `KeyValuePairsJsonProvider`, that by default uses `writeObjectField()` for all key-value pairs.
+
+#### Default approach: `writeObjectField()`
+
+Method `writeObjectField()` in class `JsonEventWriter` has the following logic:
+
+- if value is `String`, it's rendered as JSON string: `"flow":"ingest"`, similar to `writeStringField()`;
+- if value is `Integer` or `Long`, it's rendered as JSON number: `"msgId":123456`, similar to `writeNumericField()`;
+- if value is `Boolean`, it's rendered as JSON boolean: `"bool":true`;
+- if value is `Iterable`, it's rendered as JSON array, `writeObjectField()` to render each element: `"list":[0,1,2]`, similar to `writeArrayField()`;
+- if value is `RawJsonString`, its value is rendered as raw JSON without any escaping (see the section below), similar to `writeRawJsonField()`;
+- for any other type of value, the result of `toString()` is rendered as JSON string: `"obj":"TestJsonKvData@1de5f259"`.
+
+#### Direct access to `JsonEventWriter`
+
+If you write a custom provider, `JsonEventWriter` is exposed to you directly.
+You can also configure `KeyValuePairsJsonProvider` to intercept writer calls as well by setting `fieldSerializer`:
+
+```xml
+<message class="com.github.loki4j.logback.JsonLayout">
+    ...
+    <kvp>
+        <fieldSerializer class="io.my.TestFieldSerializer" />
+    </kvp>
+</message>
+```
+
+Your custom serializer must implement interface `JsonFieldSerializer<Object>`:
+
+```java
+import com.github.loki4j.logback.json.JsonEventWriter;
+import com.github.loki4j.logback.json.JsonFieldSerializer;
+
+public class TestFieldSerializer implements JsonFieldSerializer<Object> {
+    @Override
+    public void writeField(JsonEventWriter writer, String fieldName, Object fieldValue) {
+        if (fieldValue instanceof TestJsonKvData) {
+            writer.writeCustomField(fieldName, w -> {
+                    var td = (TestJsonKvData)fieldValue;
+                    w.writeBeginObject();
+                    w.writeObjectField("userId", td.userId);
+                    w.writeFieldSeparator();
+                    w.writeObjectField("userName", td.userName);
+                    w.writeFieldSeparator();
+                    w.writeObjectField("sessionId", td.sessionId);
+                    w.writeEndObject();
+                }
+            );
+        } else {
+            writer.writeObjectField(fieldName, fieldValue);
+        }
+    }
+}
+```
+
+Instead of `"obj":"TestJsonKvData@1de5f259"`, now you will see `"obj":{"userId":1001,"userName":"admin","sessionId":"92a26b23-9f10-47d8-bb0a-df2b9b15c374"}`.
+
+#### `RawJsonString`
+
+If for some reason you can not statically define serialization algorithm for your objects, you can use reflection-based frameworks and put the resulting string into `RawJsonString`.
+Writer will render it as is, without any escaping.
+
+```java
+import com.github.loki4j.logback.json.RawJsonString;
+
+public class TestFieldSerializer implements JsonFieldSerializer<Object> {
+    @Override
+    public void writeField(JsonEventWriter writer, String fieldName, Object fieldValue) {
+        writer.writeObjectField(fieldName, new RawJsonString(MyJson.serialize(fieldValue)));
+        // or
+        writer.writeRawJsonField(fieldName, MyJson.serialize(fieldValue));
+    }
+}
+```
+
+It is your responsibility to make sure that you always put valid JSON into `RawJsonString`.
+
+#### Custom message layout
+
+You can use any implementation of `Layout<ILoggingEvent>` as a message layout, including third-party JSON layouts:
+
+```xml
+<message class="net.logstash.logback.layout.LoggingEventCompositeJsonLayout">
+    <!-- your logstash configuration goes here -->
+</message>
+```
+
+Please note that Loki4j provides *no support* for any third-party components.
