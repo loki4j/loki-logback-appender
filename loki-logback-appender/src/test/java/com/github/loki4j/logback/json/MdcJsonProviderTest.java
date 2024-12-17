@@ -85,4 +85,23 @@ public class MdcJsonProviderTest {
 
         provider.stop();
     }
+
+    @Test
+    public void testOmitPrefix() {
+        var event = loggingEvent(101L, Level.DEBUG, "io.test.TestApp", "thread-1", "m2-line1", null);
+        event.getMDCPropertyMap().put("property1", "value1");
+
+        var provider = new MdcJsonProvider();
+        provider.setNoPrefix(true);
+        provider.start();
+
+        assertTrue("canWrite", provider.canWrite(event));
+
+        var writer = new JsonEventWriter(0);
+        provider.writeTo(writer, event, false);
+
+        assertEquals("writeTo", "\"property1\":\"value1\"", writer.toString());
+
+        provider.stop();
+    }
 }

@@ -2,6 +2,9 @@ package com.github.loki4j.logback.json;
 
 import static org.junit.Assert.assertEquals;
 
+import java.util.List;
+import java.util.TreeSet;
+
 import org.junit.Test;
 
 public class JsonEventWriterTest {
@@ -70,5 +73,35 @@ public class JsonEventWriterTest {
         writer.writeEndObject();
 
         assertEquals("{\"raw\":{\"arr\":[1,2,3],\"val\":null}}", writer.toString());
+    }
+
+    @Test
+    public void testWriteListOfStrings() {
+        var writer = new JsonEventWriter(10);
+        writer.writeBeginObject();
+        writer.writeObjectField("it", List.of("one", "two", "three"));
+        writer.writeEndObject();
+
+        assertEquals("{\"it\":[\"one\",\"two\",\"three\"]}", writer.toString());
+    }
+
+    @Test
+    public void testWriteSetOfInts() {
+        var writer = new JsonEventWriter(10);
+        writer.writeBeginObject();
+        writer.writeObjectField("it", new TreeSet<Integer>(List.of(1, 2, 3)));
+        writer.writeEndObject();
+
+        assertEquals("{\"it\":[1,2,3]}", writer.toString());
+    }
+
+    @Test
+    public void testWriteEmptyList() {
+        var writer = new JsonEventWriter(10);
+        writer.writeBeginObject();
+        writer.writeObjectField("it", List.of());
+        writer.writeEndObject();
+
+        assertEquals("{\"it\":[]}", writer.toString());
     }
 }
