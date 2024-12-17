@@ -10,12 +10,14 @@ This project is unofficial and community-driven.
 Please proceed to the microsite for more information:
 
 - [Quick Start](https://loki4j.github.io/loki-logback-appender/#quick-start)
-- [Configuration Guide](https://loki4j.github.io/loki-logback-appender/docs/configuration)
+- [Configuration Reference](https://loki4j.github.io/loki-logback-appender/docs/configuration)
+- [Migration Guide](https://loki4j.github.io/loki-logback-appender/docs/migration)
 
 If you have found this project helpful, please drop a :star:!
 
 ## Key features
 
+- Structured metadata support
 - Flexible management of Loki labels using MDC and SLF4J Markers
 - Out-of-the-box JSON layout support for log message formatting
 - Logback plain text formatting patterns can be used for both labels and messages
