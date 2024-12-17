@@ -248,4 +248,4 @@ You can use any implementation of `Layout<ILoggingEvent>` as a message layout, i
 </message>
 ```
 
-Please note that Loki4j provides *no support* for any third-party components.
+Please note that Loki4j provides **no support** for any third-party components.
