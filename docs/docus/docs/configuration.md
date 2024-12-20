@@ -1,6 +1,6 @@
 ---
 id: configuration
-title: Loki4j Configuration
+title: Loki4j configuration
 sidebar_label: Configuration
 ---
 
@@ -65,13 +65,12 @@ Format settings do not depend on the encoding you use.
 |Setting|Default|Description|
 |-------|-------|-----------|
 |format.label.pattern||**Required**. Logback pattern to use for log record's label|
-|format.label.pairSeparator|,|Character sequence to use as a separator between labels. If it starts with the "regex:" prefix, the remainder is applied as a regular expression separator. Otherwise, the provided char sequence is used as a separator literally|
+|format.label.structuredMetadataPattern||Logback pattern to use for log record's structured metadata|
+|format.label.pairSeparator|,|Character sequence to use as a separator between labels|
 |format.label.keyValueSeparator|=|Character to use as a separator between label's name and its value|
 |format.label.readMarkers|false|If true, Loki4j scans each log record for the attached LabelMarker to add its values to the record's labels|
-|format.label.nopex|true|If true, exception info is not added to labels. If false, you should take care of proper formatting|
 |format.label.streamCache|BoundAtomicMapCache|An implementation of a stream cache to use. By default, caches up to 1000 unique label sets|
-|format.staticLabels|false|If you use only a constant label set (e.g., same keys and values) for all log records, you can set this flag to true and save some CPU time on grouping records by label|
-|format.sortByTime|false|If true, log records in batch are sorted by timestamp. If false, records will be sent to Loki in arrival order. Enable this if you see an 'entry out of order' error from Loki|
+|format.staticLabels|false|If you use only a constant label set (e.g., same keys and values) for all log records, you can set this flag to true and save some CPU and RAM|
 
 #### Plain text message layout
 
@@ -95,8 +94,15 @@ This layout has the following settings:
 |format.message.loggerName.targetLength|-1|The desired target length of logger name: `-1` to disable abbreviation, `0` to print class name only, >`0` to abbreviate to the target length|
 |format.message.logLevel.enabled|true|Enable logLevel provider|
 |format.message.logLevel.fieldName|level|A JSON field name to use for logLevel|
+|format.message.kvp.enabled|true|Enable keyValuePair provider|
+|format.message.kvp.prefix|kvp_|A prefix added to each JSON field name written by this provider|
+|format.message.kvp.noPrefix|false|Whether to omit prefix for this provider|
+|format.message.kvp.fieldSerializer||An implementation of field JSON serializer. By default, `writeObjectField()` is used|
+|format.message.kvp.include||A set of keys to include in JSON payload. If not specified, all keys are included|
+|format.message.kvp.exclude||A set of keys to exclude from JSON payload. The exclude list has precedence over the include list. If not specified, all keys are included|
 |format.message.mdc.enabled|true|Enable MDC provider|
-|format.message.mdc.fieldName|mdc_|A prefix added to each JSON field name written by this provider|
+|format.message.mdc.prefix|mdc_|A prefix added to each JSON field name written by this provider|
+|format.message.mdc.noPrefix|false|Whether to omit prefix for this provider|
 |format.message.mdc.include||A set of MDC keys to include in JSON payload. If not specified, all keys are included|
 |format.message.mdc.exclude||A set of MDC keys to exclude from JSON payload. The exclude list has precedence over the include list. If not specified, all keys are included|
 |format.message.message.enabled|true|Enable message provider|

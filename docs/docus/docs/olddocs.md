@@ -9,6 +9,7 @@ It should not take much time, just follow the [Migration Guide](migration).
 
 However, the docs for previous Loki4j versions are still available on GitHub:
 
+- [v1.5.0](https://github.com/loki4j/loki-logback-appender/tree/v1.5.0/docs/docus/docs)
 - [v1.4.0](https://github.com/loki4j/loki-logback-appender/tree/v1.4.0/docs/docus/docs)
 - [v1.3.0](https://github.com/loki4j/loki-logback-appender/tree/v1.3.0/docs/docus/docs)
 - [v1.2.0](https://github.com/loki4j/loki-logback-appender/tree/v1.2.0/docs/docus/docs)
