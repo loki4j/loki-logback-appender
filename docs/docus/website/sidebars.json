@@ -3,6 +3,7 @@
     "Logback": [
       "configuration",
       "labels",
+      "metadata",
       "jsonlayout",
       "protobuf",
       "apacheclient",

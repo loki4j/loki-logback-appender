@@ -6,7 +6,7 @@ configuration and enjoy.
 
 ### Quick Start
 
-The current stable version of Loki4j requires Java 11+ and Logback v1.3.x.
+The current stable version of Loki4j requires Java 11+ and Logback v1.4.x.
 See the [compatibility matrix](docs/compatibility) for more information about older versions' support.
 
 Add the following dependency to your project:
@@ -40,10 +40,21 @@ Then add Loki appender to your `logback.xml`:
     </http>
     <format>
         <label>
-            <pattern>app=my-app,host=${HOSTNAME}</pattern>
+            <!-- Labels -->
+            <pattern>
+                app = my-app,
+                host = ${HOSTNAME}
+            </pattern>
+            <!-- Structured metadata (since Loki v2.9.0) -->
+            <structuredMetadataPattern>
+                level = %level,
+                thread = %thread,
+                class = %logger,
+                traceId = %mdc{traceId:-none}
+            </structuredMetadataPattern>
         </label>
         <message>
-            <pattern>%-5level [%.5(${HOSTNAME})] %.10thread %logger{20} | %msg %ex</pattern>
+            <pattern>%-5level %logger{20} %msg %ex</pattern>
         </message>
     </format>
 </appender>
@@ -80,8 +91,11 @@ Migrating from the previous Loki4j version? Read the [Migration Guide](docs/migr
 
 ### Key Features:
 
-- **Flexible management of Loki labels using MDC and SLF4J Markers.**
-You can specify Loki labels dynamically for any set of log records and even on a per-record basis.
+- **Structured metadata support.**
+Pass any non-label metadata along with your log lines using [structured metadata](docs/metadata).
+
+- **Flexible management of Loki labels and metadata using MDC and SLF4J Markers.**
+You can specify Loki labels as well as structured metadata dynamically, even on a per-record basis.
 [Learn more...](docs/labels)
 
 - **Out-of-the-box JSON layout support for log message formatting.**

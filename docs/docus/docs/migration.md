@@ -1,8 +1,52 @@
 ---
 id: migration
-title: Loki4j Migration Guide
+title: Loki4j migration guide
 sidebar_label: Migration Guide
 ---
+
+## Upgrading from 1.5.x to 1.6.x
+
+#### No Java 8 support
+
+Starting from v1.6.0, Loki4j no longer provides `-jdk8` artifact.
+Please upgrade your project at least to Java 11 before switching to Loki4j v1.6.0.
+
+#### Logback version switched to 1.4.x
+
+If your project depends on other external Logback appenders, please make sure all of them are compatible with Logback v1.4.x before upgrading.
+
+#### loki-protobuf version updated to 0.0.2
+
+Loki `.proto` files were updated to the latest version from the upstream.
+If you use protobuf API for sending logs to Loki, please switch to loki-protobuf v0.0.2.
+
+#### Minimal supported Loki version is 2.8.0
+
+Loki v2.8.0 is the first version that supports label drop functionality that is now mandatory for Loki4j's integration tests.
+Because of that Loki v1.6.1 was excluded from the integration tests and the compatibility matrix was updated.
+However, in most cases Loki4j should still work fine with versions prior to 2.8.0.
+
+#### "sortByTime" format setting removed
+
+Since Loki v2.4.0 'entry out of order' is no longer an issue.
+Now that minimal supported Loki version is 2.8.0, there is no point in keeping `format.sortByTime` setting.
+Furthermore, having this property set to `true` in some cases might impose negative effect on performance.
+That's why `format.sortByTime` is removed in v1.6.0.
+
+#### Regex pair separators deprecated
+
+Now you can use multiline strings to declare your key-value pairs in label and structured metadata patterns.
+From now on, this will work even if the pair separator is a character (by default it's `,`) or a literal string.
+A prefix `regex:` is still supported in `format.label.pairSeparator` for compatibility, but it might be removed in future versions.
+
+#### "nopex" label setting removed
+
+Previously `format.label.nopex` was used to suppress exception output into label pattern.
+In v1.6.0 we have re-worked label formatting code, so that this setting is no longer needed.
+
+#### "mdc.fieldName" setting replaced with "mdc.prefix"
+
+JSON message layout setting `format.message.mdc.fieldName` is replaced with `format.message.mdc.prefix` as it better reflects its semantics.
 
 ## Upgrading from 1.4.x to 1.5.x
 
