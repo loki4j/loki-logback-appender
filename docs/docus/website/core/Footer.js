@@ -51,7 +51,7 @@ class Footer extends React.Component {
               GitHub
             </a>
             <a
-              href="${this.props.config.linkedInProfile}"
+              href="https://www.linkedin.com/in/nekhaev/"
               target="_blank"
               rel="noreferrer noopener">
               LinkedIn

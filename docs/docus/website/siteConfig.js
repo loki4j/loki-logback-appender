@@ -94,7 +94,6 @@ const siteConfig = {
   twitterImage: 'img/undraw_tweetstorm.svg',
 
   twitterUsername: 'arnehaev',
-  linkedInProfile: 'https://www.linkedin.com/in/nekhaev/',
   gaTrackingId: 'G-0Z4FEXM003',
   gaGtag: true,
 

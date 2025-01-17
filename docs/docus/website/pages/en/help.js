@@ -27,12 +27,12 @@ function Help(props) {
       title: 'Browse Docs',
     },
     {
-      content: `[Ask questions](https://stackoverflow.com/questions/tagged/loki4j) 
-        about the documentation and project`,
+      content: `[Ask questions](${siteConfig.repoUrl}/discussions)
+        about the project`,
       title: 'Join the community',
     },
     {
-      content: `[Find out](https://twitter.com/${siteConfig.twitterUsername}) 
+      content: `[Find out](${siteConfig.repoUrl}/releases)
       what's new with this project`,
       title: 'Stay up to date',
     },
