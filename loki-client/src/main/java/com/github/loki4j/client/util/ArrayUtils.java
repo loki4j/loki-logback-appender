@@ -13,6 +13,12 @@ public class ArrayUtils {
         return result;
     }
 
+    public static String[] resize(String[] arr, int newLen) {
+        if (arr.length == newLen) return arr;
+
+        return Arrays.copyOf(arr, newLen);
+    }
+
     public static String join2(String[] arr1, String[] arr2, String separator) {
         var sb = new StringBuilder(32 * (arr1.length + arr2.length));
         for (var str: arr1) {

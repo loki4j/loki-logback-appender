@@ -1,6 +1,5 @@
 package com.github.loki4j.logback;
 
-import java.util.Arrays;
 import java.util.Collection;
 import java.util.HashSet;
 import java.util.List;
@@ -9,6 +8,8 @@ import java.util.Map.Entry;
 import java.util.Set;
 
 import org.slf4j.event.KeyValuePair;
+
+import com.github.loki4j.client.util.ArrayUtils;
 
 import ch.qos.logback.classic.spi.ILoggingEvent;
 
@@ -44,7 +45,8 @@ public abstract class BulkPatternExtractor<E, T extends Collection<E>> {
         if (entries == null || entries.isEmpty())
             return EMPTY;
 
-        var result = new String[entries.size() * 2];
+        var estimatedKeyCount = includeKeys.isEmpty() ? entries.size() : Math.min(includeKeys.size(), entries.size());
+        var result = new String[estimatedKeyCount * 2]; // in result we store key and value, so double the size
         var pos = 0;
         for (E entry : entries) {
             var key = extractKey(entry);
@@ -68,7 +70,7 @@ public abstract class BulkPatternExtractor<E, T extends Collection<E>> {
         if (pos == 0)
             return EMPTY;
         // shrink the array to the actual size
-        return Arrays.copyOf(result, pos);
+        return ArrayUtils.resize(result, pos);
     }
 
     /**
