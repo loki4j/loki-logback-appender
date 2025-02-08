@@ -62,7 +62,7 @@ public abstract class AbstractLoki4jEncoder extends ContextAwareBase implements 
         /**
          * An implementation of a Stream cache to use.
          */
-        Cache<String, LogRecordStream> streamCache;
+        Cache<Map<String, String>, LogRecordStream> streamCache;
 
         public void setPattern(String pattern) {
             this.pattern = pattern;
@@ -80,7 +80,7 @@ public abstract class AbstractLoki4jEncoder extends ContextAwareBase implements 
             this.readMarkers = readMarkers;
         }
         @DefaultClass(BoundAtomicMapCache.class)
-        public void setStreamCache(Cache<String, LogRecordStream> streamCache) {
+        public void setStreamCache(Cache<Map<String, String>, LogRecordStream> streamCache) {
             this.streamCache = streamCache;
         }
     }
@@ -162,8 +162,7 @@ public abstract class AbstractLoki4jEncoder extends ContextAwareBase implements 
         for (var extractor : labelValueExtractors) {
             extractor.extract(e, kvs);
         }
-        var streamKey = kvs.toString(); // TODO: switch to Map instead of String
-        return label.streamCache.get(streamKey, () -> {
+        return label.streamCache.get(kvs, () -> {
             var allLabels = map2KVPairs(kvs);
             return LogRecordStream.create(allLabels);
         });

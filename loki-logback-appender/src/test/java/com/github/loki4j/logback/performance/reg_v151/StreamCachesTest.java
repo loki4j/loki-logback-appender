@@ -12,6 +12,7 @@ import ch.qos.logback.classic.spi.ILoggingEvent;
 import static com.github.loki4j.logback.Generators.*;
 
 import java.util.Arrays;
+import java.util.Map;
 
 import org.junit.Test;
 import org.junit.experimental.categories.Category;
@@ -21,7 +22,7 @@ import com.github.loki4j.client.util.Cache;
 
 public class StreamCachesTest {
 
-    private static AbstractLoki4jEncoder initEncoder(Cache<String, LogRecordStream> streamCache) {
+    private static AbstractLoki4jEncoder initEncoder(Cache<Map<String, String>, LogRecordStream> streamCache) {
         var e = toStringEncoder(
             labelCfg("level=%level,app=my-app,date=%date{HH:mm:ss.SSS}", ",", "=", true, false),
             plainTextMsgLayout("l=%level c=%logger{20} t=%thread | %msg %ex{1}"),
