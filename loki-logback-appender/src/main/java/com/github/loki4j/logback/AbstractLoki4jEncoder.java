@@ -98,10 +98,10 @@ public abstract class AbstractLoki4jEncoder extends ContextAwareBase implements 
     private volatile boolean staticLabels = false;
 
     private List<String> labelKeys;
-    private MultiPatternExtractor<ILoggingEvent> labelValuesExtractor;
+    private LogbackPatternsExtractor<ILoggingEvent> labelValuesExtractor;
 
     private List<String> metadataKeys;
-    private MultiPatternExtractor<ILoggingEvent> metadataValuesExtractor;
+    private LogbackPatternsExtractor<ILoggingEvent> metadataValuesExtractor;
 
     private Layout<ILoggingEvent> messageLayout;
 
@@ -125,7 +125,7 @@ public abstract class AbstractLoki4jEncoder extends ContextAwareBase implements 
         labelKeys = extractIndexesMod2(labelKVPatterns, 0);
         var labelPatterns = extractIndexesMod2(labelKVPatterns, 1);
         try {
-            labelValuesExtractor = new MultiPatternExtractor<>(labelPatterns, context);
+            labelValuesExtractor = new LogbackPatternsExtractor<>(labelPatterns, context);
         } catch (ScanException e) {
             throw new IllegalArgumentException("Unable to parse label pattern: \"" + labelPattern + "\"", e);
         }
@@ -136,7 +136,7 @@ public abstract class AbstractLoki4jEncoder extends ContextAwareBase implements 
             metadataKeys = extractIndexesMod2(metadataKVPatterns, 0);
             var metadataPatterns = extractIndexesMod2(metadataKVPatterns, 1);
             try {
-                metadataValuesExtractor = new MultiPatternExtractor<>(metadataPatterns, context);
+                metadataValuesExtractor = new LogbackPatternsExtractor<>(metadataPatterns, context);
             } catch (ScanException e) {
                 throw new IllegalArgumentException("Unable to parse structured metadata pattern: \"" + label.structuredMetadataPattern + "\"", e);
             }

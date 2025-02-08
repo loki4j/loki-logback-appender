@@ -11,11 +11,11 @@ import ch.qos.logback.classic.spi.ILoggingEvent;
 import ch.qos.logback.core.spi.ScanException;
 
 
-public class MultiPatternExtractorTest {
+public class LogbackPatternsExtractorTest {
 
     @Test
     public void testExtract() throws ScanException {
-        var extractor = new MultiPatternExtractor<ILoggingEvent>(
+        var extractor = new LogbackPatternsExtractor<ILoggingEvent>(
                 List.of("test", "%level", "%thread", "%logger{8}"),
                 new LoggerContext());
 

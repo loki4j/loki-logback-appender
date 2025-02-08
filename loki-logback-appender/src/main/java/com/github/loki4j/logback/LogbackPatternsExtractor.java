@@ -15,13 +15,13 @@ import ch.qos.logback.core.spi.ScanException;
  * A component for rendering several Logback patters at a time.
  * Used for effective label/metadata extraction.
  */
-public class MultiPatternExtractor<E> {
+public class LogbackPatternsExtractor<E> {
 
     private static final int INITIAL_STRING_BUILDER_SIZE = 64;
 
     private final List<Converter<E>> converters = new ArrayList<>();
 
-    public MultiPatternExtractor(List<String> patterns, Context context) throws ScanException {
+    public LogbackPatternsExtractor(List<String> patterns, Context context) throws ScanException {
         var patternLayout = new PatternLayout();
         patternLayout.setContext(context);
         var effectiveConverterMap = patternLayout.getEffectiveConverterMap();
