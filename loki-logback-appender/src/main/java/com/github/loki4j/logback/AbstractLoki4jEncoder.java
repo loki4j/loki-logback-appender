@@ -3,10 +3,15 @@ package com.github.loki4j.logback;
 import java.nio.charset.Charset;
 import java.nio.charset.StandardCharsets;
 import java.util.ArrayList;
+import java.util.Arrays;
 import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Map;
+import java.util.Set;
+import java.util.Map.Entry;
+import java.util.function.Predicate;
 import java.util.regex.Pattern;
+import java.util.stream.Collectors;
 
 import com.github.loki4j.client.batch.LogRecordStream;
 import com.github.loki4j.client.util.Cache;
@@ -14,6 +19,7 @@ import com.github.loki4j.client.util.StringUtils;
 import com.github.loki4j.client.util.Cache.BoundAtomicMapCache;
 import com.github.loki4j.logback.extractor.Extractor;
 import com.github.loki4j.logback.extractor.MarkerExtractor;
+import com.github.loki4j.logback.extractor.MetadataExtractor;
 import com.github.loki4j.logback.extractor.PatternsExtractor;
 import com.github.loki4j.slf4j.marker.AbstractKeyValueMarker;
 import com.github.loki4j.slf4j.marker.LabelMarker;
@@ -187,7 +193,55 @@ public abstract class AbstractLoki4jEncoder extends ContextAwareBase implements 
         return patternLayout;
     }
 
-    static Map<String, String> extractKVPairsFromPattern(String pattern, String pairSeparator, String keyValueSeparator) {
+    private <T extends AbstractKeyValueMarker> List<Extractor> initExtractors(String pattern, Class<T> markerClass) {
+        var extractors = new ArrayList<Extractor>();
+        var kvPairs = extractKVPairsFromPattern(pattern, label.pairSeparator, label.keyValueSeparator);
+        Predicate<Entry<String, String>> bulkPatternPredicate = e ->
+            e.getValue().startsWith("%%") && e.getKey().contains("*"); // simple check on this level
+        // logback patterns
+        var logbackPatterns = new LinkedHashMap<String, String>();
+        kvPairs.stream().filter(bulkPatternPredicate.negate()).forEach(e -> logbackPatterns.put(e.getKey(), e.getValue()));
+        try {
+            extractors.add(new PatternsExtractor(logbackPatterns, context));
+        } catch (ScanException e) {
+            throw new IllegalArgumentException("Unable to parse pattern: \"" + pattern + "\"", e);
+        }
+        // bulk patterns
+        var bulkPatterns = kvPairs.stream().filter(bulkPatternPredicate).collect(Collectors.toList());
+        for (var bulkPattern : bulkPatterns) {
+            var keyMatch = Pattern.compile("^(.*)\\*[ ]*(!)?$").matcher(bulkPattern.getKey());
+            if (!keyMatch.find())
+                throw new IllegalArgumentException("Unable to parse bulk pattern key: " + bulkPattern.getKey());
+            var prefix = keyMatch.group(1).trim();
+            var neg = keyMatch.group(2) != null;
+
+            var valueMatch = Pattern.compile("^%%([^{]+)(\\{([^}]*)\\})?$").matcher(bulkPattern.getValue());
+            if (!valueMatch.find())
+                throw new IllegalArgumentException("Unable to parse bulk pattern value: " + bulkPattern.getValue());
+            var func = valueMatch.group(1).trim();
+            var paramsStr = valueMatch.group(3);
+            var params = paramsStr != null && !paramsStr.isBlank()
+                ? Arrays.stream(valueMatch.group(3).split(",")).map(String::trim).collect(Collectors.toSet())
+                : Set.<String>of();
+            var include = !neg ? params : Set.<String>of();
+            var exclude = neg ? params : Set.<String>of();
+
+            if (func.equalsIgnoreCase("mdc"))
+                extractors.add(MetadataExtractor.mdc(prefix, include, exclude));
+            else if (func.equalsIgnoreCase("kvp"))
+                extractors.add(MetadataExtractor.kvp(pattern, include, exclude));
+            else if (func.equalsIgnoreCase("marker")) {
+
+            } else
+                throw new IllegalArgumentException(
+                    String.format("Unknown function '%s' used for bulk pattern: %s", func, bulkPattern.getValue()));
+        }
+        if (label.readMarkers)
+            extractors.add(new MarkerExtractor<>(markerClass));
+        return extractors;
+    }
+
+    static List<Entry<String, String>> extractKVPairsFromPattern(String pattern, String pairSeparator, String keyValueSeparator) {
         // check if label pair separator is RegEx or literal string
         var pairSeparatorPattern = pairSeparator.startsWith(REGEX_STARTER)
             ? Pattern.compile(pairSeparator.substring(REGEX_STARTER.length()))
@@ -196,13 +250,13 @@ public abstract class AbstractLoki4jEncoder extends ContextAwareBase implements 
         var keyValueSeparatorPattern = Pattern.compile(Pattern.quote(keyValueSeparator));
 
         var pairs = pairSeparatorPattern.split(pattern);
-        var result = new LinkedHashMap<String, String>();
+        var result = new ArrayList<Entry<String, String>>();
         for (int i = 0; i < pairs.length; i++) {
             if (StringUtils.isBlank(pairs[i])) continue;
 
             var kv = keyValueSeparatorPattern.split(pairs[i]);
             if (kv.length == 2) {
-                result.put(kv[0].trim(), kv[1].trim());
+                result.add(Map.entry(kv[0].trim(), kv[1].trim()));
             } else {
                 throw new IllegalArgumentException(String.format(
                     "Unable to split '%s' in '%s' to key-value pairs, pairSeparator=%s, keyValueSeparator=%s",
@@ -212,19 +266,6 @@ public abstract class AbstractLoki4jEncoder extends ContextAwareBase implements 
         if (result.isEmpty())
             throw new IllegalArgumentException("Empty of blank patterns are not supported");
         return result;
-    }
-
-    private <T extends AbstractKeyValueMarker> List<Extractor> initExtractors(String pattern, Class<T> markerClass) {
-        var extractors = new ArrayList<Extractor>();
-        var kvPatterns = extractKVPairsFromPattern(pattern, label.pairSeparator, label.keyValueSeparator);
-        try {
-            extractors.add(new PatternsExtractor(kvPatterns, context));
-        } catch (ScanException e) {
-            throw new IllegalArgumentException("Unable to parse pattern: \"" + pattern + "\"", e);
-        }
-        if (label.readMarkers)
-            extractors.add(new MarkerExtractor<>(markerClass));
-        return extractors;
     }
 
     private static String[] map2KVPairs(Map<String, String> map) {
