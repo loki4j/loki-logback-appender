@@ -91,26 +91,23 @@ Migrating from the previous Loki4j version? Read the [Migration Guide](docs/migr
 
 ### Key Features:
 
-- **Structured metadata support.**
-Pass any non-label metadata along with your log lines using [structured metadata](docs/metadata).
-
-- **Flexible management of Loki labels and metadata using MDC and SLF4J Markers.**
-You can specify Loki labels as well as structured metadata dynamically, even on a per-record basis.
+- **Loki labels can be dynamically generated out of any Logback pattern, MDC, and SLF4J markers.**
+Label values are specified as Logback patterns.
+This along with MDC and markers allow you to precisely control label set for each particular log record.
 [Learn more...](docs/labels)
 
-- **Out-of-the-box JSON layout support for log message formatting.**
-You can choose between plain text and JSON (Logstash-like) log message formatting.
+- **Structured metadata support.**
+Unlike labels, structured metadata is not indexed, but it still can dramatically increase search efficiency,
+as Loki does not have to scan entire message bodies.
+Loki4j provides the same capabilities of dynamic generation for structured metadata as it does for labels.
+[Learn more...](docs/metadata)
+
+- **Fast JSON layout for log message formatting.**
+If you prefer Logstash-like log message formatting, you can switch the layout from plain text to JSON.
 [Learn more...](docs/jsonlayout)
 
-- **Logback plain text formatting patterns can be used for both labels and messages.**
-Loki4j allows you to use all the power and flexibility of
-[Logback patterns](http://logback.qos.ch/manual/layouts.html#ClassicPatternLayout)
-both for labels and messages.
-Same patterns are used in Logback's standard `ConsoleAppender` or `FileAppender`,
-so you are probably familiar with the syntax.
-
-- **Support for JSON and Protobuf Loki API flavors.**
-With Loki4j, you can try out either JSON or Protobuf API to send log records to Loki.
+- **Support of JSON and Protobuf Loki API flavors.**
+By default, JSON endpoints are used, but you can switch to Protobuf API anytime.
 [Learn more...](docs/protobuf)
 
 - **Compatibility with Grafana Cloud.**
@@ -118,16 +115,12 @@ Loki4j supports HTTP basic authentication, so you can use it for hosted Loki ser
 as well as for on-premise Loki instances.
 See the [example](docs/grafanacloud)...
 
-- **No JSON library bundled.**
-Instead of bundling with any JSON library (e.g., Jackson),
-Loki4j comes with a small part of JSON rendering functionality borrowed from [DSL-JSON](https://github.com/ngs-doo/dsl-json/).
-
 - **Zero-dependency.**
-Loki4j does not bring any new transitive dependencies to your project,
-assuming you already use `logback-classic` for logging.
+Loki4j jar has a very small footprint.
+It does not bring any new transitive dependencies to your project, assuming you already use `logback-classic` for logging.
 See the [example](docs/configuration#minimalistic-zero-dependency-configuration)...
 
-- **Logging performance metrics.**
+- **Performance metrics.**
 You can monitor Loki4j's performance (e.g., encode/send duration, number of batches sent, etc.)
 by enabling instrumentation powered by [Micrometer](https://micrometer.io/).
 [Learn more...](docs/performance)
