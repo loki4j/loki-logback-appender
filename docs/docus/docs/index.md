@@ -100,7 +100,7 @@ This along with MDC and markers allows you to precisely control label set for ea
 Unlike labels, structured metadata is not indexed, but it still can significantly increase search efficiency,
 as Loki does not have to scan entire message bodies for metadata.
 Loki4j provides the same capabilities of dynamic generation for structured metadata as it does for labels.
-[Learn more...](docs/metadata)
+[Learn more...](docs/labels)
 
 - **Fast JSON layout for log message formatting.**
 If you prefer Logstash-like log message formatting, you can switch the layout from plain text to JSON.
