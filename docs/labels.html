@@ -62,7 +62,7 @@
         </script></nav></div><div class="container mainContainer docsContainer"><div class="wrapper"><div class="post"><header class="postHeader"><h1 id="__docusaurus" class="postHeaderTitle">Managing Loki labels and structured metadata</h1></header><article><div><span><h2><a class="anchor" aria-hidden="true" id="labels-vs-structured-metadata"></a><a href="#labels-vs-structured-metadata" aria-hidden="true" class="hash-link"><svg class="hash-link-icon" aria-hidden="true" height="16" version="1.1" viewBox="0 0 16 16" width="16"><path fill-rule="evenodd" d="M4 9h1v1H4c-1.5 0-3-1.69-3-3.5S2.55 3 4 3h4c1.45 0 3 1.69 3 3.5 0 1.41-.91 2.72-2 3.25V8.59c.58-.45 1-1.27 1-2.09C10 5.22 8.98 4 8 4H4c-.98 0-2 1.22-2 2.5S3 9 4 9zm9-3h-1v1h1c1 0 2 1.22 2 2.5S13.98 12 13 12H9c-.98 0-2-1.22-2-2.5 0-.83.42-1.64 1-2.09V6.25c-1.09.53-2 1.84-2 3.25C6 11.31 7.55 13 9 13h4c1.45 0 3-1.69 3-3.5S14.5 6 13 6z"></path></svg></a>Labels vs Structured metadata</h2>
 <p><em>Labels</em> are used by Loki for indexing log records, and thus, improving the log search performance.
 Labels have a key-value format; both keys and values must be plain strings.
-Loki4j allows you to use any Logback format as a label value.</p>
+Loki4j allows you to use any <a href="https://logback.qos.ch/manual/layouts.html#conversionWord">Logback pattern</a> as a label value.</p>
 <p>Labels are defined as <code>key=value</code> pairs separated by commas in <code>format.label</code> section of <code>Loki4jAppender</code>'s config.
 If you have many labels, you can put them in multiple lines (a trailing comma is optional):</p>
 <pre><code class="hljs css language-xml"><span class="hljs-tag">&lt;<span class="hljs-name">appender</span> <span class="hljs-attr">name</span>=<span class="hljs-string">"LOKI"</span> <span class="hljs-attr">class</span>=<span class="hljs-string">"com.github.loki4j.logback.Loki4jAppender"</span>&gt;</span>
@@ -79,8 +79,8 @@ If you have many labels, you can put them in multiple lines (a trailing comma is
     ...
 <span class="hljs-tag">&lt;/<span class="hljs-name">appender</span>&gt;</span>
 </code></pre>
-<p>However, labels have several significant limitations, you can use them only for low-cardinality values.</p>
-<p><em>Structured metadata</em> is a way to attach high-cardinality metadata to logs without indexing them or including them in the log line content itself.
+<p>However, labels have a significant limitation: you can use them only for low-cardinality values.</p>
+<p><em>Structured metadata</em> is a way to attach high-cardinality metadata to logs without indexing them or including them in the log line itself.
 This feature was introduced in Loki v2.9.0.
 It overcomes limitations of labels, still increasing search efficiency as Loki does not have to scan entire message bodies for metadata.
 For further details, please check Loki's <a href="https://grafana.com/docs/loki/latest/get-started/labels/structured-metadata/">docs</a>.</p>
@@ -117,28 +117,34 @@ No wonder you can use <a href="https://logback.qos.ch/manual/mdc.html">MDC</a> a
 <p>In classic Logback, markers are typically used to <a href="https://logback.qos.ch/manual/filters.html#TurboFilter">filter</a> log records.
 With Loki4j you can also use markers to set Loki labels (or structured metadata) dynamically for any particular log message.</p>
 <p>First, you need to make Loki4j scan markers attached to each log event by enabling <code>readMarkers</code> flag:</p>
-<pre><code class="hljs css language-xml"><span class="hljs-tag">&lt;<span class="hljs-name">label</span>&gt;</span>
-    <span class="hljs-tag">&lt;<span class="hljs-name">pattern</span>&gt;</span>app=my-app,host=${HOSTNAME},level=%level<span class="hljs-tag">&lt;/<span class="hljs-name">pattern</span>&gt;</span>
-    <span class="hljs-tag">&lt;<span class="hljs-name">readMarkers</span>&gt;</span>true<span class="hljs-tag">&lt;/<span class="hljs-name">readMarkers</span>&gt;</span>
-<span class="hljs-tag">&lt;/<span class="hljs-name">label</span>&gt;</span>
+<pre><code class="hljs css language-xml"><span class="hljs-tag">&lt;<span class="hljs-name">appender</span> <span class="hljs-attr">name</span>=<span class="hljs-string">"LOKI"</span> <span class="hljs-attr">class</span>=<span class="hljs-string">"com.github.loki4j.logback.Loki4jAppender"</span>&gt;</span>
+    <span class="hljs-tag">&lt;<span class="hljs-name">format</span>&gt;</span>
+        <span class="hljs-tag">&lt;<span class="hljs-name">label</span>&gt;</span>
+            ...
+            <span class="hljs-tag">&lt;<span class="hljs-name">readMarkers</span>&gt;</span>true<span class="hljs-tag">&lt;/<span class="hljs-name">readMarkers</span>&gt;</span>
+        <span class="hljs-tag">&lt;/<span class="hljs-name">label</span>&gt;</span>
+        ...
+    <span class="hljs-tag">&lt;/<span class="hljs-name">format</span>&gt;</span>
+    ...
+<span class="hljs-tag">&lt;/<span class="hljs-name">appender</span>&gt;</span>
 </code></pre>
-<p>Then you can set one or more key-value labels to any specific log line using <code>LabelMarker</code>:</p>
-<pre><code class="hljs css language-java"><span class="hljs-keyword">import</span> com.github.loki4j.slf4j.marker.LabelMarker;
-
-...
-
-<span class="hljs-function"><span class="hljs-keyword">void</span> <span class="hljs-title">handleException</span><span class="hljs-params">(Exception ex)</span> </span>{
-    <span class="hljs-keyword">var</span> marker = LabelMarker.of(<span class="hljs-string">"exceptionClass"</span>, () -&gt; ex.getClass().getSimpleName());
-    log.error(marker, <span class="hljs-string">"Unexpected error"</span>, ex);
-}
-</code></pre>
-<p>Please use <code>StructuredMetadataMarker</code> for structured metadata:</p>
+<p>Then you can set one or more key-value pairs to any specific log record's metadata using <code>StructuredMetadataMarker</code>:</p>
 <pre><code class="hljs css language-java"><span class="hljs-keyword">import</span> com.github.loki4j.slf4j.marker.StructuredMetadataMarker;
 
 ...
 
 <span class="hljs-function"><span class="hljs-keyword">void</span> <span class="hljs-title">handleException</span><span class="hljs-params">(Exception ex)</span> </span>{
     <span class="hljs-keyword">var</span> marker = StructuredMetadataMarker.of(<span class="hljs-string">"exceptionClass"</span>, () -&gt; ex.getClass().getSimpleName());
+    log.error(marker, <span class="hljs-string">"Unexpected error"</span>, ex);
+}
+</code></pre>
+<p>Although it's not recommended (better keep you labels static), you can use <code>LabelMarker</code> to add some labels as well:</p>
+<pre><code class="hljs css language-java"><span class="hljs-keyword">import</span> com.github.loki4j.slf4j.marker.LabelMarker;
+
+...
+
+<span class="hljs-function"><span class="hljs-keyword">void</span> <span class="hljs-title">handleException</span><span class="hljs-params">(Exception ex)</span> </span>{
+    <span class="hljs-keyword">var</span> marker = LabelMarker.of(<span class="hljs-string">"exceptionClass"</span>, () -&gt; ex.getClass().getSimpleName());
     log.error(marker, <span class="hljs-string">"Unexpected error"</span>, ex);
 }
 </code></pre>
