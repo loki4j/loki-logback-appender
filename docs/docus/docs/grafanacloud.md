@@ -20,13 +20,6 @@ so we need to specify this explicitly.
         </auth>
         <requestTimeoutMs>15000</requestTimeoutMs>
     </http>
-    <format>
-        <label>
-            <pattern>app=my-app</pattern>
-        </label>
-        <message>
-            <pattern>l=%level c=%logger{20} t=%thread | %msg %ex</pattern>
-        </message>
-    </format>
+    ...
 </appender>
 ```
