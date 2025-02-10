@@ -1,21 +1,27 @@
 ---
 id: labels
-title: Managing Loki labels
-sidebar_label: Managing Loki Labels
+title: Managing Loki labels and structured metadata
+sidebar_label: Labels and structured metadata
 ---
 
-## Organizing labels
+## Labels vs Structured metadata
 
-Logs in Loki are indexed using labels that have a key-value format.
-In Loki4j you can specify labels on per-record level using all the benefits Logback has to offer.
+*Labels* are used by Loki for indexing log records, and thus, improving the log search performance.
+Labels have a key-value format; both keys and values must be plain strings.
+Loki4j allows you to use any Logback format as a label value.
 
-Labels are set in `format.label` section of `Loki4jAppender`'s config:
+Labels are defined as `key=value` pairs separated by commas in `format.label` section of `Loki4jAppender`'s config.
+If you have many labels, you can put them in multiple lines (a trailing comma is optional):
 
 ```xml
 <appender name="LOKI" class="com.github.loki4j.logback.Loki4jAppender">
     <format>
         <label>
-            <-- All label settings go here -->
+            <pattern>
+                app=my-app,
+                host=${HOSTNAME},
+                level=%level
+            </pattern>
         </label>
         ...
     </format>
@@ -23,44 +29,52 @@ Labels are set in `format.label` section of `Loki4jAppender`'s config:
 </appender>
 ```
 
-Below, we will go through some tips and tricks you can use in the `format.label` section to make your life a bit easier.
+However, labels have several significant limitations, you can use them only for low-cardinality values.
 
-By default labels are defined as `key=value` pairs separated by commas.
+*Structured metadata* is a way to attach high-cardinality metadata to logs without indexing them or including them in the log line content itself.
+This feature was introduced in Loki v2.9.0.
+It overcomes limitations of labels, still increasing search efficiency as Loki does not have to scan entire message bodies for metadata.
+For further details, please check Loki's [docs](https://grafana.com/docs/loki/latest/get-started/labels/structured-metadata/).
 
-```xml
-<label>
-    <pattern>app=my-app,host=${HOSTNAME},level=%level</pattern>
-</label>
-```
+Similarly to labels, structured metadata is a set of key-value pairs.
+You can configure it using Logback patterns as well.
 
-If you have many labels, you can put them in multiple lines (a trailing comma is optional):
-
-```xml
-<label>
-    <pattern>
-        job = loki4j,
-        app = my-app,
-        namespace_name = ${NAMESCAPE_NAME},
-        pod_name = ${POD_NAME},
-        level=%level,
-    </pattern>
-</label>
-```
-
-## Using MDC in labels
-
-`label.pattern` is nothing but Logback's [pattern layout](https://logback.qos.ch/manual/layouts.html#ClassicPatternLayout), which means it supports [MDC](https://logback.qos.ch/manual/mdc.html):
+It is recommended to use both labels and structured metadata in your configuration.
+Labels should be a small set of static low-cardinality values.
+Any other metadata you want to attach should go to structured metadata:
 
 ```xml
-<label>
-    <pattern>app=my-app,level=%level,stage=%mdc{stage:-none}</pattern>
-</label>
+<appender name="LOKI" class="com.github.loki4j.logback.Loki4jAppender">
+    ...
+    <format>
+        <label>
+            <!-- Logback pattern for labels -->
+            <pattern>
+                app = my-app,
+                host = ${HOSTNAME}
+            </pattern>
+            <!-- Logback pattern for structured metadata -->
+            <structuredMetadataPattern>
+                level = %level,
+                thread = %thread,
+                class = %logger,
+                traceId = %mdc{traceId:-none}
+            </structuredMetadataPattern>
+        </label>
+        <staticLabels>true</staticLabels>
+        ...
+    </format>
+</appender>
 ```
+
+`label.pattern` and `structuredMetadataPattern` is nothing but Logback's [pattern layout](https://logback.qos.ch/manual/layouts.html#ClassicPatternLayout).
+No wonder you can use [MDC](https://logback.qos.ch/manual/mdc.html) as in the example above.
+
 
 ## Adding dynamic labels using Markers
 
 In classic Logback, markers are typically used to [filter](https://logback.qos.ch/manual/filters.html#TurboFilter) log records.
-With Loki4j you can also use markers to set Loki labels dynamically for any particular log message.
+With Loki4j you can also use markers to set Loki labels (or structured metadata) dynamically for any particular log message.
 
 First, you need to make Loki4j scan markers attached to each log event by enabling `readMarkers` flag:
 
@@ -84,21 +98,16 @@ void handleException(Exception ex) {
 }
 ```
 
-## Best practices
+Please use `StructuredMetadataMarker` for structured metadata:
 
-We encourage you to follow the [Label best practices](https://grafana.com/docs/loki/latest/get-started/labels/bp-labels/) collected by Grafana Loki team. Loki4j provides several settings to facilitate these recommendations.
+```java
+import com.github.loki4j.slf4j.marker.StructuredMetadataMarker;
 
-First, make sure you have `format.staticLabels` flag enabled.
-This will prevent Loki4j from calculating labels for each particular log record:
+...
 
-```xml
-<appender name="LOKI" class="com.github.loki4j.logback.Loki4jAppender">
-    ...
-    <format>
-        <staticLabels>true</staticLabels>
-        ...
-     </format>
-</appender>
+void handleException(Exception ex) {
+    var marker = StructuredMetadataMarker.of("exceptionClass", () -> ex.getClass().getSimpleName());
+    log.error(marker, "Unexpected error", ex);
+}
 ```
 
-Second, make sure you put all the high-cardinality metadata to [structured metadata](metadata.md) instead of labels.

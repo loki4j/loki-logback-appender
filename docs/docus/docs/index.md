@@ -93,12 +93,12 @@ Migrating from the previous Loki4j version? Read the [Migration Guide](docs/migr
 
 - **Loki labels can be dynamically generated out of any Logback pattern, MDC, and SLF4J markers.**
 Label values are specified as Logback patterns.
-This along with MDC and markers allow you to precisely control label set for each particular log record.
+This along with MDC and markers allows you to precisely control label set for each particular log record.
 [Learn more...](docs/labels)
 
 - **Structured metadata support.**
-Unlike labels, structured metadata is not indexed, but it still can dramatically increase search efficiency,
-as Loki does not have to scan entire message bodies.
+Unlike labels, structured metadata is not indexed, but it still can significantly increase search efficiency,
+as Loki does not have to scan entire message bodies for metadata.
 Loki4j provides the same capabilities of dynamic generation for structured metadata as it does for labels.
 [Learn more...](docs/metadata)
 
