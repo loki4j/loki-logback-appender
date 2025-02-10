@@ -23,35 +23,30 @@ See the <a href="docs/compatibility">compatibility matrix</a> for more informati
 <p>Migrating from the previous Loki4j version? Read the <a href="docs/migration">Migration Guide</a>.</p>
 <h3><a class="anchor" aria-hidden="true" id="key-features"></a><a href="#key-features" aria-hidden="true" class="hash-link"><svg class="hash-link-icon" aria-hidden="true" height="16" version="1.1" viewBox="0 0 16 16" width="16"><path fill-rule="evenodd" d="M4 9h1v1H4c-1.5 0-3-1.69-3-3.5S2.55 3 4 3h4c1.45 0 3 1.69 3 3.5 0 1.41-.91 2.72-2 3.25V8.59c.58-.45 1-1.27 1-2.09C10 5.22 8.98 4 8 4H4c-.98 0-2 1.22-2 2.5S3 9 4 9zm9-3h-1v1h1c1 0 2 1.22 2 2.5S13.98 12 13 12H9c-.98 0-2-1.22-2-2.5 0-.83.42-1.64 1-2.09V6.25c-1.09.53-2 1.84-2 3.25C6 11.31 7.55 13 9 13h4c1.45 0 3-1.69 3-3.5S14.5 6 13 6z"></path></svg></a>Key Features:</h3>
 <ul>
-<li><p><strong>Structured metadata support.</strong>
-Pass any non-label metadata along with your log lines using <a href="docs/metadata">structured metadata</a>.</p></li>
-<li><p><strong>Flexible management of Loki labels and metadata using MDC and SLF4J Markers.</strong>
-You can specify Loki labels as well as structured metadata dynamically, even on a per-record basis.
+<li><p><strong>Loki labels can be dynamically generated out of any Logback pattern, MDC, and SLF4J markers.</strong>
+Label values are specified as Logback patterns.
+This along with MDC and markers allow you to precisely control label set for each particular log record.
 <a href="docs/labels">Learn more...</a></p></li>
-<li><p><strong>Out-of-the-box JSON layout support for log message formatting.</strong>
-You can choose between plain text and JSON (Logstash-like) log message formatting.
+<li><p><strong>Structured metadata support.</strong>
+Unlike labels, structured metadata is not indexed, but it still can dramatically increase search efficiency,
+as Loki does not have to scan entire message bodies.
+Loki4j provides the same capabilities of dynamic generation for structured metadata as it does for labels.
+<a href="docs/metadata">Learn more...</a></p></li>
+<li><p><strong>Fast JSON layout for log message formatting.</strong>
+If you prefer Logstash-like log message formatting, you can switch the layout from plain text to JSON.
 <a href="docs/jsonlayout">Learn more...</a></p></li>
-<li><p><strong>Logback plain text formatting patterns can be used for both labels and messages.</strong>
-Loki4j allows you to use all the power and flexibility of
-<a href="http://logback.qos.ch/manual/layouts.html#ClassicPatternLayout">Logback patterns</a>
-both for labels and messages.
-Same patterns are used in Logback's standard <code>ConsoleAppender</code> or <code>FileAppender</code>,
-so you are probably familiar with the syntax.</p></li>
-<li><p><strong>Support for JSON and Protobuf Loki API flavors.</strong>
-With Loki4j, you can try out either JSON or Protobuf API to send log records to Loki.
+<li><p><strong>Support of JSON and Protobuf Loki API flavors.</strong>
+By default, JSON endpoints are used, but you can switch to Protobuf API anytime.
 <a href="docs/protobuf">Learn more...</a></p></li>
 <li><p><strong>Compatibility with Grafana Cloud.</strong>
 Loki4j supports HTTP basic authentication, so you can use it for hosted Loki services (e.g., Grafana Cloud)
 as well as for on-premise Loki instances.
 See the <a href="docs/grafanacloud">example</a>...</p></li>
-<li><p><strong>No JSON library bundled.</strong>
-Instead of bundling with any JSON library (e.g., Jackson),
-Loki4j comes with a small part of JSON rendering functionality borrowed from <a href="https://github.com/ngs-doo/dsl-json/">DSL-JSON</a>.</p></li>
 <li><p><strong>Zero-dependency.</strong>
-Loki4j does not bring any new transitive dependencies to your project,
-assuming you already use <code>logback-classic</code> for logging.
+Loki4j jar has a very small footprint.
+It does not bring any new transitive dependencies to your project, assuming you already use <code>logback-classic</code> for logging.
 See the <a href="docs/configuration#minimalistic-zero-dependency-configuration">example</a>...</p></li>
-<li><p><strong>Logging performance metrics.</strong>
+<li><p><strong>Performance metrics.</strong>
 You can monitor Loki4j's performance (e.g., encode/send duration, number of batches sent, etc.)
 by enabling instrumentation powered by <a href="https://micrometer.io/">Micrometer</a>.
 <a href="docs/performance">Learn more...</a></p></li>
