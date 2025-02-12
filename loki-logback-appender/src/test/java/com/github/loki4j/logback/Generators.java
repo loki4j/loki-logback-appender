@@ -175,11 +175,22 @@ public class Generators {
             String keyValueSeparator,
             boolean nopex,
             boolean readMarkers) {
+        return labelCfg(pattern, pairSeparator, keyValueSeparator, nopex, readMarkers, false);
+    }
+
+    public static AbstractLoki4jEncoder.LabelCfg labelCfg(
+            String pattern,
+            String pairSeparator,
+            String keyValueSeparator,
+            boolean nopex,
+            boolean readMarkers,
+            boolean omitEmpty) {
         var label = new AbstractLoki4jEncoder.LabelCfg();
         label.setPattern(pattern);
         label.setPairSeparator(pairSeparator);
         label.setKeyValueSeparator(keyValueSeparator);
         label.setReadMarkers(readMarkers);
+        label.setOmitEmptyFields(omitEmpty);
         return label;
     }
 
