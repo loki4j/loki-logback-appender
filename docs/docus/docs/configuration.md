@@ -62,16 +62,16 @@ By default, Loki4j encodes log record batches to JSON before sending them to Lok
 If you want to use Protobuf encoding instead, please follow [this](protobuf.md) guide.
 Format settings do not depend on the encoding you use.
 
-|Setting|Default| Description                                                                                                                                    |
-|-------|-------|------------------------------------------------------------------------------------------------------------------------------------------------|
-|format.label.pattern|| **Required**. Logback pattern to use for log record's label                                                                                    |
-|format.label.structuredMetadataPattern|| Logback pattern to use for log record's structured metadata                                                                                    |
-|format.label.pairSeparator|,| Character sequence to use as a separator between labels                                                                                        |
-|format.label.keyValueSeparator|=| Character to use as a separator between label's name and its value                                                                             |
-|format.label.readMarkers|false| If true, Loki4j scans each log record for the attached LabelMarker to add its values to the record's labels                                    |
-|format.label.omitEmptyFields|false| If true, labels that have empty values will be omitted. |
-|format.label.streamCache|BoundAtomicMapCache| An implementation of a stream cache to use. By default, caches up to 1000 unique label sets                                                    |
-|format.staticLabels|false| If you use only a constant label set (e.g., same keys and values) for all log records, you can set this flag to true and save some CPU and RAM |
+|Setting|Default|Description|
+|-------|-------|-----------|
+|format.label.pattern|| **Required**. Logback pattern to use for log record's label|
+|format.label.structuredMetadataPattern|| Logback pattern to use for log record's structured metadata|
+|format.label.pairSeparator|,| Character sequence to use as a separator between labels|
+|format.label.keyValueSeparator|=| Character to use as a separator between label's name and its value|
+|format.label.readMarkers|false| If true, Loki4j scans each log record for the attached LabelMarker to add its values to the record's labels|
+|format.label.omitEmptyFields|false| If true, labels that have empty values will be omitted.|
+|format.label.streamCache|BoundAtomicMapCache| An implementation of a stream cache to use. By default, caches up to 1000 unique label sets|
+|format.staticLabels|false| If you use only a constant label set (e.g., same keys and values) for all log records, you can set this flag to true and save some CPU and RAM|
 
 #### Plain text message layout
 
