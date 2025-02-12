@@ -50,7 +50,7 @@ public class MultiPatternExtractor<E> {
                 c.write(strBuilder, event);
                 c = c.getNext();
             }
-            result[i] = strBuilder.toString();
+            result[i] = strBuilder.toString().trim();
             strBuilder.setLength(0);
         }
         return result;

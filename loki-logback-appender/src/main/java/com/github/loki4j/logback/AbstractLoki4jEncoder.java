@@ -2,6 +2,7 @@ package com.github.loki4j.logback;
 
 import java.nio.charset.Charset;
 import java.nio.charset.StandardCharsets;
+import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.List;
 import java.util.Map.Entry;
@@ -36,7 +37,7 @@ public abstract class AbstractLoki4jEncoder extends ContextAwareBase implements 
     private static final String REGEX_STARTER = "regex:";
     private static final String[] EMPTY_KV_PAIRS = new String[0];
     private static final String DEFAULT_MSG_PATTERN = "l=%level c=%logger{20} t=%thread | %msg %ex";
-    
+
     public static final class LabelCfg {
         /**
          * Logback pattern to use for log record's label
@@ -62,6 +63,10 @@ public abstract class AbstractLoki4jEncoder extends ContextAwareBase implements 
          */
         boolean readMarkers = false;
         /**
+         * If true, omits labels when the corresponding value is empty (null, empty string or whitespace-only.
+         */
+        boolean omitEmptyFields = false;
+        /**
          * An implementation of a Stream cache to use.
          */
         Cache<String, LogRecordStream> streamCache;
@@ -80,6 +85,9 @@ public abstract class AbstractLoki4jEncoder extends ContextAwareBase implements 
         }
         public void setReadMarkers(boolean readMarkers) {
             this.readMarkers = readMarkers;
+        }
+        public void setOmitEmptyFields(boolean omitEmptyFields) {
+            this.omitEmptyFields = omitEmptyFields;
         }
         @DefaultClass(BoundAtomicMapCache.class)
         public void setStreamCache(Cache<String, LogRecordStream> streamCache) {
@@ -165,7 +173,7 @@ public abstract class AbstractLoki4jEncoder extends ContextAwareBase implements 
     public LogRecordStream eventToStream(ILoggingEvent e) {
         if (staticLabels) {
             if (staticLabelStream == null) {
-                staticLabelStream = LogRecordStream.create(mergeKVPairs(labelKeys, labelValuesExtractor.extract(e)));
+                staticLabelStream = LogRecordStream.create(mergeKVPairs(labelKeys, labelValuesExtractor.extract(e), label));
             }
             return staticLabelStream;
         }
@@ -176,7 +184,7 @@ public abstract class AbstractLoki4jEncoder extends ContextAwareBase implements 
             : EMPTY_KV_PAIRS;
         var streamKey = ArrayUtils.join2(labelValues, markerLabels, " !%! ");//.intern();
         return label.streamCache.get(streamKey, () -> {
-            var layoutLabels = mergeKVPairs(labelKeys, labelValues);
+            var layoutLabels = mergeKVPairs(labelKeys, labelValues, label);
             var allLabels = ArrayUtils.concat(layoutLabels, markerLabels);
             return LogRecordStream.create(allLabels);
         });
@@ -193,7 +201,7 @@ public abstract class AbstractLoki4jEncoder extends ContextAwareBase implements 
         var patternKVs = EMPTY_KV_PAIRS;
         if (metadataValuesExtractor != null) {
             var metadataValues = metadataValuesExtractor.extract(e);
-            patternKVs = mergeKVPairs(metadataKeys, metadataValues);
+            patternKVs = mergeKVPairs(metadataKeys, metadataValues, label);
         }
         var allKVs = ArrayUtils.concat(patternKVs, markerKVs);
         return allKVs;
@@ -264,14 +272,15 @@ public abstract class AbstractLoki4jEncoder extends ContextAwareBase implements 
             .collect(Collectors.toList());
     }
 
-    private static String[] mergeKVPairs(List<String> keys, String[] values) {
-        var resultLen = values.length * 2;
-        var result = new String[resultLen];
-        for (int i = 0; i < resultLen; i += 2) {
-            result[i] = keys.get(i / 2);
-            result[i + 1] = values[i / 2];
+    private static String[] mergeKVPairs(List<String> keys, String[] values, LabelCfg label) {
+        var result = new ArrayList<String>();
+        for (int i = 0; i < keys.size(); i++) {
+            if (!label.omitEmptyFields || !StringUtils.isBlank(values[i])) {
+                result.add(keys.get(i));
+                result.add(values[i]);
+            }
         }
-        return result;
+        return result.toArray(new String[0]);
     }
 
     public LabelCfg getLabel() {
