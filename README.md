@@ -17,14 +17,13 @@ If you have found this project helpful, please drop a :star:!
 
 ## Key features
 
+- Loki labels can be dynamically generated out of any Logback pattern, MDC, and SLF4J markers
 - Structured metadata support
-- Flexible management of Loki labels using MDC and SLF4J Markers
-- Out-of-the-box JSON layout support for log message formatting
-- Logback plain text formatting patterns can be used for both labels and messages
-- Support for JSON and Protobuf Loki API flavors
+- Fast JSON layout for log message formatting
+- Support of JSON and Protobuf Loki API flavors
 - Compatibility with Grafana Cloud
 - Zero-dependency
-- Logging performance metrics
+- Performance metrics
 
 More details and links to examples can be found [here](https://loki4j.github.io/loki-logback-appender/#key-features).
 

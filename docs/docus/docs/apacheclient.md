@@ -36,6 +36,7 @@ Then you can explicitly specify `ApacheHttpSender` by setting `class` attribute 
     <http class="com.github.loki4j.logback.ApacheHttpSender">
         ...
     </http>
+    ...
 </appender>
 ```
 
