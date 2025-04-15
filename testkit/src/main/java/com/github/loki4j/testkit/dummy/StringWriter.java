@@ -3,8 +3,6 @@ package com.github.loki4j.testkit.dummy;
 import java.nio.ByteBuffer;
 import java.nio.charset.StandardCharsets;
 
-import java.util.Arrays;
-
 import com.github.loki4j.client.batch.LogRecordBatch;
 import com.github.loki4j.client.util.ByteBufferFactory;
 import com.github.loki4j.client.writer.Writer;
@@ -24,9 +22,9 @@ public class StringWriter implements Writer {
         for (int i = 0; i < batch.size(); i++) {
             var r = batch.get(i);
             s
-                .append(Arrays.toString(r.stream.labels))
+                .append(r.stream)
                 .append(StringPayload.LABELS_MESSAGE_SEPARATOR)
-                .append(Arrays.toString(r.metadata))
+                .append(r.metadata)
                 .append(StringPayload.LABELS_MESSAGE_SEPARATOR)
                 .append("ts=")
                 .append(r.timestampMs)

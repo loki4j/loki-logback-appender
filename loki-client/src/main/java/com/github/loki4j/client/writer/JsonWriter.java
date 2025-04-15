@@ -3,6 +3,7 @@ package com.github.loki4j.client.writer;
 import static com.github.loki4j.pkg.dslplatform.json.RawJsonWriter.*;
 
 import java.nio.ByteBuffer;
+import java.util.Map;
 
 import com.github.loki4j.client.batch.LogRecord;
 import com.github.loki4j.client.batch.LogRecordBatch;
@@ -22,11 +23,11 @@ public final class JsonWriter implements Writer {
 
     public void serializeBatch(LogRecordBatch batch) {
         var currentStream = batch.get(0).stream;
-        beginStreams(batch.get(0), currentStream.labels);
+        beginStreams(batch.get(0), currentStream);
         for (int i = 1; i < batch.size(); i++) {
             if (batch.get(i).stream != currentStream) {
                 currentStream = batch.get(i).stream;
-                nextStream(batch.get(i), currentStream.labels);
+                nextStream(batch.get(i), currentStream);
             }
             else {
                 nextRecord(batch.get(i));
@@ -51,7 +52,7 @@ public final class JsonWriter implements Writer {
         raw.reset();
     }
 
-    private void beginStreams(LogRecord firstRecord, String[] firstLabels) {
+    private void beginStreams(LogRecord firstRecord, Map<String, String> firstLabels) {
         raw.writeByte(OBJECT_START);
         raw.writeQuotedAscii("streams");
         raw.writeByte(SEMI);
@@ -59,37 +60,23 @@ public final class JsonWriter implements Writer {
         stream(firstRecord, firstLabels);
     }
 
-    private void nextStream(LogRecord firstRecord, String[] labels) {
+    private void nextStream(LogRecord firstRecord, Map<String, String> labels) {
         raw.writeByte(ARRAY_END);
         raw.writeByte(OBJECT_END);
         raw.writeByte(COMMA);
         stream(firstRecord, labels);
     }
 
-    private void stream(LogRecord firstRecord, String[] labels) {
+    private void stream(LogRecord firstRecord, Map<String, String> labels) {
         raw.writeByte(OBJECT_START);
         raw.writeQuotedAscii("stream");
         raw.writeByte(SEMI);
-        labels(labels);
+        keyValuePairs(labels);
         raw.writeByte(COMMA);
         raw.writeQuotedAscii("values");
         raw.writeByte(SEMI);
         raw.writeByte(ARRAY_START);
         record(firstRecord);
-    }
-
-    private void labels(String[] labels) {
-        raw.writeByte(OBJECT_START);
-        if (labels.length > 0) {
-            for (int i = 0; i < labels.length; i+=2) {
-                raw.writeString(labels[i]);
-                raw.writeByte(SEMI);
-                raw.writeString(labels[i + 1]);
-                if (i < labels.length - 2)
-                    raw.writeByte(COMMA);
-            }
-        }
-        raw.writeByte(OBJECT_END);
     }
 
     private void nextRecord(LogRecord record) {
@@ -102,20 +89,22 @@ public final class JsonWriter implements Writer {
         raw.writeQuotedAscii("" + record.timestampMs + nanosToStr(record.nanosInMs));
         raw.writeByte(COMMA);
         raw.writeString(record.message);
-        if (record.metadata.length > 0) {
+        if (!record.metadata.isEmpty()) {
             raw.writeByte(COMMA);
-            metadata(record.metadata);
+            keyValuePairs(record.metadata);
         }
         raw.writeByte(ARRAY_END);
     }
 
-    private void metadata(String[] metadata) {
+    private void keyValuePairs(Map<String, String> kvp) {
         raw.writeByte(OBJECT_START);
-        for (int i = 0; i < metadata.length; i+=2) {
-            raw.writeString(metadata[i]);
+        var entries = kvp.entrySet().iterator();
+        while (entries.hasNext()) {
+            var entry = entries.next();
+            raw.writeString(entry.getKey());
             raw.writeByte(SEMI);
-            raw.writeString(metadata[i + 1]);
-            if (i < metadata.length - 2)
+            raw.writeString(entry.getValue());
+            if (entries.hasNext())
                 raw.writeByte(COMMA);
         }
         raw.writeByte(OBJECT_END);
