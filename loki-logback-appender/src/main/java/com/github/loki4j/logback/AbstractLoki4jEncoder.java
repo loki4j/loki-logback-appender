@@ -6,10 +6,8 @@ import java.util.ArrayList;
 import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Map;
-import java.util.Map.Entry;
 import java.util.regex.Pattern;
 
-import com.github.loki4j.client.batch.LogRecordStream;
 import com.github.loki4j.client.util.Cache;
 import com.github.loki4j.client.util.StringUtils;
 import com.github.loki4j.logback.extractor.Extractor;
@@ -63,7 +61,7 @@ public abstract class AbstractLoki4jEncoder extends ContextAwareBase implements 
         /**
          * An implementation of a Stream cache to use.
          */
-        Cache<Map<String, String>, LogRecordStream> streamCache;
+        Cache<Map<String, String>, Map<String, String>> streamCache;
 
         public void setPattern(String pattern) {
             this.pattern = pattern;
@@ -81,7 +79,7 @@ public abstract class AbstractLoki4jEncoder extends ContextAwareBase implements 
             this.readMarkers = readMarkers;
         }
         @DefaultClass(BoundAtomicMapCache.class)
-        public void setStreamCache(Cache<Map<String, String>, LogRecordStream> streamCache) {
+        public void setStreamCache(Cache<Map<String, String>, Map<String, String>> streamCache) {
             this.streamCache = streamCache;
         }
     }
@@ -101,7 +99,7 @@ public abstract class AbstractLoki4jEncoder extends ContextAwareBase implements 
 
     private Layout<ILoggingEvent> messageLayout;
 
-    private LogRecordStream staticLabelStream = null;
+    private Map<String, String> staticLabelStream = null;
 
     private boolean started = false;
 
@@ -144,14 +142,13 @@ public abstract class AbstractLoki4jEncoder extends ContextAwareBase implements 
         return started;
     }
 
-    public LogRecordStream eventToStream(ILoggingEvent e) {
+    public Map<String, String> eventToStream(ILoggingEvent e) {
         if (staticLabels) {
             if (staticLabelStream == null) {
                 if (labelValueExtractors.size() == 1) {
                     var kvs = new LinkedHashMap<String, String>();
                     labelValueExtractors.get(0).extract(e, kvs);
-                    var kva = map2KVPairs(kvs);
-                    staticLabelStream = LogRecordStream.create(kva);
+                    staticLabelStream = kvs;
                 } else {
                     throw new IllegalStateException("No bulk patterns allowed for static label configuration");
                 }
@@ -163,23 +160,19 @@ public abstract class AbstractLoki4jEncoder extends ContextAwareBase implements 
         for (var extractor : labelValueExtractors) {
             extractor.extract(e, kvs);
         }
-        return label.streamCache.get(kvs, () -> {
-            var allLabels = map2KVPairs(kvs);
-            return LogRecordStream.create(allLabels);
-        });
+        return label.streamCache.get(kvs, () -> kvs);
     }
 
     public String eventToMessage(ILoggingEvent e) {
         return messageLayout.doLayout(e);
     }
 
-    public String[] eventToMetadata(ILoggingEvent e) {
+    public Map<String, String> eventToMetadata(ILoggingEvent e) {
         var kvs = new LinkedHashMap<String, String>();
         for (var extractor : metadataValueExtractors) {
             extractor.extract(e, kvs);
         }
-        var allKVs = map2KVPairs(kvs);
-        return allKVs;
+        return kvs;
     }
 
     private PatternLayout initPatternLayout(String pattern) {
@@ -229,17 +222,6 @@ public abstract class AbstractLoki4jEncoder extends ContextAwareBase implements 
         }
         if (result.isEmpty())
             throw new IllegalArgumentException("Empty of blank patterns are not supported");
-        return result;
-    }
-
-    private static String[] map2KVPairs(Map<String, String> map) {
-        var result = new String[map.size() * 2];
-        var pos = 0;
-        for (Entry<String, String> entry : map.entrySet()) {
-            result[pos] = entry.getKey();
-            result[pos + 1] = entry.getValue();
-            pos += 2;
-        }
         return result;
     }
 

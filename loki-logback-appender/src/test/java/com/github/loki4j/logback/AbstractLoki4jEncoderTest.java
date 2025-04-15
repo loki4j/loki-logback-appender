@@ -2,6 +2,7 @@ package com.github.loki4j.logback;
 
 import org.junit.Test;
 
+import com.github.loki4j.client.util.OrderedMap;
 import com.github.loki4j.slf4j.marker.LabelMarker;
 import com.github.loki4j.slf4j.marker.StructuredMetadataMarker;
 import com.github.loki4j.testkit.dummy.StringPayload;
@@ -110,13 +111,13 @@ public class AbstractLoki4jEncoderTest {
         encoder.start();
 
         var stream1 = encoder.eventToStream(loggingEvent(100L, Level.INFO, "test.TestApp", "thread-1", "Test message 1", null));
-        assertArrayEquals(new String[] { "level", "INFO", "app", "my-app", "thread", "thread-1" }, stream1.labels);
+        assertEquals(OrderedMap.of("level", "INFO", "app", "my-app", "thread", "thread-1"), stream1);
 
         var stream2 = encoder.eventToStream(loggingEvent(103L, Level.WARN, "test.TestApp", "thread-5", "Test message 2", null));
-        assertArrayEquals(new String[] { "level", "WARN", "app", "my-app", "thread", "thread-5" }, stream2.labels);
+        assertEquals(OrderedMap.of("level", "WARN", "app", "my-app", "thread", "thread-5"), stream2);
 
         var stream3 = encoder.eventToStream(loggingEvent(108L, Level.INFO, "test.TestApp", "thread-1", "Test message 3", null));
-        assertArrayEquals(new String[] { "level", "INFO", "app", "my-app", "thread", "thread-1" }, stream3.labels);
+        assertEquals(OrderedMap.of("level", "INFO", "app", "my-app", "thread", "thread-1"), stream3);
 
         assertTrue("Same labels resolved to one stream", stream1 == stream3);
         assertFalse("Different labels resolved to different streams", stream1 == stream2);
@@ -134,7 +135,7 @@ public class AbstractLoki4jEncoderTest {
         encoder.start();
 
         var stream1 = encoder.eventToStream(loggingEvent(100L, Level.INFO, "test.TestApp", "th=1", "Test message 1", null));
-        assertArrayEquals(new String[] { "level", "INFO", "class", "test.TestApp", "thread", "th=1" }, stream1.labels);
+        assertEquals(Map.of("level", "INFO", "class", "test.TestApp", "thread", "th=1"), stream1);
 
         encoder.stop();
     }
@@ -166,12 +167,12 @@ public class AbstractLoki4jEncoderTest {
             assertEquals(
                 "dynamic labels, no sort",
                 StringPayload.builder()
-                    .stream("[l, INFO, stcmrk, stat-val]",
+                    .stream(OrderedMap.of("l", "INFO", "stcmrk", "stat-val"),
                         "ts=100 INFO | Test message 1",
                         "ts=105 INFO | Test message 3")
-                    .stream("[l, INFO, mrk, mrk-val]",
+                    .stream(OrderedMap.of("l", "INFO", "mrk", "mrk-val"),
                         "ts=103 INFO | Test message 2")
-                    .stream("[l, INFO, mrk1, v1, mrk2, v2]",
+                    .stream(OrderedMap.of("l", "INFO", "mrk1", "v1", "mrk2", "v2"),
                         "ts=104 INFO | Test message 4")
                     .build(),
                 StringPayload.parse(sender.lastSendData()));
@@ -204,10 +205,11 @@ public class AbstractLoki4jEncoderTest {
             assertEquals(
                 "dynamic labels, no sort",
                 StringPayload.builder()
-                    .streamWithMeta("[l, INFO]",
-                        StringLogRecord.of("[t, thread-2, c, test.TestApp, mrk, mrk-val]", "ts=103 INFO | Test message 2"))
-                    .streamWithMeta("[l, INFO]",
-                        StringLogRecord.of("[t, thread-1, c, test.TestApp, mrk1, v1, mrk2, v2]", "ts=104 INFO | Test message 4"))
+                    .streamWithMeta(OrderedMap.of("l", "INFO"),
+                        StringLogRecord.of("ts=103 INFO | Test message 2",
+                            OrderedMap.of("t", "thread-2", "c", "test.TestApp", "mrk", "mrk-val")),
+                        StringLogRecord.of("ts=104 INFO | Test message 4",
+                            OrderedMap.of("t", "thread-1", "c", "test.TestApp", "mrk1", "v1", "mrk2", "v2")))
                     .build(),
                 StringPayload.parse(sender.lastSendData()));
             //System.out.println(new String(sender.lastBatch()));
@@ -237,8 +239,9 @@ public class AbstractLoki4jEncoderTest {
             assertEquals(
                 "dynamic labels, no sort",
                 StringPayload.builder()
-                    .streamWithMeta("[l, INFO, label, label-val]",
-                        StringLogRecord.of("[t, thread-2, c, test.TestApp, meta, meta-val]", "ts=103 INFO | Test message 2"))
+                    .streamWithMeta(OrderedMap.of("l", "INFO", "label", "label-val"),
+                        StringLogRecord.of("ts=103 INFO | Test message 2",
+                            OrderedMap.of("t", "thread-2", "c", "test.TestApp", "meta", "meta-val")))
                     .build(),
                 StringPayload.parse(sender.lastSendData()));
             //System.out.println(new String(sender.lastBatch()));
@@ -269,7 +272,7 @@ public class AbstractLoki4jEncoderTest {
             assertEquals(
                 "static labels, no sort",
                 StringPayload.builder()
-                    .stream("[l, INFO]",
+                    .stream(OrderedMap.of("l", "INFO"),
                         "ts=105 INFO | Test message 1",
                         "ts=103 DEBUG | Test message 2",
                         "ts=100 INFO | Test message 3",
@@ -292,15 +295,15 @@ public class AbstractLoki4jEncoderTest {
             assertEquals(
                 "dynamic labels, no sort",
                 StringPayload.builder()
-                    .stream("[l, INFO]",
+                    .stream(OrderedMap.of("l", "INFO"),
                         "ts=105 INFO | Test message 1",
                         "ts=100 INFO | Test message 3",
                         "ts=110 INFO | Test message 6")
-                    .stream("[l, DEBUG]",
+                    .stream(OrderedMap.of("l", "DEBUG"),
                         "ts=103 DEBUG | Test message 2")
-                    .stream("[l, WARN]",
+                    .stream(OrderedMap.of("l", "WARN"),
                         "ts=104 WARN | Test message 4")
-                    .stream("[l, ERROR]",
+                    .stream(OrderedMap.of("l", "ERROR"),
                         "ts=103 ERROR | Test message 5")
                     .build(),
                 StringPayload.parse(sender.lastSendData()));

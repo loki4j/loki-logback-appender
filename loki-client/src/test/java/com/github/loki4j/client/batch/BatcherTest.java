@@ -3,16 +3,16 @@ package com.github.loki4j.client.batch;
 import org.junit.Test;
 import static org.junit.Assert.*;
 
+import java.util.Map;
+
 public class BatcherTest {
 
-    private static String[] EMPTY_METADATA = new String[0];
-
     private static LogRecord logRecord(long ts) {
-        return LogRecord.create(ts, 0, LogRecordStream.create("testkey", "testval"), ("message" + ts), EMPTY_METADATA);
+        return LogRecord.create(ts, 0, Map.of("testkey", "testval"), ("message" + ts), Map.of());
     }
 
-    private static LogRecord logRecord(long ts, LogRecordStream stream, String message) {
-        return LogRecord.create(ts, 0, stream, message, EMPTY_METADATA);
+    private static LogRecord logRecord(long ts, Map<String, String> stream, String message) {
+        return LogRecord.create(ts, 0, stream, message, Map.of());
     }
 
     @Test 
@@ -67,7 +67,7 @@ public class BatcherTest {
 
         assertEquals("capacity is correct", 1, cbb.getCapacity());
 
-        var record = logRecord(1, LogRecordStream.create("a", "b"), "3456789");
+        var record = logRecord(1, Map.of("a", "b"), "3456789");
         assertFalse("Size too large", cbb.validateLogRecordSize(record));
         assertEquals("Batch is not ready", 0, buf.size());
     }
@@ -79,7 +79,7 @@ public class BatcherTest {
 
         assertEquals("capacity is correct", 10, cbb.getCapacity());
 
-        var stream = LogRecordStream.create("a", "b");
+        var stream = Map.of("a", "b");
 
         var r1 = logRecord(1, stream, "123");
         assertTrue("Size is ok", cbb.validateLogRecordSize(r1));

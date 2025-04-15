@@ -3,6 +3,7 @@ package com.github.loki4j.client.pipeline;
 import java.net.ConnectException;
 import java.net.http.HttpTimeoutException;
 import java.util.Comparator;
+import java.util.Map;
 import java.util.Optional;
 import java.util.concurrent.ConcurrentLinkedQueue;
 import java.util.concurrent.ExecutorService;
@@ -20,7 +21,6 @@ import com.github.loki4j.client.batch.BinaryBatch;
 import com.github.loki4j.client.batch.ByteBufferQueue;
 import com.github.loki4j.client.batch.LogRecord;
 import com.github.loki4j.client.batch.LogRecordBatch;
-import com.github.loki4j.client.batch.LogRecordStream;
 import com.github.loki4j.client.http.HttpStatus;
 import com.github.loki4j.client.http.Loki4jHttpClient;
 import com.github.loki4j.client.http.LokiResponse;
@@ -35,7 +35,7 @@ import static com.github.loki4j.client.util.StringUtils.bytesAsUtf8String;
 public final class AsyncBufferPipeline {
 
     private static final Comparator<LogRecord> compareByStream = (e1, e2) ->
-        Long.compare(e1.stream.hash, e2.stream.hash);
+        Long.compare(e1.stream.hashCode(), e2.stream.hashCode());
 
     private final ConcurrentLinkedQueue<LogRecord> buffer = new ConcurrentLinkedQueue<>();
 
@@ -171,9 +171,9 @@ public final class AsyncBufferPipeline {
     public boolean append(
             long timestampMs,
             int nanosInMs,
-            Supplier<LogRecordStream> stream,
+            Supplier<Map<String, String>> stream,
             Supplier<String> message,
-            Supplier<String[]> metadata) {
+            Supplier<Map<String, String>> metadata) {
         var startedNs = System.nanoTime();
         boolean accepted = false;
         if (acceptNewEvents.get()) {

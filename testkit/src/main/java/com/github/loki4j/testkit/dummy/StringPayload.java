@@ -4,6 +4,7 @@ import java.nio.charset.Charset;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.HashMap;
+import java.util.Map;
 import java.util.stream.Collectors;
 
 public class StringPayload {
@@ -52,7 +53,7 @@ public class StringPayload {
         for (String line : lines) {
             var pair = line.split(LABELS_MESSAGE_SEPARATOR);
             var recs = data.computeIfAbsent(pair[0], x -> new ArrayList<>());
-            recs.add(new StringLogRecord(pair[1], pair[2]));
+            recs.add(new StringLogRecord(pair[2], pair[1]));
         }
         return new StringPayload(data);
     }
@@ -70,18 +71,17 @@ public class StringPayload {
     }
 
     public static class StringPayloadBuilder {
-        private static final String[] EMPTY = new String[0];
         private HashMap<String, ArrayList<StringLogRecord>> data = new HashMap<>();
-        public StringPayloadBuilder stream(String stream, String... records) {
-            var recs = data.computeIfAbsent(stream, x -> new ArrayList<>());
+        public StringPayloadBuilder stream(Map<String, String> stream, String... records) {
+            var recs = data.computeIfAbsent(stream.toString(), x -> new ArrayList<>());
             recs.addAll(Arrays.asList(records).stream()
-                    .map(r -> new StringLogRecord(Arrays.toString(EMPTY), r))
+                    .map(r -> StringLogRecord.of(r, Map.of()))
                     .collect(Collectors.toList())
             );
             return this;
         }
-        public StringPayloadBuilder streamWithMeta(String stream, StringLogRecord... records) {
-            var recs = data.computeIfAbsent(stream, x -> new ArrayList<>());
+        public StringPayloadBuilder streamWithMeta(Map<String, String> stream, StringLogRecord... records) {
+            var recs = data.computeIfAbsent(stream.toString(), x -> new ArrayList<>());
             recs.addAll(Arrays.asList(records));
             return this;
         }
@@ -93,12 +93,12 @@ public class StringPayload {
     public static class StringLogRecord {
         private String metadata;
         private String line;
-        public StringLogRecord(String metadata, String line) {
+        public StringLogRecord(String line, String metadata) {
             this.metadata = metadata;
             this.line = line;
         }
-        public static StringLogRecord of(String metadata, String line) {
-            return new StringLogRecord(metadata, line);
+        public static StringLogRecord of(String line, Map<String, String> metadataKvp) {
+            return new StringLogRecord(line, metadataKvp.toString());
         }
         @Override
         public int hashCode() {

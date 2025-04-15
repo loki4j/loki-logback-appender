@@ -2,7 +2,7 @@ package com.github.loki4j.client.pipeline;
 
 import java.util.concurrent.ThreadLocalRandom;
 
-class Jitter {
+public class Jitter {
 
     private final int maxJitter;
 
@@ -10,7 +10,7 @@ class Jitter {
         this.maxJitter = maxJitter;
     }
 
-    int nextJitter() {
+    public int nextJitter() {
         return maxJitter == 0 ? 0 : ThreadLocalRandom.current().nextInt(maxJitter);
     }
 }

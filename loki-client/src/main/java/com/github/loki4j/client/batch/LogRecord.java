@@ -1,6 +1,6 @@
 package com.github.loki4j.client.batch;
 
-import java.util.Arrays;
+import java.util.Map;
 
 import com.github.loki4j.client.util.StringUtils;
 
@@ -10,42 +10,43 @@ public class LogRecord {
 
     public final int nanosInMs;
 
-    public final LogRecordStream stream;
+    public final Map<String, String> stream;
+
+    public final int streamUtf8SizeBytes;
 
     public final String message;
 
     public final int messageUtf8SizeBytes;
 
-    public final String[] metadata;
+    public final Map<String, String> metadata;
 
     public final int metadataUtf8SizeBytes;
 
     private LogRecord(
             long timestampMs,
             int nanosInMs,
-            LogRecordStream stream,
+            Map<String, String> stream,
             String message,
-            String[] metadata) {
+            Map<String, String> metadata) {
         this.timestampMs = timestampMs;
         this.nanosInMs = nanosInMs;
-        this.stream = stream;
+
         this.message = message;
         this.messageUtf8SizeBytes = StringUtils.utf8Length(message);
 
+        this.stream = stream;
+        this.streamUtf8SizeBytes = kvpUtf8SizeBytes(stream);
+
         this.metadata = metadata;
-        var metadataUtf8SizeBytes = 0;
-        for (int i = 0; i < metadata.length; i++) {
-            metadataUtf8SizeBytes += StringUtils.utf8Length(metadata[i]);
-        }
-        this.metadataUtf8SizeBytes = metadataUtf8SizeBytes;
+        this.metadataUtf8SizeBytes = kvpUtf8SizeBytes(metadata);
     }
 
     public static LogRecord create(
             long timestampMs,
             int nanosInMs,
-            LogRecordStream stream,
+            Map<String, String> stream,
             String message,
-            String[] metadata) {
+            Map<String, String> metadata) {
         return new LogRecord(timestampMs, nanosInMs, stream, message, metadata);
     }
 
@@ -55,7 +56,7 @@ public class LogRecord {
                 + ", nanos=" + nanosInMs
                 + ", stream=" + stream
                 + ", message=" + message
-                + ", metadata=" + Arrays.toString(metadata)
+                + ", metadata=" + metadata
                 + "]";
     }
 
@@ -97,9 +98,18 @@ public class LogRecord {
         if (metadata == null) {
             if (other.metadata != null)
                 return false;
-        } else if (!Arrays.equals(metadata, other.metadata))
+        } else if (!metadata.equals(other.metadata))
             return false;
         return true;
+    }
+
+    private static int kvpUtf8SizeBytes(Map<String, String> map) {
+        var utf8SizeBytes = 0;
+        for (var entry : map.entrySet()) {
+            utf8SizeBytes += StringUtils.utf8Length(entry.getKey());
+            utf8SizeBytes += StringUtils.utf8Length(entry.getValue());
+        }
+        return utf8SizeBytes;
     }
 
 }

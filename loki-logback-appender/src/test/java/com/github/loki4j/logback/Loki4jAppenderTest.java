@@ -10,6 +10,7 @@ import java.util.concurrent.TimeoutException;
 
 import org.junit.Test;
 
+import com.github.loki4j.client.util.OrderedMap;
 import com.github.loki4j.logback.Generators.WrappingHttpSender;
 import com.github.loki4j.testkit.dummy.FailingHttpClient;
 import com.github.loki4j.testkit.dummy.FailingStringWriter;
@@ -47,10 +48,10 @@ public class Loki4jAppenderTest {
     };
 
     static StringPayload expected = StringPayload.builder()
-        .stream("[level, INFO, app, my-app]",
+        .stream(OrderedMap.of("level", "INFO", "app", "my-app"),
             "ts=100 l=INFO c=test.TestApp t=thread-1 | Test message 1 ",
             "ts=107 l=INFO c=test.TestApp t=thread-1 | Test message 3 ")
-        .stream("[level, WARN, app, my-app]",
+        .stream(OrderedMap.of("level", "WARN", "app", "my-app"),
             "ts=104 l=WARN c=test.TestApp t=thread-2 | Test message 2 ")
         .build();
 
@@ -231,11 +232,11 @@ public class Loki4jAppenderTest {
     @Test
     public void testConnectionExceptionRetry() throws InterruptedException, BrokenBarrierException, TimeoutException, ExecutionException {
         StringPayload expectedPayload = StringPayload.builder()
-            .stream("[level, INFO, app, my-app]",
+            .stream(OrderedMap.of("level", "INFO", "app", "my-app"),
                 "ts=100 l=INFO c=test.TestApp t=thread-1 | Test message 1 ")
             .build();
         StringPayload expectedPayload2 = StringPayload.builder()
-            .stream("[level, WARN, app, my-app]",
+            .stream(OrderedMap.of("level", "WARN", "app", "my-app"),
                 "ts=104 l=WARN c=test.TestApp t=thread-2 | Test message 2 ")
             .build();
 
@@ -287,7 +288,7 @@ public class Loki4jAppenderTest {
     @Test
     public void testHttpTimeoutRetry() throws InterruptedException, BrokenBarrierException, TimeoutException, ExecutionException {
         StringPayload expectedPayload = StringPayload.builder()
-            .stream("[level, INFO, app, my-app]",
+            .stream(OrderedMap.of("level", "INFO", "app", "my-app"),
                 "ts=100 l=INFO c=test.TestApp t=thread-1 | Test message 1 ")
             .build();
 
@@ -323,7 +324,7 @@ public class Loki4jAppenderTest {
     @Test
     public void testRateLimitedRetry() throws InterruptedException, BrokenBarrierException, TimeoutException, ExecutionException {
         StringPayload expectedPayload = StringPayload.builder()
-            .stream("[level, INFO, app, my-app]",
+            .stream(OrderedMap.of("level", "INFO", "app", "my-app"),
                 "ts=100 l=INFO c=test.TestApp t=thread-1 | Test message 1 ")
             .build();
 

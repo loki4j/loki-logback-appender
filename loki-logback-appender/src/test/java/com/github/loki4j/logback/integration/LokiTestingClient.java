@@ -36,7 +36,7 @@ import ch.qos.logback.classic.spi.ILoggingEvent;
 public class LokiTestingClient {
 
     private static Comparator<LogRecord> byStream = (e1, e2) -> String.CASE_INSENSITIVE_ORDER.compare(
-        Arrays.toString(e1.stream.labels), Arrays.toString(e2.stream.labels));
+        e1.stream.toString(), e2.stream.toString());
     private static Comparator<LogRecord> byTime = (e1, e2) ->
         Long.compare(e1.timestampMs, e2.timestampMs);
     private static Comparator<LogRecord> lokiLogsSorting = byStream.thenComparing(byTime);
