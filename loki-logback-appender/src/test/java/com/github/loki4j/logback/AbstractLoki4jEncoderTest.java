@@ -117,6 +117,43 @@ public class AbstractLoki4jEncoderTest {
         var stream3 = encoder.eventToStream(loggingEvent(108L, Level.INFO, "test.TestApp", "thread-1", "Test message 3", null));
         assertArrayEquals(new String[] { "level", "INFO", "app", "my-app", "thread", "thread-1" }, stream3.labels);
 
+        var stream4 = encoder.eventToStream(loggingEvent(110L, Level.INFO, "test.TestApp", "", "Test message 3", null));
+        assertArrayEquals(new String[] { "level", "INFO", "app", "my-app", "thread", "" }, stream4.labels);
+
+        var stream5 = encoder.eventToStream(loggingEvent(110L, Level.INFO, "test.TestApp", "   ", "Test message 3", null));
+        assertArrayEquals(new String[] { "level", "INFO", "app", "my-app", "thread", "" }, stream5.labels);
+
+        assertTrue("Same labels resolved to one stream", stream1 == stream3);
+        assertFalse("Different labels resolved to different streams", stream1 == stream2);
+
+        encoder.stop();
+    }
+
+    @Test
+    public void testLogRecordStreamsWithEmptyFields() {
+        var encoder = toStringEncoder(
+                labelCfg("level=%level,app=my-app,thread=%thread,msg=%message", ",", "=", false, false, true),
+                plainTextMsgLayout("l=%level | %msg %ex{1}"),
+                false);
+        encoder.setContext(new LoggerContext());
+        encoder.start();
+
+        var stream1 = encoder.eventToStream(loggingEvent(100L, Level.INFO, "test.TestApp", "thread-1", "", null));
+        assertArrayEquals(new String[] { "level", "INFO", "app", "my-app", "thread", "thread-1" }, stream1.labels);
+
+        var stream2 = encoder.eventToStream(loggingEvent(103L, Level.WARN, "test.TestApp", "   ", "Test message 2", null));
+        assertArrayEquals(new String[] { "level", "WARN", "app", "my-app", "msg", "Test message 2" }, stream2.labels);
+
+        var stream3 = encoder.eventToStream(loggingEvent(108L, Level.INFO, "test.TestApp", "thread-1", "  ", null));
+        assertArrayEquals(new String[] { "level", "INFO", "app", "my-app", "thread", "thread-1" }, stream3.labels);
+
+        var stream4 = encoder.eventToStream(loggingEvent(110L, Level.INFO, "test.TestApp", "", "\t ", null));
+        assertArrayEquals(new String[] { "level", "INFO", "app", "my-app" }, stream4.labels);
+
+        var stream5 = encoder.eventToStream(loggingEvent(110L, Level.INFO, "test.TestApp", "   ", " ", null));
+        assertArrayEquals(new String[] { "level", "INFO", "app", "my-app" }, stream5.labels);
+
+
         assertTrue("Same labels resolved to one stream", stream1 == stream3);
         assertFalse("Different labels resolved to different streams", stream1 == stream2);
 
