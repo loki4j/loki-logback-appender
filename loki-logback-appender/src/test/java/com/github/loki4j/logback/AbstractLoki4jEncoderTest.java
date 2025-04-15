@@ -15,6 +15,7 @@ import static org.junit.Assert.*;
 
 import java.util.LinkedHashMap;
 import java.util.List;
+import java.util.Map;
 
 import static com.github.loki4j.logback.Generators.*;
 
@@ -38,15 +39,15 @@ public class AbstractLoki4jEncoderTest {
     @Test
     public void testExtractStreamKVPairsIgnoringEmpty() {
         var kvs1 = AbstractLoki4jEncoder.extractKVPairsFromPattern(",,level=%level,,app=\"my\"app,", ",", "=");
-        var kvse1 = new String[] {"level", "%level", "app", "\"my\"app"};
-        assertArrayEquals("Split by ,=", kvse1, kvs1);
+        var kvse1 = Map.of("level", "%level", "app", "\"my\"app");
+        assertEquals("Split by ,=", kvse1, kvs1);
     }
 
     @Test
     public void testExtractStreamKVPairsIgnoringWhitespace() {
         var kvs1 = AbstractLoki4jEncoder.extractKVPairsFromPattern("\tlevel = %level,\n\tapp=\"my\"app,\n", ",", "=");
-        var kvse1 = new String[] {"level", "%level", "app", "\"my\"app"};
-        assertArrayEquals("Split by ,=", kvse1, kvs1);
+        var kvse1 = Map.of("level", "%level", "app", "\"my\"app");
+        assertEquals("Split by ,=", kvse1, kvs1);
     }
 
     @Test
@@ -55,21 +56,21 @@ public class AbstractLoki4jEncoderTest {
             "\n\n// level is label\nlevel=%level\n// another comment\n\napp=\"my\"app\n\n// end comment",
             "regex:(\n|//[^\n]+)+",
             "=");
-        var kvse1 = new String[] {"level", "%level", "app", "\"my\"app"};
-        assertArrayEquals("Split by ,=", kvse1, kvs1);
+        var kvse1 = Map.of("level", "%level", "app", "\"my\"app");
+        assertEquals("Split by ,=", kvse1, kvs1);
     }
 
     @Test
     public void testExtractStreamKVPairs() {
         var kvs1 = AbstractLoki4jEncoder.extractKVPairsFromPattern("level=%level,app=\"my\"app,test=test", ",", "=");
-        var kvse1 = new String[] {"level", "%level", "app", "\"my\"app", "test", "test"};
-        assertArrayEquals("Split by ,=", kvse1, kvs1);
+        var kvse1 = Map.of("level", "%level", "app", "\"my\"app", "test", "test");
+        assertEquals("Split by ,=", kvse1, kvs1);
 
         var kvs2 = AbstractLoki4jEncoder.extractKVPairsFromPattern("level:%level;app:\"my\"app;test:test", ";", ":");
-        assertArrayEquals("Split by ;:", kvse1, kvs2);
+        assertEquals("Split by ;:", kvse1, kvs2);
 
         var kvs3 = AbstractLoki4jEncoder.extractKVPairsFromPattern("level.%level|app.\"my\"app|test.test", "|", ".");
-        assertArrayEquals("Split by |.", kvse1, kvs3);
+        assertEquals("Split by |.", kvse1, kvs3);
     }
 
     @Test
