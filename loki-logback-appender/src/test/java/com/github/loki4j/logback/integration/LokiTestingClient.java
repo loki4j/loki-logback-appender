@@ -137,7 +137,9 @@ public class LokiTestingClient {
             a.waitAllAppended();
             return null;
         });
-        withEncoder(new AbstractLoki4jEncoder(), encoder -> {
+        var expectedEncoder = new AbstractLoki4jEncoder();
+        configEncoder(expectedEncoder, false, lbl, null);
+        withEncoder(expectedEncoder, encoder -> {
             for (int i = 0; i < events.length; i++) {
                 final var idx = i;
                 records[i] = LogRecord.create(

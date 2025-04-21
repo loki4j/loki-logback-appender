@@ -96,9 +96,9 @@ public class Generators {
             appender.setWriter(PipelineConfig.json);
             configEncoder(
                 appender.getEncoder(),
-                labelCfg("test=" + testLabel + ",level=%level,service_name=my-app", ",", "=", true, false),
-                msgLayout,
-                staticLabels);
+                staticLabels,
+                testLabel,
+                msgLayout);
         };
     }
 
@@ -111,9 +111,9 @@ public class Generators {
             appender.setWriter(PipelineConfig.protobuf);
             configEncoder(
                 appender.getEncoder(),
-                labelCfg("test=" + testLabel + ",level=%level,service_name=my-app", ",", "=", true, false),
-                msgLayout,
-                staticLabels);
+                staticLabels,
+                testLabel,
+                msgLayout);
         };
     }
 
@@ -129,7 +129,7 @@ public class Generators {
         }
     }
 
-    public static Consumer<Loki4jAppender> defaultToStringEncoder() {
+    public static Consumer<Loki4jAppender> defaultStringEncoder() {
         return stringEncoder(
             labelCfg("level=%level,app=my-app", ",", "=", true, false),
             plainTextMsgLayout("l=%level c=%logger{20} t=%thread | %msg %ex{1}"),
@@ -148,6 +148,18 @@ public class Generators {
 
     public static Writer stringWriter(int capacity, ByteBufferFactory bufferFactory) {
         return new StringWriter(capacity, bufferFactory);
+    }
+
+    public static void configEncoder(
+            AbstractLoki4jEncoder encoder,
+            boolean staticLabels,
+            String testLabel,
+            Layout<ILoggingEvent> msgLayout) {
+        configEncoder(
+            encoder,
+            labelCfg("test=" + testLabel + ",level=%level,service_name=my-app", ",", "=", true, false),
+            msgLayout,
+            staticLabels);
     }
 
     public static void configEncoder(

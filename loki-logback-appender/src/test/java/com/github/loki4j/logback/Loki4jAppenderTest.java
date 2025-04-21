@@ -58,7 +58,7 @@ public class Loki4jAppenderTest {
 
     @Test
     public void testBatchSize() {
-        var encoder = defaultToStringEncoder();
+        var encoder = defaultStringEncoder();
         var sender = dummySender();
         withAppender(appender(3, 1000L, encoder, sender), appender -> {
             var sendCapture = sender.captureSendInvocation();
@@ -75,7 +75,7 @@ public class Loki4jAppenderTest {
 
     @Test
     public void testBatchTimeout() {
-        var encoder = defaultToStringEncoder();
+        var encoder = defaultStringEncoder();
         var sender = dummySender();
         withAppender(appender(30, 400L, encoder, sender), appender -> {
             appender.append(events[0]);
@@ -94,7 +94,7 @@ public class Loki4jAppenderTest {
 
     @Test
     public void testDrainOnStop() {
-        var encoder = defaultToStringEncoder();
+        var encoder = defaultStringEncoder();
         var sender = dummySender();
         var appender = appender(30, 4000L, encoder, sender);
         appender.start();
@@ -158,7 +158,7 @@ public class Loki4jAppenderTest {
 
     @Test
     public void testDrainOnStopDisabled() {
-        var encoder = defaultToStringEncoder();
+        var encoder = defaultStringEncoder();
         var sender = dummySender();
         var appender = appender(30, 4000L, encoder, sender);
         appender.setDrainOnStop(false);
@@ -187,7 +187,7 @@ public class Loki4jAppenderTest {
             "123456789012345678901234567890123456789012345678901234567890123456789012345678901234567890" +
             "123456789012345678901234567890123456789012345678901234567890123456789012345678901234567890";
 
-        var encoder = defaultToStringEncoder();
+        var encoder = defaultStringEncoder();
         var sender = dummySender();
         var appender = appender(3, 4000L, encoder, sender);
         appender.setBatchMaxBytes(500);
@@ -207,7 +207,7 @@ public class Loki4jAppenderTest {
     @Test
     public void testBackpressure() {
         var sender = new WrappingHttpSender<>(new SuspendableHttpClient());
-        var encoder = defaultToStringEncoder();
+        var encoder = defaultStringEncoder();
         var appender = appender(1, 4000L, encoder, sender);
         appender.setBatchMaxBytes(120);
         appender.setSendQueueMaxBytes(150);
@@ -254,7 +254,7 @@ public class Loki4jAppenderTest {
 
         var failingHttpClient = new FailingHttpClient();
         var sender = new WrappingHttpSender<>(failingHttpClient);
-        var encoder = defaultToStringEncoder();
+        var encoder = defaultStringEncoder();
 
         var appender = appender(1, 4000L, encoder, sender);
         appender.setMinRetryBackoffMs(50);
@@ -306,7 +306,7 @@ public class Loki4jAppenderTest {
 
         var failingHttpClient = new FailingHttpClient();
         var sender = new WrappingHttpSender<>(failingHttpClient);
-        var encoder = defaultToStringEncoder();
+        var encoder = defaultStringEncoder();
 
         var appender = appender(1, 4000L, encoder, sender);
         appender.setMinRetryBackoffMs(50);
@@ -342,7 +342,7 @@ public class Loki4jAppenderTest {
 
         var failingHttpClient = new FailingHttpClient();
         var sender = new WrappingHttpSender<>(failingHttpClient);
-        var encoder = defaultToStringEncoder();
+        var encoder = defaultStringEncoder();
 
         var appender = appender(1, 4000L, encoder, sender);
         appender.setMinRetryBackoffMs(50);
