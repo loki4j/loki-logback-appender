@@ -36,7 +36,7 @@ public class MultitenantSupportTest {
         var appender = appender(10, 1000, encoder, sender);
 
         var events = generateEvents(1000, 10);
-        client.testHttpSend(label, events, appender, jsonEncoder(false, label));
+        client.testHttpSend(label, events, appender);
     }
 
     @Test
@@ -49,6 +49,6 @@ public class MultitenantSupportTest {
         var appender = appender(10, 1000, encoder, sender);
 
         var events = generateEvents(20, 20);
-        client.testHttpSend(label, events, appender, jsonEncoder(false, label));
+        client.testHttpSend(label, events, appender);
     }
 }

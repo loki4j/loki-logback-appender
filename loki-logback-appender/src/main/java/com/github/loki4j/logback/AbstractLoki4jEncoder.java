@@ -23,13 +23,15 @@ import ch.qos.logback.classic.spi.ILoggingEvent;
 import ch.qos.logback.core.CoreConstants;
 import ch.qos.logback.core.Layout;
 import ch.qos.logback.core.joran.spi.DefaultClass;
+import ch.qos.logback.core.joran.spi.NoAutoStart;
 import ch.qos.logback.core.spi.ContextAwareBase;
 import ch.qos.logback.core.spi.ScanException;
 
 /**
  * Abstract class that provides basic Loki4j batch encoding functionality
  */
-public abstract class AbstractLoki4jEncoder extends ContextAwareBase implements Loki4jEncoder {
+@NoAutoStart
+public class AbstractLoki4jEncoder extends ContextAwareBase implements Loki4jEncoder {
 
     private static final String REGEX_STARTER = "regex:";
     private static final String DEFAULT_MSG_PATTERN = "l=%level c=%logger{20} t=%thread | %msg %ex";
@@ -84,7 +86,7 @@ public abstract class AbstractLoki4jEncoder extends ContextAwareBase implements 
         }
     }
 
-    protected final Charset charset = StandardCharsets.UTF_8;
+    protected static final Charset charset = StandardCharsets.UTF_8;
 
     private LabelCfg label = new LabelCfg();
 

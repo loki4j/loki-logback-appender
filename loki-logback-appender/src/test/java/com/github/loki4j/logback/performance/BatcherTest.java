@@ -19,7 +19,9 @@ import ch.qos.logback.classic.LoggerContext;
 
 public class BatcherTest {
 
-    private static AbstractLoki4jEncoder initEnc(AbstractLoki4jEncoder e) {
+    private static AbstractLoki4jEncoder initEnc() {
+        var e = new AbstractLoki4jEncoder();
+        e.setStaticLabels(true);
         e.setContext(new LoggerContext());
         e.start();
         return e;
@@ -35,7 +37,7 @@ public class BatcherTest {
             this.runs = 100;
             this.parFactor = 1;
             this.generator = () -> {
-                var jsonEncSta = initEnc(jsonEncoder(true, "testLabel"));
+                var jsonEncSta = initEnc();
                 return Arrays
                     .stream(generateEvents(100_000, 10))
                     .map(e -> eventToRecord(e, jsonEncSta))
