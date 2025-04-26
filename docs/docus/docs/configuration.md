@@ -170,7 +170,6 @@ Finally, we want to see Loki4j debug output.
                 <targetLength>20</targetLength>
             </loggerName>
         </message>
-        <sortByTime>true</sortByTime>
     </format>
 </appender>
 ```
