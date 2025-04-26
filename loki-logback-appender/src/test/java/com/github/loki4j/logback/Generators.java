@@ -7,7 +7,6 @@ import java.util.HashMap;
 import java.util.Iterator;
 import java.util.List;
 import java.util.concurrent.ThreadLocalRandom;
-import java.util.function.BiFunction;
 import java.util.function.Consumer;
 import java.util.function.Function;
 import java.util.stream.StreamSupport;
@@ -52,13 +51,13 @@ public class Generators {
     public static Loki4jAppender appender(
             int batchSize,
             long batchTimeoutMs,
-            Loki4jEncoder encoder,
+            Consumer<Loki4jAppender> encoder,   // for compatibility with tests using old "encoder" settings
             AbstractHttpSender sender) {
         var appender = new Loki4jAppender();
         appender.setContext(new LoggerContext());
         appender.setBatchMaxItems(batchSize);
         appender.setBatchTimeoutMs(batchTimeoutMs);
-        appender.setFormat(encoder);
+        encoder.accept(appender);
         appender.setHttp(sender);
         appender.setVerbose(true);
         return appender;
@@ -88,28 +87,34 @@ public class Generators {
         return new DummyHttpSender();
     }
 
-    public static JsonEncoder jsonEncoder(boolean staticLabels, String testLabel) {
+    public static Consumer<Loki4jAppender> jsonEncoder(boolean staticLabels, String testLabel) {
         return jsonEncoder(staticLabels, testLabel, null);
     }
 
-    public static JsonEncoder jsonEncoder(boolean staticLabels, String testLabel, Layout<ILoggingEvent> msgLayout) {
-        var encoder = new JsonEncoder();
-        encoder.setStaticLabels(staticLabels);
-        encoder.setLabel(labelCfg("test=" + testLabel + ",level=%level,service_name=my-app", ",", "=", true, false));
-        encoder.setMessage(msgLayout);
-        return encoder;
+    public static Consumer<Loki4jAppender> jsonEncoder(boolean staticLabels, String testLabel, Layout<ILoggingEvent> msgLayout) {
+        return appender -> {
+            appender.setWriter(PipelineConfig.json);
+            configEncoder(
+                appender.getEncoder(),
+                staticLabels,
+                testLabel,
+                msgLayout);
+        };
     }
 
-    public static ProtobufEncoder protobufEncoder(boolean staticLabels, String testLabel) {
+    public static Consumer<Loki4jAppender> protobufEncoder(boolean staticLabels, String testLabel) {
         return protobufEncoder(staticLabels, testLabel, null);
     }
 
-    public static ProtobufEncoder protobufEncoder(boolean staticLabels, String testLabel, Layout<ILoggingEvent> msgLayout) {
-        var encoder = new ProtobufEncoder();
-        encoder.setStaticLabels(staticLabels);
-        encoder.setLabel(labelCfg("test=" + testLabel + ",level=%level,service_name=my-app", ",", "=", true, false));
-        encoder.setMessage(msgLayout);
-        return encoder;
+    public static Consumer<Loki4jAppender> protobufEncoder(boolean staticLabels, String testLabel, Layout<ILoggingEvent> msgLayout) {
+        return appender -> {
+            appender.setWriter(PipelineConfig.protobuf);
+            configEncoder(
+                appender.getEncoder(),
+                staticLabels,
+                testLabel,
+                msgLayout);
+        };
     }
 
     public static <U> U withAppender(
@@ -124,8 +129,8 @@ public class Generators {
         }
     }
 
-    public static AbstractLoki4jEncoder defaultToStringEncoder() {
-        return toStringEncoder(
+    public static Consumer<Loki4jAppender> defaultStringEncoder() {
+        return stringEncoder(
             labelCfg("level=%level,app=my-app", ",", "=", true, false),
             plainTextMsgLayout("l=%level c=%logger{20} t=%thread | %msg %ex{1}"),
             false);
@@ -145,28 +150,40 @@ public class Generators {
         return new StringWriter(capacity, bufferFactory);
     }
 
-    public static AbstractLoki4jEncoder wrapToEncoder(
-            BiFunction<Integer, ByteBufferFactory, Writer> writerFactory,
+    public static void configEncoder(
+            AbstractLoki4jEncoder encoder,
+            boolean staticLabels,
+            String testLabel,
+            Layout<ILoggingEvent> msgLayout) {
+        configEncoder(
+            encoder,
+            labelCfg("test=" + testLabel + ",level=%level,service_name=my-app", ",", "=", true, false),
+            msgLayout,
+            staticLabels);
+    }
+
+    public static void configEncoder(
+            AbstractLoki4jEncoder encoder,
             AbstractLoki4jEncoder.LabelCfg label,
             Layout<ILoggingEvent> messageLayout,
             boolean staticLabels) {
-        var encoder = new AbstractLoki4jEncoder() {
-            @Override
-            public PipelineConfig.WriterFactory getWriterFactory() {
-                return new PipelineConfig.WriterFactory(writerFactory, "text/plain");
-            }
-        };
         encoder.setLabel(label);
         encoder.setMessage(messageLayout);
         encoder.setStaticLabels(staticLabels);
-        return encoder;
     }
 
-    public static AbstractLoki4jEncoder toStringEncoder(
+    public static Consumer<Loki4jAppender> stringEncoder(
             AbstractLoki4jEncoder.LabelCfg label,
             Layout<ILoggingEvent> messageLayout,
             boolean staticLabels) {
-        return wrapToEncoder(Generators::stringWriter, label, messageLayout, staticLabels);
+        return appender -> {
+            appender.setWriter(new PipelineConfig.WriterFactory(Generators::stringWriter, "text/plain"));
+            configEncoder(
+                appender.getEncoder(),
+                label,
+                messageLayout,
+                staticLabels);
+        };
     }
 
     public static AbstractLoki4jEncoder.LabelCfg labelCfg(

@@ -3,6 +3,8 @@ package com.github.loki4j.logback;
 import static com.github.loki4j.logback.Generators.*;
 import static org.junit.Assert.*;
 
+import java.nio.charset.StandardCharsets;
+
 import org.junit.Test;
 
 import ch.qos.logback.classic.Level;
@@ -36,7 +38,7 @@ public class PatternLayoutTest {
             "['100000000','l=INFO c=TestApp t=main | m3-line1\\rline2\\r ']]}]}"
             ).replace('\'', '"');
 
-        var actual = new String(sender.lastSendData(), encoder.charset);
+        var actual = new String(sender.lastSendData(), StandardCharsets.UTF_8);
         //System.out.println(expected);
         //System.out.println(actual);
         assertEquals("escape", expected, actual);

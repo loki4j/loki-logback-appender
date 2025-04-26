@@ -2,8 +2,6 @@ package com.github.loki4j.logback;
 
 import java.util.Map;
 
-import com.github.loki4j.client.pipeline.PipelineConfig.WriterFactory;
-
 import ch.qos.logback.classic.spi.ILoggingEvent;
 import ch.qos.logback.core.spi.ContextAware;
 import ch.qos.logback.core.spi.LifeCycle;
@@ -18,8 +16,6 @@ public interface Loki4jEncoder extends ContextAware, LifeCycle {
     String eventToMessage(ILoggingEvent e);
 
     Map<String, String> eventToMetadata(ILoggingEvent e);
-
-    WriterFactory getWriterFactory();
 
     boolean getStaticLabels();
 

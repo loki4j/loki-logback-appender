@@ -1,6 +1,7 @@
 package com.github.loki4j.testkit.dummy;
 
 import java.nio.charset.Charset;
+import java.nio.charset.StandardCharsets;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.HashMap;
@@ -59,7 +60,7 @@ public class StringPayload {
     }
 
     public static StringPayload parse(byte[] input) {
-        return parse(new String(input));
+        return parse(new String(input, StandardCharsets.UTF_8));
     }
 
     public static StringPayload parse(byte[] input, Charset charset) {

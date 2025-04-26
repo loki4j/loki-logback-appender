@@ -37,7 +37,7 @@ public class FastSendTest {
         var appender = appender(10, 1000, encoder, sender);
 
         var events = generateEvents(1, 10);
-        client.testHttpSend(label, events, appender, jsonEncoder(false, label));
+        client.testHttpSend(label, events, appender);
     }
 
 
@@ -50,7 +50,7 @@ public class FastSendTest {
         var appender = appender(10, 1000, encoder, sender);
 
         var events = generateEvents(1000, 10);
-        client.testHttpSend(label, events, appender, jsonEncoder(false, label));
+        client.testHttpSend(label, events, appender);
 
         assertTrue(true);
     }
@@ -64,7 +64,7 @@ public class FastSendTest {
         var appender = appender(10, 1000, encoder, sender);
 
         var events = generateEvents(1000, 10);
-        client.testHttpSend(label, events, appender, jsonEncoder(false, label));
+        client.testHttpSend(label, events, appender);
     }
 
     @Test
@@ -76,7 +76,7 @@ public class FastSendTest {
         var appender = appender(10, 1000, encoder, sender);
 
         var events = generateEvents(1000, 10);
-        client.testHttpSend(label, events, appender, jsonEncoder(false, label));
+        client.testHttpSend(label, events, appender);
     }
 
     @Test
@@ -88,7 +88,7 @@ public class FastSendTest {
         var appender = appender(10, 1000, encoder, sender);
 
         var events = generateEvents(1000, 10);
-        client.testHttpSend(label, events, appender, jsonEncoder(false, label));
+        client.testHttpSend(label, events, appender);
     }
 
     @Test
@@ -100,7 +100,7 @@ public class FastSendTest {
         var appender = appender(10, 1000, encoder, sender);
 
         var events = generateEvents(1000, 10);
-        client.testHttpSend(label, events, appender, jsonEncoder(false, label, new JsonLayout()));
+        client.testHttpSend(label, events, appender);
     }
 
     @Test
@@ -112,7 +112,7 @@ public class FastSendTest {
         var appender = appender(10, 1000, encoder, sender);
 
         var events = generateEvents(1000, 10);
-        client.testHttpSend(label, events, appender, jsonEncoder(false, label, new JsonLayout()));
+        client.testHttpSend(label, events, appender);
     }
 
 }

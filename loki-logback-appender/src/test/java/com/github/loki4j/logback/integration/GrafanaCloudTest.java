@@ -59,7 +59,7 @@ public class GrafanaCloudTest {
         var appender = appender(10, 1000, encoder, sender);
 
         var events = generateEvents(1, 20);
-        client.testHttpSend(label, events, appender, jsonEncoder(false, label));
+        client.testHttpSend(label, events, appender);
 
         assertTrue(true);
     }
@@ -73,7 +73,7 @@ public class GrafanaCloudTest {
         var appender = appender(10, 1000, encoder, sender);
 
         var events = generateEvents(20, 20);
-        client.testHttpSend(label, events, appender, jsonEncoder(false, label));
+        client.testHttpSend(label, events, appender);
 
         assertTrue(true);
     }
@@ -87,7 +87,7 @@ public class GrafanaCloudTest {
         var appender = appender(10, 1000, encoder, sender);
 
         var events = generateEvents(20, 10);
-        client.testHttpSend(label, events, appender, jsonEncoder(false, label));
+        client.testHttpSend(label, events, appender);
     }
 
     @Test
@@ -99,7 +99,7 @@ public class GrafanaCloudTest {
         var appender = appender(10, 1000, encoder, sender);
 
         var events = generateEvents(50, 10);
-        client.testHttpSend(label, events, appender, jsonEncoder(false, label));
+        client.testHttpSend(label, events, appender);
     }
 
     @Test
@@ -111,7 +111,7 @@ public class GrafanaCloudTest {
         var appender = appender(10, 1000, encoder, sender);
 
         var events = generateEvents(100, 10);
-        client.testHttpSend(label, events, appender, jsonEncoder(false, label));
+        client.testHttpSend(label, events, appender);
     }
 
     @Test
@@ -123,7 +123,7 @@ public class GrafanaCloudTest {
         var appender = appender(10, 1000, encoder, sender);
 
         var events = generateEvents(20, 10);
-        client.testHttpSend(label, events, appender, jsonEncoder(false, label, new JsonLayout()));
+        client.testHttpSend(label, events, appender);
     }
 
     @Test
@@ -135,7 +135,7 @@ public class GrafanaCloudTest {
         var appender = appender(10, 1000, encoder, sender);
 
         var events = generateEvents(50, 10);
-        client.testHttpSend(label, events, appender, jsonEncoder(false, label, new JsonLayout()));
+        client.testHttpSend(label, events, appender);
     }
 
     @Test
@@ -150,7 +150,7 @@ public class GrafanaCloudTest {
         appender.setVerbose(false);
 
         var events = generateEvents(1000, 100);
-        client.testHttpSend(label, events, appender, jsonEncoder(false, label));
+        client.testHttpSend(label, events, appender);
 
         assertTrue(true);
     }
@@ -168,7 +168,7 @@ public class GrafanaCloudTest {
         appender.setVerbose(false);
 
         var events = generateEvents(1000, 1000);
-        client.testHttpSend(label, events, appender, jsonEncoder(false, label));
+        client.testHttpSend(label, events, appender);
 
         assertTrue(true);
     }

@@ -27,6 +27,7 @@ import com.fasterxml.jackson.databind.ObjectMapper;
 import com.github.loki4j.client.batch.LogRecord;
 import com.github.loki4j.client.batch.LogRecordBatch;
 import com.github.loki4j.client.http.HttpHeader;
+import com.github.loki4j.client.pipeline.PipelineConfig;
 import com.github.loki4j.client.util.ByteBufferFactory;
 import com.github.loki4j.logback.Loki4jAppender;
 import com.github.loki4j.logback.AbstractLoki4jEncoder;
@@ -112,16 +113,14 @@ public class LokiTestingClient {
     public void testHttpSend(
             String lbl,
             ILoggingEvent[] events,
-            Loki4jAppender actualAppender,
-            AbstractLoki4jEncoder expectedEncoder) throws Exception {
-        testHttpSend(lbl, events, actualAppender, expectedEncoder, events.length, 10L);
+            Loki4jAppender actualAppender) throws Exception {
+        testHttpSend(lbl, events, actualAppender, events.length, 10L);
     }
 
     public void testHttpSend(
             String lbl,
             ILoggingEvent[] events,
             Loki4jAppender actualAppender,
-            AbstractLoki4jEncoder expectedEncoder,
             int chunkSize,
             long chunkDelayMs) throws Exception {
         var records = new LogRecord[events.length];
@@ -138,6 +137,8 @@ public class LokiTestingClient {
             a.waitAllAppended();
             return null;
         });
+        var expectedEncoder = new AbstractLoki4jEncoder();
+        configEncoder(expectedEncoder, false, lbl, null);
         withEncoder(expectedEncoder, encoder -> {
             for (int i = 0; i < events.length; i++) {
                 final var idx = i;
@@ -150,7 +151,7 @@ public class LokiTestingClient {
             }
             var batch = new LogRecordBatch(records);
             batch.sort(lokiLogsSorting);
-            var writer = encoder.getWriterFactory().factory.apply(4 * 1024 * 1024, new ByteBufferFactory(false));
+            var writer = PipelineConfig.json.factory.apply(4 * 1024 * 1024, new ByteBufferFactory(false));
             writer.serializeBatch(batch);
             reqStr.set(new String(writer.toByteArray()));
         });

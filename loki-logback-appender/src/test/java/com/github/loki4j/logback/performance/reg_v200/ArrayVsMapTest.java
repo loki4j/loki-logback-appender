@@ -19,7 +19,7 @@ import ch.qos.logback.classic.spi.ILoggingEvent;
 public class ArrayVsMapTest {
 
     private static AppenderWrapper initApp(LabelCfg labelCfg) {
-        var e = toStringEncoder(
+        var e = stringEncoder(
             labelCfg,
             plainTextMsgLayout("l=%level c=%logger{20} t=%thread | %msg %ex{1}"),
             false);

@@ -38,7 +38,7 @@ public class BatchSizeTest {
         appender.setSendQueueMaxBytes(100 * 1024 * 1024);
 
         var events = generateEvents(5_000, 2000);
-        client.testHttpSend(label, events, appender, jsonEncoder(false, label));
+        client.testHttpSend(label, events, appender);
 
         assertTrue(true);
     }
@@ -54,7 +54,7 @@ public class BatchSizeTest {
         appender.setSendQueueMaxBytes(100 * 1024 * 1024);
 
         var events = generateEvents(5_000, 2000);
-        client.testHttpSend(label, events, appender, jsonEncoder(false, label));
+        client.testHttpSend(label, events, appender);
 
         assertTrue(true);
     }

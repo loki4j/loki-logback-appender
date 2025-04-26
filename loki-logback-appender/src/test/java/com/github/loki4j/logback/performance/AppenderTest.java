@@ -3,8 +3,9 @@ package com.github.loki4j.logback.performance;
 import static com.github.loki4j.logback.Generators.*;
 
 import java.util.Arrays;
+import java.util.function.Consumer;
 
-import com.github.loki4j.logback.Loki4jEncoder;
+import com.github.loki4j.logback.Loki4jAppender;
 import com.github.loki4j.testkit.benchmark.Benchmarker;
 import com.github.loki4j.testkit.benchmark.Benchmarker.Benchmark;
 import com.github.loki4j.testkit.categories.PerformanceTests;
@@ -16,7 +17,7 @@ import ch.qos.logback.classic.spi.ILoggingEvent;
 
 public class AppenderTest {
 
-    private static AppenderWrapper initApp(int capacity, Loki4jEncoder e) {
+    private static AppenderWrapper initApp(int capacity, Consumer<Loki4jAppender> e) {
         var a = appender(capacity, 60_000L, e, dummySender());
         a.setSendQueueMaxBytes(Long.MAX_VALUE);
         a.setVerbose(false);
@@ -35,7 +36,7 @@ public class AppenderTest {
             this.generator = () -> InfiniteEventIterator.from(generateEvents(10_000, 10)).limited(100_000);
             this.benchmarks = Arrays.asList(
                 Benchmark.of("dummyAppenderWait",
-                    () -> initApp(capacity, defaultToStringEncoder()),
+                    () -> initApp(capacity, defaultStringEncoder()),
                     (a, e) -> a.append(e),
                     a -> a.waitAllAppended(),
                     a -> a.stop()),
@@ -66,7 +67,7 @@ public class AppenderTest {
             this.generator = () -> InfiniteEventIterator.from(generateEvents(10_000, 10)).limited(100_000);
             this.benchmarks = Arrays.asList(
                 Benchmark.of("dummyAppenderWait",
-                    () -> initApp(capacity, defaultToStringEncoder()),
+                    () -> initApp(capacity, defaultStringEncoder()),
                     (a, e) -> a.append(e),
                     a -> a.waitAllAppended(),
                     a -> a.stop()),

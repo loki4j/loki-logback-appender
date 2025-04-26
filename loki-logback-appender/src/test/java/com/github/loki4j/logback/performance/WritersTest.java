@@ -29,11 +29,9 @@ public class WritersTest {
 
     private ByteBuffer resultBuffer = ByteBuffer.allocate(CAPACITY_BYTES);
 
-    private static AbstractLoki4jEncoder initEnc(AbstractLoki4jEncoder e) {
-        return initEnc(e, false);
-    }
-
-    private static AbstractLoki4jEncoder initEnc(AbstractLoki4jEncoder e, boolean isDirect) {
+    private static AbstractLoki4jEncoder initEnc() {
+        var e = new AbstractLoki4jEncoder();
+        e.setStaticLabels(true);
         e.setContext(new LoggerContext());
         e.start();
         return e;
@@ -54,7 +52,7 @@ public class WritersTest {
             this.runs = 50;
             this.parFactor = 1;
             this.generator = () -> {
-                var jsonEncSta = initEnc(jsonEncoder(true, "testLabel"));
+                var jsonEncSta = initEnc();
                 return Stream.iterate(
                         Arrays.stream(generateEvents(batchSize, 10))
                             .map(e -> eventToRecord(e, jsonEncSta))
@@ -84,7 +82,7 @@ public class WritersTest {
             this.runs = 50;
             this.parFactor = 1;
             this.generator = () -> {
-                var jsonEncDyn = initEnc(jsonEncoder(false, "testLabel"));
+                var jsonEncDyn = initEnc();
                 return Stream.iterate(
                         Arrays.stream(generateEvents(batchSize, 10))
                             .map(e -> eventToRecord(e, jsonEncDyn))

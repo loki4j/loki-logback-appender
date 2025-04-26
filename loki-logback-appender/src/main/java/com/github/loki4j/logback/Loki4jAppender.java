@@ -4,6 +4,7 @@ import java.util.concurrent.atomic.AtomicLong;
 
 import com.github.loki4j.client.pipeline.AsyncBufferPipeline;
 import com.github.loki4j.client.pipeline.PipelineConfig;
+import com.github.loki4j.client.pipeline.PipelineConfig.WriterFactory;
 
 import ch.qos.logback.classic.spi.ILoggingEvent;
 import ch.qos.logback.core.UnsynchronizedAppenderBase;
@@ -48,17 +49,17 @@ public class Loki4jAppender extends UnsynchronizedAppenderBase<ILoggingEvent> {
      * Initial backoff delay before the next attempt to re-send a failed batch.
      * Batches are retried with an exponential backoff (e.g. 0.5s, 1s, 2s, 4s, etc.) and jitter.
      */
-    public long minRetryBackoffMs = 500;
+    private long minRetryBackoffMs = 500;
 
     /**
      * Maximum backoff delay before the next attempt to re-send a failed batch.
      */
-    public long maxRetryBackoffMs = 60 * 1000;
+    private long maxRetryBackoffMs = 60 * 1000;
 
     /**
      * Upper bound for a jitter added to the retry delays.
      */
-    public int maxRetryJitterMs = 500;
+    private int maxRetryJitterMs = 500;
 
     /**
      * If true, batches that Loki responds to with a 429 status code (TooManyRequests)
@@ -71,6 +72,11 @@ public class Loki4jAppender extends UnsynchronizedAppenderBase<ILoggingEvent> {
      * Decreasing this value means lower latency at cost of higher CPU usage.
      */
     private long internalQueuesCheckTimeoutMs = 25;
+
+    /**
+     * If true, Loki4j uses Protobuf Loki API instead of JSON.
+     */
+    private boolean useProtobufApi = false;
 
     /**
      * If true, the appender will print its own debug logs to stderr.
@@ -95,9 +101,14 @@ public class Loki4jAppender extends UnsynchronizedAppenderBase<ILoggingEvent> {
     private boolean useDirectBuffers = true;
 
     /**
-     * An encoder to use for converting log record batches to format acceptable by Loki.
+     * An encoder converts Logback events into Loki4j log record format.
      */
-    private Loki4jEncoder encoder;
+    private AbstractLoki4jEncoder encoder = new AbstractLoki4jEncoder();
+
+    /**
+     * A writer to use for converting log record batches to format acceptable by Loki.
+     */
+    private WriterFactory writer;
 
     /**
      * A configurator for HTTP sender.
@@ -134,12 +145,12 @@ public class Loki4jAppender extends UnsynchronizedAppenderBase<ILoggingEvent> {
             sendQueueMaxBytes = batchMaxBytes * 5;
         }
 
-        if (encoder == null) {
-            addWarn("No encoder specified in the config. Using JsonEncoder with default settings");
-            encoder = new JsonEncoder();
-        }
         encoder.setContext(context);
         encoder.start();
+
+        if (writer == null) {
+            writer = useProtobufApi ? PipelineConfig.protobuf : PipelineConfig.json;
+        }
 
         if (sender == null) {
             addWarn("No sender specified in the config. Trying to use JavaHttpSender with default settings");
@@ -162,7 +173,7 @@ public class Loki4jAppender extends UnsynchronizedAppenderBase<ILoggingEvent> {
             .setUseDirectBuffers(useDirectBuffers)
             .setDrainOnStop(drainOnStop)
             .setMetricsEnabled(metricsEnabled)
-            .setWriter(encoder.getWriterFactory())
+            .setWriter(writer)
             .setHttpConfig(sender.getConfig())
             .setHttpClientFactory(sender.getHttpClientFactory())
             .setInternalLoggingFactory(source -> new InternalLogger(source, this))
@@ -245,7 +256,7 @@ public class Loki4jAppender extends UnsynchronizedAppenderBase<ILoggingEvent> {
     }
 
     public void setMaxRetries(int maxRetries) {
-            this.maxRetries = maxRetries;
+        this.maxRetries = maxRetries;
     }
     public void setMinRetryBackoffMs(long minRetryBackoffMs) {
         this.minRetryBackoffMs = minRetryBackoffMs;
@@ -259,33 +270,9 @@ public class Loki4jAppender extends UnsynchronizedAppenderBase<ILoggingEvent> {
     public void setDropRateLimitedBatches(boolean dropRateLimitedBatches) {
         this.dropRateLimitedBatches = dropRateLimitedBatches;
     }
-    public void setRetryTimeoutMs(long retryTimeoutMs) {
+    public void setRetryTimeoutMs(long retryTimeoutMs) {    // TODO: remove this
         addWarn("The setting `retryTimeoutMs` is no longer supported. See `minRetryBackoffMs` and `maxRetryBackoffMs`");
     }
-
-    /**
-     * "format" instead of "encoder" in the name allows to specify
-     * the default implementation, so users don't have to write
-     * full-qualified class name by default.
-     */
-    @DefaultClass(JsonEncoder.class)
-    public void setFormat(Loki4jEncoder encoder) {
-        this.encoder = encoder;
-    }
-
-    HttpSender getSender() {
-        return sender;
-    }
-
-    /**
-     * "http" instead of "sender" is just to have a more clear name
-     * for the configuration section.
-     */
-    @DefaultClass(JavaHttpSender.class)
-    public void setHttp(HttpSender sender) {
-        this.sender = sender;
-    }
-
     public void setVerbose(boolean verbose) {
         this.verbose = verbose;
     }
@@ -301,5 +288,44 @@ public class Loki4jAppender extends UnsynchronizedAppenderBase<ILoggingEvent> {
     public void setInternalQueuesCheckTimeoutMs(long internalQueuesCheckTimeoutMs) {
         this.internalQueuesCheckTimeoutMs = internalQueuesCheckTimeoutMs;
     }
+    public void setUseProtobufApi(boolean useProtobufApi) {
+        this.useProtobufApi = useProtobufApi;
+    }
 
+    HttpSender getSender() {
+        return sender;
+    }
+
+    /**
+     * "http" instead of "sender" is just to have a more clear name
+     * for the configuration section.
+     */
+    @DefaultClass(JavaHttpSender.class)
+    public void setHttp(HttpSender sender) {
+        this.sender = sender;
+    }
+
+    /**
+     * Encoder can be configured from the outside for testing purposes.
+     */
+    AbstractLoki4jEncoder getEncoder() {
+        return this.encoder;
+    }
+
+    /**
+     * "format" instead of "encoder" in the name allows to specify
+     * the default implementation, so users don't have to write
+     * full-qualified class name by default.
+     */
+    @DefaultClass(AbstractLoki4jEncoder.class)
+    void setFormat(AbstractLoki4jEncoder encoder) {
+        this.encoder = encoder;
+    }
+
+    /**
+     * Writer can be set from the outside for testing purposes.
+     */
+    void setWriter(WriterFactory writer) {
+        this.writer = writer;
+    }
 }

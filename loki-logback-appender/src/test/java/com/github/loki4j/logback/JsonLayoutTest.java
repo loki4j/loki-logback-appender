@@ -48,7 +48,7 @@ public class JsonLayoutTest {
             )
             .build();
 
-        var encoder = toStringEncoder(
+        var encoder = stringEncoder(
                 labelCfg("app=my-app", ",", "=", true, false),
                 jsonMsgLayout(),
                 false
@@ -58,7 +58,7 @@ public class JsonLayoutTest {
             appender.append(events);
             appender.waitAllAppended();
 
-            var actual = StringPayload.parse(sender.lastSendData(), encoder.charset);
+            var actual = StringPayload.parse(sender.lastSendData());
             assertEquals("jsonLayout", expected, actual);
             return null;
         });
