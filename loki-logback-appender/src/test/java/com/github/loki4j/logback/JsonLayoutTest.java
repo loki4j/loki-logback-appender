@@ -48,13 +48,8 @@ public class JsonLayoutTest {
             )
             .build();
 
-        var encoder = stringEncoder(
-                labelCfg("app=my-app", ",", "=", true, false),
-                jsonMsgLayout(),
-                false
-        );
         var sender = dummySender();
-        withAppender(appender(3, 1000L, encoder, sender), appender -> {
+        withAppender(stringAppender("app=my-app", null, jsonMsgLayout(), 3, 1000L, sender), appender -> {
             appender.append(events);
             appender.waitAllAppended();
 

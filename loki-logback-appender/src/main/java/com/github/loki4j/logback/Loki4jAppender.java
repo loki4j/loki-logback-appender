@@ -36,7 +36,7 @@ public class Loki4jAppender extends PipelineConfigAppenderBase {
     private static final String KV_REGEX_STARTER = "regex:";
     private static final String KV_PAIR_SEPARATOR = "\n";
     private static final String KV_KV_SEPARATOR = "=";
-    private static final String DEFAULT_LBL_PATTERN = "source=loki4j,host=";
+    private static final String DEFAULT_LBL_PATTERN = "source=loki4j\nhost=";
     private static final String DEFAULT_MSG_PATTERN = "%msg %ex";
 
     /**

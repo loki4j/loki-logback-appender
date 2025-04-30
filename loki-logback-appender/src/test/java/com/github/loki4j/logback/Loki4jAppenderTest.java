@@ -58,9 +58,8 @@ public class Loki4jAppenderTest {
 
     @Test
     public void testBatchSize() {
-        var encoder = defaultStringEncoder();
         var sender = dummySender();
-        withAppender(appender(3, 1000L, encoder, sender), appender -> {
+        withAppender(stringAppender(3, 1000L, sender), appender -> {
             var sendCapture = sender.captureSendInvocation();
             appender.append(events[0]);
             appender.append(events[1]);
@@ -75,9 +74,8 @@ public class Loki4jAppenderTest {
 
     @Test
     public void testBatchTimeout() {
-        var encoder = defaultStringEncoder();
         var sender = dummySender();
-        withAppender(appender(30, 400L, encoder, sender), appender -> {
+        withAppender(stringAppender(30, 400L, sender), appender -> {
             appender.append(events[0]);
             appender.append(events[1]);
             appender.append(events[2]);
@@ -94,9 +92,8 @@ public class Loki4jAppenderTest {
 
     @Test
     public void testDrainOnStop() {
-        var encoder = defaultStringEncoder();
         var sender = dummySender();
-        var appender = appender(30, 4000L, encoder, sender);
+        var appender = stringAppender(30, 4000L, sender);
         appender.start();
         appender.append(events[0]);
         appender.append(events[1]);
@@ -115,25 +112,20 @@ public class Loki4jAppenderTest {
         var failingWriterRef = new AtomicReference<FailingStringWriter>();
         var sender = dummySender();
         var appender = appender(
+            "level=%level\napp=my-app",
+            false,
+            null,
+            plainTextMsgLayout("l=%level c=%logger{20} t=%thread | %msg %ex{1}"),
             4,
             4000L,
-            app -> {
-                app.setWriter(
-                    new PipelineConfig.WriterFactory(
-                        (c, bf) -> {
-                            var failingWriter = new FailingStringWriter(c, bf);
-                            failingWriterRef.set(failingWriter);
-                            return failingWriter;
-                        },
-                        "text/plain"
-                    )
-                );
-                configEncoder(
-                    app.getEncoder(),
-                    labelCfg("level=%level,app=my-app", ",", "=", true, false),
-                    plainTextMsgLayout("l=%level c=%logger{20} t=%thread | %msg %ex{1}"),
-                    false);
-            },
+            new PipelineConfig.WriterFactory(
+                (c, bf) -> {
+                    var failingWriter = new FailingStringWriter(c, bf);
+                    failingWriterRef.set(failingWriter);
+                    return failingWriter;
+                },
+                "text/plain"
+            ),
             sender);
         appender.start();
         failingWriterRef.get().fail.set(true);
@@ -158,10 +150,9 @@ public class Loki4jAppenderTest {
 
     @Test
     public void testDrainOnStopDisabled() {
-        var encoder = defaultStringEncoder();
         var sender = dummySender();
-        var appender = appender(30, 4000L, encoder, sender);
-        appender.setDrainOnStop(false);
+        var appender = stringAppender(30, 4000L, sender);
+        appender.getBatch().setDrainOnStop(false);
         appender.start();
         appender.append(events[0]);
         appender.append(events[1]);
@@ -187,10 +178,9 @@ public class Loki4jAppenderTest {
             "123456789012345678901234567890123456789012345678901234567890123456789012345678901234567890" +
             "123456789012345678901234567890123456789012345678901234567890123456789012345678901234567890";
 
-        var encoder = defaultStringEncoder();
         var sender = dummySender();
-        var appender = appender(3, 4000L, encoder, sender);
-        appender.setBatchMaxBytes(500);
+        var appender = stringAppender(3, 4000L, sender);
+        appender.getBatch().setMaxBytes(500);
         appender.start();
         var sendCapture = sender.captureSendInvocation();
         appender.append(events[0]);
@@ -207,10 +197,9 @@ public class Loki4jAppenderTest {
     @Test
     public void testBackpressure() {
         var sender = new WrappingHttpSender<>(new SuspendableHttpClient());
-        var encoder = defaultStringEncoder();
-        var appender = appender(1, 4000L, encoder, sender);
-        appender.setBatchMaxBytes(120);
-        appender.setSendQueueMaxBytes(150);
+        var appender = stringAppender(1, 4000L, sender);
+        appender.getBatch().setMaxBytes(120);
+        appender.getBatch().setSendQueueMaxBytes(150);
         appender.start();
 
         sender.client.suspend();
@@ -254,11 +243,10 @@ public class Loki4jAppenderTest {
 
         var failingHttpClient = new FailingHttpClient();
         var sender = new WrappingHttpSender<>(failingHttpClient);
-        var encoder = defaultStringEncoder();
 
-        var appender = appender(1, 4000L, encoder, sender);
-        appender.setMinRetryBackoffMs(50);
-        appender.setMaxRetryJitterMs(10);
+        var appender = stringAppender(1, 4000L, sender);
+        appender.getHttp().setMinRetryBackoffMs(50);
+        appender.getHttp().setMaxRetryJitterMs(10);
         appender.start();
 
         // all retries failed
@@ -306,11 +294,10 @@ public class Loki4jAppenderTest {
 
         var failingHttpClient = new FailingHttpClient();
         var sender = new WrappingHttpSender<>(failingHttpClient);
-        var encoder = defaultStringEncoder();
 
-        var appender = appender(1, 4000L, encoder, sender);
-        appender.setMinRetryBackoffMs(50);
-        appender.setMaxRetryJitterMs(10);
+        var appender = stringAppender(1, 4000L, sender);
+        appender.getHttp().setMinRetryBackoffMs(50);
+        appender.getHttp().setMaxRetryJitterMs(10);
         appender.start();
 
         sender.client.setFailure(FailureType.HTTP_CONNECT_TIMEOUT_EXCEPTION);
@@ -342,11 +329,10 @@ public class Loki4jAppenderTest {
 
         var failingHttpClient = new FailingHttpClient();
         var sender = new WrappingHttpSender<>(failingHttpClient);
-        var encoder = defaultStringEncoder();
 
-        var appender = appender(1, 4000L, encoder, sender);
-        appender.setMinRetryBackoffMs(50);
-        appender.setMaxRetryJitterMs(10);
+        var appender = stringAppender(1, 4000L, sender);
+        appender.getHttp().setMinRetryBackoffMs(50);
+        appender.getHttp().setMaxRetryJitterMs(10);
         appender.start();
 
         sender.client.setFailure(FailureType.RATE_LIMITED);

@@ -42,7 +42,7 @@ public final class ProtobufWriter implements Writer {
         var currentStream = batch.get(0).stream;
         nextStream(currentStream);
         for (int i = 0; i < batch.size(); i++) {
-            if (batch.get(i).stream != currentStream) {
+            if (!batch.get(i).stream.equals(currentStream)) {
                 currentStream = batch.get(i).stream;
                 nextStream(currentStream);
             }

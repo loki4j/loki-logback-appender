@@ -78,6 +78,27 @@ public abstract class PipelineConfigAppenderBase extends UnsynchronizedAppenderB
                 .build();
     }
 
+    /** Keeping getter for testing purposes */
+    BatchCfg getBatch() {
+        return batch;
+    }
+    public void setBatch(BatchCfg batch) {
+        this.batch = batch;
+    }
+
+    /** Keeping getter for testing purposes */
+    HttpCfg getHttp() {
+        return http;
+    }
+    public void setHttp(HttpCfg http) {
+        this.http = http;
+    }
+
+    public void setMetricsEnabled(boolean metricsEnabled) {
+        this.metricsEnabled = metricsEnabled;
+    }
+
+
     public static final class BatchCfg {
         /**
          * Max number of events to put into a single batch before sending it to Loki.

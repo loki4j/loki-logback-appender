@@ -20,9 +20,8 @@ public class PatternLayoutTest {
             loggingEvent(100L, Level.INFO, "TestApp", "main", "m3-line1\rline2\r", null)
         };
 
-        var encoder = jsonEncoder(false, "testEncodeEscapes");
         var sender = dummySender();
-        var appender = appender(3, 1000L, encoder, sender);
+        var appender = jsonAppender("testEncodeEscapes", 3, 1000L, sender);
         appender.start();
 
         appender.append(escEvents[0]);

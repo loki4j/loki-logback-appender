@@ -43,7 +43,7 @@ public class JavaHttpAppenderTest {
 
     @Test
     public void testJavaHttpOffHeapSend() {
-        withAppender(appender(3, 1000L, defaultStringEncoder(), javaHttpSender(url)), a -> {
+        withAppender(stringAppender(3, 1000L, javaHttpSender(url)), a -> {
             a.append(events[0]);
             a.append(events[1]);
             assertTrue("no batches before batchSize reached", mockLoki.lastBatch == null);
@@ -57,8 +57,8 @@ public class JavaHttpAppenderTest {
 
     @Test
     public void testJavaHttpOnHeapSend() {
-        var appender = appender(3, 1000L, defaultStringEncoder(), javaHttpSender(url));
-        appender.setUseDirectBuffers(false);
+        var appender = stringAppender(3, 1000L, javaHttpSender(url));
+        appender.getBatch().setUseDirectBuffers(false);
         withAppender(appender, a -> {
             a.append(events[0]);
             a.append(events[1]);
@@ -75,7 +75,7 @@ public class JavaHttpAppenderTest {
     public void testJavaHttpSendWithTenantHeader() {
         var sender = javaHttpSender(url);
         sender.setTenantId("tenant1");
-        withAppender(appender(3, 1000L, defaultStringEncoder(), sender), a -> {
+        withAppender(stringAppender(3, 1000L, sender), a -> {
             a.append(events);
             a.waitAllAppended();
             assertEquals("http send", expected, StringPayload.parse(mockLoki.lastBatch));
