@@ -7,7 +7,6 @@ import java.util.HashMap;
 import java.util.Iterator;
 import java.util.List;
 import java.util.concurrent.ThreadLocalRandom;
-import java.util.function.Consumer;
 import java.util.function.Function;
 import java.util.stream.StreamSupport;
 
@@ -393,6 +392,9 @@ public class Generators {
             for (int i = 0; i < events.length; i++) {
                 appender.append(events[i]);
             }
+        }
+        public LogRecord eventToLogRecord(ILoggingEvent event) {
+            return appender.eventToLogRecord(event);
         }
         public void waitAllAppended() {
             appender.waitSendQueueIsEmpty(2L * 60 * 1000);
