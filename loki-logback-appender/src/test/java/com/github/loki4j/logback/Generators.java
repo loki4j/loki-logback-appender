@@ -141,6 +141,38 @@ public class Generators {
             sender);
     }
 
+    public static Loki4jAppender protoAppender(
+            String labelsPattern,
+            String structuredMetadataPattern,
+            Layout<ILoggingEvent> msgLayout,
+            int batchSize,
+            long batchTimeoutMs,
+            AbstractHttpSender sender) {
+        return appender(
+            labelsPattern,
+            false,
+            structuredMetadataPattern,
+            msgLayout,
+            batchSize,
+            batchTimeoutMs,
+            PipelineConfig.protobuf,
+            sender);
+    }
+
+    public static Loki4jAppender protoAppender(
+            String testLabel,
+            int batchSize,
+            long batchTimeoutMs,
+            AbstractHttpSender sender) {
+        return jsonAppender(
+            "test=" + testLabel + "\nlevel=%level\nservice_name=my-app",
+            null,
+            plainTextMsgLayout(TEST_MSG_PATTERN),
+            batchSize,
+            batchTimeoutMs,
+            sender);
+    }
+
     public static JavaHttpSender javaHttpSender(String url) {
         var sender = new JavaHttpSender();
 

@@ -54,9 +54,8 @@ public class GrafanaCloudTest {
     @Category({CIOnlyTests.class})
     public void testApacheJsonOneEventCloud() throws Exception {
         var label = label("testApacheJsonOneEventCloud");
-        var encoder = jsonEncoder(false, label);
         var sender = authorize(apacheHttpSender(urlPush));
-        var appender = appender(10, 1000, encoder, sender);
+        var appender = jsonAppender(label, 10, 1000, sender);
 
         var events = generateEvents(1, 20);
         client.testHttpSend(label, events, appender);
@@ -68,9 +67,8 @@ public class GrafanaCloudTest {
     @Category({CIOnlyTests.class})
     public void testApacheJsonCloud() throws Exception {
         var label = label("testApacheJsonCloud");
-        var encoder = jsonEncoder(false, label);
         var sender = authorize(apacheHttpSender(urlPush));
-        var appender = appender(10, 1000, encoder, sender);
+        var appender = jsonAppender(label, 10, 1000, sender);
 
         var events = generateEvents(20, 20);
         client.testHttpSend(label, events, appender);
@@ -82,9 +80,8 @@ public class GrafanaCloudTest {
     @Category({CIOnlyTests.class})
     public void testJavaJsonCloud() throws Exception {
         var label = label("testJavaJsonCloud");
-        var encoder = jsonEncoder(false, label);
         var sender = authorize(javaHttpSender(urlPush));
-        var appender = appender(10, 1000, encoder, sender);
+        var appender = jsonAppender(label, 10, 1000, sender);
 
         var events = generateEvents(20, 10);
         client.testHttpSend(label, events, appender);
@@ -94,9 +91,8 @@ public class GrafanaCloudTest {
     @Category({CIOnlyTests.class})
     public void testApacheProtobufCloud() throws Exception {
         var label = label("testApacheProtobufCloud");
-        var encoder = protobufEncoder(false, label);
         var sender = authorize(apacheHttpSender(urlPush));
-        var appender = appender(10, 1000, encoder, sender);
+        var appender = protoAppender(label, 10, 1000, sender);
 
         var events = generateEvents(50, 10);
         client.testHttpSend(label, events, appender);
@@ -106,9 +102,8 @@ public class GrafanaCloudTest {
     @Category({CIOnlyTests.class})
     public void testJavaProtobufCloud() throws Exception {
         var label = label("testJavaProtobufCloud");
-        var encoder = protobufEncoder(false, label);
         var sender = authorize(javaHttpSender(urlPush));
-        var appender = appender(10, 1000, encoder, sender);
+        var appender = protoAppender(label, 10, 1000, sender);
 
         var events = generateEvents(100, 10);
         client.testHttpSend(label, events, appender);
@@ -118,9 +113,8 @@ public class GrafanaCloudTest {
     @Category({CIOnlyTests.class})
     public void testJsonLayoutJavaJsonCloud() throws Exception {
         var label = label("testJsonLayoutJavaJsonCloud");
-        var encoder = jsonEncoder(false, label, new JsonLayout());
         var sender = authorize(javaHttpSender(urlPush));
-        var appender = appender(10, 1000, encoder, sender);
+        var appender = jsonAppender(label, null, new JsonLayout(), 10, 1000, sender);
 
         var events = generateEvents(20, 10);
         client.testHttpSend(label, events, appender);
@@ -130,9 +124,8 @@ public class GrafanaCloudTest {
     @Category({CIOnlyTests.class})
     public void testJsonLayoutApacheProtobufCloud() throws Exception {
         var label = label("testJsonLayoutApacheProtobufCloud");
-        var encoder = protobufEncoder(false, label, new JsonLayout());
         var sender = authorize(apacheHttpSender(urlPush));
-        var appender = appender(10, 1000, encoder, sender);
+        var appender = protoAppender(label, null, new JsonLayout(), 10, 1000, sender);
 
         var events = generateEvents(50, 10);
         client.testHttpSend(label, events, appender);
@@ -142,10 +135,9 @@ public class GrafanaCloudTest {
     @Category({CIOnlyTests.class})
     public void testApacheJsonMaxBytesSend() throws Exception {
         var label = label("testApacheJsonMaxBytesSendCloud");
-        var encoder = jsonEncoder(false, label);
         var sender = authorize(apacheHttpSender(urlPush));
         sender.setRequestTimeoutMs(30_000L);
-        var appender = appender(5_000, 1000, encoder, sender);
+        var appender = jsonAppender(label, 5_000, 1000, sender);
         appender.setBatchMaxBytes(65536);
         appender.setVerbose(false);
 
@@ -160,10 +152,9 @@ public class GrafanaCloudTest {
     @Ignore("Disabled due to unpredictable stream sharding on Grafana Cloud Loki side")
     public void testJavaProtobufMaxBytesSend() throws Exception {
         var label = label("testJavaProtobufMaxBytesSendCloud");
-        var encoder = protobufEncoder(false, label);
         var sender = authorize(javaHttpSender(urlPush));
         sender.setRequestTimeoutMs(30_000L);
-        var appender = appender(5_000, 1000, encoder, sender);
+        var appender = protoAppender(label, 5_000, 1000, sender);
         appender.setBatchMaxBytes(65536);
         appender.setVerbose(false);
 
