@@ -83,8 +83,7 @@ public class AbstractLoki4jEncoderTest {
                 "level=%level\napp=",
                 null,
                 plainTextMsgLayout("l=%level c=%logger{20} t=%thread | %msg %ex{1}"),
-                30,
-                400L,
+                batch(30, 400L),
                 sender), appender -> {
                     appender.append(event);
                     return null;
@@ -93,8 +92,7 @@ public class AbstractLoki4jEncoderTest {
                 "level=%lev{,app=x",
                 null,
                 plainTextMsgLayout("l=%level c=%logger{20} t=%thread | %msg %ex{1}"),
-                30,
-                400L,
+                batch(30, 400L),
                 sender), appender -> {
                     appender.append(event);
                     return null;
@@ -107,8 +105,7 @@ public class AbstractLoki4jEncoderTest {
                 "level=%level\napp=my-app\nthread=%thread",
                 null,
                 plainTextMsgLayout("l=%level | %msg %ex{1}"),
-                1,
-                1000L,
+                batch(1, 1000L),
                 null), appender -> {
                     var stream1 = appender.eventToLogRecord(
                             loggingEvent(100L, Level.INFO, "test.TestApp", "thread-1", "Test message 1", null)).stream;
@@ -137,8 +134,7 @@ public class AbstractLoki4jEncoderTest {
                 "level=%level\nclass=%logger\nthread=%thread",
                 null,
                 plainTextMsgLayout("l=%level | %msg %ex{1}"),
-                1,
-                1000L,
+                batch(1, 1000L),
                 null), appender -> {
                     var event = loggingEvent(100L, Level.INFO, "test.TestApp", "th=\n1", "Test message 1", null);
                     var record = appender.eventToLogRecord(event);
@@ -173,8 +169,7 @@ public class AbstractLoki4jEncoderTest {
                 "l=%level",
                 null,
                 plainTextMsgLayout("%level | %msg"),
-                4,
-                1000L,
+                batch(4, 1000L),
                 sender);
         stringAppender.setReadMarkers(true);
 
@@ -217,8 +212,7 @@ public class AbstractLoki4jEncoderTest {
                 "l=%level",
                 "t=%thread\nc=%logger",
                 plainTextMsgLayout("%level | %msg"),
-                4,
-                1000L,
+                batch(4, 1000L),
                 sender);
         stringAppender.setReadMarkers(true);
 
@@ -254,8 +248,7 @@ public class AbstractLoki4jEncoderTest {
                 "l=%level",
                 "t=%thread\nc=%logger",
                 plainTextMsgLayout("%level | %msg"),
-                4,
-                1000L,
+                batch(4, 1000L),
                 sender);
         stringAppender.setReadMarkers(true);
 
@@ -291,8 +284,7 @@ public class AbstractLoki4jEncoderTest {
                 "l=%level",
                 null,
                 plainTextMsgLayout("%level | %msg"),
-                6,
-                1000L,
+                batch(6, 1000L),
                 sender);
         staticAppender.getBatch().setStaticLabels(true);
 
@@ -319,8 +311,7 @@ public class AbstractLoki4jEncoderTest {
                         "l=%level",
                         null,
                         plainTextMsgLayout("%level | %msg"),
-                        6,
-                        1000L,
+                        batch(6, 1000L),
                         sender),
                 appender -> {
                     appender.append(eventsToOrder);

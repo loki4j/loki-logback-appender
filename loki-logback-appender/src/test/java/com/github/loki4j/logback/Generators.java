@@ -19,6 +19,7 @@ import com.github.loki4j.client.pipeline.PipelineConfig;
 import com.github.loki4j.client.pipeline.PipelineConfig.WriterFactory;
 import com.github.loki4j.client.util.ByteBufferFactory;
 import com.github.loki4j.client.writer.Writer;
+import com.github.loki4j.logback.PipelineConfigAppenderBase.BatchCfg;
 import com.github.loki4j.testkit.dummy.DummyHttpClient;
 import com.github.loki4j.testkit.dummy.ExceptionGenerator;
 import com.github.loki4j.testkit.dummy.LokiHttpServerMock;
@@ -55,14 +56,9 @@ public class Generators {
             boolean staticLabels,
             String structuredMetadataPattern,
             Layout<ILoggingEvent> msgLayout,
-            int batchSize,
-            long batchTimeoutMs,
+            BatchCfg batch,
             WriterFactory writer,
             AbstractHttpSender sender) {
-        var batch = new Loki4jAppender.BatchCfg();
-        batch.setMaxItems(batchSize);
-        batch.setTimeoutMs(batchTimeoutMs);
-
         var http = new Loki4jAppender.HttpCfg();
         http.setWriter(writer);
         http.setSender(sender);
@@ -82,30 +78,26 @@ public class Generators {
             String labelsPattern,
             String structuredMetadataPattern,
             Layout<ILoggingEvent> msgLayout,
-            int batchSize,
-            long batchTimeoutMs,
+            BatchCfg batch,
             AbstractHttpSender sender) {
         return appender(
             labelsPattern,
             false,
             structuredMetadataPattern,
             msgLayout,
-            batchSize,
-            batchTimeoutMs,
+            batch,
             new PipelineConfig.WriterFactory(Generators::stringWriter, "text/plain"),
             sender);
     }
 
     public static Loki4jAppender stringAppender(
-            int batchSize,
-            long batchTimeoutMs,
+            BatchCfg batch,
             AbstractHttpSender sender) {
         return stringAppender(
             "level=%level\napp=my-app",
             null,
             plainTextMsgLayout(TEST_MSG_PATTERN),
-            batchSize,
-            batchTimeoutMs,
+            batch,
             sender);
     }
 
@@ -113,31 +105,27 @@ public class Generators {
             String labelsPattern,
             String structuredMetadataPattern,
             Layout<ILoggingEvent> msgLayout,
-            int batchSize,
-            long batchTimeoutMs,
+            BatchCfg batch,
             AbstractHttpSender sender) {
         return appender(
             labelsPattern,
             false,
             structuredMetadataPattern,
             msgLayout,
-            batchSize,
-            batchTimeoutMs,
+            batch,
             PipelineConfig.json,
             sender);
     }
 
     public static Loki4jAppender jsonAppender(
             String testLabel,
-            int batchSize,
-            long batchTimeoutMs,
+            BatchCfg batch,
             AbstractHttpSender sender) {
         return jsonAppender(
             "test=" + testLabel + "\nlevel=%level\nservice_name=my-app",
             null,
             plainTextMsgLayout(TEST_MSG_PATTERN),
-            batchSize,
-            batchTimeoutMs,
+            batch,
             sender);
     }
 
@@ -145,32 +133,35 @@ public class Generators {
             String labelsPattern,
             String structuredMetadataPattern,
             Layout<ILoggingEvent> msgLayout,
-            int batchSize,
-            long batchTimeoutMs,
+            BatchCfg batch,
             AbstractHttpSender sender) {
         return appender(
             labelsPattern,
             false,
             structuredMetadataPattern,
             msgLayout,
-            batchSize,
-            batchTimeoutMs,
+            batch,
             PipelineConfig.protobuf,
             sender);
     }
 
     public static Loki4jAppender protoAppender(
             String testLabel,
-            int batchSize,
-            long batchTimeoutMs,
+            BatchCfg batch,
             AbstractHttpSender sender) {
         return jsonAppender(
             "test=" + testLabel + "\nlevel=%level\nservice_name=my-app",
             null,
             plainTextMsgLayout(TEST_MSG_PATTERN),
-            batchSize,
-            batchTimeoutMs,
+            batch,
             sender);
+    }
+
+    public static BatchCfg batch(int batchSize, long batchTimeoutMs) {
+        var batch = new Loki4jAppender.BatchCfg();
+        batch.setMaxItems(batchSize);
+        batch.setTimeoutMs(batchTimeoutMs);
+        return batch;
     }
 
     public static JavaHttpSender javaHttpSender(String url) {

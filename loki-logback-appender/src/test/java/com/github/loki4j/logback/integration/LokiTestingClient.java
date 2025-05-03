@@ -137,7 +137,7 @@ public class LokiTestingClient {
             return null;
         });
         // forming expected output
-        withAppender(jsonAppender(lbl, chunkSize, chunkDelayMs, dummySender()), encoder -> {
+        withAppender(jsonAppender(lbl, batch(chunkSize, chunkDelayMs), dummySender()), encoder -> {
             for (int i = 0; i < events.length; i++) {
                 final var idx = i;
                 records[i] = encoder.eventToLogRecord(events[idx]);

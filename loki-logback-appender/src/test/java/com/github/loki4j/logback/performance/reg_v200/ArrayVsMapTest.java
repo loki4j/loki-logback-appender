@@ -18,14 +18,14 @@ import ch.qos.logback.classic.spi.ILoggingEvent;
 public class ArrayVsMapTest {
 
     private static AppenderWrapper initApp(String labelsPattern, String metadataPattern) {
+        var batch = batch(1000, 60_000L);
+        batch.setSendQueueMaxBytes(Long.MAX_VALUE);
         var a = stringAppender(
             labelsPattern,
             metadataPattern,
             plainTextMsgLayout("l=%level c=%logger{20} t=%thread | %msg %ex{1}"),
-            1000,
-            60_000L,
+            batch,
             dummySender());
-        a.setSendQueueMaxBytes(Long.MAX_VALUE);
         a.setVerbose(false);
         a.start();
         return new AppenderWrapper(a);

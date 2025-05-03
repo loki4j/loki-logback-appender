@@ -21,7 +21,7 @@ public class PatternLayoutTest {
         };
 
         var sender = dummySender();
-        var appender = jsonAppender("testEncodeEscapes", 3, 1000L, sender);
+        var appender = jsonAppender("testEncodeEscapes", batch(3, 1000L), sender);
         appender.start();
 
         appender.append(escEvents[0]);

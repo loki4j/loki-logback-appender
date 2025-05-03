@@ -33,8 +33,9 @@ public class BatchSizeTest {
         var label = "testApacheJsonMaxBytesSend";
         var sender = apacheHttpSender(urlPush);
         sender.setRequestTimeoutMs(30_000L);
-        var appender = jsonAppender(label, 5_000, 1000, sender);
-        appender.setSendQueueMaxBytes(100 * 1024 * 1024);
+        var batch = batch(5_000, 1000);
+        batch.setSendQueueMaxBytes(100 * 1024 * 1024);
+        var appender = jsonAppender(label, batch, sender);
 
         var events = generateEvents(5_000, 2000);
         client.testHttpSend(label, events, appender);
@@ -48,8 +49,9 @@ public class BatchSizeTest {
         var label = "testJavaProtobufMaxBytesSend";
         var sender = javaHttpSender(urlPush);
         sender.setRequestTimeoutMs(30_000L);
-        var appender = protoAppender(label, 5_000, 1000, sender);
-        appender.setSendQueueMaxBytes(100 * 1024 * 1024);
+        var batch = batch(5_000, 1000);
+        batch.setSendQueueMaxBytes(100 * 1024 * 1024);
+        var appender = protoAppender(label, batch, sender);
 
         var events = generateEvents(5_000, 2000);
         client.testHttpSend(label, events, appender);

@@ -55,7 +55,7 @@ public class GrafanaCloudTest {
     public void testApacheJsonOneEventCloud() throws Exception {
         var label = label("testApacheJsonOneEventCloud");
         var sender = authorize(apacheHttpSender(urlPush));
-        var appender = jsonAppender(label, 10, 1000, sender);
+        var appender = jsonAppender(label, batch(10, 1000), sender);
 
         var events = generateEvents(1, 20);
         client.testHttpSend(label, events, appender);
@@ -68,7 +68,7 @@ public class GrafanaCloudTest {
     public void testApacheJsonCloud() throws Exception {
         var label = label("testApacheJsonCloud");
         var sender = authorize(apacheHttpSender(urlPush));
-        var appender = jsonAppender(label, 10, 1000, sender);
+        var appender = jsonAppender(label, batch(10, 1000), sender);
 
         var events = generateEvents(20, 20);
         client.testHttpSend(label, events, appender);
@@ -81,7 +81,7 @@ public class GrafanaCloudTest {
     public void testJavaJsonCloud() throws Exception {
         var label = label("testJavaJsonCloud");
         var sender = authorize(javaHttpSender(urlPush));
-        var appender = jsonAppender(label, 10, 1000, sender);
+        var appender = jsonAppender(label, batch(10, 1000), sender);
 
         var events = generateEvents(20, 10);
         client.testHttpSend(label, events, appender);
@@ -92,7 +92,7 @@ public class GrafanaCloudTest {
     public void testApacheProtobufCloud() throws Exception {
         var label = label("testApacheProtobufCloud");
         var sender = authorize(apacheHttpSender(urlPush));
-        var appender = protoAppender(label, 10, 1000, sender);
+        var appender = protoAppender(label, batch(10, 1000), sender);
 
         var events = generateEvents(50, 10);
         client.testHttpSend(label, events, appender);
@@ -103,7 +103,7 @@ public class GrafanaCloudTest {
     public void testJavaProtobufCloud() throws Exception {
         var label = label("testJavaProtobufCloud");
         var sender = authorize(javaHttpSender(urlPush));
-        var appender = protoAppender(label, 10, 1000, sender);
+        var appender = protoAppender(label, batch(10, 1000), sender);
 
         var events = generateEvents(100, 10);
         client.testHttpSend(label, events, appender);
@@ -114,7 +114,7 @@ public class GrafanaCloudTest {
     public void testJsonLayoutJavaJsonCloud() throws Exception {
         var label = label("testJsonLayoutJavaJsonCloud");
         var sender = authorize(javaHttpSender(urlPush));
-        var appender = jsonAppender(label, null, new JsonLayout(), 10, 1000, sender);
+        var appender = jsonAppender(label, null, new JsonLayout(), batch(10, 1000), sender);
 
         var events = generateEvents(20, 10);
         client.testHttpSend(label, events, appender);
@@ -125,7 +125,7 @@ public class GrafanaCloudTest {
     public void testJsonLayoutApacheProtobufCloud() throws Exception {
         var label = label("testJsonLayoutApacheProtobufCloud");
         var sender = authorize(apacheHttpSender(urlPush));
-        var appender = protoAppender(label, null, new JsonLayout(), 10, 1000, sender);
+        var appender = protoAppender(label, null, new JsonLayout(), batch(10, 1000), sender);
 
         var events = generateEvents(50, 10);
         client.testHttpSend(label, events, appender);
@@ -137,8 +137,9 @@ public class GrafanaCloudTest {
         var label = label("testApacheJsonMaxBytesSendCloud");
         var sender = authorize(apacheHttpSender(urlPush));
         sender.setRequestTimeoutMs(30_000L);
-        var appender = jsonAppender(label, 5_000, 1000, sender);
-        appender.setBatchMaxBytes(65536);
+        var batch = batch(5_000, 1000);
+        batch.setMaxBytes(65536);
+        var appender = jsonAppender(label, batch, sender);
         appender.setVerbose(false);
 
         var events = generateEvents(1000, 100);
@@ -154,8 +155,9 @@ public class GrafanaCloudTest {
         var label = label("testJavaProtobufMaxBytesSendCloud");
         var sender = authorize(javaHttpSender(urlPush));
         sender.setRequestTimeoutMs(30_000L);
-        var appender = protoAppender(label, 5_000, 1000, sender);
-        appender.setBatchMaxBytes(65536);
+        var batch = batch(5_000, 1000);
+        batch.setMaxBytes(65536);
+        var appender = protoAppender(label, batch, sender);
         appender.setVerbose(false);
 
         var events = generateEvents(1000, 1000);

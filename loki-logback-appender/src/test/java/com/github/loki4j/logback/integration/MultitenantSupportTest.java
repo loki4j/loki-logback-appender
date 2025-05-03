@@ -32,7 +32,7 @@ public class MultitenantSupportTest {
         var label = "testJavaJsonSendWithTenant";
         var sender = javaHttpSender(urlPush);
         sender.setTenantId(tenant);
-        var appender = jsonAppender(label, 10, 1000, sender);
+        var appender = jsonAppender(label, batch(10, 1000), sender);
 
         var events = generateEvents(1000, 10);
         client.testHttpSend(label, events, appender);
@@ -44,7 +44,7 @@ public class MultitenantSupportTest {
         var label = "testApacheProtobufSendWithTenant";
         var sender = apacheHttpSender(urlPush);
         sender.setTenantId(tenant);
-        var appender = protoAppender(label, 10, 1000, sender);
+        var appender = protoAppender(label, batch(10, 1000), sender);
 
         var events = generateEvents(20, 20);
         client.testHttpSend(label, events, appender);
