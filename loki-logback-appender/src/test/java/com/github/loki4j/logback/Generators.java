@@ -7,8 +7,6 @@ import java.util.HashMap;
 import java.util.Iterator;
 import java.util.List;
 import java.util.concurrent.ThreadLocalRandom;
-import java.util.function.BiFunction;
-import java.util.function.Consumer;
 import java.util.function.Function;
 import java.util.stream.StreamSupport;
 
@@ -18,8 +16,10 @@ import com.github.loki4j.client.batch.LogRecord;
 import com.github.loki4j.client.http.HttpConfig;
 import com.github.loki4j.client.http.Loki4jHttpClient;
 import com.github.loki4j.client.pipeline.PipelineConfig;
+import com.github.loki4j.client.pipeline.PipelineConfig.WriterFactory;
 import com.github.loki4j.client.util.ByteBufferFactory;
 import com.github.loki4j.client.writer.Writer;
+import com.github.loki4j.logback.PipelineConfigAppenderBase.BatchCfg;
 import com.github.loki4j.testkit.dummy.DummyHttpClient;
 import com.github.loki4j.testkit.dummy.ExceptionGenerator;
 import com.github.loki4j.testkit.dummy.LokiHttpServerMock;
@@ -39,6 +39,8 @@ import static com.github.loki4j.testkit.dummy.Generators.genMessage;
 
 public class Generators {
 
+    private static final String TEST_MSG_PATTERN = "l=%level c=%logger{20} t=%thread | %msg %ex{1}";
+
     static HttpConfig.Builder defaultHttpConfig = HttpConfig.builder();
 
     public static LokiHttpServerMock lokiMock(int port) {
@@ -50,18 +52,116 @@ public class Generators {
     }
 
     public static Loki4jAppender appender(
-            int batchSize,
-            long batchTimeoutMs,
-            Loki4jEncoder encoder,
+            String labelsPattern,
+            boolean staticLabels,
+            String structuredMetadataPattern,
+            Layout<ILoggingEvent> msgLayout,
+            BatchCfg batch,
+            WriterFactory writer,
             AbstractHttpSender sender) {
+        var http = new Loki4jAppender.HttpCfg();
+        http.setWriter(writer);
+        http.setSender(sender);
+
         var appender = new Loki4jAppender();
         appender.setContext(new LoggerContext());
-        appender.setBatchMaxItems(batchSize);
-        appender.setBatchTimeoutMs(batchTimeoutMs);
-        appender.setFormat(encoder);
-        appender.setHttp(sender);
+        appender.setLabels(labelsPattern);
+        appender.setStructuredMetadata(structuredMetadataPattern);
+        appender.setMessage(msgLayout);
+        appender.setBatch(batch);
+        appender.setHttp(http);
         appender.setVerbose(true);
         return appender;
+    }
+
+    public static Loki4jAppender stringAppender(
+            String labelsPattern,
+            String structuredMetadataPattern,
+            Layout<ILoggingEvent> msgLayout,
+            BatchCfg batch,
+            AbstractHttpSender sender) {
+        return appender(
+            labelsPattern,
+            false,
+            structuredMetadataPattern,
+            msgLayout,
+            batch,
+            new PipelineConfig.WriterFactory(Generators::stringWriter, "text/plain"),
+            sender);
+    }
+
+    public static Loki4jAppender stringAppender(
+            BatchCfg batch,
+            AbstractHttpSender sender) {
+        return stringAppender(
+            "level=%level\napp=my-app",
+            null,
+            plainTextMsgLayout(TEST_MSG_PATTERN),
+            batch,
+            sender);
+    }
+
+    public static Loki4jAppender jsonAppender(
+            String labelsPattern,
+            String structuredMetadataPattern,
+            Layout<ILoggingEvent> msgLayout,
+            BatchCfg batch,
+            AbstractHttpSender sender) {
+        return appender(
+            labelsPattern,
+            false,
+            structuredMetadataPattern,
+            msgLayout,
+            batch,
+            PipelineConfig.json,
+            sender);
+    }
+
+    public static Loki4jAppender jsonAppender(
+            String testLabel,
+            BatchCfg batch,
+            AbstractHttpSender sender) {
+        return jsonAppender(
+            "test=" + testLabel + "\nlevel=%level\nservice_name=my-app",
+            null,
+            plainTextMsgLayout(TEST_MSG_PATTERN),
+            batch,
+            sender);
+    }
+
+    public static Loki4jAppender protoAppender(
+            String labelsPattern,
+            String structuredMetadataPattern,
+            Layout<ILoggingEvent> msgLayout,
+            BatchCfg batch,
+            AbstractHttpSender sender) {
+        return appender(
+            labelsPattern,
+            false,
+            structuredMetadataPattern,
+            msgLayout,
+            batch,
+            PipelineConfig.protobuf,
+            sender);
+    }
+
+    public static Loki4jAppender protoAppender(
+            String testLabel,
+            BatchCfg batch,
+            AbstractHttpSender sender) {
+        return jsonAppender(
+            "test=" + testLabel + "\nlevel=%level\nservice_name=my-app",
+            null,
+            plainTextMsgLayout(TEST_MSG_PATTERN),
+            batch,
+            sender);
+    }
+
+    public static BatchCfg batch(int batchSize, long batchTimeoutMs) {
+        var batch = new Loki4jAppender.BatchCfg();
+        batch.setMaxItems(batchSize);
+        batch.setTimeoutMs(batchTimeoutMs);
+        return batch;
     }
 
     public static JavaHttpSender javaHttpSender(String url) {
@@ -88,30 +188,6 @@ public class Generators {
         return new DummyHttpSender();
     }
 
-    public static JsonEncoder jsonEncoder(boolean staticLabels, String testLabel) {
-        return jsonEncoder(staticLabels, testLabel, null);
-    }
-
-    public static JsonEncoder jsonEncoder(boolean staticLabels, String testLabel, Layout<ILoggingEvent> msgLayout) {
-        var encoder = new JsonEncoder();
-        encoder.setStaticLabels(staticLabels);
-        encoder.setLabel(labelCfg("test=" + testLabel + ",level=%level,service_name=my-app", ",", "=", true, false));
-        encoder.setMessage(msgLayout);
-        return encoder;
-    }
-
-    public static ProtobufEncoder protobufEncoder(boolean staticLabels, String testLabel) {
-        return protobufEncoder(staticLabels, testLabel, null);
-    }
-
-    public static ProtobufEncoder protobufEncoder(boolean staticLabels, String testLabel, Layout<ILoggingEvent> msgLayout) {
-        var encoder = new ProtobufEncoder();
-        encoder.setStaticLabels(staticLabels);
-        encoder.setLabel(labelCfg("test=" + testLabel + ",level=%level,service_name=my-app", ",", "=", true, false));
-        encoder.setMessage(msgLayout);
-        return encoder;
-    }
-
     public static <U> U withAppender(
             Loki4jAppender appender,
             Function<AppenderWrapper, U> body) {
@@ -124,74 +200,8 @@ public class Generators {
         }
     }
 
-    public static AbstractLoki4jEncoder defaultToStringEncoder() {
-        return toStringEncoder(
-            labelCfg("level=%level,app=my-app", ",", "=", true, false),
-            plainTextMsgLayout("l=%level c=%logger{20} t=%thread | %msg %ex{1}"),
-            false);
-    }
-
-    public static void withEncoder(AbstractLoki4jEncoder encoder, Consumer<AbstractLoki4jEncoder> body) {
-        encoder.setContext(new LoggerContext());
-        encoder.start();
-        try {
-            body.accept(encoder);
-        } finally {
-            encoder.stop();
-        }
-    }
-
     public static Writer stringWriter(int capacity, ByteBufferFactory bufferFactory) {
         return new StringWriter(capacity, bufferFactory);
-    }
-
-    public static AbstractLoki4jEncoder wrapToEncoder(
-            BiFunction<Integer, ByteBufferFactory, Writer> writerFactory,
-            AbstractLoki4jEncoder.LabelCfg label,
-            Layout<ILoggingEvent> messageLayout,
-            boolean staticLabels) {
-        var encoder = new AbstractLoki4jEncoder() {
-            @Override
-            public PipelineConfig.WriterFactory getWriterFactory() {
-                return new PipelineConfig.WriterFactory(writerFactory, "text/plain");
-            }
-        };
-        encoder.setLabel(label);
-        encoder.setMessage(messageLayout);
-        encoder.setStaticLabels(staticLabels);
-        return encoder;
-    }
-
-    public static AbstractLoki4jEncoder toStringEncoder(
-            AbstractLoki4jEncoder.LabelCfg label,
-            Layout<ILoggingEvent> messageLayout,
-            boolean staticLabels) {
-        return wrapToEncoder(Generators::stringWriter, label, messageLayout, staticLabels);
-    }
-
-    public static AbstractLoki4jEncoder.LabelCfg labelCfg(
-            String pattern,
-            String pairSeparator,
-            String keyValueSeparator,
-            boolean nopex,
-            boolean readMarkers) {
-        var label = new AbstractLoki4jEncoder.LabelCfg();
-        label.setPattern(pattern);
-        label.setPairSeparator(pairSeparator);
-        label.setKeyValueSeparator(keyValueSeparator);
-        label.setReadMarkers(readMarkers);
-        return label;
-    }
-
-    public static AbstractLoki4jEncoder.LabelCfg labelMetadataCfg(
-            String pattern,
-            String metadataPattern,
-            boolean readMarkers) {
-        var label = new AbstractLoki4jEncoder.LabelCfg();
-        label.setPattern(pattern);
-        label.setStructuredMetadataPattern(metadataPattern);
-        label.setReadMarkers(readMarkers);
-        return label;
     }
 
     public static PatternLayout plainTextMsgLayout(String pattern) {
@@ -281,13 +291,8 @@ public class Generators {
         return loggingEvent(timestamp, level, className, threadName, message, throwable, null);
     }
 
-    public static LogRecord eventToRecord(ILoggingEvent e, Loki4jEncoder enc) {
-        return LogRecord.create(
-            e.getTimeStamp(),
-            0,
-            enc.eventToStream(e),
-            enc.eventToMessage(e),
-            enc.eventToMetadata(e));
+    public static LogRecord eventToRecord(ILoggingEvent e, Loki4jAppender enc) {
+        return enc.eventToLogRecord(e);
     }
 
     public static class AppenderWrapper {
@@ -302,6 +307,9 @@ public class Generators {
             for (int i = 0; i < events.length; i++) {
                 appender.append(events[i]);
             }
+        }
+        public LogRecord eventToLogRecord(ILoggingEvent event) {
+            return appender.eventToLogRecord(event);
         }
         public void waitAllAppended() {
             appender.waitSendQueueIsEmpty(2L * 60 * 1000);

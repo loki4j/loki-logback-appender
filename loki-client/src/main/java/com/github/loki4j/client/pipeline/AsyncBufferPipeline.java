@@ -20,7 +20,6 @@ import com.github.loki4j.client.batch.BinaryBatch;
 import com.github.loki4j.client.batch.ByteBufferQueue;
 import com.github.loki4j.client.batch.LogRecord;
 import com.github.loki4j.client.batch.LogRecordBatch;
-import com.github.loki4j.client.batch.LogRecordStream;
 import com.github.loki4j.client.http.HttpStatus;
 import com.github.loki4j.client.http.Loki4jHttpClient;
 import com.github.loki4j.client.http.LokiResponse;
@@ -35,7 +34,7 @@ import static com.github.loki4j.client.util.StringUtils.bytesAsUtf8String;
 public final class AsyncBufferPipeline {
 
     private static final Comparator<LogRecord> compareByStream = (e1, e2) ->
-        Long.compare(e1.stream.hash, e2.stream.hash);
+        Long.compare(e1.stream.hashCode(), e2.stream.hashCode());
 
     private final ConcurrentLinkedQueue<LogRecord> buffer = new ConcurrentLinkedQueue<>();
 
@@ -168,18 +167,13 @@ public final class AsyncBufferPipeline {
         waitSendQueueLessThan(1, timeoutMs);
     }
 
-    public boolean append(
-            long timestampMs,
-            int nanosInMs,
-            Supplier<LogRecordStream> stream,
-            Supplier<String> message,
-            Supplier<String[]> metadata) {
+    public boolean append(Supplier<LogRecord> recordSupplier) {
         var startedNs = System.nanoTime();
         boolean accepted = false;
         if (acceptNewEvents.get()) {
             LogRecord record = null;
             try {
-                record = LogRecord.create(timestampMs, nanosInMs, stream.get(), message.get(), metadata.get());
+                record = recordSupplier.get();
             } catch (Exception e) {
                 log.error(e, "Error occurred while appending an event");
                 if (metrics != null) metrics.appendFailed(() -> e.getClass().getSimpleName());

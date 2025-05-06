@@ -4,7 +4,11 @@ import static com.github.loki4j.logback.Generators.*;
 
 import java.util.Arrays;
 
-import com.github.loki4j.logback.Loki4jEncoder;
+import com.github.loki4j.client.pipeline.PipelineConfig;
+import com.github.loki4j.client.pipeline.PipelineConfig.WriterFactory;
+import com.github.loki4j.logback.Generators.AppenderWrapper;
+import com.github.loki4j.logback.Generators.InfiniteEventIterator;
+import com.github.loki4j.logback.Generators;
 import com.github.loki4j.testkit.benchmark.Benchmarker;
 import com.github.loki4j.testkit.benchmark.Benchmarker.Benchmark;
 import com.github.loki4j.testkit.categories.PerformanceTests;
@@ -16,9 +20,19 @@ import ch.qos.logback.classic.spi.ILoggingEvent;
 
 public class AppenderTest {
 
-    private static AppenderWrapper initApp(int capacity, Loki4jEncoder e) {
-        var a = appender(capacity, 60_000L, e, dummySender());
-        a.setSendQueueMaxBytes(Long.MAX_VALUE);
+    private final static WriterFactory STRING_WRITER = new WriterFactory(Generators::stringWriter, "text/plain");
+
+    private static AppenderWrapper initApp(int capacity, String testLabel, WriterFactory writer) {
+        var batch = batch(capacity, 60_000L);
+        batch.setSendQueueMaxBytes(Long.MAX_VALUE);
+        var a = appender(
+            "test=" + testLabel + "\nlevel=%level\nservice_name=my-app",
+            false,
+            null,
+            plainTextMsgLayout("%msg %ex"),
+            batch,
+            writer,
+            dummySender());
         a.setVerbose(false);
         a.start();
         return new AppenderWrapper(a);
@@ -35,17 +49,17 @@ public class AppenderTest {
             this.generator = () -> InfiniteEventIterator.from(generateEvents(10_000, 10)).limited(100_000);
             this.benchmarks = Arrays.asList(
                 Benchmark.of("dummyAppenderWait",
-                    () -> initApp(capacity, defaultToStringEncoder()),
+                    () -> initApp(capacity, "singleThreadPerformance", STRING_WRITER),
                     (a, e) -> a.append(e),
                     a -> a.waitAllAppended(),
                     a -> a.stop()),
                 Benchmark.of("dummyJsonAppenderWait",
-                    () -> initApp(capacity, jsonEncoder(false, "singleThreadPerformance")),
+                    () -> initApp(capacity, "singleThreadPerformance", PipelineConfig.json),
                     (a, e) -> a.append(e),
                     a -> a.waitAllAppended(),
                     a -> a.stop()),
                 Benchmark.of("dummyProtobufAppenderWait",
-                    () -> initApp(capacity, protobufEncoder(false, "singleThreadPerformance")),
+                    () -> initApp(capacity, "singleThreadPerformance", PipelineConfig.protobuf),
                     (a, e) -> a.append(e),
                     a -> a.waitAllAppended(),
                     a -> a.stop())
@@ -66,17 +80,17 @@ public class AppenderTest {
             this.generator = () -> InfiniteEventIterator.from(generateEvents(10_000, 10)).limited(100_000);
             this.benchmarks = Arrays.asList(
                 Benchmark.of("dummyAppenderWait",
-                    () -> initApp(capacity, defaultToStringEncoder()),
+                    () -> initApp(capacity, "multiThreadPerformance", STRING_WRITER),
                     (a, e) -> a.append(e),
                     a -> a.waitAllAppended(),
                     a -> a.stop()),
                 Benchmark.of("dummyJsonAppenderWait",
-                    () -> initApp(capacity, jsonEncoder(false, "multiThreadPerformance")),
+                    () -> initApp(capacity, "multiThreadPerformance", PipelineConfig.json),
                     (a, e) -> a.append(e),
                     a -> a.waitAllAppended(),
                     a -> a.stop()),
                 Benchmark.of("dummyProtobufAppenderWait",
-                    () -> initApp(capacity, protobufEncoder(false, "multiThreadPerformance")),
+                    () -> initApp(capacity, "multiThreadPerformance", PipelineConfig.protobuf),
                     (a, e) -> a.append(e),
                     a -> a.waitAllAppended(),
                     a -> a.stop())

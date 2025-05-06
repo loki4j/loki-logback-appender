@@ -27,16 +27,16 @@ import com.fasterxml.jackson.databind.ObjectMapper;
 import com.github.loki4j.client.batch.LogRecord;
 import com.github.loki4j.client.batch.LogRecordBatch;
 import com.github.loki4j.client.http.HttpHeader;
+import com.github.loki4j.client.pipeline.PipelineConfig;
 import com.github.loki4j.client.util.ByteBufferFactory;
 import com.github.loki4j.logback.Loki4jAppender;
-import com.github.loki4j.logback.AbstractLoki4jEncoder;
 
 import ch.qos.logback.classic.spi.ILoggingEvent;
 
 public class LokiTestingClient {
 
     private static Comparator<LogRecord> byStream = (e1, e2) -> String.CASE_INSENSITIVE_ORDER.compare(
-        Arrays.toString(e1.stream.labels), Arrays.toString(e2.stream.labels));
+        e1.stream.toString(), e2.stream.toString());
     private static Comparator<LogRecord> byTime = (e1, e2) ->
         Long.compare(e1.timestampMs, e2.timestampMs);
     private static Comparator<LogRecord> lokiLogsSorting = byStream.thenComparing(byTime);
@@ -112,16 +112,17 @@ public class LokiTestingClient {
     public void testHttpSend(
             String lbl,
             ILoggingEvent[] events,
-            Loki4jAppender actualAppender,
-            AbstractLoki4jEncoder expectedEncoder) throws Exception {
-        testHttpSend(lbl, events, actualAppender, expectedEncoder, events.length, 10L);
+            Loki4jAppender actualAppender) throws Exception {
+        var chunkSize = events.length;
+        var chunkDelayMs = 10L;
+        testHttpSend(lbl, events, actualAppender, null, chunkSize, chunkDelayMs);
     }
 
     public void testHttpSend(
             String lbl,
             ILoggingEvent[] events,
             Loki4jAppender actualAppender,
-            AbstractLoki4jEncoder expectedEncoder,
+            Loki4jAppender expectedAppender,    // if null - the default json appender is used
             int chunkSize,
             long chunkDelayMs) throws Exception {
         var records = new LogRecord[events.length];
@@ -138,21 +139,20 @@ public class LokiTestingClient {
             a.waitAllAppended();
             return null;
         });
-        withEncoder(expectedEncoder, encoder -> {
+        // forming expected output
+        if (expectedAppender == null)
+            expectedAppender = jsonAppender(lbl, batch(chunkSize, chunkDelayMs), dummySender());
+        withAppender(expectedAppender, encoder -> {
             for (int i = 0; i < events.length; i++) {
                 final var idx = i;
-                records[i] = LogRecord.create(
-                    events[i].getTimeStamp(),
-                    events[i].getNanoseconds() % 1_000_000,
-                    encoder.eventToStream(events[idx]),
-                    encoder.eventToMessage(events[idx]),
-                    encoder.eventToMetadata(events[idx]));
+                records[i] = encoder.eventToLogRecord(events[idx]);
             }
             var batch = new LogRecordBatch(records);
             batch.sort(lokiLogsSorting);
-            var writer = encoder.getWriterFactory().factory.apply(4 * 1024 * 1024, new ByteBufferFactory(false));
+            var writer = PipelineConfig.json.factory.apply(4 * 1024 * 1024, new ByteBufferFactory(false));
             writer.serializeBatch(batch);
             reqStr.set(new String(writer.toByteArray()));
+            return null;
         });
 
         var req = parseRequest(reqStr.get());

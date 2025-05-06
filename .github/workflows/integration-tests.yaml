@@ -11,7 +11,7 @@ jobs:
     runs-on: ubuntu-latest
     strategy:
       matrix:
-        loki: [2.8.0, 3.3.1]
+        loki: [2.8.0, 3.4.3]
         include:
           - loki: 2.8.0
             limits: |
@@ -19,7 +19,7 @@ jobs:
               -ingester.per-stream-rate-limit="80MB" -ingester.per-stream-rate-limit-burst="160MB" \
               -server.grpc-max-recv-msg-size-bytes=4194304000 \
               -querier.frontend-client.grpc-max-send-msg-size=167772160
-          - loki: 3.3.1
+          - loki: 3.4.3
             limits: |
               -distributor.ingestion-rate-limit-mb=160 -distributor.ingestion-burst-size-mb=240 \
               -ingester.per-stream-rate-limit="80MB" -ingester.per-stream-rate-limit-burst="160MB" \
@@ -34,7 +34,7 @@ jobs:
           distribution: 'temurin'
           java-version: 11
       - name: Setup Gradle
-        uses: gradle/actions/setup-gradle@v3
+        uses: gradle/actions/setup-gradle@v4
       - name: Build and Run Integration Tests
         run: |
           docker run --name loki -d -p 3100:3100 grafana/loki:${{ matrix.loki }} \
@@ -72,7 +72,7 @@ jobs:
           distribution: 'temurin'
           java-version: ${{ matrix.jdk }}
       - name: Setup Gradle
-        uses: gradle/actions/setup-gradle@v3
+        uses: gradle/actions/setup-gradle@v4
       - name: Build and Run Integration Tests
         env:
           GRAFANA_CLOUD_URL_BASE: ${{ vars.GRAFANA_CLOUD_URL_BASE }}

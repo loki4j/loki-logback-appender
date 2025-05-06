@@ -6,11 +6,12 @@ import org.xerial.snappy.Snappy;
 import static org.junit.Assert.*;
 
 import java.io.IOException;
+import java.util.Map;
 
 import com.github.loki4j.client.batch.LogRecord;
 import com.github.loki4j.client.batch.LogRecordBatch;
-import com.github.loki4j.client.batch.LogRecordStream;
 import com.github.loki4j.client.util.ByteBufferFactory;
+import com.github.loki4j.client.util.OrderedMap;
 import com.github.loki4j.pkg.google.protobuf.Timestamp;
 import com.github.loki4j.pkg.loki.protobuf.Push.EntryAdapter;
 import com.github.loki4j.pkg.loki.protobuf.Push.LabelPairAdapter;
@@ -19,9 +20,9 @@ import com.github.loki4j.pkg.loki.protobuf.Push.StreamAdapter;
 
 public class ProtobufWriterTest {
 
-    private LogRecordStream stream1 = LogRecordStream.create("level", "INFO", "app", "my-app");
-    private LogRecordStream stream2 = LogRecordStream.create("level", "DEBUG", "app", "my-app");
-    private String[] emptyMetadata = new String[0];
+    private Map<String, String> stream1 = OrderedMap.of("level", "INFO", "app", "my-app");
+    private Map<String, String> stream2 = OrderedMap.of("level", "DEBUG", "app", "my-app");
+    private Map<String, String> emptyMetadata = Map.of();
     private LogRecordBatch batch = new LogRecordBatch(new LogRecord[] {
         LogRecord.create(3000, 1, stream2, "l=DEBUG c=test.TestApp t=thread-2 | Test message 2", emptyMetadata),
         LogRecord.create(1000, 2, stream1, "l=INFO c=test.TestApp t=thread-1 | Test message 1", emptyMetadata),
@@ -93,8 +94,8 @@ public class ProtobufWriterTest {
     }
 
     public void testStructuredMetadata() throws IOException {
-        String[] metadata1 = new String[] { "cluster", "clusterA", "traceId", "A00001" };
-        String[] metadata2 = new String[] { "cluster", "clusterB", "traceId", "B56762" };
+        var metadata1 = OrderedMap.of("cluster", "clusterA", "traceId", "A00001");
+        var metadata2 = OrderedMap.of("cluster", "clusterB", "traceId", "B56762");
         LogRecordBatch metaBatch = new LogRecordBatch(new LogRecord[] {
             LogRecord.create(2000, 3, stream1, "l=INFO c=test.TestApp t=thread-3 | Test message 4", metadata1),
             LogRecord.create(5000, 4, stream1, "l=INFO c=test.TestApp t=thread-1 | Test message 3", metadata2),

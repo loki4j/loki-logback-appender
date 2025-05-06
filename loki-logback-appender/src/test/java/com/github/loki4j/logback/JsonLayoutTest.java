@@ -14,6 +14,7 @@ import java.util.function.Supplier;
 
 import org.junit.Test;
 
+import com.github.loki4j.client.util.OrderedMap;
 import com.github.loki4j.logback.json.AbstractFieldJsonProvider;
 import com.github.loki4j.logback.json.JsonEventWriter;
 import com.github.loki4j.logback.json.JsonProvider;
@@ -40,24 +41,19 @@ public class JsonLayoutTest {
     @Test
     public void testWorksInAppender() {
         var expected = StringPayload.builder()
-            .stream("[app, my-app]",
+            .stream(OrderedMap.of("app", "my-app"),
                 "ts=100 {'timestamp_ms':100,'logger_name':'io.test.TestApp','level':'INFO','thread_name':'main','message':'m1-line1\\r\\nline2\\r\\n'}".replace('\'', '"'),
                 "ts=101 {'timestamp_ms':101,'logger_name':'io.test.TestApp','level':'DEBUG','thread_name':'thread-1','message':'m2-line1'}".replace('\'', '"'),
                 "ts=102 {'timestamp_ms':102,'logger_name':'io.test.TestApp','level':'WARN','thread_name':'main','message':'m3-line1\\nline2\\r'}".replace('\'', '"')
             )
             .build();
 
-        var encoder = toStringEncoder(
-                labelCfg("app=my-app", ",", "=", true, false),
-                jsonMsgLayout(),
-                false
-        );
         var sender = dummySender();
-        withAppender(appender(3, 1000L, encoder, sender), appender -> {
+        withAppender(stringAppender("app=my-app", null, jsonMsgLayout(), batch(3, 1000L), sender), appender -> {
             appender.append(events);
             appender.waitAllAppended();
 
-            var actual = StringPayload.parse(sender.lastSendData(), encoder.charset);
+            var actual = StringPayload.parse(sender.lastSendData());
             assertEquals("jsonLayout", expected, actual);
             return null;
         });

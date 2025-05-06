@@ -13,7 +13,7 @@ import com.github.loki4j.client.util.ByteBufferFactory;
 import com.github.loki4j.client.writer.JsonWriter;
 import com.github.loki4j.client.writer.ProtobufWriter;
 import com.github.loki4j.client.writer.Writer;
-import com.github.loki4j.logback.AbstractLoki4jEncoder;
+import com.github.loki4j.logback.Loki4jAppender;
 import com.github.loki4j.testkit.benchmark.Benchmarker;
 import com.github.loki4j.testkit.benchmark.Benchmarker.Benchmark;
 import com.github.loki4j.testkit.categories.PerformanceTests;
@@ -29,11 +29,9 @@ public class WritersTest {
 
     private ByteBuffer resultBuffer = ByteBuffer.allocate(CAPACITY_BYTES);
 
-    private static AbstractLoki4jEncoder initEnc(AbstractLoki4jEncoder e) {
-        return initEnc(e, false);
-    }
-
-    private static AbstractLoki4jEncoder initEnc(AbstractLoki4jEncoder e, boolean isDirect) {
+    private static Loki4jAppender initEnc() {
+        var e = new Loki4jAppender();
+        //e.setStaticLabels(true);
         e.setContext(new LoggerContext());
         e.start();
         return e;
@@ -54,7 +52,7 @@ public class WritersTest {
             this.runs = 50;
             this.parFactor = 1;
             this.generator = () -> {
-                var jsonEncSta = initEnc(jsonEncoder(true, "testLabel"));
+                var jsonEncSta = initEnc();
                 return Stream.iterate(
                         Arrays.stream(generateEvents(batchSize, 10))
                             .map(e -> eventToRecord(e, jsonEncSta))
@@ -84,7 +82,7 @@ public class WritersTest {
             this.runs = 50;
             this.parFactor = 1;
             this.generator = () -> {
-                var jsonEncDyn = initEnc(jsonEncoder(false, "testLabel"));
+                var jsonEncDyn = initEnc();
                 return Stream.iterate(
                         Arrays.stream(generateEvents(batchSize, 10))
                             .map(e -> eventToRecord(e, jsonEncDyn))
@@ -92,7 +90,7 @@ public class WritersTest {
                         UnaryOperator.identity())
                     .map(rs -> new LogRecordBatch(rs))
                     .map(b -> {
-                        b.sort((e1, e2) -> Long.compare(e1.stream.hash, e2.stream.hash));
+                        b.sort((e1, e2) -> Long.compare(e1.stream.hashCode(), e2.stream.hashCode()));
                         return b;
                     })
                     .limit(1000)

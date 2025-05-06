@@ -5,15 +5,17 @@ import org.junit.Test;
 import static com.github.loki4j.client.batch.LogRecord.create;
 import static org.junit.Assert.*;
 
+import java.util.Map;
+
 import com.github.loki4j.client.batch.LogRecord;
 import com.github.loki4j.client.batch.LogRecordBatch;
-import com.github.loki4j.client.batch.LogRecordStream;
+import com.github.loki4j.client.util.OrderedMap;
 
 public class JsonWriterTest {
 
-    private LogRecordStream stream1 = LogRecordStream.create("level", "INFO", "app", "my-app");
-    private LogRecordStream stream2 = LogRecordStream.create("level", "DEBUG", "app", "my-app");
-    private String[] emptyMetadata = new String[0];
+    private Map<String, String> stream1 = OrderedMap.of("level", "INFO", "app", "my-app");
+    private Map<String, String> stream2 = OrderedMap.of("level", "DEBUG", "app", "my-app");
+    private Map<String, String> emptyMetadata = Map.of();
     private LogRecordBatch batch = new LogRecordBatch(new LogRecord[] {
         LogRecord.create(3000, 1, stream2, "l=DEBUG c=test.TestApp t=thread-2 | Test message 2", emptyMetadata),
         LogRecord.create(1000, 2, stream1, "l=INFO c=test.TestApp t=thread-1 | Test message 1", emptyMetadata),
@@ -47,7 +49,7 @@ public class JsonWriterTest {
         var re1 = create(
             100L,
             0,
-            LogRecordStream.create("level", "INFO", "app", "my-app"),
+            OrderedMap.of("level", "INFO", "app", "my-app"),
             "l=INFO c=test.TestApp t=thread-1 | Test message",
             emptyMetadata);
 
@@ -68,7 +70,7 @@ public class JsonWriterTest {
         var re1 = create(
             100L,
             0,
-            LogRecordStream.create("level", "INFO", "app", "my-app"),
+            OrderedMap.of("level", "INFO", "app", "my-app"),
             "спец !@#$%^&*()\" \n\tсимволы <>?/\\№ё:{}[]🏁",
             emptyMetadata);
 
@@ -90,9 +92,9 @@ public class JsonWriterTest {
         var re1 = create(
             100L,
             0,
-            LogRecordStream.create("level", "INFO", "app", "my-app"),
+            OrderedMap.of("level", "INFO", "app", "my-app"),
             "l=INFO c=test.TestApp t=thread-1 | Test message",
-            new String[] { "cluster", "clusterA", "traceId", "A875754" }
+            OrderedMap.of("cluster", "clusterA", "traceId", "A875754")
         );
 
         var writer = new JsonWriter(1000);

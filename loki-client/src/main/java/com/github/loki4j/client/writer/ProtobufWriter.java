@@ -2,6 +2,7 @@ package com.github.loki4j.client.writer;
 
 import java.io.IOException;
 import java.nio.ByteBuffer;
+import java.util.Map;
 
 import com.github.loki4j.client.batch.LogRecord;
 import com.github.loki4j.client.batch.LogRecordBatch;
@@ -39,11 +40,11 @@ public final class ProtobufWriter implements Writer {
 
     public void serializeBatch(LogRecordBatch batch) {
         var currentStream = batch.get(0).stream;
-        nextStream(currentStream.labels);
+        nextStream(currentStream);
         for (int i = 0; i < batch.size(); i++) {
-            if (batch.get(i).stream != currentStream) {
+            if (!batch.get(i).stream.equals(currentStream)) {
                 currentStream = batch.get(i).stream;
-                nextStream(currentStream.labels);
+                nextStream(currentStream);
             }
             nextEntry(batch.get(i));
         }
@@ -54,25 +55,25 @@ public final class ProtobufWriter implements Writer {
         }
     }
 
-    private void nextStream(String[] labelSet) {
+    private void nextStream(Map<String, String> labelSet) {
         stream = request
             .addStreamsBuilder()
             .setLabels(label(labelSet));
     }
 
-    static String label(String[] labels) {
+    static String label(Map<String, String> labels) {
         var s = new StringBuilder();
         s.append('{');
-        if (labels.length > 0) {
-            for (int i = 0; i < labels.length; i+=2) {
-                s.append(labels[i]);
-                s.append('=');
-                s.append('"');
-                s.append(labels[i + 1].replace("\"", "\\\""));
-                s.append('"');
-                if (i < labels.length - 2)
-                    s.append(',');
-            }
+        var entries = labels.entrySet().iterator();
+        while (entries.hasNext()) {
+            var entry = entries.next();
+            s.append(entry.getKey());
+            s.append('=');
+            s.append('"');
+            s.append(entry.getValue().replace("\"", "\\\""));
+            s.append('"');
+            if (entries.hasNext())
+                s.append(',');
         }
         s.append('}');
         return s.toString();
@@ -84,10 +85,10 @@ public final class ProtobufWriter implements Writer {
                 .setSeconds(record.timestampMs / 1000)
                 .setNanos((int)(record.timestampMs % 1000) * 1_000_000 + record.nanosInMs))
             .setLine(record.message);
-        for (int i = 0; i < record.metadata.length; i+=2) {
+        for (var kvp : record.metadata.entrySet()) {
             entry.addStructuredMetadata(LabelPairAdapter.newBuilder()
-                .setName(record.metadata[i])
-                .setValue(record.metadata[i+1])
+                .setName(kvp.getKey())
+                .setValue(kvp.getValue())
             );
         }
         stream.addEntries(entry);

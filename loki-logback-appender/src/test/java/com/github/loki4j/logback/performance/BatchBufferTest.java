@@ -5,12 +5,13 @@ import static com.github.loki4j.logback.Generators.*;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Collections;
+import java.util.Map;
 import java.util.concurrent.ArrayBlockingQueue;
 import java.util.concurrent.ConcurrentLinkedQueue;
 import java.util.concurrent.atomic.AtomicInteger;
 
 import com.github.loki4j.client.batch.LogRecord;
-import com.github.loki4j.client.batch.LogRecordStream;
+import com.github.loki4j.logback.Generators.InfiniteEventIterator;
 import com.github.loki4j.testkit.benchmark.Benchmarker;
 import com.github.loki4j.testkit.benchmark.Benchmarker.Benchmark;
 import com.github.loki4j.testkit.categories.PerformanceTests;
@@ -22,15 +23,13 @@ import ch.qos.logback.classic.spi.ILoggingEvent;
 
 public class BatchBufferTest {
 
-    private static final String[] EMPTY_METADATA = new String[0];
-
     public static LogRecord eventToRecord(ILoggingEvent e) {
         return LogRecord.create(
             e.getTimeStamp(),
             0,
-            LogRecordStream.create("test","dlkjafh"),
+            Map.of("test","dlkjafh"),
             e.getMessage(),
-            EMPTY_METADATA);
+            Map.of());
     }
 
     @Test
