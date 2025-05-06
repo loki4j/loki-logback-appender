@@ -187,37 +187,7 @@ public class Generators {
     public static DummyHttpSender dummySender() {
         return new DummyHttpSender();
     }
-/*
-    public static Consumer<Loki4jAppender> jsonEncoder(boolean staticLabels, String testLabel) {
-        return jsonEncoder(staticLabels, testLabel, null);
-    }
 
-    public static Consumer<Loki4jAppender> jsonEncoder(boolean staticLabels, String testLabel, Layout<ILoggingEvent> msgLayout) {
-        return appender -> {
-            appender.setWriter(PipelineConfig.json);
-            configEncoder(
-                appender.getEncoder(),
-                staticLabels,
-                testLabel,
-                msgLayout);
-        };
-    }
-
-    public static Consumer<Loki4jAppender> protobufEncoder(boolean staticLabels, String testLabel) {
-        return protobufEncoder(staticLabels, testLabel, null);
-    }
-
-    public static Consumer<Loki4jAppender> protobufEncoder(boolean staticLabels, String testLabel, Layout<ILoggingEvent> msgLayout) {
-        return appender -> {
-            appender.setWriter(PipelineConfig.protobuf);
-            configEncoder(
-                appender.getEncoder(),
-                staticLabels,
-                testLabel,
-                msgLayout);
-        };
-    }
-*/
     public static <U> U withAppender(
             Loki4jAppender appender,
             Function<AppenderWrapper, U> body) {
@@ -230,88 +200,10 @@ public class Generators {
         }
     }
 
-    /*public static Consumer<Loki4jAppender> defaultStringEncoder() {
-        return stringEncoder(
-            labelCfg("level=%level,app=my-app", ",", "=", true, false),
-            plainTextMsgLayout("l=%level c=%logger{20} t=%thread | %msg %ex{1}"),
-            false);
-    }
-
-    public static void withEncoder(AbstractLoki4jEncoder encoder, Consumer<AbstractLoki4jEncoder> body) {
-        encoder.setContext(new LoggerContext());
-        encoder.start();
-        try {
-            body.accept(encoder);
-        } finally {
-            encoder.stop();
-        }
-    }*/
-
     public static Writer stringWriter(int capacity, ByteBufferFactory bufferFactory) {
         return new StringWriter(capacity, bufferFactory);
     }
-/*
-    public static void configEncoder(
-            AbstractLoki4jEncoder encoder,
-            boolean staticLabels,
-            String testLabel,
-            Layout<ILoggingEvent> msgLayout) {
-        configEncoder(
-            encoder,
-            labelCfg("test=" + testLabel + ",level=%level,service_name=my-app", ",", "=", true, false),
-            msgLayout,
-            staticLabels);
-    }
 
-    public static void configEncoder(
-            AbstractLoki4jEncoder encoder,
-            AbstractLoki4jEncoder.LabelCfg label,
-            Layout<ILoggingEvent> messageLayout,
-            boolean staticLabels) {
-        encoder.setLabel(label);
-        encoder.setMessage(messageLayout);
-        encoder.setStaticLabels(staticLabels);
-    }
-
-    public static Consumer<Loki4jAppender> stringEncoder(
-            AbstractLoki4jEncoder.LabelCfg label,
-            Layout<ILoggingEvent> messageLayout,
-            boolean staticLabels) {
-        return appender -> {
-            appender.setWriter(new PipelineConfig.WriterFactory(Generators::stringWriter, "text/plain"));
-            configEncoder(
-                appender.getEncoder(),
-                label,
-                messageLayout,
-                staticLabels);
-        };
-    }
-
-    public static AbstractLoki4jEncoder.LabelCfg labelCfg(
-            String pattern,
-            String pairSeparator,
-            String keyValueSeparator,
-            boolean nopex,
-            boolean readMarkers) {
-        var label = new AbstractLoki4jEncoder.LabelCfg();
-        label.setPattern(pattern);
-        label.setPairSeparator(pairSeparator);
-        label.setKeyValueSeparator(keyValueSeparator);
-        label.setReadMarkers(readMarkers);
-        return label;
-    }
-
-    public static AbstractLoki4jEncoder.LabelCfg labelMetadataCfg(
-            String pattern,
-            String metadataPattern,
-            boolean readMarkers) {
-        var label = new AbstractLoki4jEncoder.LabelCfg();
-        label.setPattern(pattern);
-        label.setStructuredMetadataPattern(metadataPattern);
-        label.setReadMarkers(readMarkers);
-        return label;
-    }
-*/
     public static PatternLayout plainTextMsgLayout(String pattern) {
         var message = new PatternLayout();
         message.setPattern(pattern);
