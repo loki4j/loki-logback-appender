@@ -52,6 +52,7 @@ public class ParSendTest {
                             label,
                             events,
                             appender,
+                            null,
                             5,
                             (parFactor - idx) + 500L);
                     } catch (Exception e) {
@@ -86,6 +87,7 @@ public class ParSendTest {
                             label,
                             events,
                             appender,
+                            null,
                             5,
                             (parFactor - idx) + 500L);
                     } catch (Exception e) {

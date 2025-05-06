@@ -91,10 +91,11 @@ public class FastSendTest {
     public void testJsonLayoutJsonFastSend() throws Exception {
         var label = "testJsonLayoutJsonFastSend";
         var sender = javaHttpSender(urlPush);
-        var appender = jsonAppender(label, null, new JsonLayout(), batch(10, 1000), sender);
+        var appender = jsonAppender("service_name=my-app\ntest=" + label, null, new JsonLayout(), batch(10, 1000), sender);
 
         var events = generateEvents(1000, 10);
-        client.testHttpSend(label, events, appender);
+        var expectedAppender = jsonAppender("service_name=my-app\ntest=" + label, null, new JsonLayout(), batch(events.length, 10L), sender);
+        client.testHttpSend(label, events, appender, expectedAppender, events.length, 10L);
     }
 
     @Test
@@ -102,10 +103,11 @@ public class FastSendTest {
     public void testJsonLayoutProtobufFastSend() throws Exception {
         var label = "testJsonLayoutProtobufFastSend";
         var sender = javaHttpSender(urlPush);
-        var appender = protoAppender(label, null, new JsonLayout(), batch(10, 1000), sender);
+        var appender = protoAppender("service_name=my-app\ntest=" + label, null, new JsonLayout(), batch(10, 1000), sender);
 
         var events = generateEvents(1000, 10);
-        client.testHttpSend(label, events, appender);
+        var expectedAppender = jsonAppender("service_name=my-app\ntest=" + label, null, new JsonLayout(), batch(events.length, 10L), sender);
+        client.testHttpSend(label, events, appender, expectedAppender, events.length, 10L);
     }
 
 }

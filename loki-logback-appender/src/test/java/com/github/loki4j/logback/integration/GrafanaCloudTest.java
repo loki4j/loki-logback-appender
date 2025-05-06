@@ -114,10 +114,11 @@ public class GrafanaCloudTest {
     public void testJsonLayoutJavaJsonCloud() throws Exception {
         var label = label("testJsonLayoutJavaJsonCloud");
         var sender = authorize(javaHttpSender(urlPush));
-        var appender = jsonAppender(label, null, new JsonLayout(), batch(10, 1000), sender);
+        var appender = jsonAppender("service_name=my-app\ntest=" + label, null, new JsonLayout(), batch(10, 1000), sender);
 
         var events = generateEvents(20, 10);
-        client.testHttpSend(label, events, appender);
+        var expectedAppender = jsonAppender("service_name=my-app\ntest=" + label, null, new JsonLayout(), batch(events.length, 10L), sender);
+        client.testHttpSend(label, events, appender, expectedAppender, events.length, 10L);
     }
 
     @Test
@@ -125,10 +126,11 @@ public class GrafanaCloudTest {
     public void testJsonLayoutApacheProtobufCloud() throws Exception {
         var label = label("testJsonLayoutApacheProtobufCloud");
         var sender = authorize(apacheHttpSender(urlPush));
-        var appender = protoAppender(label, null, new JsonLayout(), batch(10, 1000), sender);
+        var appender = protoAppender("service_name=my-app\ntest=" + label, null, new JsonLayout(), batch(10, 1000), sender);
 
         var events = generateEvents(50, 10);
-        client.testHttpSend(label, events, appender);
+        var expectedAppender = jsonAppender("service_name=my-app\ntest=" + label, null, new JsonLayout(), batch(events.length, 10L), sender);
+        client.testHttpSend(label, events, appender, expectedAppender, events.length, 10L);
     }
 
     @Test

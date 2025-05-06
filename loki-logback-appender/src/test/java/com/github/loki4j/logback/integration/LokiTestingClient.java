@@ -113,13 +113,16 @@ public class LokiTestingClient {
             String lbl,
             ILoggingEvent[] events,
             Loki4jAppender actualAppender) throws Exception {
-        testHttpSend(lbl, events, actualAppender, events.length, 10L);
+        var chunkSize = events.length;
+        var chunkDelayMs = 10L;
+        testHttpSend(lbl, events, actualAppender, null, chunkSize, chunkDelayMs);
     }
 
     public void testHttpSend(
             String lbl,
             ILoggingEvent[] events,
             Loki4jAppender actualAppender,
+            Loki4jAppender expectedAppender,    // if null - the default json appender is used
             int chunkSize,
             long chunkDelayMs) throws Exception {
         var records = new LogRecord[events.length];
@@ -137,7 +140,9 @@ public class LokiTestingClient {
             return null;
         });
         // forming expected output
-        withAppender(jsonAppender(lbl, batch(chunkSize, chunkDelayMs), dummySender()), encoder -> {
+        if (expectedAppender == null)
+            expectedAppender = jsonAppender(lbl, batch(chunkSize, chunkDelayMs), dummySender());
+        withAppender(expectedAppender, encoder -> {
             for (int i = 0; i < events.length; i++) {
                 final var idx = i;
                 records[i] = encoder.eventToLogRecord(events[idx]);
