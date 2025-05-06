@@ -7,7 +7,7 @@ import java.util.Arrays;
 import com.github.loki4j.client.batch.Batcher;
 import com.github.loki4j.client.batch.LogRecord;
 import com.github.loki4j.client.batch.LogRecordBatch;
-import com.github.loki4j.logback.AbstractLoki4jEncoder;
+import com.github.loki4j.logback.Loki4jAppender;
 import com.github.loki4j.testkit.benchmark.Benchmarker;
 import com.github.loki4j.testkit.benchmark.Benchmarker.Benchmark;
 import com.github.loki4j.testkit.categories.PerformanceTests;
@@ -19,9 +19,9 @@ import ch.qos.logback.classic.LoggerContext;
 
 public class BatcherTest {
 
-    private static AbstractLoki4jEncoder initEnc() {
-        var e = new AbstractLoki4jEncoder();
-        e.setStaticLabels(true);
+    private static Loki4jAppender initEnc() {
+        var e = new Loki4jAppender();
+        //e.setStaticLabels(true);
         e.setContext(new LoggerContext());
         e.start();
         return e;

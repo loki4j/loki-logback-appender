@@ -13,7 +13,7 @@ import com.github.loki4j.client.util.ByteBufferFactory;
 import com.github.loki4j.client.writer.JsonWriter;
 import com.github.loki4j.client.writer.ProtobufWriter;
 import com.github.loki4j.client.writer.Writer;
-import com.github.loki4j.logback.AbstractLoki4jEncoder;
+import com.github.loki4j.logback.Loki4jAppender;
 import com.github.loki4j.testkit.benchmark.Benchmarker;
 import com.github.loki4j.testkit.benchmark.Benchmarker.Benchmark;
 import com.github.loki4j.testkit.categories.PerformanceTests;
@@ -29,9 +29,9 @@ public class WritersTest {
 
     private ByteBuffer resultBuffer = ByteBuffer.allocate(CAPACITY_BYTES);
 
-    private static AbstractLoki4jEncoder initEnc() {
-        var e = new AbstractLoki4jEncoder();
-        e.setStaticLabels(true);
+    private static Loki4jAppender initEnc() {
+        var e = new Loki4jAppender();
+        //e.setStaticLabels(true);
         e.setContext(new LoggerContext());
         e.start();
         return e;

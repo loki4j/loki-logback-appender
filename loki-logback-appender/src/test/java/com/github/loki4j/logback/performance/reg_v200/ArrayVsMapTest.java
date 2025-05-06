@@ -4,7 +4,6 @@ import static com.github.loki4j.logback.Generators.*;
 
 import java.util.Arrays;
 
-import com.github.loki4j.logback.AbstractLoki4jEncoder.LabelCfg;
 import com.github.loki4j.logback.Generators.AppenderWrapper;
 import com.github.loki4j.logback.Generators.InfiniteEventIterator;
 import com.github.loki4j.testkit.benchmark.Benchmarker;
@@ -18,13 +17,15 @@ import ch.qos.logback.classic.spi.ILoggingEvent;
 
 public class ArrayVsMapTest {
 
-    private static AppenderWrapper initApp(LabelCfg labelCfg) {
-        var e = stringEncoder(
-            labelCfg,
+    private static AppenderWrapper initApp(String labelsPattern, String metadataPattern) {
+        var batch = batch(1000, 60_000L);
+        batch.setSendQueueMaxBytes(Long.MAX_VALUE);
+        var a = stringAppender(
+            labelsPattern,
+            metadataPattern,
             plainTextMsgLayout("l=%level c=%logger{20} t=%thread | %msg %ex{1}"),
-            false);
-        var a = appender(1000, 60_000L, e, dummySender());
-        a.setSendQueueMaxBytes(Long.MAX_VALUE);
+            batch,
+            dummySender());
         a.setVerbose(false);
         a.start();
         return new AppenderWrapper(a);
@@ -40,7 +41,7 @@ public class ArrayVsMapTest {
             this.generator = () -> InfiniteEventIterator.from(generateEvents(10_000, 10)).limited(100_000);
             this.benchmarks = Arrays.asList(
                 Benchmark.of("maps-new2",
-                    () -> initApp(labelMetadataCfg("app=my-app", "t=%thread,c=%logger", true)),
+                    () -> initApp("app=my-app", "t=%thread,c=%logger"),
                     (a, e) -> a.append(e),
                     a -> a.waitAllAppended(),
                     a -> a.stop())
