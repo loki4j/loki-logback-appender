@@ -25,7 +25,7 @@ public final class JsonWriter implements Writer {
         var currentStream = batch.get(0).stream;
         beginStreams(batch.get(0), currentStream);
         for (int i = 1; i < batch.size(); i++) {
-            if (batch.get(i).stream != currentStream) {
+            if (!batch.get(i).stream.equals(currentStream)) {
                 currentStream = batch.get(i).stream;
                 nextStream(batch.get(i), currentStream);
             }

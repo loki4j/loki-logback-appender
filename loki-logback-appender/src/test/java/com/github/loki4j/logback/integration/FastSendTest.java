@@ -32,9 +32,8 @@ public class FastSendTest {
     @Category({IntegrationTests.class})
     public void testJavaJsonOneEventSend() throws Exception {
         var label = "testJavaJsonOneEventSend";
-        var encoder = jsonEncoder(false, label);
         var sender = javaHttpSender(urlPush);
-        var appender = appender(10, 1000, encoder, sender);
+        var appender = jsonAppender(label, batch(10, 1000), sender);
 
         var events = generateEvents(1, 10);
         client.testHttpSend(label, events, appender);
@@ -45,9 +44,8 @@ public class FastSendTest {
     @Category({IntegrationTests.class})
     public void testApacheJsonFastSend() throws Exception {
         var label = "testApacheJsonFastSend";
-        var encoder = jsonEncoder(false, label);
         var sender = apacheHttpSender(urlPush);
-        var appender = appender(10, 1000, encoder, sender);
+        var appender = jsonAppender(label, batch(10, 1000), sender);
 
         var events = generateEvents(1000, 10);
         client.testHttpSend(label, events, appender);
@@ -59,9 +57,8 @@ public class FastSendTest {
     @Category({IntegrationTests.class})
     public void testJavaJsonFastSend() throws Exception {
         var label = "testJavaJsonFastSend";
-        var encoder = jsonEncoder(false, label);
         var sender = javaHttpSender(urlPush);
-        var appender = appender(10, 1000, encoder, sender);
+        var appender = jsonAppender(label, batch(10, 1000), sender);
 
         var events = generateEvents(1000, 10);
         client.testHttpSend(label, events, appender);
@@ -71,9 +68,8 @@ public class FastSendTest {
     @Category({IntegrationTests.class})
     public void testApacheProtobufFastSend() throws Exception {
         var label = "testApacheProtobufFastSend";
-        var encoder = protobufEncoder(false, label);
         var sender = apacheHttpSender(urlPush);
-        var appender = appender(10, 1000, encoder, sender);
+        var appender = protoAppender(label, batch(10, 1000), sender);
 
         var events = generateEvents(1000, 10);
         client.testHttpSend(label, events, appender);
@@ -83,9 +79,8 @@ public class FastSendTest {
     @Category({IntegrationTests.class})
     public void testJavaProtobufFastSend() throws Exception {
         var label = "testJavaProtobufFastSend";
-        var encoder = protobufEncoder(false, label);
         var sender = javaHttpSender(urlPush);
-        var appender = appender(10, 1000, encoder, sender);
+        var appender = protoAppender(label, batch(10, 1000), sender);
 
         var events = generateEvents(1000, 10);
         client.testHttpSend(label, events, appender);
@@ -95,24 +90,24 @@ public class FastSendTest {
     @Category({IntegrationTests.class})
     public void testJsonLayoutJsonFastSend() throws Exception {
         var label = "testJsonLayoutJsonFastSend";
-        var encoder = jsonEncoder(false, label, new JsonLayout());
         var sender = javaHttpSender(urlPush);
-        var appender = appender(10, 1000, encoder, sender);
+        var appender = jsonAppender("service_name=my-app\ntest=" + label, null, new JsonLayout(), batch(10, 1000), sender);
 
         var events = generateEvents(1000, 10);
-        client.testHttpSend(label, events, appender);
+        var expectedAppender = jsonAppender("service_name=my-app\ntest=" + label, null, new JsonLayout(), batch(events.length, 10L), sender);
+        client.testHttpSend(label, events, appender, expectedAppender, events.length, 10L);
     }
 
     @Test
     @Category({IntegrationTests.class})
     public void testJsonLayoutProtobufFastSend() throws Exception {
         var label = "testJsonLayoutProtobufFastSend";
-        var encoder = protobufEncoder(false, label, new JsonLayout());
         var sender = javaHttpSender(urlPush);
-        var appender = appender(10, 1000, encoder, sender);
+        var appender = protoAppender("service_name=my-app\ntest=" + label, null, new JsonLayout(), batch(10, 1000), sender);
 
         var events = generateEvents(1000, 10);
-        client.testHttpSend(label, events, appender);
+        var expectedAppender = jsonAppender("service_name=my-app\ntest=" + label, null, new JsonLayout(), batch(events.length, 10L), sender);
+        client.testHttpSend(label, events, appender, expectedAppender, events.length, 10L);
     }
 
 }

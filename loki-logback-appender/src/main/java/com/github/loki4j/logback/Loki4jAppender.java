@@ -1,119 +1,67 @@
 package com.github.loki4j.logback;
 
+import java.util.ArrayList;
+import java.util.LinkedHashMap;
+import java.util.List;
+import java.util.Map;
 import java.util.concurrent.atomic.AtomicLong;
+import java.util.regex.Pattern;
 
+import com.github.loki4j.client.batch.LogRecord;
 import com.github.loki4j.client.pipeline.AsyncBufferPipeline;
 import com.github.loki4j.client.pipeline.PipelineConfig;
-import com.github.loki4j.client.pipeline.PipelineConfig.WriterFactory;
+import com.github.loki4j.client.util.StringUtils;
+import com.github.loki4j.logback.extractor.Extractor;
+import com.github.loki4j.logback.extractor.MarkerExtractor;
+import com.github.loki4j.logback.extractor.PatternsExtractor;
+import com.github.loki4j.slf4j.marker.AbstractKeyValueMarker;
+import com.github.loki4j.slf4j.marker.LabelMarker;
+import com.github.loki4j.slf4j.marker.StructuredMetadataMarker;
 
+import ch.qos.logback.classic.PatternLayout;
 import ch.qos.logback.classic.spi.ILoggingEvent;
-import ch.qos.logback.core.UnsynchronizedAppenderBase;
+import ch.qos.logback.core.CoreConstants;
+import ch.qos.logback.core.Layout;
 import ch.qos.logback.core.joran.spi.DefaultClass;
+import ch.qos.logback.core.spi.ScanException;
 import ch.qos.logback.core.status.Status;
 
 /**
  * Main appender that provides functionality for sending log record batches to Loki.
+ * This class is responsible for converting Logback event to internal log record representation
+ * and sending it to the pipeline.
  */
-public class Loki4jAppender extends UnsynchronizedAppenderBase<ILoggingEvent> {
+public class Loki4jAppender extends PipelineConfigAppenderBase {
+
+    private static final String KV_REGEX_STARTER = "regex:";
+    private static final String KV_PAIR_SEPARATOR = "\n";
+    private static final String KV_KV_SEPARATOR = "=";
+    private static final String DEFAULT_LBL_PATTERN = "source=loki4j\nhost=";
+    private static final String DEFAULT_MSG_PATTERN = "%msg %ex";
 
     /**
-     * Max number of events to put into a single batch before sending it to Loki.
+     * Logback pattern to use for log record's label.
      */
-    private int batchMaxItems = 1000;
+    private String labelsPattern;
     /**
-     * Max number of bytes a single batch can contain (as counted by Loki).
-     * This value should not be greater than server.grpc_server_max_recv_msg_size
-     * in your Loki config.
+     * Logback pattern to use for log record's structured metadata.
      */
-    private int batchMaxBytes = 4 * 1024 * 1024;
+    private String structuredMetadataPattern;
     /**
-     * Max time in milliseconds to keep a batch before sending it to Loki, even if
-     * max items/bytes limits for this batch are not reached.
+     * Logback layout to use for log record's message.
      */
-    private long batchTimeoutMs = 60 * 1000;
+    private Layout<ILoggingEvent> messageLayout;
 
     /**
-     * Max number of bytes to keep in the send queue.
-     * When the queue is full, incoming log events are dropped.
+     * If true, scans each log record for attached LabelMarker to
+     * add its values to record's labels.
      */
-    private long sendQueueMaxBytes = batchMaxBytes * 10;
-
-    /**
-     * Max number of attempts to send a batch to Loki before it will be dropped.
-     * A failed batch send could be retried only in case of ConnectException, or receiving statuses 429, 503 from Loki.
-     * All other exceptions and 4xx-5xx statuses do not cause a retry in order to avoid duplicates.
-     */
-    private int maxRetries = 2;
-
-    /**
-     * Initial backoff delay before the next attempt to re-send a failed batch.
-     * Batches are retried with an exponential backoff (e.g. 0.5s, 1s, 2s, 4s, etc.) and jitter.
-     */
-    private long minRetryBackoffMs = 500;
-
-    /**
-     * Maximum backoff delay before the next attempt to re-send a failed batch.
-     */
-    private long maxRetryBackoffMs = 60 * 1000;
-
-    /**
-     * Upper bound for a jitter added to the retry delays.
-     */
-    private int maxRetryJitterMs = 500;
-
-    /**
-     * If true, batches that Loki responds to with a 429 status code (TooManyRequests)
-     * will be dropped rather than retried.
-     */
-    private boolean dropRateLimitedBatches = false;
-
-    /**
-     * A timeout for Loki4j threads to sleep if encode or send queues are empty.
-     * Decreasing this value means lower latency at cost of higher CPU usage.
-     */
-    private long internalQueuesCheckTimeoutMs = 25;
-
-    /**
-     * If true, Loki4j uses Protobuf Loki API instead of JSON.
-     */
-    private boolean useProtobufApi = false;
+    private boolean readMarkers = false;
 
     /**
      * If true, the appender will print its own debug logs to stderr.
      */
     private boolean verbose = false;
-
-    /**
-     * If true, the appender will report its metrics using Micrometer.
-     */
-    private boolean metricsEnabled = false;
-
-    /**
-     * If true, the appender will try to send all the remaining events on shutdown,
-     * so the proper shutdown procedure might take longer.
-     * Otherwise, the appender will drop the unsent events.
-     */
-    private boolean drainOnStop = true;
-
-    /**
-     * Use off-heap memory for storing intermediate data.
-     */
-    private boolean useDirectBuffers = true;
-
-    /**
-     * An encoder converts Logback events into Loki4j log record format.
-     */
-    private AbstractLoki4jEncoder encoder = new AbstractLoki4jEncoder();
-
-    /**
-     * A writer to use for converting log record batches to format acceptable by Loki.
-     */
-    private WriterFactory writer;
-
-    /**
-     * A configurator for HTTP sender.
-     */
-    private HttpSender sender;
 
     /**
      * A pipeline that does all the heavy lifting log records processing.
@@ -125,10 +73,14 @@ public class Loki4jAppender extends UnsynchronizedAppenderBase<ILoggingEvent> {
      */
     private AtomicLong droppedEventsCount = new AtomicLong(0L);
 
-    private PipelineConfig.Builder pipelineBuilder = PipelineConfig.builder();
+    private List<Extractor> labelValueExtractors = new ArrayList<>();
+    private List<Extractor> metadataValueExtractors = new ArrayList<>();
+
+    private Map<String, String> staticLabelStream = null;
 
     @Override
     public void start() {
+        // init internal logging
         if (getStatusManager() != null && getStatusManager().getCopyOfStatusListenerList().isEmpty()) {
             var statusListener = new StatusPrinter(verbose ? Status.INFO : Status.WARN);
             statusListener.setContext(getContext());
@@ -136,49 +88,26 @@ public class Loki4jAppender extends UnsynchronizedAppenderBase<ILoggingEvent> {
             getStatusManager().add(statusListener);
         }
 
-        addInfo(String.format("Starting with " +
-            "batchMaxItems=%s, batchMaxBytes=%s, batchTimeout=%s, sendQueueMaxBytes=%s...",
-            batchMaxItems, batchMaxBytes, batchTimeoutMs, sendQueueMaxBytes));
+        // init labels KV extraction
+        if (labelsPattern == null)
+            labelsPattern = DEFAULT_LBL_PATTERN + context.getProperty(CoreConstants.HOSTNAME_KEY);
+        labelValueExtractors = initExtractors(labelsPattern, LabelMarker.class);
 
-        if (sendQueueMaxBytes < batchMaxBytes * 5) {
-            addWarn("Configured value sendQueueMaxBytes=" + sendQueueMaxBytes + " is less than `batchMaxBytes * 5`");
-            sendQueueMaxBytes = batchMaxBytes * 5;
+        // init structured metadata KV extraction
+        if (structuredMetadataPattern != null && !structuredMetadataPattern.isBlank()) {
+            metadataValueExtractors = initExtractors(structuredMetadataPattern, StructuredMetadataMarker.class);
         }
 
-        encoder.setContext(context);
-        encoder.start();
-
-        if (writer == null) {
-            writer = useProtobufApi ? PipelineConfig.protobuf : PipelineConfig.json;
+        // init message layout
+        if (messageLayout == null) {
+            addWarn("No message layout specified in the config. Using PatternLayout with default settings");
+            messageLayout = initPatternLayout(DEFAULT_MSG_PATTERN);
         }
+        messageLayout.setContext(context);
+        messageLayout.start();
 
-        if (sender == null) {
-            addWarn("No sender specified in the config. Trying to use JavaHttpSender with default settings");
-            sender = new JavaHttpSender();
-        }
-
-        PipelineConfig pipelineConf = pipelineBuilder
-            .setName(this.getName() == null ? "none" : this.getName())
-            .setBatchMaxItems(batchMaxItems)
-            .setBatchMaxBytes(batchMaxBytes)
-            .setBatchTimeoutMs(batchTimeoutMs)
-            .setStaticLabels(encoder.getStaticLabels())
-            .setSendQueueMaxBytes(sendQueueMaxBytes)
-            .setMaxRetries(maxRetries)
-            .setMinRetryBackoffMs(minRetryBackoffMs)
-            .setMaxRetryBackoffMs(maxRetryBackoffMs)
-            .setMaxRetryJitterMs(maxRetryJitterMs)
-            .setDropRateLimitedBatches(dropRateLimitedBatches)
-            .setInternalQueuesCheckTimeoutMs(internalQueuesCheckTimeoutMs)
-            .setUseDirectBuffers(useDirectBuffers)
-            .setDrainOnStop(drainOnStop)
-            .setMetricsEnabled(metricsEnabled)
-            .setWriter(writer)
-            .setHttpConfig(sender.getConfig())
-            .setHttpClientFactory(sender.getHttpClientFactory())
-            .setInternalLoggingFactory(source -> new InternalLogger(source, this))
-            .build();
-
+        // init pipeline
+        PipelineConfig pipelineConf = buildPipelineConfig();
         pipeline = new AsyncBufferPipeline(pipelineConf);
         pipeline.start();
 
@@ -197,22 +126,67 @@ public class Loki4jAppender extends UnsynchronizedAppenderBase<ILoggingEvent> {
         super.stop();
 
         pipeline.stop();
-        encoder.stop();
+        messageLayout.stop();
 
         addInfo("Successfully stopped");
     }
 
     @Override
     protected void append(ILoggingEvent event) {
-        var appended = pipeline.append(
-            event.getTimeStamp(),
-            event.getNanoseconds() % 1_000_000, // take only nanos, not ms
-            () -> encoder.eventToStream(event),
-            () -> encoder.eventToMessage(event),
-            () -> encoder.eventToMetadata(event));
-
+        var appended = pipeline.append(() -> eventToLogRecord(event));
         if (!appended)
             reportDroppedEvents();
+    }
+
+    public LogRecord eventToLogRecord(ILoggingEvent event) {
+        return LogRecord.create(
+            event.getTimeStamp(),
+            event.getNanoseconds() % 1_000_000, // take only nanos, not ms
+            extractStream(event),
+            extractMessage(event),
+            extractMetadata(event));
+    }
+
+    private Map<String, String> extractStream(ILoggingEvent e) {
+        if (isStaticLabels()) {
+            if (staticLabelStream == null) {
+                if (labelValueExtractors.size() == 1) {
+                    var kvs = new LinkedHashMap<String, String>();
+                    labelValueExtractors.get(0).extract(e, kvs);
+                    staticLabelStream = kvs;
+                } else {
+                    throw new IllegalStateException("No bulk patterns allowed for static label configuration");
+                }
+            }
+            return staticLabelStream;
+        }
+
+        var kvs = new LinkedHashMap<String, String>();
+        for (var extractor : labelValueExtractors) {
+            extractor.extract(e, kvs);
+        }
+        return kvs;
+    }
+
+    private Map<String, String> extractMetadata(ILoggingEvent e) {
+        if (metadataValueExtractors.isEmpty())
+            return Map.of();
+
+        var kvs = new LinkedHashMap<String, String>();
+        for (var extractor : metadataValueExtractors) {
+            extractor.extract(e, kvs);
+        }
+        return kvs;
+    }
+
+    private String extractMessage(ILoggingEvent e) {
+        return messageLayout.doLayout(e);
+    }
+
+    private PatternLayout initPatternLayout(String pattern) {
+        var patternLayout = new PatternLayout();
+        patternLayout.setPattern(pattern);
+        return patternLayout;
     }
 
     private void reportDroppedEvents() {
@@ -234,6 +208,50 @@ public class Loki4jAppender extends UnsynchronizedAppenderBase<ILoggingEvent> {
         }
     }
 
+    private <T extends AbstractKeyValueMarker> List<Extractor> initExtractors(String pattern, Class<T> markerClass) {
+        var extractors = new ArrayList<Extractor>();
+        var kvPairs = extractKVPairsFromPattern(pattern, KV_PAIR_SEPARATOR, KV_KV_SEPARATOR);
+        // logback patterns' extractor
+        var logbackPatterns = new LinkedHashMap<String, String>();
+        kvPairs.entrySet().stream().forEach(e -> logbackPatterns.put(e.getKey(), e.getValue()));
+        try {
+            extractors.add(new PatternsExtractor(logbackPatterns, context));
+        } catch (ScanException e) {
+            throw new IllegalArgumentException("Unable to parse pattern: \"" + pattern + "\"", e);
+        }
+        // marker extractor
+        if (readMarkers)
+            extractors.add(new MarkerExtractor<>(markerClass));
+        return extractors;
+    }
+
+    static Map<String, String> extractKVPairsFromPattern(String pattern, String pairSeparator, String keyValueSeparator) {
+        // check if label pair separator is RegEx or literal string
+        var pairSeparatorPattern = pairSeparator.startsWith(KV_REGEX_STARTER)
+            ? Pattern.compile(pairSeparator.substring(KV_REGEX_STARTER.length()))
+            : Pattern.compile(Pattern.quote(pairSeparator));
+        // label key-value separator supports only literal strings
+        var keyValueSeparatorPattern = Pattern.compile(Pattern.quote(keyValueSeparator));
+
+        var pairs = pairSeparatorPattern.split(pattern);
+        var result = new LinkedHashMap<String, String>();
+        for (int i = 0; i < pairs.length; i++) {
+            if (StringUtils.isBlank(pairs[i])) continue;
+
+            var kv = keyValueSeparatorPattern.split(pairs[i]);
+            if (kv.length == 2) {
+                result.put(kv[0].trim(), kv[1].trim());
+            } else {
+                throw new IllegalArgumentException(String.format(
+                    "Unable to split '%s' in '%s' to key-value pairs, pairSeparator=%s, keyValueSeparator=%s",
+                    pairs[i], pattern, pairSeparator, keyValueSeparator));
+            }
+        }
+        if (result.isEmpty())
+            throw new IllegalArgumentException("Empty of blank patterns are not supported");
+        return result;
+    }
+
     void waitSendQueueIsEmpty(long timeoutMs) {
         pipeline.waitSendQueueIsEmpty(timeoutMs);
     }
@@ -242,90 +260,24 @@ public class Loki4jAppender extends UnsynchronizedAppenderBase<ILoggingEvent> {
         return droppedEventsCount.get();
     }
 
-    public void setBatchMaxItems(int batchMaxItems) {
-        this.batchMaxItems = batchMaxItems;
-    }
-    public void setBatchMaxBytes(int batchMaxBytes) {
-        this.batchMaxBytes = batchMaxBytes;
-    }
-    public void setBatchTimeoutMs(long batchTimeoutMs) {
-        this.batchTimeoutMs = batchTimeoutMs;
-    }
-    public void setSendQueueMaxBytes(long sendQueueMaxBytes) {
-        this.sendQueueMaxBytes = sendQueueMaxBytes;
+    public void setLabels(String labelsPattern) {
+        this.labelsPattern = labelsPattern;
     }
 
-    public void setMaxRetries(int maxRetries) {
-        this.maxRetries = maxRetries;
+    public void setStructuredMetadata(String structuredMetadataPattern) {
+        this.structuredMetadataPattern = structuredMetadataPattern;
     }
-    public void setMinRetryBackoffMs(long minRetryBackoffMs) {
-        this.minRetryBackoffMs = minRetryBackoffMs;
+
+    @DefaultClass(PatternLayout.class)
+    public void setMessage(Layout<ILoggingEvent> messageLayout) {
+        this.messageLayout = messageLayout;
     }
-    public void setMaxRetryBackoffMs(long maxRetryBackoffMs) {
-        this.maxRetryBackoffMs = maxRetryBackoffMs;
+
+    public void setReadMarkers(boolean readMarkers) {
+        this.readMarkers = readMarkers;
     }
-    public void setMaxRetryJitterMs(int maxRetryJitterMs) {
-        this.maxRetryJitterMs = maxRetryJitterMs;
-    }
-    public void setDropRateLimitedBatches(boolean dropRateLimitedBatches) {
-        this.dropRateLimitedBatches = dropRateLimitedBatches;
-    }
-    public void setRetryTimeoutMs(long retryTimeoutMs) {    // TODO: remove this
-        addWarn("The setting `retryTimeoutMs` is no longer supported. See `minRetryBackoffMs` and `maxRetryBackoffMs`");
-    }
+
     public void setVerbose(boolean verbose) {
         this.verbose = verbose;
-    }
-    public void setMetricsEnabled(boolean metricsEnabled) {
-        this.metricsEnabled = metricsEnabled;
-    }
-    public void setDrainOnStop(boolean drainOnStop) {
-        this.drainOnStop = drainOnStop;
-    }
-    public void setUseDirectBuffers(boolean useDirectBuffers) {
-        this.useDirectBuffers = useDirectBuffers;
-    }
-    public void setInternalQueuesCheckTimeoutMs(long internalQueuesCheckTimeoutMs) {
-        this.internalQueuesCheckTimeoutMs = internalQueuesCheckTimeoutMs;
-    }
-    public void setUseProtobufApi(boolean useProtobufApi) {
-        this.useProtobufApi = useProtobufApi;
-    }
-
-    HttpSender getSender() {
-        return sender;
-    }
-
-    /**
-     * "http" instead of "sender" is just to have a more clear name
-     * for the configuration section.
-     */
-    @DefaultClass(JavaHttpSender.class)
-    public void setHttp(HttpSender sender) {
-        this.sender = sender;
-    }
-
-    /**
-     * Encoder can be configured from the outside for testing purposes.
-     */
-    AbstractLoki4jEncoder getEncoder() {
-        return this.encoder;
-    }
-
-    /**
-     * "format" instead of "encoder" in the name allows to specify
-     * the default implementation, so users don't have to write
-     * full-qualified class name by default.
-     */
-    @DefaultClass(AbstractLoki4jEncoder.class)
-    void setFormat(AbstractLoki4jEncoder encoder) {
-        this.encoder = encoder;
-    }
-
-    /**
-     * Writer can be set from the outside for testing purposes.
-     */
-    void setWriter(WriterFactory writer) {
-        this.writer = writer;
     }
 }

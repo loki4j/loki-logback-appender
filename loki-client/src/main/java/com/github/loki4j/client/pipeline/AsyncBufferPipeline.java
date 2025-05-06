@@ -3,7 +3,6 @@ package com.github.loki4j.client.pipeline;
 import java.net.ConnectException;
 import java.net.http.HttpTimeoutException;
 import java.util.Comparator;
-import java.util.Map;
 import java.util.Optional;
 import java.util.concurrent.ConcurrentLinkedQueue;
 import java.util.concurrent.ExecutorService;
@@ -168,18 +167,13 @@ public final class AsyncBufferPipeline {
         waitSendQueueLessThan(1, timeoutMs);
     }
 
-    public boolean append(
-            long timestampMs,
-            int nanosInMs,
-            Supplier<Map<String, String>> stream,
-            Supplier<String> message,
-            Supplier<Map<String, String>> metadata) {
+    public boolean append(Supplier<LogRecord> recordSupplier) {
         var startedNs = System.nanoTime();
         boolean accepted = false;
         if (acceptNewEvents.get()) {
             LogRecord record = null;
             try {
-                record = LogRecord.create(timestampMs, nanosInMs, stream.get(), message.get(), metadata.get());
+                record = recordSupplier.get();
             } catch (Exception e) {
                 log.error(e, "Error occurred while appending an event");
                 if (metrics != null) metrics.appendFailed(() -> e.getClass().getSimpleName());
