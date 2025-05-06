@@ -20,6 +20,6 @@ jobs:
           distribution: temurin
           java-version: ${{ matrix.jdk }}
       - name: Setup Gradle
-        uses: gradle/actions/setup-gradle@v3
+        uses: gradle/actions/setup-gradle@v4
       - name: Build and Run Integration Tests
         run: gradle check

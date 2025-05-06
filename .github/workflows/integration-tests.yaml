@@ -34,7 +34,7 @@ jobs:
           distribution: 'temurin'
           java-version: 11
       - name: Setup Gradle
-        uses: gradle/actions/setup-gradle@v3
+        uses: gradle/actions/setup-gradle@v4
       - name: Build and Run Integration Tests
         run: |
           docker run --name loki -d -p 3100:3100 grafana/loki:${{ matrix.loki }} \
@@ -72,7 +72,7 @@ jobs:
           distribution: 'temurin'
           java-version: ${{ matrix.jdk }}
       - name: Setup Gradle
-        uses: gradle/actions/setup-gradle@v3
+        uses: gradle/actions/setup-gradle@v4
       - name: Build and Run Integration Tests
         env:
           GRAFANA_CLOUD_URL_BASE: ${{ vars.GRAFANA_CLOUD_URL_BASE }}
