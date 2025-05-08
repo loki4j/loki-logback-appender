@@ -42,8 +42,7 @@ public class ParSendTest {
         for (int i = 0; i < parFactor; i++) {
             var idx = i;
             var label = "testJavaJsonParSend" + idx;
-            var sender = javaHttpSender(urlPush);
-            var appender = jsonAppender(label, batch(10, 150_000), sender);
+            var appender = appender(label, batch(10, 150_000), http(urlPush, jsonFormat(), javaSender()));
 
             fs[i] = CompletableFuture
                 .supplyAsync(() -> {
@@ -77,8 +76,7 @@ public class ParSendTest {
         for (int i = 0; i < parFactor; i++) {
             var idx = i;
             var label = "testApacheJsonParSend" + idx;
-            var sender = apacheHttpSender(urlPush);
-            var appender = jsonAppender(label, batch(10, 150_000), sender);
+            var appender = appender(label, batch(10, 150_000), http(urlPush, jsonFormat(), apacheSender()));
 
             fs[i] = CompletableFuture
                 .supplyAsync(() -> {

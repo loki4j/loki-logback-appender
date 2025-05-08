@@ -19,7 +19,7 @@ import com.github.loki4j.client.pipeline.PipelineConfig;
 import com.github.loki4j.client.pipeline.PipelineConfig.WriterFactory;
 import com.github.loki4j.client.util.ByteBufferFactory;
 import com.github.loki4j.client.writer.Writer;
-import com.github.loki4j.logback.PipelineConfigAppenderBase.BatchCfg;
+import com.github.loki4j.logback.PipelineConfigAppenderBase.*;
 import com.github.loki4j.testkit.dummy.DummyHttpClient;
 import com.github.loki4j.testkit.dummy.ExceptionGenerator;
 import com.github.loki4j.testkit.dummy.LokiHttpServerMock;
@@ -53,16 +53,10 @@ public class Generators {
 
     public static Loki4jAppender appender(
             String labelsPattern,
-            boolean staticLabels,
             String structuredMetadataPattern,
             Layout<ILoggingEvent> msgLayout,
             BatchCfg batch,
-            WriterFactory writer,
-            AbstractHttpSender sender) {
-        var http = new Loki4jAppender.HttpCfg();
-        http.setWriter(writer);
-        http.setSender(sender);
-
+            HttpCfg http) {
         var appender = new Loki4jAppender();
         appender.setContext(new LoggerContext());
         appender.setLabels(labelsPattern);
@@ -74,87 +68,27 @@ public class Generators {
         return appender;
     }
 
-    public static Loki4jAppender stringAppender(
-            String labelsPattern,
-            String structuredMetadataPattern,
-            Layout<ILoggingEvent> msgLayout,
+    public static Loki4jAppender appender(
             BatchCfg batch,
-            AbstractHttpSender sender) {
+            HttpCfg http) {
         return appender(
-            labelsPattern,
-            false,
-            structuredMetadataPattern,
-            msgLayout,
-            batch,
-            new PipelineConfig.WriterFactory(Generators::stringWriter, "text/plain"),
-            sender);
-    }
-
-    public static Loki4jAppender stringAppender(
-            BatchCfg batch,
-            AbstractHttpSender sender) {
-        return stringAppender(
             "level=%level\napp=my-app",
             null,
             plainTextMsgLayout(TEST_MSG_PATTERN),
             batch,
-            sender);
+            http);
     }
 
-    public static Loki4jAppender jsonAppender(
-            String labelsPattern,
-            String structuredMetadataPattern,
-            Layout<ILoggingEvent> msgLayout,
-            BatchCfg batch,
-            AbstractHttpSender sender) {
-        return appender(
-            labelsPattern,
-            false,
-            structuredMetadataPattern,
-            msgLayout,
-            batch,
-            PipelineConfig.json,
-            sender);
-    }
-
-    public static Loki4jAppender jsonAppender(
+    public static Loki4jAppender appender(
             String testLabel,
             BatchCfg batch,
-            AbstractHttpSender sender) {
-        return jsonAppender(
+            HttpCfg http) {
+        return appender(
             "test=" + testLabel + "\nlevel=%level\nservice_name=my-app",
             null,
             plainTextMsgLayout(TEST_MSG_PATTERN),
             batch,
-            sender);
-    }
-
-    public static Loki4jAppender protoAppender(
-            String labelsPattern,
-            String structuredMetadataPattern,
-            Layout<ILoggingEvent> msgLayout,
-            BatchCfg batch,
-            AbstractHttpSender sender) {
-        return appender(
-            labelsPattern,
-            false,
-            structuredMetadataPattern,
-            msgLayout,
-            batch,
-            PipelineConfig.protobuf,
-            sender);
-    }
-
-    public static Loki4jAppender protoAppender(
-            String testLabel,
-            BatchCfg batch,
-            AbstractHttpSender sender) {
-        return jsonAppender(
-            "test=" + testLabel + "\nlevel=%level\nservice_name=my-app",
-            null,
-            plainTextMsgLayout(TEST_MSG_PATTERN),
-            batch,
-            sender);
+            http);
     }
 
     public static BatchCfg batch(int batchSize, long batchTimeoutMs) {
@@ -164,28 +98,47 @@ public class Generators {
         return batch;
     }
 
-    public static JavaHttpSender javaHttpSender(String url) {
-        var sender = new JavaHttpSender();
-
-        sender.setUrl(url);
-        sender.setConnectionTimeoutMs(1000L);
-        sender.setRequestTimeoutMs(500L);
-
-        return sender;
+    public static HttpCfg http(HttpSender sender) {
+        return http(stringFormat(), sender);
     }
 
-    public static ApacheHttpSender apacheHttpSender(String url) {
-        var sender = new ApacheHttpSender();
+    public static HttpCfg http(WriterFactory format, HttpSender sender) {
+        var http = new HttpCfg();
+        http.setWriter(format);
+        http.setSender(sender);
+        return http;
+    }
 
-        sender.setUrl(url);
-        sender.setConnectionTimeoutMs(1000L);
-        sender.setRequestTimeoutMs(500L);
+    public static HttpCfg http(String url, WriterFactory format, HttpSender sender) {
+        var http = http(format, sender);
+        http.setUrl(url);
+        http.setConnectionTimeoutMs(1000L);
+        http.setRequestTimeoutMs(500L);
+        return http;
+    }
 
-        return sender;
+    public static JavaHttpSender javaSender() {
+        return new JavaHttpSender();
+    }
+
+    public static ApacheHttpSender apacheSender() {
+        return new ApacheHttpSender();
     }
 
     public static DummyHttpSender dummySender() {
         return new DummyHttpSender();
+    }
+
+    public static WriterFactory jsonFormat() {
+        return PipelineConfig.json;
+    }
+
+    public static WriterFactory protobufFormat() {
+        return PipelineConfig.protobuf;
+    }
+
+    public static WriterFactory stringFormat() {
+        return new PipelineConfig.WriterFactory(Generators::stringWriter, "text/plain");
     }
 
     public static <U> U withAppender(
@@ -367,7 +320,7 @@ public class Generators {
         }
     }
 
-    public static class WrappingHttpSender<T extends Loki4jHttpClient> extends AbstractHttpSender {
+    public static class WrappingHttpSender<T extends Loki4jHttpClient> implements HttpSender {
         public final T client;
 
         public WrappingHttpSender(T client) {

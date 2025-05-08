@@ -1,5 +1,8 @@
 package com.github.loki4j.logback;
 
+import java.util.Optional;
+
+import com.github.loki4j.client.http.HttpConfig;
 import com.github.loki4j.client.pipeline.PipelineConfig;
 import com.github.loki4j.client.pipeline.PipelineConfig.WriterFactory;
 
@@ -72,10 +75,20 @@ public abstract class PipelineConfigAppenderBase extends UnsynchronizedAppenderB
                 .setDropRateLimitedBatches(http.dropRateLimitedBatches)
                 .setMetricsEnabled(metricsEnabled)
                 .setWriter(effectiveWriter)
-                .setHttpConfig(effectiveSender.getConfig())
+                .setHttpConfig(effectiveSender.getConfig().fill(this::fillHttpConfig))
                 .setHttpClientFactory(effectiveSender.getHttpClientFactory())
                 .setInternalLoggingFactory(source -> new InternalLogger(source, this))
                 .build();
+    }
+
+    private void fillHttpConfig(HttpConfig.Builder builder) {
+        builder
+            .setPushUrl(http.url)
+            .setTenantId(http.tenantId)
+            .setConnectionTimeoutMs(http.connectionTimeoutMs)
+            .setRequestTimeoutMs(http.requestTimeoutMs)
+            .setUsername(Optional.ofNullable(http.auth).map(a -> a.username))
+            .setPassword(Optional.ofNullable(http.auth).map(a -> a.password));
     }
 
     /** Keeping getter for testing purposes */
@@ -174,6 +187,36 @@ public abstract class PipelineConfigAppenderBase extends UnsynchronizedAppenderB
     }
 
     public static final class HttpCfg {
+
+        /**
+        * Loki endpoint to be used for sending batches
+        */
+        private String url = "http://localhost:3100/loki/api/v1/push";
+
+        /**
+         * Tenant identifier.
+         * It is required only for sending logs directly to Loki operating in multi-tenant mode.
+         * Otherwise this setting has no effect
+         */
+        private Optional<String> tenantId = Optional.empty();
+
+        /**
+         * Time in milliseconds to wait for HTTP connection to Loki to be established
+         * before reporting an error
+         */
+        private long connectionTimeoutMs = 30_000;
+
+        /**
+         * Time in milliseconds to wait for HTTP request to Loki to be responded
+         * before reporting an error
+         */
+        private long requestTimeoutMs = 5_000;
+
+        /**
+         * Optional creds for basic HTTP auth
+         */
+        private BasicAuth auth;
+
         /**
          * Max number of attempts to send a batch to Loki before it will be dropped.
          * A failed batch send could be retried only in case of ConnectException, or
@@ -223,7 +266,21 @@ public abstract class PipelineConfigAppenderBase extends UnsynchronizedAppenderB
          */
         private HttpSender sender;
 
-
+        public void setUrl(String url) {
+            this.url = url;
+        }
+        public void setAuth(BasicAuth auth) {
+            this.auth = auth;
+        }
+        public void setTenantId(String tenant) {
+            this.tenantId = Optional.ofNullable(tenant);
+        }
+        public void setConnectionTimeoutMs(long connectionTimeoutMs) {
+            this.connectionTimeoutMs = connectionTimeoutMs;
+        }
+        public void setRequestTimeoutMs(long requestTimeoutMs) {
+            this.requestTimeoutMs = requestTimeoutMs;
+        }
         public void setMaxRetries(int maxRetries) {
             this.maxRetries = maxRetries;
         }
@@ -251,6 +308,24 @@ public abstract class PipelineConfigAppenderBase extends UnsynchronizedAppenderB
         /** Keeping this for test purpose */
         void setWriter(WriterFactory writer) {
             this.writer = writer;
+        }
+    }
+
+    public static final class BasicAuth {
+        /**
+         * Username to use for basic auth
+         */
+        String username;
+        /**
+         * Password to use for basic auth
+         */
+        String password;
+
+        public void setUsername(String username) {
+            this.username = username;
+        }
+        public void setPassword(String password) {
+            this.password = password;
         }
     }
 }

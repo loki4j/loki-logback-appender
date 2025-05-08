@@ -27,12 +27,10 @@ public class AppenderTest {
         batch.setSendQueueMaxBytes(Long.MAX_VALUE);
         var a = appender(
             "test=" + testLabel + "\nlevel=%level\nservice_name=my-app",
-            false,
             null,
             plainTextMsgLayout("%msg %ex"),
             batch,
-            writer,
-            dummySender());
+            http(writer, dummySender()));
         a.setVerbose(false);
         a.start();
         return new AppenderWrapper(a);

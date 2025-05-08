@@ -141,7 +141,7 @@ public class LokiTestingClient {
         });
         // forming expected output
         if (expectedAppender == null)
-            expectedAppender = jsonAppender(lbl, batch(chunkSize, chunkDelayMs), dummySender());
+            expectedAppender = appender(lbl, batch(chunkSize, chunkDelayMs), http(null));
         withAppender(expectedAppender, encoder -> {
             for (int i = 0; i < events.length; i++) {
                 final var idx = i;

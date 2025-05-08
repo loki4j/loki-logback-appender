@@ -31,11 +31,12 @@ public class BatchSizeTest {
     @Category({IntegrationTests.class})
     public void testApacheJsonMaxBytesSend() throws Exception {
         var label = "testApacheJsonMaxBytesSend";
-        var sender = apacheHttpSender(urlPush);
-        sender.setRequestTimeoutMs(30_000L);
+
+        var http = http(urlPush, jsonFormat(), apacheSender());
+        http.setRequestTimeoutMs(30_000L);
         var batch = batch(5_000, 1000);
         batch.setSendQueueMaxBytes(100 * 1024 * 1024);
-        var appender = jsonAppender(label, batch, sender);
+        var appender = appender(label, batch, http);
 
         var events = generateEvents(5_000, 2000);
         client.testHttpSend(label, events, appender);
@@ -47,11 +48,12 @@ public class BatchSizeTest {
     @Category({IntegrationTests.class})
     public void testJavaProtobufMaxBytesSend() throws Exception {
         var label = "testJavaProtobufMaxBytesSend";
-        var sender = javaHttpSender(urlPush);
-        sender.setRequestTimeoutMs(30_000L);
+
+        var http = http(urlPush, protobufFormat(), javaSender());
+        http.setRequestTimeoutMs(30_000L);
         var batch = batch(5_000, 1000);
         batch.setSendQueueMaxBytes(100 * 1024 * 1024);
-        var appender = protoAppender(label, batch, sender);
+        var appender = appender(label, batch, http);
 
         var events = generateEvents(5_000, 2000);
         client.testHttpSend(label, events, appender);

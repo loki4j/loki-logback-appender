@@ -1,12 +1,15 @@
 package com.github.loki4j.logback;
 
+import java.util.function.Function;
+
 import com.github.loki4j.client.http.HttpConfig;
+import com.github.loki4j.client.http.Loki4jHttpClient;
 import com.github.loki4j.client.pipeline.PipelineConfig;
 
 /**
  * A configurator for {@link com.github.loki4j.client.http.ApacheHttpClient ApacheHttpClient}
  */
-public class ApacheHttpSender extends AbstractHttpSender {
+public class ApacheHttpSender implements HttpSender {
 
     /**
      * Maximum number of HTTP connections setting for HttpClient
@@ -30,9 +33,11 @@ public class ApacheHttpSender extends AbstractHttpSender {
 
     @Override
     public HttpConfig.Builder getConfig() {
-        return PipelineConfig
-            .apache(maxConnections, connectionKeepAliveMs)
-            .fill(this::fillHttpConfig);
+        return PipelineConfig.apache(maxConnections, connectionKeepAliveMs);
     }
 
+    @Override
+    public Function<HttpConfig, Loki4jHttpClient> getHttpClientFactory() {
+        return PipelineConfig.defaultHttpClientFactory;
+    }
 }
