@@ -3,7 +3,6 @@ package com.github.loki4j.logback.integration;
 import static com.github.loki4j.logback.Generators.*;
 import static org.junit.Assert.*;
 
-import com.github.loki4j.logback.JsonLayout;
 import com.github.loki4j.testkit.categories.IntegrationTests;
 
 import org.junit.AfterClass;
@@ -32,8 +31,7 @@ public class FastSendTest {
     @Category({IntegrationTests.class})
     public void testJavaJsonOneEventSend() throws Exception {
         var label = "testJavaJsonOneEventSend";
-        var sender = javaHttpSender(urlPush);
-        var appender = jsonAppender(label, batch(10, 1000), sender);
+        var appender = appender(label, batch(10, 1000), http(urlPush, jsonFormat(), javaSender()));
 
         var events = generateEvents(1, 10);
         client.testHttpSend(label, events, appender);
@@ -44,8 +42,7 @@ public class FastSendTest {
     @Category({IntegrationTests.class})
     public void testApacheJsonFastSend() throws Exception {
         var label = "testApacheJsonFastSend";
-        var sender = apacheHttpSender(urlPush);
-        var appender = jsonAppender(label, batch(10, 1000), sender);
+        var appender = appender(label, batch(10, 1000), http(urlPush, jsonFormat(), apacheSender()));
 
         var events = generateEvents(1000, 10);
         client.testHttpSend(label, events, appender);
@@ -57,8 +54,7 @@ public class FastSendTest {
     @Category({IntegrationTests.class})
     public void testJavaJsonFastSend() throws Exception {
         var label = "testJavaJsonFastSend";
-        var sender = javaHttpSender(urlPush);
-        var appender = jsonAppender(label, batch(10, 1000), sender);
+        var appender = appender(label, batch(10, 1000), http(urlPush, jsonFormat(), javaSender()));
 
         var events = generateEvents(1000, 10);
         client.testHttpSend(label, events, appender);
@@ -68,8 +64,7 @@ public class FastSendTest {
     @Category({IntegrationTests.class})
     public void testApacheProtobufFastSend() throws Exception {
         var label = "testApacheProtobufFastSend";
-        var sender = apacheHttpSender(urlPush);
-        var appender = protoAppender(label, batch(10, 1000), sender);
+        var appender = appender(label, batch(10, 1000), http(urlPush, protobufFormat(), apacheSender()));
 
         var events = generateEvents(1000, 10);
         client.testHttpSend(label, events, appender);
@@ -79,8 +74,7 @@ public class FastSendTest {
     @Category({IntegrationTests.class})
     public void testJavaProtobufFastSend() throws Exception {
         var label = "testJavaProtobufFastSend";
-        var sender = javaHttpSender(urlPush);
-        var appender = protoAppender(label, batch(10, 1000), sender);
+        var appender = appender(label, batch(10, 1000), http(urlPush, protobufFormat(), javaSender()));
 
         var events = generateEvents(1000, 10);
         client.testHttpSend(label, events, appender);
@@ -90,11 +84,20 @@ public class FastSendTest {
     @Category({IntegrationTests.class})
     public void testJsonLayoutJsonFastSend() throws Exception {
         var label = "testJsonLayoutJsonFastSend";
-        var sender = javaHttpSender(urlPush);
-        var appender = jsonAppender("service_name=my-app\ntest=" + label, null, new JsonLayout(), batch(10, 1000), sender);
+        var appender = appender(
+            "service_name=my-app\ntest=" + label,
+            null,
+            jsonMsgLayout(),
+            batch(10, 1000),
+            http(urlPush, jsonFormat(), javaSender()));
 
         var events = generateEvents(1000, 10);
-        var expectedAppender = jsonAppender("service_name=my-app\ntest=" + label, null, new JsonLayout(), batch(events.length, 10L), sender);
+        var expectedAppender = appender(
+            "service_name=my-app\ntest=" + label,
+            null,
+            jsonMsgLayout(),
+            batch(events.length, 10L),
+            http(null));
         client.testHttpSend(label, events, appender, expectedAppender, events.length, 10L);
     }
 
@@ -102,11 +105,20 @@ public class FastSendTest {
     @Category({IntegrationTests.class})
     public void testJsonLayoutProtobufFastSend() throws Exception {
         var label = "testJsonLayoutProtobufFastSend";
-        var sender = javaHttpSender(urlPush);
-        var appender = protoAppender("service_name=my-app\ntest=" + label, null, new JsonLayout(), batch(10, 1000), sender);
+        var appender = appender(
+            "service_name=my-app\ntest=" + label,
+            null,
+            jsonMsgLayout(),
+            batch(10, 1000),
+            http(urlPush, protobufFormat(), javaSender()));
 
         var events = generateEvents(1000, 10);
-        var expectedAppender = jsonAppender("service_name=my-app\ntest=" + label, null, new JsonLayout(), batch(events.length, 10L), sender);
+        var expectedAppender = appender(
+            "service_name=my-app\ntest=" + label,
+            null,
+            jsonMsgLayout(),
+            batch(events.length, 10L),
+            http(null));
         client.testHttpSend(label, events, appender, expectedAppender, events.length, 10L);
     }
 

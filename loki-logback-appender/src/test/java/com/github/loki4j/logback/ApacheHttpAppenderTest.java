@@ -43,7 +43,7 @@ public class ApacheHttpAppenderTest {
 
     @Test
     public void testApacheHttpOffHeapSend() {
-        withAppender(stringAppender(batch(3, 1000L), apacheHttpSender(url)), a -> {
+        withAppender(appender(batch(3, 1000L), http(url, stringFormat(), apacheSender())), a -> {
             a.append(events[0]);
             a.append(events[1]);
             assertTrue("no batches before batchSize reached", mockLoki.lastBatch == null);
@@ -58,7 +58,7 @@ public class ApacheHttpAppenderTest {
 
     @Test
     public void testApacheHttpOnHeapSend() {
-        var appender = stringAppender(batch(3, 1000L), apacheHttpSender(url));
+        var appender = appender(batch(3, 1000L), http(url, stringFormat(), apacheSender()));
         appender.getBatch().setUseDirectBuffers(false);
         withAppender(appender, a -> {
             a.append(events[0]);
@@ -75,9 +75,9 @@ public class ApacheHttpAppenderTest {
 
     @Test
     public void testApacheHttpSendWithTenantHeader() {
-        var sender = apacheHttpSender(url);
-        sender.setTenantId("tenant1");
-        withAppender(stringAppender(batch(3, 1000L), sender), a -> {
+        var http = http(url, stringFormat(), apacheSender());
+        http.setTenantId("tenant1");
+        withAppender(appender(batch(3, 1000L), http), a -> {
             a.append(events);
             a.waitAllAppended();
             assertEquals("http send", expected, StringPayload.parse(mockLoki.lastBatch));

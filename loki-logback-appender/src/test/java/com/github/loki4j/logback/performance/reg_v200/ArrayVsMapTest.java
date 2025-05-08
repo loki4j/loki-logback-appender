@@ -20,12 +20,12 @@ public class ArrayVsMapTest {
     private static AppenderWrapper initApp(String labelsPattern, String metadataPattern) {
         var batch = batch(1000, 60_000L);
         batch.setSendQueueMaxBytes(Long.MAX_VALUE);
-        var a = stringAppender(
+        var a = appender(
             labelsPattern,
             metadataPattern,
             plainTextMsgLayout("l=%level c=%logger{20} t=%thread | %msg %ex{1}"),
             batch,
-            dummySender());
+            http(dummySender()));
         a.setVerbose(false);
         a.start();
         return new AppenderWrapper(a);

@@ -30,9 +30,9 @@ public class MultitenantSupportTest {
     @Category({CIOnlyTests.class})
     public void testJavaJsonSendWithTenant() throws Exception {
         var label = "testJavaJsonSendWithTenant";
-        var sender = javaHttpSender(urlPush);
-        sender.setTenantId(tenant);
-        var appender = jsonAppender(label, batch(10, 1000), sender);
+        var http = http(urlPush, jsonFormat(), javaSender());
+        http.setTenantId(tenant);
+        var appender = appender(label, batch(10, 1000), http);
 
         var events = generateEvents(1000, 10);
         client.testHttpSend(label, events, appender);
@@ -42,9 +42,9 @@ public class MultitenantSupportTest {
     @Category({CIOnlyTests.class})
     public void testApacheProtobufSendWithTenant() throws Exception {
         var label = "testApacheProtobufSendWithTenant";
-        var sender = apacheHttpSender(urlPush);
-        sender.setTenantId(tenant);
-        var appender = protoAppender(label, batch(10, 1000), sender);
+        var http = http(urlPush, protobufFormat(), apacheSender());
+        http.setTenantId(tenant);
+        var appender = appender(label, batch(10, 1000), http);
 
         var events = generateEvents(20, 20);
         client.testHttpSend(label, events, appender);

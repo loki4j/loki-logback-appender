@@ -49,7 +49,7 @@ public class JsonLayoutTest {
             .build();
 
         var sender = dummySender();
-        withAppender(stringAppender("app=my-app", null, jsonMsgLayout(), batch(3, 1000L), sender), appender -> {
+        withAppender(appender("app=my-app", null, jsonMsgLayout(), batch(3, 1000L), http(stringFormat(), sender)), appender -> {
             appender.append(events);
             appender.waitAllAppended();
 

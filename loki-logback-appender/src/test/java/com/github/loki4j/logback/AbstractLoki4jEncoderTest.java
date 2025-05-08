@@ -79,21 +79,23 @@ public class AbstractLoki4jEncoderTest {
         var event = loggingEvent(105L, Level.INFO, "test.TestApp", "thread-1", "Test message 1", null);
 
         var sender = dummySender();
-        assertThrows("KV separation failed", IllegalArgumentException.class, () -> withAppender(stringAppender(
+        assertThrows("KV separation failed", IllegalArgumentException.class, () -> withAppender(
+            appender(
                 "level=%level\napp=",
                 null,
                 plainTextMsgLayout("l=%level c=%logger{20} t=%thread | %msg %ex{1}"),
                 batch(30, 400L),
-                sender), appender -> {
+                http(sender)), appender -> {
                     appender.append(event);
                     return null;
-                }));
-        assertThrows("Converter parsing failed", IllegalArgumentException.class, () -> withAppender(stringAppender(
+            }));
+        assertThrows("Converter parsing failed", IllegalArgumentException.class, () -> withAppender(
+            appender(
                 "level=%lev{,app=x",
                 null,
                 plainTextMsgLayout("l=%level c=%logger{20} t=%thread | %msg %ex{1}"),
                 batch(30, 400L),
-                sender), appender -> {
+                http(sender)), appender -> {
                     appender.append(event);
                     return null;
                 }));
@@ -101,12 +103,12 @@ public class AbstractLoki4jEncoderTest {
 
     @Test
     public void testLogRecordStreams() {
-        withAppender(stringAppender(
+        withAppender(appender(
                 "level=%level\napp=my-app\nthread=%thread",
                 null,
                 plainTextMsgLayout("l=%level | %msg %ex{1}"),
                 batch(1, 1000L),
-                null), appender -> {
+                http(null)), appender -> {
                     var stream1 = appender.eventToLogRecord(
                             loggingEvent(100L, Level.INFO, "test.TestApp", "thread-1", "Test message 1", null)).stream;
                     assertEquals(OrderedMap.of("level", "INFO", "app", "my-app", "thread", "thread-1"), stream1);
@@ -130,12 +132,12 @@ public class AbstractLoki4jEncoderTest {
 
     @Test
     public void testLabelValuesUnaffectedByKVSeparation() {
-        withAppender(stringAppender(
+        withAppender(appender(
                 "level=%level\nclass=%logger\nthread=%thread",
                 null,
                 plainTextMsgLayout("l=%level | %msg %ex{1}"),
                 batch(1, 1000L),
-                null), appender -> {
+                http(null)), appender -> {
                     var event = loggingEvent(100L, Level.INFO, "test.TestApp", "th=\n1", "Test message 1", null);
                     var record = appender.eventToLogRecord(event);
                     var stream1 = record.stream;
@@ -165,12 +167,12 @@ public class AbstractLoki4jEncoderTest {
         };
 
         var sender = dummySender();
-        var stringAppender = stringAppender(
+        var stringAppender = appender(
                 "l=%level",
                 null,
                 plainTextMsgLayout("%level | %msg"),
                 batch(4, 1000L),
-                sender);
+                http(sender));
         stringAppender.setReadMarkers(true);
 
         withAppender(stringAppender, appender -> {
@@ -208,12 +210,12 @@ public class AbstractLoki4jEncoderTest {
         };
 
         var sender = dummySender();
-        var stringAppender = stringAppender(
+        var stringAppender = appender(
                 "l=%level",
                 "t=%thread\nc=%logger",
                 plainTextMsgLayout("%level | %msg"),
                 batch(4, 1000L),
-                sender);
+                http(sender));
         stringAppender.setReadMarkers(true);
 
         withAppender(stringAppender, appender -> {
@@ -244,12 +246,12 @@ public class AbstractLoki4jEncoderTest {
         };
 
         var sender = dummySender();
-        var stringAppender = stringAppender(
+        var stringAppender = appender(
                 "l=%level",
                 "t=%thread\nc=%logger",
                 plainTextMsgLayout("%level | %msg"),
                 batch(4, 1000L),
-                sender);
+                http(sender));
         stringAppender.setReadMarkers(true);
 
         withAppender(stringAppender, appender -> {
@@ -280,12 +282,12 @@ public class AbstractLoki4jEncoderTest {
         };
 
         var sender = dummySender();
-        var staticAppender = stringAppender(
+        var staticAppender = appender(
                 "l=%level",
                 null,
                 plainTextMsgLayout("%level | %msg"),
                 batch(6, 1000L),
-                sender);
+                http(sender));
         staticAppender.getBatch().setStaticLabels(true);
 
         withAppender(staticAppender, appender -> {
@@ -307,12 +309,12 @@ public class AbstractLoki4jEncoderTest {
         });
 
         withAppender(
-                stringAppender(
+                appender(
                         "l=%level",
                         null,
                         plainTextMsgLayout("%level | %msg"),
                         batch(6, 1000L),
-                        sender),
+                        http(sender)),
                 appender -> {
                     appender.append(eventsToOrder);
                     appender.waitAllAppended();
