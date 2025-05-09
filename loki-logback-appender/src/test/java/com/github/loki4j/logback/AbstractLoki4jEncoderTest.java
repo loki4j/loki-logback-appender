@@ -62,6 +62,16 @@ public class AbstractLoki4jEncoderTest {
     }
 
     @Test
+    public void testExtractStreamKVPairsByNewLineRegex() {
+        var kvs1 = extractKVPairsFromPattern(
+                "\r\nlevel=%level\rthread=t1\napp=\"my\"app\n\r\r\r",
+                "regex:\n|\r",
+                "=");
+        var kvse1 = Map.of("level", "%level", "thread", "t1", "app", "\"my\"app");
+        assertEquals("Split by ,=", kvse1, kvs1);
+    }
+
+    @Test
     public void testExtractStreamKVPairs() {
         var kvs1 = extractKVPairsFromPattern("level=%level,app=\"my\"app,test=test", ",", "=");
         var kvse1 = Map.of("level", "%level", "app", "\"my\"app", "test", "test");
