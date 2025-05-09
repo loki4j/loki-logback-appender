@@ -4,6 +4,115 @@ title: Loki4j migration guide
 sidebar_label: Migration Guide
 ---
 
+## Upgrading from 1.6.x to 2.0.x
+
+Version 2.0.0 introduces significant changes to how the appender is configured in `logback.xml`.
+
+#### New sub-section `<batch>`
+
+In v2.0.0 all settings related to grouping log records into batches were moved to a separate section `<batch>`.
+Previously these settings were in the "general" section (i.e., top-level `<appender>` settings).
+
+Below is the list of settings moved to `<batch>` section:
+
+|Old setting|New setting|
+|-----------|-----------|
+|batchMaxItems|batch.maxItems|
+|batchMaxBytes|batch.maxBytes|
+|batchTimeoutMs|batch.timeoutMs|
+|sendQueueMaxBytes|batch.sendQueueMaxBytes|
+|internalQueuesCheckTimeoutMs|batch.internalQueuesCheckTimeoutMs|
+|useDirectBuffers|batch.useDirectBuffers|
+|drainOnStop|batch.drainOnStop|
+|format.staticLabels|batch.staticLabels|
+|||
+
+The default values for the settings listed above remain the same.
+
+#### Some general settings moved to sub-section `<http>`
+
+General settings related to sending batches to Loki via HTTP were moved to `<http>` section:
+
+|Old setting|New setting|
+|-----------|-----------|
+|maxRetries|http.maxRetries|
+|minRetryBackoffMs|http.minRetryBackoffMs|
+|maxRetryBackoffMs|http.maxRetryBackoffMs|
+|maxRetryJitterMs|http.maxRetryJitterMs|
+|dropRateLimitedBatches|http.dropRateLimitedBatches|
+|||
+
+The default values for the settings listed above remain the same.
+
+#### Sub-section `<format>` removed
+
+Settings from the `<format>` section were either removed or moved to "general" section (i.e., top-level `<appender>` settings):
+
+|Old setting|New setting|
+|-----------|-----------|
+|format.label.pattern|labels|
+|format.label.structuredMetadataPattern|structuredMetadata|
+|format.message.*|message|
+|format.label.pairSeparator|<no longer configurable>|
+|format.label.keyValueSeparator|<no longer configurable>|
+|format.label.readMarkers|readMarkers|
+|format.label.streamCache|<removed>|
+|format.staticLabels|batch.staticLabels|
+
+Please note, that some of these settings have also changed their default values:
+
+|Setting|Old default|New default|
+|-------|-----------|-----------|
+|labels|`level=%level,host=$HOSTNAME`|???|
+|structuredMetadata||???|
+|message.pattern|`l=%level c=%logger{20} t=%thread \| %msg %ex`|???|
+
+#### Labels now separated by a new line only
+
+Previously Loki4j offered a setting `format.label.pairSeparator` that was `,` (comma) by default.
+In v2.0.0 this separator is `\n` (new line), `\r` (carriage return), or any combination of them.
+And it's no longer configurable.
+
+Which means, you have to change your old-style labels and structured metadata configuration from:
+
+```xml
+<appender name="LOKI" class="com.github.loki4j.logback.Loki4jAppender">
+    ...
+    <format>
+        <label>
+            <pattern>
+                app = my-app, host = ${HOSTNAME}
+            </pattern>
+            <structuredMetadataPattern>
+                level = %level, thread = %thread, class = %logger
+            </structuredMetadataPattern>
+        </label>
+        ...
+    </format>
+</appender>
+```
+
+to the new-style configuration (mind no commas!):
+
+```xml
+<appender name="LOKI" class="com.github.loki4j.logback.Loki4jAppender">
+    ...
+    <labels>
+        app = my-app
+        host = ${HOSTNAME}
+    </labels>
+    <structuredMetadata>
+        level = %level
+        thread = %thread
+        class = %logger
+    </structuredMetadata>
+</appender>
+```
+
+#### Logback version switched to 1.5.x
+
+If your project depends on other external Logback appenders, please make sure all of them are compatible with Logback v1.5.x before upgrading.
+
 ## Upgrading from 1.5.x to 1.6.x
 
 #### No Java 8 support
