@@ -34,7 +34,7 @@ import ch.qos.logback.core.status.Status;
 public class Loki4jAppender extends PipelineConfigAppenderBase {
 
     private static final String KV_REGEX_STARTER = "regex:";
-    private static final String KV_PAIR_SEPARATOR = "\n";
+    private static final String KV_PAIR_SEPARATOR = KV_REGEX_STARTER + "\n|\r";
     private static final String KV_KV_SEPARATOR = "=";
     private static final String DEFAULT_LBL_PATTERN = "source=loki4j\nhost=";
     private static final String DEFAULT_MSG_PATTERN = "%msg %ex";
