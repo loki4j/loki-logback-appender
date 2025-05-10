@@ -5,12 +5,10 @@ import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.concurrent.atomic.AtomicLong;
-import java.util.regex.Pattern;
 
 import com.github.loki4j.client.batch.LogRecord;
 import com.github.loki4j.client.pipeline.AsyncBufferPipeline;
 import com.github.loki4j.client.pipeline.PipelineConfig;
-import com.github.loki4j.client.util.StringUtils;
 import com.github.loki4j.logback.extractor.Extractor;
 import com.github.loki4j.logback.extractor.MarkerExtractor;
 import com.github.loki4j.logback.extractor.PatternsExtractor;
@@ -33,8 +31,7 @@ import ch.qos.logback.core.status.Status;
  */
 public class Loki4jAppender extends PipelineConfigAppenderBase {
 
-    private static final String KV_REGEX_STARTER = "regex:";
-    private static final String KV_PAIR_SEPARATOR = KV_REGEX_STARTER + "\n|\r";
+    private static final String KV_PAIR_SEPARATOR = LabelsPatternParser.KV_REGEX_STARTER + "\n|\r";
     private static final String KV_KV_SEPARATOR = "=";
     private static final String DEFAULT_LBL_PATTERN = "source=loki4j\nhost=";
     private static final String DEFAULT_MSG_PATTERN = "%msg %ex";
@@ -210,7 +207,7 @@ public class Loki4jAppender extends PipelineConfigAppenderBase {
 
     private <T extends AbstractKeyValueMarker> List<Extractor> initExtractors(String pattern, Class<T> markerClass) {
         var extractors = new ArrayList<Extractor>();
-        var kvPairs = extractKVPairsFromPattern(pattern, KV_PAIR_SEPARATOR, KV_KV_SEPARATOR);
+        var kvPairs = LabelsPatternParser.extractKVPairsFromPattern(pattern, KV_PAIR_SEPARATOR, KV_KV_SEPARATOR);
         // logback patterns' extractor
         var logbackPatterns = new LinkedHashMap<String, String>();
         kvPairs.entrySet().stream().forEach(e -> logbackPatterns.put(e.getKey(), e.getValue()));
@@ -225,32 +222,6 @@ public class Loki4jAppender extends PipelineConfigAppenderBase {
         return extractors;
     }
 
-    static Map<String, String> extractKVPairsFromPattern(String pattern, String pairSeparator, String keyValueSeparator) {
-        // check if label pair separator is RegEx or literal string
-        var pairSeparatorPattern = pairSeparator.startsWith(KV_REGEX_STARTER)
-            ? Pattern.compile(pairSeparator.substring(KV_REGEX_STARTER.length()))
-            : Pattern.compile(Pattern.quote(pairSeparator));
-        // label key-value separator supports only literal strings
-        var keyValueSeparatorPattern = Pattern.compile(Pattern.quote(keyValueSeparator));
-
-        var pairs = pairSeparatorPattern.split(pattern);
-        var result = new LinkedHashMap<String, String>();
-        for (int i = 0; i < pairs.length; i++) {
-            if (StringUtils.isBlank(pairs[i])) continue;
-
-            var kv = keyValueSeparatorPattern.split(pairs[i]);
-            if (kv.length == 2) {
-                result.put(kv[0].trim(), kv[1].trim());
-            } else {
-                throw new IllegalArgumentException(String.format(
-                    "Unable to split '%s' in '%s' to key-value pairs, pairSeparator=%s, keyValueSeparator=%s",
-                    pairs[i], pattern, pairSeparator, keyValueSeparator));
-            }
-        }
-        if (result.isEmpty())
-            throw new IllegalArgumentException("Empty of blank patterns are not supported");
-        return result;
-    }
 
     void waitSendQueueIsEmpty(long timeoutMs) {
         pipeline.waitSendQueueIsEmpty(timeoutMs);
