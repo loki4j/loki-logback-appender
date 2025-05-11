@@ -85,5 +85,9 @@ public class LabelsPatternParser {
             this.include = include;
             this.exclude = exclude;
         }
+        @Override
+        public String toString() {
+            return "BulkPattern [prefix=" + prefix + ", func=" + func + ", include=" + include + ", exclude=" + exclude + "]";
+        }
     }
 }

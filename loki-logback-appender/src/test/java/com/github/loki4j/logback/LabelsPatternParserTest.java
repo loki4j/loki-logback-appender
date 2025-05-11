@@ -4,6 +4,7 @@ import static com.github.loki4j.logback.LabelsPatternParser.*;
 import static org.junit.Assert.assertEquals;
 
 import java.util.Map;
+import java.util.Set;
 
 import org.junit.Test;
 
@@ -70,4 +71,59 @@ public class LabelsPatternParserTest {
         var kvs3 = extractKVPairsFromPattern("level.%level|app.\"my\"app|test.test", "|", ".");
         assertEquals("Split by |.", kvse1, kvs3);
     }
+
+    @Test
+    public void testParseBulkPattern() {
+        var p = parseBulkPattern("mdc_*", "%%mdc");
+        assertEquals("prefix", "mdc_", p.prefix);
+        assertEquals("func", "mdc", p.func);
+        assertEquals("include", Set.of(), p.include);
+        assertEquals("exclude", Set.of(), p.exclude);
+    }
+
+    @Test
+    public void testParseBulkPatternNoPrefix() {
+        var p = parseBulkPattern("*", "%%mdc");
+        assertEquals("prefix", "", p.prefix);
+        assertEquals("func", "mdc", p.func);
+        assertEquals("include", Set.of(), p.include);
+        assertEquals("exclude", Set.of(), p.exclude);
+    }
+
+    @Test
+    public void testParseBulkPatternInclude() {
+        var p = parseBulkPattern("*", "%%mdc{key1, key2}");
+        assertEquals("prefix", "", p.prefix);
+        assertEquals("func", "mdc", p.func);
+        assertEquals("include", Set.of("key1", "key2"), p.include);
+        assertEquals("exclude", Set.of(), p.exclude);
+    }
+
+    @Test
+    public void testParseBulkPatternExclude() {
+        var p = parseBulkPattern("mdc_*!", "%%mdc{key1,key2}");
+        assertEquals("prefix", "mdc_", p.prefix);
+        assertEquals("func", "mdc", p.func);
+        assertEquals("include", Set.of(), p.include);
+        assertEquals("exclude", Set.of("key1", "key2"), p.exclude);
+    }
+
+    @Test
+    public void testParseBulkPatternEmptyParams() {
+        var p = parseBulkPattern("* !", "%%mdc{ }");
+        assertEquals("prefix", "", p.prefix);
+        assertEquals("func", "mdc", p.func);
+        assertEquals("include", Set.of(), p.include);
+        assertEquals("exclude", Set.of(), p.exclude);
+    }
+
+    @Test
+    public void testParseBulkPatternOneParam() {
+        var p = parseBulkPattern(" * ", "%%mdc { key1 }");
+        assertEquals("prefix", "", p.prefix);
+        assertEquals("func", "mdc", p.func);
+        assertEquals("include", Set.of("key1"), p.include);
+        assertEquals("exclude", Set.of(), p.exclude);
+    }
+
 }

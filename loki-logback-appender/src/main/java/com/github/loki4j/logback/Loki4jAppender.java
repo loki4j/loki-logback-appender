@@ -5,12 +5,14 @@ import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.concurrent.atomic.AtomicLong;
+import java.util.stream.Collectors;
 
 import com.github.loki4j.client.batch.LogRecord;
 import com.github.loki4j.client.pipeline.AsyncBufferPipeline;
 import com.github.loki4j.client.pipeline.PipelineConfig;
 import com.github.loki4j.logback.extractor.Extractor;
 import com.github.loki4j.logback.extractor.MarkerExtractor;
+import com.github.loki4j.logback.extractor.MetadataExtractor;
 import com.github.loki4j.logback.extractor.PatternsExtractor;
 import com.github.loki4j.slf4j.marker.AbstractKeyValueMarker;
 import com.github.loki4j.slf4j.marker.LabelMarker;
@@ -210,11 +212,27 @@ public class Loki4jAppender extends PipelineConfigAppenderBase {
         var kvPairs = LabelsPatternParser.extractKVPairsFromPattern(pattern, KV_PAIR_SEPARATOR, KV_KV_SEPARATOR);
         // logback patterns' extractor
         var logbackPatterns = new LinkedHashMap<String, String>();
-        kvPairs.entrySet().stream().forEach(e -> logbackPatterns.put(e.getKey(), e.getValue()));
+        kvPairs.entrySet().stream()
+            .filter(e -> !LabelsPatternParser.isBulkPattern(e))
+            .forEach(e -> logbackPatterns.put(e.getKey(), e.getValue()));
         try {
             extractors.add(new PatternsExtractor(logbackPatterns, context));
         } catch (ScanException e) {
             throw new IllegalArgumentException("Unable to parse pattern: \"" + pattern + "\"", e);
+        }
+        // bulk patterns
+        var bulkPatterns = kvPairs.entrySet().stream()
+            .filter(LabelsPatternParser::isBulkPattern)
+            .collect(Collectors.toList());
+        for (var bulkPattern : bulkPatterns) {
+            var parsed = LabelsPatternParser.parseBulkPattern(bulkPattern.getKey(), bulkPattern.getValue());
+            if (parsed.func.equalsIgnoreCase("mdc"))
+                extractors.add(MetadataExtractor.mdc(parsed.prefix, parsed.include, parsed.exclude));
+            else if (parsed.func.equalsIgnoreCase("kvp"))
+                extractors.add(MetadataExtractor.kvp(parsed.prefix, parsed.include, parsed.exclude));
+            else
+                throw new IllegalArgumentException(
+                    String.format("Unknown function '%s' used for bulk pattern: %s", parsed.func, bulkPattern.getValue()));
         }
         // marker extractor
         if (readMarkers)
