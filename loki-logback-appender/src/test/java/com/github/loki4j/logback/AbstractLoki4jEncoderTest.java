@@ -1,6 +1,7 @@
 package com.github.loki4j.logback;
 
 import org.junit.Test;
+import org.slf4j.event.KeyValuePair;
 
 import com.github.loki4j.client.util.OrderedMap;
 import com.github.loki4j.slf4j.marker.LabelMarker;
@@ -11,9 +12,9 @@ import com.github.loki4j.testkit.dummy.StringPayload.StringLogRecord;
 import ch.qos.logback.classic.Level;
 import ch.qos.logback.classic.spi.ILoggingEvent;
 
-import static com.github.loki4j.logback.Loki4jAppender.extractKVPairsFromPattern;
 import static org.junit.Assert.*;
 
+import java.util.Arrays;
 import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Map;
@@ -21,68 +22,6 @@ import java.util.Map;
 import static com.github.loki4j.logback.Generators.*;
 
 public class AbstractLoki4jEncoderTest {
-
-    @Test(expected = IllegalArgumentException.class)
-    public void testExtractStreamKVPairsEmptyPattern() {
-        extractKVPairsFromPattern("", ",", "=");
-    }
-
-    @Test(expected = IllegalArgumentException.class)
-    public void testExtractStreamKVPairsEmptyValue() {
-        extractKVPairsFromPattern("level=,app=\"my\"app", ",", "=");
-    }
-
-    @Test(expected = IllegalArgumentException.class)
-    public void testExtractStreamKVPairsIncorrectValue() {
-        extractKVPairsFromPattern("level=%level app=\"my\"app", ",", "=");
-    }
-
-    @Test
-    public void testExtractStreamKVPairsIgnoringEmpty() {
-        var kvs1 = extractKVPairsFromPattern(",,level=%level,,app=\"my\"app,", ",", "=");
-        var kvse1 = Map.of("level", "%level", "app", "\"my\"app");
-        assertEquals("Split by ,=", kvse1, kvs1);
-    }
-
-    @Test
-    public void testExtractStreamKVPairsIgnoringWhitespace() {
-        var kvs1 = extractKVPairsFromPattern("\tlevel = %level,\n\tapp=\"my\"app,\n", ",", "=");
-        var kvse1 = Map.of("level", "%level", "app", "\"my\"app");
-        assertEquals("Split by ,=", kvse1, kvs1);
-    }
-
-    @Test
-    public void testExtractStreamKVPairsByRegex() {
-        var kvs1 = extractKVPairsFromPattern(
-                "\n\n// level is label\nlevel=%level\n// another comment\n\napp=\"my\"app\n\n// end comment",
-                "regex:(\n|//[^\n]+)+",
-                "=");
-        var kvse1 = Map.of("level", "%level", "app", "\"my\"app");
-        assertEquals("Split by ,=", kvse1, kvs1);
-    }
-
-    @Test
-    public void testExtractStreamKVPairsByNewLineRegex() {
-        var kvs1 = extractKVPairsFromPattern(
-                "\r\nlevel=%level\rthread=t1\napp=\"my\"app\n\r\r\r",
-                "regex:\n|\r",
-                "=");
-        var kvse1 = Map.of("level", "%level", "thread", "t1", "app", "\"my\"app");
-        assertEquals("Split by ,=", kvse1, kvs1);
-    }
-
-    @Test
-    public void testExtractStreamKVPairs() {
-        var kvs1 = extractKVPairsFromPattern("level=%level,app=\"my\"app,test=test", ",", "=");
-        var kvse1 = Map.of("level", "%level", "app", "\"my\"app", "test", "test");
-        assertEquals("Split by ,=", kvse1, kvs1);
-
-        var kvs2 = extractKVPairsFromPattern("level:%level;app:\"my\"app;test:test", ";", ":");
-        assertEquals("Split by ;:", kvse1, kvs2);
-
-        var kvs3 = extractKVPairsFromPattern("level.%level|app.\"my\"app|test.test", "|", ".");
-        assertEquals("Split by |.", kvse1, kvs3);
-    }
 
     @Test
     public void testLabelParsingFailed() {
@@ -224,7 +163,7 @@ public class AbstractLoki4jEncoderTest {
                 "l=%level",
                 "t=%thread\nc=%logger",
                 plainTextMsgLayout("%level | %msg"),
-                batch(4, 1000L),
+                batch(2, 1000L),
                 http(sender));
         stringAppender.setReadMarkers(true);
 
@@ -260,7 +199,7 @@ public class AbstractLoki4jEncoderTest {
                 "l=%level",
                 "t=%thread\nc=%logger",
                 plainTextMsgLayout("%level | %msg"),
-                batch(4, 1000L),
+                batch(1, 1000L),
                 http(sender));
         stringAppender.setReadMarkers(true);
 
@@ -345,5 +284,94 @@ public class AbstractLoki4jEncoderTest {
                             StringPayload.parse(sender.lastSendData()));
                     return null;
                 });
+    }
+
+    @Test
+    public void testBulkPatterns() {
+        var event = loggingEvent(103L, Level.INFO, "test.TestApp", "thread-2", "Test message 2", null);
+        event.setKeyValuePairs(Arrays.asList(
+                new KeyValuePair("kvp1", "kvpValue1"),
+                new KeyValuePair("kvp2", "kvpValue2")
+        ));
+        event.getMDCPropertyMap().put("mdc1", "mdcValue1");
+        event.getMDCPropertyMap().put("mdc2", "mdcValue2");
+
+        var sender = dummySender();
+        withAppender(appender(
+                "* = %%mdc\nc=%logger",
+                "t=%thread\n*=%%kvp",
+                plainTextMsgLayout("%msg"),
+                batch(1, 1000L),
+                http(sender)), appender -> {
+            appender.append(new ILoggingEvent[] { event });
+            appender.waitAllAppended();
+            assertEquals(
+                    "mdc+kvp",
+                    StringPayload.builder()
+                            .streamWithMeta(OrderedMap.of("c", "test.TestApp", "mdc1", "mdcValue1", "mdc2", "mdcValue2"),
+                                    StringLogRecord.of("ts=103 Test message 2",
+                                            OrderedMap.of("t", "thread-2", "kvp1", "kvpValue1", "kvp2", "kvpValue2")))
+                            .build(),
+                    StringPayload.parse(sender.lastSendData()));
+            // System.out.println(new String(sender.lastBatch()));
+            return null;
+        });
+    }
+
+    @Test
+    public void testBulkPatternsNoValues() {
+        var event = loggingEvent(103L, Level.INFO, "test.TestApp", "thread-2", "Test message 2", null);
+
+        var sender = dummySender();
+        withAppender(appender(
+                "* = %%mdc\nc=%logger",
+                "t=%thread\n*=%%kvp",
+                plainTextMsgLayout("%msg"),
+                batch(1, 1000L),
+                http(sender)), appender -> {
+            appender.append(new ILoggingEvent[] { event });
+            appender.waitAllAppended();
+            assertEquals(
+                    "mdc+kvp",
+                    StringPayload.builder()
+                            .streamWithMeta(OrderedMap.of("c", "test.TestApp"),
+                                    StringLogRecord.of("ts=103 Test message 2", OrderedMap.of("t", "thread-2")))
+                            .build(),
+                    StringPayload.parse(sender.lastSendData()));
+            // System.out.println(new String(sender.lastBatch()));
+            return null;
+        });
+    }
+
+    @Test
+    public void testBulkPatternsIncludeExclude() {
+        var event = loggingEvent(103L, Level.INFO, "test.TestApp", "thread-2", "Test message 2", null);
+        event.setKeyValuePairs(Arrays.asList(
+                new KeyValuePair("kvp1", "kvpValue1"),
+                new KeyValuePair("kvp2", "kvpValue2")
+        ));
+        event.getMDCPropertyMap().put("mdc1", "mdcValue1");
+        event.getMDCPropertyMap().put("mdc2", "mdcValue2");
+
+        var sender = dummySender();
+        withAppender(appender(
+                "kvp_*=%%kvp{kvp1}\nc=%logger",
+                "t=%thread\nmdc_* != %%mdc { mdc2 }",
+                plainTextMsgLayout("%msg"),
+                batch(1, 1000L),
+                http(sender)), appender -> {
+            appender.append(new ILoggingEvent[] { event });
+            appender.waitAllAppended();
+            assertEquals(
+                    "mdc+kvp",
+                    StringPayload.builder()
+                            .streamWithMeta(OrderedMap.of("c", "test.TestApp", "kvp_kvp1", "kvpValue1"),
+                                    StringLogRecord.of("ts=103 Test message 2",
+                                            OrderedMap.of("t", "thread-2", "mdc_mdc1", "mdcValue1")))
+                            .build(),
+                    StringPayload.parse(sender.lastSendData()));
+            // System.out.println(new String(sender.lastBatch()));
+            return null;
+        });
     }
 }
