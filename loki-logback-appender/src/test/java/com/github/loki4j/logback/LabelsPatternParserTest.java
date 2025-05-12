@@ -126,4 +126,19 @@ public class LabelsPatternParserTest {
         assertEquals("exclude", Set.of(), p.exclude);
     }
 
+    @Test(expected = IllegalArgumentException.class)
+    public void testParseBulkPatternFailNoStar() {
+        parseBulkPattern("mdc_", "%%mdc{key1,key2}");
+    }
+
+    @Test(expected = IllegalArgumentException.class)
+    public void testParseBulkPatternFailNoDoublePercent() {
+        parseBulkPattern("mdc_", "%mdc{key1,key2}");
+    }
+
+    @Test(expected = IllegalArgumentException.class)
+    public void testParseBulkPatternFailBracesMalformed() {
+        parseBulkPattern("mdc_", "%mdc{key1},key2");
+    }
+
 }

@@ -1,6 +1,7 @@
 package com.github.loki4j.logback;
 
 import org.junit.Test;
+import org.slf4j.event.KeyValuePair;
 
 import com.github.loki4j.client.util.OrderedMap;
 import com.github.loki4j.slf4j.marker.LabelMarker;
@@ -13,6 +14,7 @@ import ch.qos.logback.classic.spi.ILoggingEvent;
 
 import static org.junit.Assert.*;
 
+import java.util.Arrays;
 import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Map;
@@ -161,7 +163,7 @@ public class AbstractLoki4jEncoderTest {
                 "l=%level",
                 "t=%thread\nc=%logger",
                 plainTextMsgLayout("%level | %msg"),
-                batch(4, 1000L),
+                batch(2, 1000L),
                 http(sender));
         stringAppender.setReadMarkers(true);
 
@@ -197,7 +199,7 @@ public class AbstractLoki4jEncoderTest {
                 "l=%level",
                 "t=%thread\nc=%logger",
                 plainTextMsgLayout("%level | %msg"),
-                batch(4, 1000L),
+                batch(1, 1000L),
                 http(sender));
         stringAppender.setReadMarkers(true);
 
@@ -282,5 +284,94 @@ public class AbstractLoki4jEncoderTest {
                             StringPayload.parse(sender.lastSendData()));
                     return null;
                 });
+    }
+
+    @Test
+    public void testBulkPatterns() {
+        var event = loggingEvent(103L, Level.INFO, "test.TestApp", "thread-2", "Test message 2", null);
+        event.setKeyValuePairs(Arrays.asList(
+                new KeyValuePair("kvp1", "kvpValue1"),
+                new KeyValuePair("kvp2", "kvpValue2")
+        ));
+        event.getMDCPropertyMap().put("mdc1", "mdcValue1");
+        event.getMDCPropertyMap().put("mdc2", "mdcValue2");
+
+        var sender = dummySender();
+        withAppender(appender(
+                "* = %%mdc\nc=%logger",
+                "t=%thread\n*=%%kvp",
+                plainTextMsgLayout("%msg"),
+                batch(1, 1000L),
+                http(sender)), appender -> {
+            appender.append(new ILoggingEvent[] { event });
+            appender.waitAllAppended();
+            assertEquals(
+                    "mdc+kvp",
+                    StringPayload.builder()
+                            .streamWithMeta(OrderedMap.of("c", "test.TestApp", "mdc1", "mdcValue1", "mdc2", "mdcValue2"),
+                                    StringLogRecord.of("ts=103 Test message 2",
+                                            OrderedMap.of("t", "thread-2", "kvp1", "kvpValue1", "kvp2", "kvpValue2")))
+                            .build(),
+                    StringPayload.parse(sender.lastSendData()));
+            // System.out.println(new String(sender.lastBatch()));
+            return null;
+        });
+    }
+
+    @Test
+    public void testBulkPatternsNoValues() {
+        var event = loggingEvent(103L, Level.INFO, "test.TestApp", "thread-2", "Test message 2", null);
+
+        var sender = dummySender();
+        withAppender(appender(
+                "* = %%mdc\nc=%logger",
+                "t=%thread\n*=%%kvp",
+                plainTextMsgLayout("%msg"),
+                batch(1, 1000L),
+                http(sender)), appender -> {
+            appender.append(new ILoggingEvent[] { event });
+            appender.waitAllAppended();
+            assertEquals(
+                    "mdc+kvp",
+                    StringPayload.builder()
+                            .streamWithMeta(OrderedMap.of("c", "test.TestApp"),
+                                    StringLogRecord.of("ts=103 Test message 2", OrderedMap.of("t", "thread-2")))
+                            .build(),
+                    StringPayload.parse(sender.lastSendData()));
+            // System.out.println(new String(sender.lastBatch()));
+            return null;
+        });
+    }
+
+    @Test
+    public void testBulkPatternsIncludeExclude() {
+        var event = loggingEvent(103L, Level.INFO, "test.TestApp", "thread-2", "Test message 2", null);
+        event.setKeyValuePairs(Arrays.asList(
+                new KeyValuePair("kvp1", "kvpValue1"),
+                new KeyValuePair("kvp2", "kvpValue2")
+        ));
+        event.getMDCPropertyMap().put("mdc1", "mdcValue1");
+        event.getMDCPropertyMap().put("mdc2", "mdcValue2");
+
+        var sender = dummySender();
+        withAppender(appender(
+                "kvp_*=%%kvp{kvp1}\nc=%logger",
+                "t=%thread\nmdc_* != %%mdc { mdc2 }",
+                plainTextMsgLayout("%msg"),
+                batch(1, 1000L),
+                http(sender)), appender -> {
+            appender.append(new ILoggingEvent[] { event });
+            appender.waitAllAppended();
+            assertEquals(
+                    "mdc+kvp",
+                    StringPayload.builder()
+                            .streamWithMeta(OrderedMap.of("c", "test.TestApp", "kvp_kvp1", "kvpValue1"),
+                                    StringLogRecord.of("ts=103 Test message 2",
+                                            OrderedMap.of("t", "thread-2", "mdc_mdc1", "mdcValue1")))
+                            .build(),
+                    StringPayload.parse(sender.lastSendData()));
+            // System.out.println(new String(sender.lastBatch()));
+            return null;
+        });
     }
 }

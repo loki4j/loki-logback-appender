@@ -28,7 +28,7 @@ public class KeyValuePairsJsonProviderTest {
     }
 
     @Test
-    public void testOneMdcInEvent() {
+    public void testOneKvpInEvent() {
         var event = loggingEvent(101L, Level.DEBUG, "io.test.TestApp", "thread-1", "m2-line1", null);
         event.setKeyValuePairs(Arrays.asList(
                 new KeyValuePair("property1", "value1")

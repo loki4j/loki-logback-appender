@@ -27,7 +27,7 @@ public abstract class MetadataExtractor<E, T extends Collection<E>> implements E
     private Set<String> excludeKeys = new HashSet<>();
     private Set<String> includeKeys = new HashSet<>();
 
-    MetadataExtractor(String prefix, Set<String> excludeKeys, Set<String> includeKeys) {
+    MetadataExtractor(String prefix, Set<String> includeKeys, Set<String> excludeKeys) {
         this.prefix = prefix;
         this.noPrefix = prefix == null || prefix.length() == 0;
         this.excludeKeys = excludeKeys;
@@ -132,7 +132,7 @@ public abstract class MetadataExtractor<E, T extends Collection<E>> implements E
 
         @Override
         protected String extractValue(KeyValuePair entry) {
-            return entry.value == null ? null : entry.toString();
+            return entry.value == null ? null : entry.value.toString();
         }
     }
 }
