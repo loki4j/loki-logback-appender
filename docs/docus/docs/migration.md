@@ -25,9 +25,9 @@ Below is the list of settings moved to `<batch>` section:
 |useDirectBuffers|batch.useDirectBuffers|
 |drainOnStop|batch.drainOnStop|
 |format.staticLabels|batch.staticLabels|
-|||
 
-The default values for the settings listed above remain the same.
+If your v1.6.x configuration defines any of the old settings listed above, please move them to `<batch>` section with the proper new name.
+The default values for these settings remain the same.
 
 #### Some general settings moved to sub-section `<http>`
 
@@ -40,9 +40,9 @@ General settings related to sending batches to Loki via HTTP were moved to `<htt
 |maxRetryBackoffMs|http.maxRetryBackoffMs|
 |maxRetryJitterMs|http.maxRetryJitterMs|
 |dropRateLimitedBatches|http.dropRateLimitedBatches|
-|||
 
-The default values for the settings listed above remain the same.
+If your v1.6.x configuration defines any of the old settings listed above, please move them to `<http>` section.
+The default values for these settings remain the same.
 
 #### Sub-section `<format>` removed
 
@@ -53,27 +53,30 @@ Settings from the `<format>` section were either removed or moved to "general" s
 |format.label.pattern|labels|
 |format.label.structuredMetadataPattern|structuredMetadata|
 |format.message.*|message|
-|format.label.pairSeparator|<no longer configurable>|
-|format.label.keyValueSeparator|<no longer configurable>|
+|format.label.pairSeparator|\<no longer configurable\>|
+|format.label.keyValueSeparator|\<no longer configurable\>|
 |format.label.readMarkers|readMarkers|
-|format.label.streamCache|<removed>|
+|format.label.streamCache|\<removed\>|
 |format.staticLabels|batch.staticLabels|
+
+If your v1.6.x configuration defines any of the old settings listed above, please move them to the top level.
 
 Please note, that some of these settings have also changed their default values:
 
 |Setting|Old default|New default|
 |-------|-----------|-----------|
-|labels|`level=%level,host=$HOSTNAME`|???|
-|structuredMetadata||???|
-|message.pattern|`l=%level c=%logger{20} t=%thread \| %msg %ex`|???|
+|labels|level=%level,host=${HOSTNAME}|agent=loki4j<br/>host=${HOSTNAME}|
+|message.pattern|l=%level c=%logger{20} t=%thread %msg %ex|\[%thread\] %logger{20} - %msg%n|
 
-#### Labels now separated by a new line only
+If you are not happy with the new default values, feel free to override them in you config.
+
+#### Key-value pairs in labels and structured metadata now separated by new line
 
 Previously Loki4j offered a setting `format.label.pairSeparator` that was `,` (comma) by default.
 In v2.0.0 this separator is `\n` (new line), `\r` (carriage return), or any combination of them.
 And it's no longer configurable.
 
-Which means, you have to change your old-style labels and structured metadata configuration from:
+For example, you would need to change your old-style labels and structured metadata configuration from:
 
 ```xml
 <appender name="LOKI" class="com.github.loki4j.logback.Loki4jAppender">
@@ -81,10 +84,10 @@ Which means, you have to change your old-style labels and structured metadata co
     <format>
         <label>
             <pattern>
-                app = my-app, host = ${HOSTNAME}
+                app=my-app, host=${HOSTNAME}
             </pattern>
             <structuredMetadataPattern>
-                level = %level, thread = %thread, class = %logger
+                level=%level, thread=%thread
             </structuredMetadataPattern>
         </label>
         ...
@@ -92,20 +95,51 @@ Which means, you have to change your old-style labels and structured metadata co
 </appender>
 ```
 
-to the new-style configuration (mind no commas!):
+to the new-style configuration (please note there are no commas!):
 
 ```xml
 <appender name="LOKI" class="com.github.loki4j.logback.Loki4jAppender">
     ...
     <labels>
-        app = my-app
-        host = ${HOSTNAME}
+        app=my-app
+        host=${HOSTNAME}
     </labels>
     <structuredMetadata>
-        level = %level
-        thread = %thread
-        class = %logger
+        level=%level
+        thread=%thread
     </structuredMetadata>
+</appender>
+```
+
+#### "http.useProtobufApi" setting for switching to Loki Protobuf API
+
+Previously, in order to switch from JSON to Protobuf flavor of Loki API, you would specify `ProtobufEncoder` class in the `format` section.
+
+In v2.0.0 this was replaced by `http.useProtobufApi` flag:
+
+```xml
+<appender name="LOKI" class="com.github.loki4j.logback.Loki4jAppender">
+    ...
+    <http>
+        <useProtobufApi>true</useProtobufApi>
+    </http>
+</appender>
+```
+
+#### "http.sender" for switching between HTTP client implementations
+
+Previously, in order to switch from Java to Apache HTTP client, you would specify `ApacheHttpSender` class in the `http` section.
+
+In v2.0.0 this is now configured in `http.sender` section:
+
+```xml
+<appender name="LOKI" class="com.github.loki4j.logback.Loki4jAppender">
+    <http>
+        <sender class="com.github.loki4j.logback.ApacheHttpSender">
+            ...
+        </sender>
+    </http>
+    ...
 </appender>
 ```
 

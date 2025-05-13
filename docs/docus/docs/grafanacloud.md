@@ -11,7 +11,6 @@ so we need to specify this explicitly.
 
 ```xml
 <appender name="LOKI" class="com.github.loki4j.logback.Loki4jAppender">
-    <batchMaxBytes>65536</batchMaxBytes>
     <http>
         <url>https://logs-prod-us-central1.grafana.net/loki/api/v1/push</url>
         <auth>
@@ -20,6 +19,9 @@ so we need to specify this explicitly.
         </auth>
         <requestTimeoutMs>15000</requestTimeoutMs>
     </http>
+    <batch>
+        <maxBytes>65536</maxBytes>
+    </batch>
     ...
 </appender>
 ```

@@ -29,13 +29,14 @@ implementation 'com.github.loki4j:loki-protobuf:0.0.2_pb4.29.0'
 
 This library contains pre-generated encoders for Loki Protobuf format along with the proper version of Protobuf runtime and Snappy as transitive dependencies.
 
-Then you can explicitly specify `ProtobufEncoder` by setting `class` attribute for `format` section:
+Then you need to enable `http.useProtobufApi` setting in Loki4j config:
 
 ```xml
 <appender name="LOKI" class="com.github.loki4j.logback.Loki4jAppender">
-    <format class="com.github.loki4j.logback.ProtobufEncoder">
-        ...
-    </format>
+    ...
+    <http>
+        <useProtobufApi>true</useProtobufApi>
+    </http>
 </appender>
 ```
 

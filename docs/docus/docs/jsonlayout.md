@@ -27,11 +27,8 @@ You can enable JSON layout for log messages by specifying a corresponding `class
 
 ```xml
 <appender name="LOKI" class="com.github.loki4j.logback.Loki4jAppender">
-    <format>
-        ...
-        <message class="com.github.loki4j.logback.JsonLayout" />
-    </format>
     ...
+    <message class="com.github.loki4j.logback.JsonLayout" />
 </appender>
 ```
 
