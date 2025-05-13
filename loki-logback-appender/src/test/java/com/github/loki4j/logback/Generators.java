@@ -3,8 +3,8 @@ package com.github.loki4j.logback;
 import java.io.IOException;
 import java.time.Instant;
 import java.util.ArrayList;
-import java.util.HashMap;
 import java.util.Iterator;
+import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.concurrent.ThreadLocalRandom;
 import java.util.function.Function;
@@ -226,7 +226,7 @@ public class Generators {
         e.setLoggerName(className);
         e.setThreadName(threadName);
         e.setMessage(message);
-        e.setMDCPropertyMap(new HashMap<>());
+        e.setMDCPropertyMap(new LinkedHashMap<>());
         if (throwable != null)
             e.setThrowableProxy(new ThrowableProxy(throwable));
         if (markers != null)
