@@ -35,8 +35,8 @@ public class Loki4jAppender extends PipelineConfigAppenderBase {
 
     private static final String KV_PAIR_SEPARATOR = LabelsPatternParser.KV_REGEX_STARTER + "\n|\r";
     private static final String KV_KV_SEPARATOR = "=";
-    private static final String DEFAULT_LBL_PATTERN = "source=loki4j\nhost=";
-    private static final String DEFAULT_MSG_PATTERN = "%msg %ex";
+    private static final String DEFAULT_LBL_PATTERN = "agent=loki4j\nhost=";
+    private static final String DEFAULT_MSG_PATTERN = "[%thread] %logger{20} - %msg%n";
 
     /**
      * Logback pattern to use for log record's label.
