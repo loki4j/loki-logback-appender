@@ -222,9 +222,11 @@ public final class AsyncBufferPipeline {
                 if (!started) return;
                 isEncodeRunning = true;
                 encodeStep(batch);
-                isEncodeRunning = false;
             } catch (InterruptedException e) {
-                stop();
+                Thread.currentThread().interrupt();
+                return;
+            } finally {
+                isEncodeRunning = false;
             }
         }
     }
@@ -240,9 +242,11 @@ public final class AsyncBufferPipeline {
                 if (!started) return;
                 isSendRunning = true;
                 sendStep(batch);
-                isSendRunning = false;
             } catch (InterruptedException e) {
-                stop();
+                Thread.currentThread().interrupt();
+                return;
+            } finally {
+                isSendRunning = false;
             }
         }
     }
