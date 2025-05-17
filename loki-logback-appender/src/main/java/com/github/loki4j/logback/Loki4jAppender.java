@@ -242,7 +242,7 @@ public class Loki4jAppender extends PipelineConfigAppenderBase {
 
 
     void waitSendQueueIsEmpty(long timeoutMs) {
-        pipeline.waitSendQueueIsEmpty(timeoutMs);
+        pipeline.waitPipelineIsEmpty(timeoutMs);
     }
 
     long droppedEventsCount() {

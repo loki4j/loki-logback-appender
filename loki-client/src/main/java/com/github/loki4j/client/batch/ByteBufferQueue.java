@@ -9,10 +9,16 @@ import com.github.loki4j.client.util.ByteBufferFactory;
 
 public class ByteBufferQueue {
 
+    /**
+     * Pool of batches returned to the queue and ready to be re-used.
+     */
     private final ConcurrentLinkedQueue<BinaryBatch> pool = new ConcurrentLinkedQueue<>();
 
     private final AtomicLong sizeBytes = new AtomicLong(0L);
 
+    /**
+     * Bathes that are currently in this queue.
+     */
     private final ConcurrentLinkedQueue<BinaryBatch> items = new ConcurrentLinkedQueue<>();
 
     private final long maxSizeBytes;
@@ -58,6 +64,10 @@ public class ByteBufferQueue {
 
     public long getSizeBytes() {
         return sizeBytes.get();
+    }
+
+    public boolean isEmpty() {
+        return items.isEmpty();
     }
 
     int poolSize() {
