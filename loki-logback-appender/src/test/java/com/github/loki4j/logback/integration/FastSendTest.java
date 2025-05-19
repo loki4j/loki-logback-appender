@@ -108,7 +108,7 @@ public class FastSendTest {
         var label = "testJsonLayoutProtobufFastSend";
         var appender = appender(
             "service_name=my-app\ntest=" + label,
-            null,
+            Loki4jAppender.DISABLE_SMD_PATTERN,
             jsonMsgLayout(),
             batch(10, 1000),
             http(urlPush, protobufFormat(), javaSender()));
@@ -116,7 +116,7 @@ public class FastSendTest {
         var events = generateEvents(1000, 10);
         var expectedAppender = appender(
             "service_name=my-app\ntest=" + label,
-            null,
+            Loki4jAppender.DISABLE_SMD_PATTERN,
             jsonMsgLayout(),
             batch(events.length, 10L),
             http(null));

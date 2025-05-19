@@ -115,7 +115,12 @@ public class GrafanaCloudTest {
     public void testJsonLayoutJavaJsonCloud() throws Exception {
         var label = label("testJsonLayoutJavaJsonCloud");
         var http = authorize(http(urlPush, jsonFormat(), javaSender()));
-        var appender = appender("service_name=my-app\ntest=" + label, null, jsonMsgLayout(), batch(10, 1000), http);
+        var appender = appender(
+            "service_name=my-app\ntest=" + label,
+            Loki4jAppender.DISABLE_SMD_PATTERN,
+            jsonMsgLayout(),
+            batch(10, 1000),
+            http);
 
         var events = generateEvents(20, 10);
         var expectedAppender = appender(
@@ -133,7 +138,12 @@ public class GrafanaCloudTest {
     public void testJsonLayoutApacheProtobufCloud() throws Exception {
         var label = label("testJsonLayoutApacheProtobufCloud");
         var http = authorize(http(urlPush, protobufFormat(), apacheSender()));
-        var appender = appender("service_name=my-app\ntest=" + label, null, jsonMsgLayout(), batch(10, 1000), http);
+        var appender = appender(
+            "service_name=my-app\ntest=" + label,
+            Loki4jAppender.DISABLE_SMD_PATTERN,
+            jsonMsgLayout(),
+            batch(10, 1000),
+            http);
 
         var events = generateEvents(50, 10);
         var expectedAppender = appender(
