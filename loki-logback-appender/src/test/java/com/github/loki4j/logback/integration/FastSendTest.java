@@ -3,6 +3,7 @@ package com.github.loki4j.logback.integration;
 import static com.github.loki4j.logback.Generators.*;
 import static org.junit.Assert.*;
 
+import com.github.loki4j.logback.Loki4jAppender;
 import com.github.loki4j.testkit.categories.IntegrationTests;
 
 import org.junit.AfterClass;
@@ -86,7 +87,7 @@ public class FastSendTest {
         var label = "testJsonLayoutJsonFastSend";
         var appender = appender(
             "service_name=my-app\ntest=" + label,
-            null,
+            Loki4jAppender.DISABLE_SMD_PATTERN,
             jsonMsgLayout(),
             batch(10, 1000),
             http(urlPush, jsonFormat(), javaSender()));
@@ -94,7 +95,7 @@ public class FastSendTest {
         var events = generateEvents(1000, 10);
         var expectedAppender = appender(
             "service_name=my-app\ntest=" + label,
-            null,
+            Loki4jAppender.DISABLE_SMD_PATTERN,
             jsonMsgLayout(),
             batch(events.length, 10L),
             http(null));
@@ -107,7 +108,7 @@ public class FastSendTest {
         var label = "testJsonLayoutProtobufFastSend";
         var appender = appender(
             "service_name=my-app\ntest=" + label,
-            null,
+            Loki4jAppender.DISABLE_SMD_PATTERN,
             jsonMsgLayout(),
             batch(10, 1000),
             http(urlPush, protobufFormat(), javaSender()));
@@ -115,7 +116,7 @@ public class FastSendTest {
         var events = generateEvents(1000, 10);
         var expectedAppender = appender(
             "service_name=my-app\ntest=" + label,
-            null,
+            Loki4jAppender.DISABLE_SMD_PATTERN,
             jsonMsgLayout(),
             batch(events.length, 10L),
             http(null));

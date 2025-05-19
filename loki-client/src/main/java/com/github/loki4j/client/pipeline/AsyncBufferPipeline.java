@@ -77,6 +77,9 @@ public final class AsyncBufferPipeline {
 
     private volatile boolean started = false;
 
+    private volatile boolean isEncodeRunning = false;
+    private volatile boolean isSendRunning = false;
+
     private AtomicBoolean acceptNewEvents = new AtomicBoolean(true);
 
     private AtomicBoolean drainRequested = new AtomicBoolean(false);
@@ -141,10 +144,10 @@ public final class AsyncBufferPipeline {
 
         if (drainOnStop) {
             log.info("Pipeline is draining...");
-            waitSendQueueLessThan(batcher.getCapacity(), Long.MAX_VALUE);
+            waitPipelineIsEmpty(Long.MAX_VALUE);
             lastSendTimeMs.set(0);
             drain();
-            waitSendQueueIsEmpty(Long.MAX_VALUE);
+            waitPipelineIsEmpty(Long.MAX_VALUE);
             log.info("Drain completed");
         }
 
@@ -163,8 +166,19 @@ public final class AsyncBufferPipeline {
         log.trace("Pipeline stopped");
     }
 
-    public void waitSendQueueIsEmpty(long timeoutMs) {
-        waitSendQueueLessThan(1, timeoutMs);
+    public void waitPipelineIsEmpty(long timeoutMs) {
+        var timeoutNs = TimeUnit.MILLISECONDS.toNanos(timeoutMs);
+        var elapsedNs = 0L;
+        while(started
+                && (drainRequested.get() || !buffer.isEmpty() || isEncodeRunning || !sendQueue.isEmpty() || isSendRunning)
+                && elapsedNs < timeoutNs) {
+            LockSupport.parkNanos(parkTimeoutNs);
+            elapsedNs += parkTimeoutNs;
+        }
+        log.trace("Wait send queue: started=%s, unsent=%s, %s ms %s elapsed",
+                started, unsentEvents.get(), timeoutMs, elapsedNs < timeoutNs ? "not" : "");
+        if (elapsedNs >= timeoutNs)
+            throw new RuntimeException("Not completed within timeout " + timeoutMs + " ms");
     }
 
     public boolean append(Supplier<LogRecord> recordSupplier) {
@@ -202,9 +216,17 @@ public final class AsyncBufferPipeline {
         var batch = new LogRecordBatch(batcher.getCapacity());
         while (started) {
             try {
+                while (started && buffer.isEmpty() && !drainRequested.get()) {
+                    LockSupport.parkNanos(this, parkTimeoutNs);
+                }
+                if (!started) return;
+                isEncodeRunning = true;
                 encodeStep(batch);
             } catch (InterruptedException e) {
-                stop();
+                Thread.currentThread().interrupt();
+                return;
+            } finally {
+                isEncodeRunning = false;
             }
         }
     }
@@ -212,18 +234,24 @@ public final class AsyncBufferPipeline {
     private void runSendLoop() {
         while (started) {
             try {
-                sendStep();
+                BinaryBatch batch = sendQueue.borrowBuffer();
+                while(started && batch == null) {
+                    LockSupport.parkNanos(this, parkTimeoutNs);
+                    batch = sendQueue.borrowBuffer();
+                }
+                if (!started) return;
+                isSendRunning = true;
+                sendStep(batch);
             } catch (InterruptedException e) {
-                stop();
+                Thread.currentThread().interrupt();
+                return;
+            } finally {
+                isSendRunning = false;
             }
         }
     }
 
     private void encodeStep(LogRecordBatch batch) throws InterruptedException {
-        while (started && buffer.isEmpty() && !drainRequested.get()) {
-            LockSupport.parkNanos(this, parkTimeoutNs);
-        }
-        if (!started) return;
         log.trace("Checking encode actions...");
         LogRecord record = buffer.peek();
         while(record != null && batch.isEmpty()) {
@@ -236,11 +264,16 @@ public final class AsyncBufferPipeline {
             batcher.drain(lastSendTimeMs.get(), batch);
             log.trace("Draining %s remained log records for encode", batch.size());
         }
-        drainRequested.set(false);
-        if (batch.isEmpty()) return;
+        if (batch.isEmpty()) {
+            drainRequested.set(false);
+            return;
+        }
 
         writeBatch(batch, writer);
-        if (writer.isEmpty()) return;
+        if (writer.isEmpty()) {
+            drainRequested.set(false);
+            return;
+        }
         while(started &&
                 !sendQueue.offer(
                     batch.batchId(),
@@ -252,6 +285,7 @@ public final class AsyncBufferPipeline {
         }
         batch.clear();
         acceptNewEvents.set(true);
+        drainRequested.set(false);
     }
 
     private void writeBatch(LogRecordBatch batch, Writer writer) {
@@ -273,13 +307,7 @@ public final class AsyncBufferPipeline {
         }
     }
 
-    private void sendStep() throws InterruptedException {
-        BinaryBatch batch = sendQueue.borrowBuffer();
-        while(started && batch == null) {
-            LockSupport.parkNanos(this, parkTimeoutNs);
-            batch = sendQueue.borrowBuffer();
-        }
-        if (!started) return;
+    private void sendStep(BinaryBatch batch) throws InterruptedException {
         try {
             sendBatch(batch);
             lastSendTimeMs.set(System.currentTimeMillis());
@@ -382,19 +410,6 @@ public final class AsyncBufferPipeline {
             Thread.currentThread().interrupt();
         }
         return true;
-    }
-
-    void waitSendQueueLessThan(int size, long timeoutMs) {
-        var timeoutNs = TimeUnit.MILLISECONDS.toNanos(timeoutMs);
-        var elapsedNs = 0L;
-        while(started && unsentEvents.get() >= size && elapsedNs < timeoutNs) {
-            LockSupport.parkNanos(parkTimeoutNs);
-            elapsedNs += parkTimeoutNs;
-        }
-        log.trace("Wait send queue: started=%s, buffer(%s)>=%s, %s ms %s elapsed",
-                started, unsentEvents.get(), size, timeoutMs, elapsedNs < timeoutNs ? "not" : "");
-        if (elapsedNs >= timeoutNs)
-            throw new RuntimeException("Not completed within timeout " + timeoutMs + " ms");
     }
 
 }

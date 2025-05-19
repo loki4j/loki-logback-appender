@@ -18,13 +18,13 @@ public abstract class PipelineConfigAppenderBase extends UnsynchronizedAppenderB
 
     /**
      * "batch" section of the appender's config.
-     * It contains params for grouping log records into batches.
+     * It contains settings that control grouping log records into batches.
      */
     private BatchCfg batch = new BatchCfg();
 
     /**
      * "http" section of the appender's config.
-     * It contains params for sending batches to Loki via HTTP.
+     * It contains various settings for sending batches to Loki via HTTP.
      */
     private HttpCfg http = new HttpCfg();
 
@@ -156,6 +156,7 @@ public abstract class PipelineConfigAppenderBase extends UnsynchronizedAppenderB
         /**
          * If true, labels will be calculated only once for the first log record
          * and then used for all other log records without re-calculation.
+         * Otherwise, they will be calculated for each record individually.
          */
         boolean staticLabels = false;
 

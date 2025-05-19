@@ -35,8 +35,11 @@ public class Loki4jAppender extends PipelineConfigAppenderBase {
 
     private static final String KV_PAIR_SEPARATOR = LabelsPatternParser.KV_REGEX_STARTER + "\n|\r";
     private static final String KV_KV_SEPARATOR = "=";
-    private static final String DEFAULT_LBL_PATTERN = "source=loki4j\nhost=";
-    private static final String DEFAULT_MSG_PATTERN = "%msg %ex";
+    private static final String DEFAULT_LBL_PATTERN = "agent=loki4j\nhost=";
+    private static final String DEFAULT_SMD_PATTERN = "level=%level\nthread=%thread\nlogger=%logger";
+    private static final String DEFAULT_MSG_PATTERN = "[%thread] %logger{20} - %msg%n";
+
+    public static final String DISABLE_SMD_PATTERN = "off";
 
     /**
      * Logback pattern to use for log record's label.
@@ -44,6 +47,7 @@ public class Loki4jAppender extends PipelineConfigAppenderBase {
     private String labelsPattern;
     /**
      * Logback pattern to use for log record's structured metadata.
+     * Use pattern "off" to disable structured metadata generation.
      */
     private String structuredMetadataPattern;
     /**
@@ -93,7 +97,9 @@ public class Loki4jAppender extends PipelineConfigAppenderBase {
         labelValueExtractors = initExtractors(labelsPattern, LabelMarker.class);
 
         // init structured metadata KV extraction
-        if (structuredMetadataPattern != null && !structuredMetadataPattern.isBlank()) {
+        if (structuredMetadataPattern == null)
+            structuredMetadataPattern = DEFAULT_SMD_PATTERN;
+        if (!structuredMetadataPattern.isBlank() && !structuredMetadataPattern.equalsIgnoreCase(DISABLE_SMD_PATTERN)) {
             metadataValueExtractors = initExtractors(structuredMetadataPattern, StructuredMetadataMarker.class);
         }
 
@@ -242,7 +248,7 @@ public class Loki4jAppender extends PipelineConfigAppenderBase {
 
 
     void waitSendQueueIsEmpty(long timeoutMs) {
-        pipeline.waitSendQueueIsEmpty(timeoutMs);
+        pipeline.waitPipelineIsEmpty(timeoutMs);
     }
 
     long droppedEventsCount() {
