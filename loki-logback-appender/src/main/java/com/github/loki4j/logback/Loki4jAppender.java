@@ -38,7 +38,8 @@ public class Loki4jAppender extends PipelineConfigAppenderBase {
     private static final String DEFAULT_LBL_PATTERN = "agent=loki4j\nhost=";
     private static final String DEFAULT_SMD_PATTERN = "level=%level\nthread=%thread\nlogger=%logger";
     private static final String DEFAULT_MSG_PATTERN = "[%thread] %logger{20} - %msg%n";
-    static final String DISABLE_SMD_PATTERN = "off";
+
+    public static final String DISABLE_SMD_PATTERN = "off";
 
     /**
      * Logback pattern to use for log record's label.

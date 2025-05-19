@@ -3,6 +3,7 @@ package com.github.loki4j.logback.integration;
 import static com.github.loki4j.logback.Generators.*;
 import static org.junit.Assert.*;
 
+import com.github.loki4j.logback.Loki4jAppender;
 import com.github.loki4j.logback.PipelineConfigAppenderBase.BasicAuth;
 import com.github.loki4j.logback.PipelineConfigAppenderBase.HttpCfg;
 import com.github.loki4j.testkit.categories.CIOnlyTests;
@@ -119,7 +120,7 @@ public class GrafanaCloudTest {
         var events = generateEvents(20, 10);
         var expectedAppender = appender(
             "service_name=my-app\ntest=" + label,
-            null,
+            Loki4jAppender.DISABLE_SMD_PATTERN,
             jsonMsgLayout(),
             batch(events.length, 10L),
             http(jsonFormat(),
@@ -137,7 +138,7 @@ public class GrafanaCloudTest {
         var events = generateEvents(50, 10);
         var expectedAppender = appender(
             "service_name=my-app\ntest=" + label,
-            null,
+            Loki4jAppender.DISABLE_SMD_PATTERN,
             jsonMsgLayout(),
             batch(events.length, 10L),
             http(jsonFormat(), null));
