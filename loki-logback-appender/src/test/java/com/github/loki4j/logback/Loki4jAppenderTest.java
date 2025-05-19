@@ -113,7 +113,7 @@ public class Loki4jAppenderTest {
         var sender = dummySender();
         var appender = appender(
             "level=%level\napp=my-app",
-            null,
+            Loki4jAppender.DISABLE_SMD_PATTERN,
             plainTextMsgLayout("l=%level c=%logger{20} t=%thread | %msg %ex{1}"),
             batch(4, 4000L),
             http(

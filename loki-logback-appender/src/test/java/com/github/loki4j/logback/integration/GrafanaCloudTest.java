@@ -3,6 +3,7 @@ package com.github.loki4j.logback.integration;
 import static com.github.loki4j.logback.Generators.*;
 import static org.junit.Assert.*;
 
+import com.github.loki4j.logback.Loki4jAppender;
 import com.github.loki4j.logback.PipelineConfigAppenderBase.BasicAuth;
 import com.github.loki4j.logback.PipelineConfigAppenderBase.HttpCfg;
 import com.github.loki4j.testkit.categories.CIOnlyTests;
@@ -114,12 +115,17 @@ public class GrafanaCloudTest {
     public void testJsonLayoutJavaJsonCloud() throws Exception {
         var label = label("testJsonLayoutJavaJsonCloud");
         var http = authorize(http(urlPush, jsonFormat(), javaSender()));
-        var appender = appender("service_name=my-app\ntest=" + label, null, jsonMsgLayout(), batch(10, 1000), http);
+        var appender = appender(
+            "service_name=my-app\ntest=" + label,
+            Loki4jAppender.DISABLE_SMD_PATTERN,
+            jsonMsgLayout(),
+            batch(10, 1000),
+            http);
 
         var events = generateEvents(20, 10);
         var expectedAppender = appender(
             "service_name=my-app\ntest=" + label,
-            null,
+            Loki4jAppender.DISABLE_SMD_PATTERN,
             jsonMsgLayout(),
             batch(events.length, 10L),
             http(jsonFormat(),
@@ -132,12 +138,17 @@ public class GrafanaCloudTest {
     public void testJsonLayoutApacheProtobufCloud() throws Exception {
         var label = label("testJsonLayoutApacheProtobufCloud");
         var http = authorize(http(urlPush, protobufFormat(), apacheSender()));
-        var appender = appender("service_name=my-app\ntest=" + label, null, jsonMsgLayout(), batch(10, 1000), http);
+        var appender = appender(
+            "service_name=my-app\ntest=" + label,
+            Loki4jAppender.DISABLE_SMD_PATTERN,
+            jsonMsgLayout(),
+            batch(10, 1000),
+            http);
 
         var events = generateEvents(50, 10);
         var expectedAppender = appender(
             "service_name=my-app\ntest=" + label,
-            null,
+            Loki4jAppender.DISABLE_SMD_PATTERN,
             jsonMsgLayout(),
             batch(events.length, 10L),
             http(jsonFormat(), null));
