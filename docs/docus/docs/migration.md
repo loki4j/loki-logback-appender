@@ -99,7 +99,6 @@ to the new-style configuration (please note there are no commas!):
 
 ```xml
 <appender name="LOKI" class="com.github.loki4j.logback.Loki4jAppender">
-    ...
     <labels>
         app=my-app
         host=${HOSTNAME}
@@ -108,6 +107,7 @@ to the new-style configuration (please note there are no commas!):
         level=%level
         thread=%thread
     </structuredMetadata>
+    ...
 </appender>
 ```
 

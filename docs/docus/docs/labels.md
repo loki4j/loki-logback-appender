@@ -83,7 +83,7 @@ Please see the examples below:
 
 Bulk patterns are supported in both `labels` and `structuredMetadata` sections.
 
-## Adding dynamic labels using Markers
+## Adding dynamic labels using SLF4J Markers
 
 In classic Logback, markers are typically used to [filter](https://logback.qos.ch/manual/filters.html#TurboFilter) log records.
 With Loki4j you can also use markers to set Loki labels (or structured metadata) dynamically for any particular log message.
