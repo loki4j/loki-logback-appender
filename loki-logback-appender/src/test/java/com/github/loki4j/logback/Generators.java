@@ -73,7 +73,7 @@ public class Generators {
             HttpCfg http) {
         return appender(
             "level=%level\napp=my-app",
-            null,
+            Loki4jAppender.DISABLE_SMD_PATTERN,
             plainTextMsgLayout(TEST_MSG_PATTERN),
             batch,
             http);
@@ -85,7 +85,7 @@ public class Generators {
             HttpCfg http) {
         return appender(
             "test=" + testLabel + "\nlevel=%level\nservice_name=my-app",
-            null,
+            Loki4jAppender.DISABLE_SMD_PATTERN,
             plainTextMsgLayout(TEST_MSG_PATTERN),
             batch,
             http);

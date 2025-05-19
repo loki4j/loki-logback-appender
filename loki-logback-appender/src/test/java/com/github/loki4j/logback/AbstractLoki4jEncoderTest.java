@@ -118,7 +118,7 @@ public class AbstractLoki4jEncoderTest {
         var sender = dummySender();
         var stringAppender = appender(
                 "l=%level",
-                null,
+                Loki4jAppender.DISABLE_SMD_PATTERN,
                 plainTextMsgLayout("%level | %msg"),
                 batch(4, 1000L),
                 http(sender));
@@ -233,7 +233,7 @@ public class AbstractLoki4jEncoderTest {
         var sender = dummySender();
         var staticAppender = appender(
                 "l=%level",
-                null,
+                Loki4jAppender.DISABLE_SMD_PATTERN,
                 plainTextMsgLayout("%level | %msg"),
                 batch(6, 1000L),
                 http(sender));
@@ -260,7 +260,7 @@ public class AbstractLoki4jEncoderTest {
         withAppender(
                 appender(
                         "l=%level",
-                        null,
+                        Loki4jAppender.DISABLE_SMD_PATTERN,
                         plainTextMsgLayout("%level | %msg"),
                         batch(6, 1000L),
                         http(sender)),

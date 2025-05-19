@@ -49,7 +49,14 @@ public class JsonLayoutTest {
             .build();
 
         var sender = dummySender();
-        withAppender(appender("app=my-app", null, jsonMsgLayout(), batch(3, 1000L), http(stringFormat(), sender)), appender -> {
+        withAppender(
+                appender(
+                    "app=my-app",
+                    Loki4jAppender.DISABLE_SMD_PATTERN,
+                    jsonMsgLayout(),
+                    batch(3, 1000L),
+                    http(stringFormat(), sender)
+                ), appender -> {
             appender.append(events);
             appender.waitAllAppended();
 
