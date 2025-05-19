@@ -36,11 +36,6 @@ Then add Loki appender to your `logback.xml`:
         app=my-app
         host=${HOSTNAME}
     </labels>
-    <structuredMetadata>
-        level=%level
-        thread=%thread
-        logger=%logger
-    </structuredMetadata>
     <http>
         <url>http://localhost:3100/loki/api/v1/push</url>
     </http>

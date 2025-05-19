@@ -6,18 +6,17 @@ sidebar_label: JSON Message Layout
 
 ## When to use JSON message layout
 
-Loki4j supports JSON layout for log messages, however it is not Loki's native format for logs.
+If all you need is to send log messages to Loki along with some metadata (e.g., class name, thread name, log level, MDC, KVP), you can just set up proper [labels and structured metadata](labels.md) and use the default plain text layout.
+Thus, you do not need JSON message layout in most of the cases.
+
+Although Loki4j supports JSON layout for log messages, it is not Loki's native format for logs.
 Producing and parsing log lines in JSON imposes performance penalties and extra cost comparing to the plain text layout.
 Also worth mentioning that JSON is harder to read for humans than the plain text as well.
 
 Having that said, Loki4j's JSON message layout has no alternatives if you:
 
-- heavily use MDC or KV in multiple dynamic contexts and need more flexibility to configure them;
-- need nested structures in your metadata;
-- have tools in your logging stack (apart from Loki) that require JSON format.
-
-So before you decide to use JSON layout, we recommend you to take a look at other, more straight-forward ways for attaching metadata to log records: [labels and structured metadata](labels.md).
-Both of them work perfectly with plain text layout.
+- need nested structures with custom serialization in your metadata;
+- have tools in your logging stack (apart from Loki) that require logstash-like JSON format.
 
 Now, if you are still sure JSON layout is the right option for you, please proceed to the next section.
 

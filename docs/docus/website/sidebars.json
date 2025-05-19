@@ -7,7 +7,7 @@
       "protobuf",
       "apacheclient",
       "grafanacloud",
-      "performance",
+      "monitoring",
       "tracing",
       "migration",
       "compatibility",

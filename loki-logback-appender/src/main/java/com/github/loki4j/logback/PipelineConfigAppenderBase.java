@@ -263,7 +263,7 @@ public abstract class PipelineConfigAppenderBase extends UnsynchronizedAppenderB
         private WriterFactory writer;
 
         /**
-         * A configurator for HTTP sender.
+         * An implementation of HTTP sender to use.
          */
         private HttpSender sender;
 

@@ -15,9 +15,9 @@ Labels are defined one per line as `key=value` pairs in `labels` section of `Lok
 ```xml
 <appender name="LOKI" class="com.github.loki4j.logback.Loki4jAppender">
     <labels>
-        app=my-app
-        host=${HOSTNAME}
-        level=%level
+        app = my-app
+        host = ${HOSTNAME}
+        level = %level
     </labels>
     ...
 </appender>
@@ -40,13 +40,13 @@ Any other metadata you want to attach should go to structured metadata:
 ```xml
 <appender name="LOKI" class="com.github.loki4j.logback.Loki4jAppender">
     <labels>
-        app=my-app
-        host=${HOSTNAME}
+        app = my-app
+        host = ${HOSTNAME}
     </labels>
     <structuredMetadata>
-        level=%level
-        thread=%thread
-        class=%logger
+        level = %level
+        thread = %thread
+        class = %logger
     </structuredMetadata>
     <batch>
         <staticLabels>true</staticLabels>
@@ -81,7 +81,20 @@ Please see the examples below:
 - *\* = %%mdc{key1, key2}* - include MDC entries "key1" and "key2"
 - *\* != %%kvp{key1, key2}* - include all KVP entries except "key1" and "key2"
 
-Bulk patterns are supported in both `labels` and `structuredMetadata` sections.
+Bulk patterns are supported in both `labels` and `structuredMetadata` sections:
+
+```xml
+<appender name="LOKI" class="com.github.loki4j.logback.Loki4jAppender">
+    <labels>
+        * = %%mdc{vendor}
+    </labels>
+    <structuredMetadata>
+        * != %%mdc{vendor}
+        * = %%kvp
+    </structuredMetadata>
+    ...
+</appender>
+```
 
 ## Adding dynamic labels using SLF4J Markers
 

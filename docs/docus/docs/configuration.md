@@ -14,8 +14,8 @@ These few that are required are marked explicitly.
 
 |Setting|Default|Description|
 |-------|-------|-----------|
-|labels|agent=loki4j<br/>host=${HOSTNAME}|**Required**. Labels for a log record. A list of key-value pairs separated by a new line. Each value should be a valid Logback or Loki4j pattern|
-|structuredMetadata||Structured metadata for a log record. A list of key-value pairs separated by a new line. Each value should be a valid Logback or Loki4j pattern|
+|labels|agent=loki4j<br/>host=${HOSTNAME}|Labels for a log record. A list of key-value pairs separated by a new line. Each value should be a valid Logback or Loki4j pattern|
+|structuredMetadata|level=%level<br/>thread=%thread<br/>logger=%logger|Structured metadata for a log record. A list of key-value pairs separated by a new line. Each value should be a valid Logback or Loki4j pattern. Use pattern "off" to disable structured metadata generation|
 |readMarkers|false|If true, Loki4j scans each log record for the attached SLF4J marker to add its values to the record's labels or structured metadata|
 |metricsEnabled|false|If true, the appender will report its metrics using Micrometer|
 |verbose|false|If true, the appender will print its own debug logs to stderr|
@@ -68,7 +68,7 @@ This layout has the following settings:
 
 Loki4j uses standard Java HTTP client by default.
 If you want to switch to Apache HTTP client, please see [this](apacheclient.md) page.
-HTTP settings are the same for both Java And Apache clients:
+Below are the HTTP settings same for both Java and Apache clients:
 
 |Setting|Default|Description|
 |-------|-------|-----------|
@@ -83,6 +83,8 @@ HTTP settings are the same for both Java And Apache clients:
 |http.maxRetryBackoffMs|60000|Maximum backoff delay before the next attempt to re-send a failed batch|
 |http.maxRetryJitterMs|500|Upper bound for a jitter added to the retry delays|
 |http.dropRateLimitedBatches|false|If true, batches that Loki responds to with a `429` status code (TooManyRequests) will be dropped rather than retried|
+|http.useProtobufApi|false|If true, Loki4j uses Protobuf Loki API instead of JSON|
+|http.sender|JavaHttpSender|An implementation of HTTP sender to use|
 
 ### Batch settings
 
@@ -105,7 +107,6 @@ This section contains settings related to this process.
 
 ### Minimalistic zero-dependency configuration
 
-In Java 11 and later, we can use standard HTTP client and Loki JSON API.
 This setup is supported natively by Loki4j and does not require any extra dependencies.
 We need to define only required settings, leaving optional settings with their default values.
 
@@ -114,47 +115,42 @@ We need to define only required settings, leaving optional settings with their d
     <http>
         <url>http://localhost:3100/loki/api/v1/push</url>
     </http>
-    <format>
-        <label>
-            <pattern>app=my-app,host=${HOSTNAME},level=%level</pattern>
-        </label>
-        <message>
-            <pattern>l=%level h=${HOSTNAME} c=%logger{20} t=%thread | %msg %ex</pattern>
-        </message>
-    </format>
 </appender>
 ```
 
 ### Overriding the default settings
 
-In this example, we would like to change max batch size to 100 records, batch timeout to 10s, label key-value separator to `:`,
-and sort log records by time before sending them to Loki.
+In this example, we would like to see our application name as a label, structured metadata should be disabled.
 Messages should be in [JSON format](jsonlayout), without timestamp field, and with logger name abbreviated to 20 characters.
-Also, we would like to use [Apache HTTP sender](apacheclient) with request timeout 10s and [Protobuf API](protobuf).
+We would like to use [Apache HTTP sender](apacheclient) with request timeout 10s and [Protobuf API](protobuf).
+Also, max batch size should be 100 records and batch timeout - 10s.
 Finally, we want to see Loki4j debug output.
 
 ```xml
 <appender name="LOKI" class="com.github.loki4j.logback.Loki4jAppender">
-    <batchMaxItems>100</batchMaxItems>
-    <batchTimeoutMs>10000</batchTimeoutMs>
-    <verbose>true</verbose>
-    <http class="com.github.loki4j.logback.ApacheHttpSender">
+    <labels>
+        app = my-app
+        host = ${HOSTNAME}
+    </labels>
+    <structuredMetadata>off</structuredMetadata>
+    <message class="com.github.loki4j.logback.JsonLayout">
+        <timestamp>
+            <enabled>false</enabled>
+        </timestamp>
+        <loggerName>
+            <targetLength>20</targetLength>
+        </loggerName>
+    </message>
+    <http>
         <url>http://localhost:3100/loki/api/v1/push</url>
+        <useProtobufApi>true</useProtobufApi>
+        <sender class="com.github.loki4j.logback.ApacheHttpSender" />
         <requestTimeoutMs>10000</requestTimeoutMs>
     </http>
-    <format class="com.github.loki4j.logback.ProtobufEncoder">
-        <label>
-            <pattern>app:my-app,host:${HOSTNAME}</pattern>
-            <keyValueSeparator>:</keyValueSeparator>
-        </label>
-        <message class="com.github.loki4j.logback.JsonLayout">
-            <timestamp>
-                <enabled>false</enabled>
-            </timestamp>
-            <loggerName>
-                <targetLength>20</targetLength>
-            </loggerName>
-        </message>
-    </format>
+    <batch>
+        <maxItems>100</batchMaxItems>
+        <timeoutMs>10000</batchTimeoutMs>
+    </batch>
+    <verbose>true</verbose>
 </appender>
 ```

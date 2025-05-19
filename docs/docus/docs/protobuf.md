@@ -4,10 +4,10 @@ title: Switching to Protobuf format
 sidebar_label: Protobuf Support
 ---
 
-By default, Loki4j uses `JsonEncoder` that converts log batches into JSON format specified by Loki API.
-This encoder does not use any extra libs for JSON generation.
+By default, Loki4j converts log batches into JSON format specified by Loki API.
+This mode does not use any extra libs for JSON generation.
 
-If you want to use `ProtobufEncoder`, you need to add the following dependency to your project:
+If you want to use Protobuf API instead, you need to add the following dependency to your project:
 
 <!--DOCUSAURUS_CODE_TABS-->
 <!--Maven-->

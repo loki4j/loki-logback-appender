@@ -52,7 +52,7 @@ Settings from the `<format>` section were either removed or moved to "general" s
 |-----------|-----------|
 |format.label.pattern|labels|
 |format.label.structuredMetadataPattern|structuredMetadata|
-|format.message.*|message|
+|format.message.*|message.*|
 |format.label.pairSeparator|\<no longer configurable\>|
 |format.label.keyValueSeparator|\<no longer configurable\>|
 |format.label.readMarkers|readMarkers|
@@ -66,6 +66,7 @@ Please note, that some of these settings have also changed their default values:
 |Setting|Old default|New default|
 |-------|-----------|-----------|
 |labels|level=%level,host=${HOSTNAME}|agent=loki4j<br/>host=${HOSTNAME}|
+|structuredMetadata|off|level=%level<br/>thread=%thread<br/>logger=%logger|
 |message.pattern|l=%level c=%logger{20} t=%thread %msg %ex|\[%thread\] %logger{20} - %msg%n|
 
 If you are not happy with the new default values, feel free to override them in you config.
