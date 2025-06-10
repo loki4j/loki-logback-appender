@@ -52,7 +52,7 @@ Migrating from the previous Loki4j version? Read the [Migration Guide](docs/migr
 
 ### Key Features:
 
-- **Loki labels can be dynamically generated out of any Logback pattern, MDC, KVP, or SLF4J markers.**
+- **Dynamic generation of Loki labels and metadata out of any Logback pattern, MDC, KVP, or SLF4J markers.**
 Label values are specified as Logback patterns.
 This along with MDC, KVP, and markers allows you to precisely control label set for each particular log record.
 [Learn more...](docs/labels)

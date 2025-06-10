@@ -103,28 +103,9 @@ This section contains settings related to this process.
 |batch.useDirectBuffers|true|Use off-heap memory for storing intermediate data|
 
 
-## Examples
+## Example
 
-### Minimalistic zero-dependency configuration
-
-This setup is supported natively by Loki4j and does not require any extra dependencies.
-We need to define only required settings, leaving optional settings with their default values.
-
-```xml
-<appender name="LOKI" class="com.github.loki4j.logback.Loki4jAppender">
-    <http>
-        <url>http://localhost:3100/loki/api/v1/push</url>
-    </http>
-</appender>
-```
-
-### Overriding the default settings
-
-In this example, we would like to see our application name as a label, structured metadata should be disabled.
-Messages should be in [JSON format](jsonlayout), without timestamp field, and with logger name abbreviated to 20 characters.
-We would like to use [Apache HTTP sender](apacheclient) with request timeout 10s and [Protobuf API](protobuf).
-Also, max batch size should be 100 records and batch timeout - 10s.
-Finally, we want to see Loki4j debug output.
+Below is the example of a heavily customized Loki4j configuration:
 
 ```xml
 <appender name="LOKI" class="com.github.loki4j.logback.Loki4jAppender">
@@ -133,13 +114,8 @@ Finally, we want to see Loki4j debug output.
         host = ${HOSTNAME}
     </labels>
     <structuredMetadata>off</structuredMetadata>
-    <message class="com.github.loki4j.logback.JsonLayout">
-        <timestamp>
-            <enabled>false</enabled>
-        </timestamp>
-        <loggerName>
-            <targetLength>20</targetLength>
-        </loggerName>
+    <message>
+            <pattern>%-5level [%thread] %logger{20} - %msg%n</pattern>
     </message>
     <http>
         <url>http://localhost:3100/loki/api/v1/push</url>
@@ -154,3 +130,13 @@ Finally, we want to see Loki4j debug output.
     <verbose>true</verbose>
 </appender>
 ```
+
+In this example we:
+
+- explicitly pass application name as `app` label,
+- disable structured metadata,
+- change the log messages format so that along with the log line it also contains log level, thread, and source class name,
+- use [Apache HTTP sender](apacheclient) with request timeout 10s,
+- use [Protobuf API](protobuf) instead of JSON,
+- set max batch size to 100 records and batch timeout to 10s,
+- enable Loki4j debug output.

@@ -16,14 +16,14 @@ If you want to use Protobuf API instead, you need to add the following dependenc
 <dependency>
     <groupId>com.github.loki4j</groupId>
     <artifactId>loki-protobuf</artifactId>
-    <version>0.0.2_pb4.29.0</version>
+    <version>0.0.2_pb4.31.0</version>
 </dependency>
 ```
 
 <!--Gradle-->
 
 ```groovy
-implementation 'com.github.loki4j:loki-protobuf:0.0.2_pb4.29.0'
+implementation 'com.github.loki4j:loki-protobuf:0.0.2_pb4.31.0'
 ```
 <!--END_DOCUSAURUS_CODE_TABS-->
 
