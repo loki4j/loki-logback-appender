@@ -1,7 +1,8 @@
 package com.github.loki4j.logback;
 
+import java.util.ArrayList;
 import java.util.Arrays;
-import java.util.LinkedHashMap;
+import java.util.List;
 import java.util.Map;
 import java.util.Set;
 import java.util.Map.Entry;
@@ -21,7 +22,7 @@ public class LabelsPatternParser {
     public static final Pattern BULK_PATTERN_KEY_REGEX = Pattern.compile("^(.*)\\*[ ]*(!)?$");
     public static final Pattern BULK_PATTERN_VALUE_REGEX = Pattern.compile("^%%([^{]+)(\\{([^}]*)\\})?$");
 
-    public static Map<String, String> extractKVPairsFromPattern(String pattern, String pairSeparator, String keyValueSeparator) {
+    public static List<Entry<String, String>> extractKVPairsFromPattern(String pattern, String pairSeparator, String keyValueSeparator) {
         // check if label pair separator is RegEx or literal string
         var pairSeparatorPattern = pairSeparator.startsWith(KV_REGEX_STARTER)
             ? Pattern.compile(pairSeparator.substring(KV_REGEX_STARTER.length()))
@@ -30,13 +31,13 @@ public class LabelsPatternParser {
         var keyValueSeparatorPattern = Pattern.compile(Pattern.quote(keyValueSeparator));
 
         var pairs = pairSeparatorPattern.split(pattern);
-        var result = new LinkedHashMap<String, String>();
+        var result = new ArrayList<Entry<String, String>>();
         for (int i = 0; i < pairs.length; i++) {
             if (StringUtils.isBlank(pairs[i])) continue;
 
             var kv = keyValueSeparatorPattern.split(pairs[i]);
             if (kv.length == 2) {
-                result.put(kv[0].trim(), kv[1].trim());
+                result.add(Map.entry(kv[0].trim(), kv[1].trim()));
             } else {
                 throw new IllegalArgumentException(String.format(
                     "Unable to split '%s' in '%s' to key-value pairs, pairSeparator=%s, keyValueSeparator=%s",
