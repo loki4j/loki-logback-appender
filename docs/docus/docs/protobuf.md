@@ -4,10 +4,10 @@ title: Switching to Protobuf format
 sidebar_label: Protobuf Support
 ---
 
-By default, Loki4j uses `JsonEncoder` that converts log batches into JSON format specified by Loki API.
-This encoder does not use any extra libs for JSON generation.
+By default, Loki4j converts log batches into JSON format specified by Loki API.
+This mode does not use any extra libs for JSON generation.
 
-If you want to use `ProtobufEncoder`, you need to add the following dependency to your project:
+If you want to use Protobuf API instead, you need to add the following dependency to your project:
 
 <!--DOCUSAURUS_CODE_TABS-->
 <!--Maven-->
@@ -16,26 +16,27 @@ If you want to use `ProtobufEncoder`, you need to add the following dependency t
 <dependency>
     <groupId>com.github.loki4j</groupId>
     <artifactId>loki-protobuf</artifactId>
-    <version>0.0.2_pb4.29.0</version>
+    <version>0.0.2_pb4.31.0</version>
 </dependency>
 ```
 
 <!--Gradle-->
 
 ```groovy
-implementation 'com.github.loki4j:loki-protobuf:0.0.2_pb4.29.0'
+implementation 'com.github.loki4j:loki-protobuf:0.0.2_pb4.31.0'
 ```
 <!--END_DOCUSAURUS_CODE_TABS-->
 
 This library contains pre-generated encoders for Loki Protobuf format along with the proper version of Protobuf runtime and Snappy as transitive dependencies.
 
-Then you can explicitly specify `ProtobufEncoder` by setting `class` attribute for `format` section:
+Then you need to enable `http.useProtobufApi` setting in Loki4j config:
 
 ```xml
 <appender name="LOKI" class="com.github.loki4j.logback.Loki4jAppender">
-    <format class="com.github.loki4j.logback.ProtobufEncoder">
-        ...
-    </format>
+    ...
+    <http>
+        <useProtobufApi>true</useProtobufApi>
+    </http>
 </appender>
 ```
 

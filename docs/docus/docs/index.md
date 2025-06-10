@@ -6,7 +6,7 @@ configuration and enjoy.
 
 ### Quick Start
 
-The current stable version of Loki4j requires **Java 11+** and **Logback v1.4.x**.
+The current stable version of Loki4j requires **Java 11+** and **Logback v1.5.x**.
 See the [compatibility matrix](docs/compatibility) for more information about older versions' support.
 
 Add the following dependency to your project:
@@ -30,60 +30,19 @@ implementation 'com.github.loki4j:loki-logback-appender:%version%'
 
 Then add Loki appender to your `logback.xml`:
 
-<!--DOCUSAURUS_CODE_TABS-->
-<!--Plain text layout-->
-
 ```xml
+<contextName>my-app</contextName>
+
 <appender name="LOKI" class="com.github.loki4j.logback.Loki4jAppender">
     <http>
         <url>http://localhost:3100/loki/api/v1/push</url>
     </http>
-    <format>
-        <label>
-            <!-- Labels -->
-            <pattern>
-                app = my-app,
-                host = ${HOSTNAME}
-            </pattern>
-            <!-- Structured metadata (since Loki v2.9.0) -->
-            <structuredMetadataPattern>
-                level = %level,
-                thread = %thread,
-                class = %logger,
-                traceId = %mdc{traceId:-none}
-            </structuredMetadataPattern>
-        </label>
-        <message>
-            <pattern>%-5level %logger{20} %msg %ex</pattern>
-        </message>
-    </format>
 </appender>
 
 <root level="DEBUG">
     <appender-ref ref="LOKI" />
 </root>
 ```
-
-<!--JSON layout-->
-
-```xml
-<appender name="LOKI" class="com.github.loki4j.logback.Loki4jAppender">
-    <http>
-        <url>http://localhost:3100/loki/api/v1/push</url>
-    </http>
-    <format>
-        <label>
-            <pattern>app=my-app,host=${HOSTNAME}</pattern>
-        </label>
-        <message class="com.github.loki4j.logback.JsonLayout" />
-    </format>
-</appender>
-
-<root level="DEBUG">
-    <appender-ref ref="LOKI" />
-</root>
-```
-<!--END_DOCUSAURUS_CODE_TABS-->
 
 For more details, please refer to [Docs](docs/configuration).
 
@@ -91,9 +50,9 @@ Migrating from the previous Loki4j version? Read the [Migration Guide](docs/migr
 
 ### Key Features:
 
-- **Loki labels can be dynamically generated out of any Logback pattern, MDC, and SLF4J markers.**
+- **Dynamic generation of Loki labels and metadata out of any Logback pattern, MDC, KVP, or SLF4J markers.**
 Label values are specified as Logback patterns.
-This along with MDC and markers allows you to precisely control label set for each particular log record.
+This along with MDC, KVP, and markers allows you to precisely control label set for each particular log record.
 [Learn more...](docs/labels)
 
 - **Structured metadata support.**

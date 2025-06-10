@@ -1,5 +1,5 @@
 ---
-id: performance
+id: monitoring
 title: Performance monitoring
 sidebar_label: Monitoring
 ---
@@ -15,14 +15,14 @@ First, you need to make sure that Micrometer dependency is added to your project
 <dependency>
     <groupId>io.micrometer</groupId>
     <artifactId>micrometer-core</artifactId>
-    <version>1.14.2</version>
+    <version>1.15.0</version>
 </dependency>
 ```
 
 <!--Gradle-->
 
 ```groovy
-implementation 'io.micrometer:micrometer-core:1.14.2'
+implementation 'io.micrometer:micrometer-core:1.15.0'
 ```
 <!--END_DOCUSAURUS_CODE_TABS-->
 
