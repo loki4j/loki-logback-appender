@@ -31,11 +31,9 @@ implementation 'com.github.loki4j:loki-logback-appender:%version%'
 Then add Loki appender to your `logback.xml`:
 
 ```xml
+<contextName>my-app</contextName>
+
 <appender name="LOKI" class="com.github.loki4j.logback.Loki4jAppender">
-    <labels>
-        app=my-app
-        host=${HOSTNAME}
-    </labels>
     <http>
         <url>http://localhost:3100/loki/api/v1/push</url>
     </http>

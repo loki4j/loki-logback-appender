@@ -65,8 +65,8 @@ Please note, that some of these settings have also changed their default values:
 
 |Setting|Old default|New default|
 |-------|-----------|-----------|
-|labels|level=%level,host=${HOSTNAME}|agent=loki4j<br/>host=${HOSTNAME}|
-|structuredMetadata|off|level=%level<br/>thread=%thread<br/>logger=%logger|
+|labels|level=%level,host=${HOSTNAME}|agent=loki4j<br/>app=${CONTEXT_NAME}<br/>host=${HOSTNAME}|
+|structuredMetadata|off|level=%level<br/>thread=%thread<br/>logger=%logger<br/>\*=%%mdc<br/>\*=%%kvp|
 |message.pattern|l=%level c=%logger{20} t=%thread %msg %ex|\[%thread\] %logger{20} - %msg%n|
 
 If you are not happy with the new default values, feel free to override them in you config.
