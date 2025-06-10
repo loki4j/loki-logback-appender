@@ -70,7 +70,7 @@ These few that are required are marked explicitly.</p>
 </thead>
 <tbody>
 <tr><td>labels</td><td>agent=loki4j<br/>app=${CONTEXT_NAME}<br/>host=${HOSTNAME}</td><td>Labels for a log record. A list of key-value pairs separated by a new line. Each value should be a valid Logback or Loki4j pattern</td></tr>
-<tr><td>structuredMetadata</td><td>level=%level<br/>thread=%thread<br/>logger=%logger<br/>*=%%mdc<br/>*=%%kvp</td><td>Structured metadata for a log record. A list of key-value pairs separated by a new line. Each value should be a valid Logback or Loki4j pattern. Use pattern &quot;off&quot; to disable structured metadata generation</td></tr>
+<tr><td>structuredMetadata</td><td>level=%level<br/>thread=%thread<br/>logger=%logger<br/>*=%%mdc<br/>*=%%kvp</td><td>Structured metadata for a log record. A list of key-value pairs separated by a new line. Each value should be a valid Logback or Loki4j pattern. Use value &quot;off&quot; to disable structured metadata generation</td></tr>
 <tr><td>readMarkers</td><td>false</td><td>If true, Loki4j scans each log record for the attached SLF4J marker to add its values to the record's labels or structured metadata</td></tr>
 <tr><td>metricsEnabled</td><td>false</td><td>If true, the appender will report its metrics using Micrometer</td></tr>
 <tr><td>verbose</td><td>false</td><td>If true, the appender will print its own debug logs to stderr</td></tr>
@@ -175,7 +175,7 @@ This section contains settings related to this process.</p>
     <span class="hljs-tag">&lt;/<span class="hljs-name">labels</span>&gt;</span>
     <span class="hljs-tag">&lt;<span class="hljs-name">structuredMetadata</span>&gt;</span>off<span class="hljs-tag">&lt;/<span class="hljs-name">structuredMetadata</span>&gt;</span>
     <span class="hljs-tag">&lt;<span class="hljs-name">message</span>&gt;</span>
-            <span class="hljs-tag">&lt;<span class="hljs-name">pattern</span>&gt;</span>%-5level [%thread] %logger{20} - %msg%n<span class="hljs-tag">&lt;/<span class="hljs-name">pattern</span>&gt;</span>
+        <span class="hljs-tag">&lt;<span class="hljs-name">pattern</span>&gt;</span>%-5level [%thread] %logger{20} - %msg%n<span class="hljs-tag">&lt;/<span class="hljs-name">pattern</span>&gt;</span>
     <span class="hljs-tag">&lt;/<span class="hljs-name">message</span>&gt;</span>
     <span class="hljs-tag">&lt;<span class="hljs-name">http</span>&gt;</span>
         <span class="hljs-tag">&lt;<span class="hljs-name">url</span>&gt;</span>http://localhost:3100/loki/api/v1/push<span class="hljs-tag">&lt;/<span class="hljs-name">url</span>&gt;</span>
