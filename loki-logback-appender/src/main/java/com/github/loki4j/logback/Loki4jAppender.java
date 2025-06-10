@@ -35,8 +35,8 @@ public class Loki4jAppender extends PipelineConfigAppenderBase {
 
     private static final String KV_PAIR_SEPARATOR = LabelsPatternParser.KV_REGEX_STARTER + "\n|\r";
     private static final String KV_KV_SEPARATOR = "=";
-    private static final String DEFAULT_LBL_PATTERN = "agent=loki4j\nhost=";
-    private static final String DEFAULT_SMD_PATTERN = "level=%level\nthread=%thread\nlogger=%logger";
+    private static final String DEFAULT_LBL_PATTERN = "agent=loki4j\napp=%s\nhost=%s";
+    private static final String DEFAULT_SMD_PATTERN = "level=%level\nthread=%thread\nlogger=%logger\n*=%%mdc\n*=%%kvp";
     private static final String DEFAULT_MSG_PATTERN = "[%thread] %logger{20} - %msg%n";
 
     public static final String DISABLE_SMD_PATTERN = "off";
@@ -93,7 +93,11 @@ public class Loki4jAppender extends PipelineConfigAppenderBase {
 
         // init labels KV extraction
         if (labelsPattern == null)
-            labelsPattern = DEFAULT_LBL_PATTERN + context.getProperty(CoreConstants.HOSTNAME_KEY);
+            labelsPattern = String.format(
+                DEFAULT_LBL_PATTERN,
+                context.getProperty(CoreConstants.CONTEXT_NAME_KEY),
+                context.getProperty(CoreConstants.HOSTNAME_KEY)
+            );
         labelValueExtractors = initExtractors(labelsPattern, LabelMarker.class);
 
         // init structured metadata KV extraction
@@ -218,7 +222,7 @@ public class Loki4jAppender extends PipelineConfigAppenderBase {
         var kvPairs = LabelsPatternParser.extractKVPairsFromPattern(pattern, KV_PAIR_SEPARATOR, KV_KV_SEPARATOR);
         // logback patterns' extractor
         var logbackPatterns = new LinkedHashMap<String, String>();
-        kvPairs.entrySet().stream()
+        kvPairs.stream()
             .filter(e -> !LabelsPatternParser.isBulkPattern(e))
             .forEach(e -> logbackPatterns.put(e.getKey(), e.getValue()));
         try {
@@ -227,7 +231,7 @@ public class Loki4jAppender extends PipelineConfigAppenderBase {
             throw new IllegalArgumentException("Unable to parse pattern: \"" + pattern + "\"", e);
         }
         // bulk patterns
-        var bulkPatterns = kvPairs.entrySet().stream()
+        var bulkPatterns = kvPairs.stream()
             .filter(LabelsPatternParser::isBulkPattern)
             .collect(Collectors.toList());
         for (var bulkPattern : bulkPatterns) {
