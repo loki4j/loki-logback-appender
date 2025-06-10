@@ -15,7 +15,7 @@ These few that are required are marked explicitly.
 |Setting|Default|Description|
 |-------|-------|-----------|
 |labels|agent=loki4j<br/>app=${CONTEXT_NAME}<br/>host=${HOSTNAME}|Labels for a log record. A list of key-value pairs separated by a new line. Each value should be a valid Logback or Loki4j pattern|
-|structuredMetadata|level=%level<br/>thread=%thread<br/>logger=%logger<br/>\*=%%mdc<br/>\*=%%kvp|Structured metadata for a log record. A list of key-value pairs separated by a new line. Each value should be a valid Logback or Loki4j pattern. Use pattern "off" to disable structured metadata generation|
+|structuredMetadata|level=%level<br/>thread=%thread<br/>logger=%logger<br/>\*=%%mdc<br/>\*=%%kvp|Structured metadata for a log record. A list of key-value pairs separated by a new line. Each value should be a valid Logback or Loki4j pattern. Use value "off" to disable structured metadata generation|
 |readMarkers|false|If true, Loki4j scans each log record for the attached SLF4J marker to add its values to the record's labels or structured metadata|
 |metricsEnabled|false|If true, the appender will report its metrics using Micrometer|
 |verbose|false|If true, the appender will print its own debug logs to stderr|
@@ -115,7 +115,7 @@ Below is the example of a heavily customized Loki4j configuration:
     </labels>
     <structuredMetadata>off</structuredMetadata>
     <message>
-            <pattern>%-5level [%thread] %logger{20} - %msg%n</pattern>
+        <pattern>%-5level [%thread] %logger{20} - %msg%n</pattern>
     </message>
     <http>
         <url>http://localhost:3100/loki/api/v1/push</url>

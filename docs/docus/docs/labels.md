@@ -65,7 +65,7 @@ The generic form of bulk pattern is the following:
     [<i>prefix</i>]<b>*</b> [<b>!</b>]<b>=</b> <b>%%</b>(<b>mdc</b> | <b>kvp</b>)[<b>{</b><i>key</i>[<b>,</b> <i>key</i><b>,</b> ...]<b>}</b>]
 </p>
 
-Left side (before "=") starts with an optional alphanumeric prefix followed by wildcard "*" that will be substituted with the original key name.
+Left side (before "=") starts with an optional alphanumeric prefix followed by a wildcard "*" that will be substituted with the original key name.
 
 Right side (after "=") starts with a bulk pattern marker "%%" followed by function name and optional param list.
 Currently only two functions are supported - "mdc" and "kvp".
