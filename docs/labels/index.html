@@ -122,7 +122,7 @@ If no params specified, all MDC/KVP entries are included.</p>
 <pre><code class="hljs css language-bnf">bulk-pattern : [<span class="hljs-attribute">&lt;prefix&gt;</span>]"*" ["!"]"=" "%%"<span class="hljs-attribute">&lt;func-name&gt;</span>["{"<span class="hljs-attribute">&lt;key-list&gt;</span>"}"]
 prefix       : <span class="hljs-attribute">&lt;id&gt;</span>
 func-name    : "mdc" | "kvp"
-key-list     : <span class="hljs-attribute">&lt;key&gt;</span>[, <span class="hljs-attribute">&lt;key-list&gt;</span>]
+key-list     : <span class="hljs-attribute">&lt;key&gt;</span>["," <span class="hljs-attribute">&lt;key-list&gt;</span>]
 key          : <span class="hljs-attribute">&lt;id&gt;</span>
 </code></pre>
 <p>Square brackets <code>[</code> and <code>]</code> enclose optional items.
