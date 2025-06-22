@@ -87,7 +87,7 @@ The generic form of a bulk pattern can be represented as the following grammar:
 bulk-pattern : [<prefix>]"*" ["!"]"=" "%%"<func-name>["{"<key-list>"}"]
 prefix       : <id>
 func-name    : "mdc" | "kvp"
-key-list     : <key>[, <key-list>]
+key-list     : <key>["," <key-list>]
 key          : <id>
 ```
 Square brackets `[` and `]` enclose optional items.
