@@ -59,27 +59,44 @@ Any other metadata you want to attach should go to structured metadata:
 What if you want to include entries from Logback's [MDC](https://logback.qos.ch/manual/mdc.html) or [KVP](https://www.slf4j.org/manual.html#fluent) into the labels or structured metadata sent to Loki?
 
 Loki4j supports a special syntax for this called "bulk patterns".
-The generic form of bulk pattern is the following:
-
-<p align="center">
-    [<i>prefix</i>]<b>*</b> [<b>!</b>]<b>=</b> <b>%%</b>(<b>mdc</b> | <b>kvp</b>)[<b>{</b><i>key</i>[<b>,</b> <i>key</i><b>,</b> ...]<b>}</b>]
-</p>
-
-Left side (before "=") starts with an optional alphanumeric prefix followed by a wildcard "*" that will be substituted with the original key name.
-
-Right side (after "=") starts with a bulk pattern marker "%%" followed by function name and optional param list.
-Currently only two functions are supported - "mdc" and "kvp".
-Both optionally take a list of keys to include as params.
-If no params specified, all MDC/KVP entries are included.
-
-If you want to exclude certain keys, use "!=" instead of "=".
-
-Please see the examples below:
+Check the examples below:
 
 - *\* = %%kvp* - include all KVP entries
 - *kvp_\* = %%kvp* - include all KVP entries, add prefix "kvp_" for all keys (e.g., "kvp_key1", "kvp_key2", etc.)
 - *\* = %%mdc{key1, key2}* - include MDC entries "key1" and "key2"
 - *\* != %%kvp{key1, key2}* - include all KVP entries except "key1" and "key2"
+
+Left side (before "=") starts with an optional alphanumeric prefix followed by a wildcard "*".
+This wildcard is mandatory, it means the bulk pattern can produce zero or more key-value pairs depending on the right side function.
+If prefix is specified, it will be added to each key produced by this bulk pattern.
+
+Right side (after "=") starts with a bulk pattern marker "%%" followed by a function name and an optional param list.
+Currently, two functions are supported: "mdc" and "kvp".
+Both optionally take a list of keys to include as params.
+If no params specified, all MDC/KVP entries are included.
+
+If you want to exclude certain keys, use "!=" instead of "=".
+
+<details>
+
+<summary>Bulk patterns' grammar *(click to expand...)*</summary>
+
+The generic form of a bulk pattern can be represented as the following grammar:
+
+```bnf
+bulk-pattern : [<prefix>]"*" ["!"]"=" "%%"<func-name>["{"<key-list>"}"]
+prefix       : <id>
+func-name    : "mdc" | "kvp"
+key-list     : <key>[, <key-list>]
+key          : <id>
+```
+Square brackets `[` and `]` enclose optional items.
+Angle brackets `<` and `>` indicate non-terminals.
+Vertical bar `|` separates alternatives.
+`<id>` is an alphanumeric char sequence.
+Terminals are given in double quotes.
+
+</details>
 
 Bulk patterns are supported in both `labels` and `structuredMetadata` sections:
 
@@ -95,6 +112,9 @@ Bulk patterns are supported in both `labels` and `structuredMetadata` sections:
     ...
 </appender>
 ```
+
+In this example, MDC entry with key "vendor" (if it's defined) becomes a label.
+All other MDC entries as well as all KVP entries are sent to Loki as a structured metadata.
 
 ## Adding dynamic labels using SLF4J Markers
 
