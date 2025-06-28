@@ -124,8 +124,8 @@ Below is the example of a heavily customized Loki4j configuration:
         <requestTimeoutMs>10000</requestTimeoutMs>
     </http>
     <batch>
-        <maxItems>100</batchMaxItems>
-        <timeoutMs>10000</batchTimeoutMs>
+        <maxItems>100</maxItems>
+        <timeoutMs>10000</timeoutMs>
     </batch>
     <verbose>true</verbose>
 </appender>
