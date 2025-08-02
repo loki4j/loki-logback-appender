@@ -7,6 +7,9 @@ import java.util.function.Consumer;
 
 import com.github.loki4j.client.util.ByteBufferFactory;
 
+/**
+ * A thread-safe queue operating with reusable ByteBuffers.
+ */
 public class ByteBufferQueue {
 
     /**

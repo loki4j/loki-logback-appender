@@ -33,23 +33,45 @@ import static com.github.loki4j.client.util.StringUtils.bytesAsUtf8String;
 
 public final class AsyncBufferPipeline {
 
+    /**
+     * Comparator used for sorting the bath, i.e., to group records by stream
+     */
     private static final Comparator<LogRecord> compareByStream = (e1, e2) ->
         Long.compare(e1.stream.hashCode(), e2.stream.hashCode());
 
+    /**
+     * Thread-safe buffer to store incoming log records before they are batched (append -> encode)
+     */
     private final ConcurrentLinkedQueue<LogRecord> buffer = new ConcurrentLinkedQueue<>();
 
+    /**
+     * Configurable timeout to park a thread for during one iteration of waiting
+     */
     private final long parkTimeoutNs;
 
+    /**
+     * A queue for outgoing encoded batches (encode -> send)
+     */
     private final ByteBufferQueue sendQueue;
 
+    /**
+     * Batcher is responsible for accumulating log records according to configured batching rules.
+     * It is used on encoding step
+     */
     private final Batcher batcher;
 
+    /**
+     * Used on encode step to order log records in the batch before serializing them
+     */
     private final Optional<Comparator<LogRecord>> recordComparator;
 
+    /**
+     * Used on encode step to serialize (encode) log records into binary data
+     */
     private final Writer writer;
 
     /**
-     * A HTTP client to use for pushing logs to Loki
+     * HTTP client to use for pushing logs to Loki
      */
     private final Loki4jHttpClient httpClient;
 
@@ -64,8 +86,13 @@ public final class AsyncBufferPipeline {
 
     private final Jitter jitterMs;
 
+    /**
+     * See {@link PipelineConfig#drainOnStop}
+     */
     private final boolean drainOnStop;
-
+    /**
+     * See {@link PipelineConfig#maxRetries}
+     */
     private final int maxRetries;
 
     /**
@@ -75,17 +102,50 @@ public final class AsyncBufferPipeline {
      */
     private final boolean dropRateLimitedBatches;
 
+    /**
+     * This flag, if false, terminates the event loops: encode loop and send loop
+     */
     private volatile boolean started = false;
 
+    /**
+     * This flag is true when encode step is running.
+     * It is used in {@link #waitPipelineIsEmpty(long)} to track if encoding is still running while the {@link buffer} is empty
+     */
     private volatile boolean isEncodeRunning = false;
+    /**
+     * This flag is true when send step is running.
+     * It is used in {@link #waitPipelineIsEmpty(long)} to track if sending is still running while the {@link #sendQueue} is empty
+     */
     private volatile boolean isSendRunning = false;
 
+    /**
+     * When {@link #sendQueue} is full and unable to accept more batches, this flag is set to false.
+     * This signals the append step to stop accepting new log records, they are dropped instead.
+     * <p>
+     * This is a backpressure mechanism between send and append to prevent OOMs when too many records got stuck in buffers
+     */
     private AtomicBoolean acceptNewEvents = new AtomicBoolean(true);
 
+    /**
+     * Periodically is set to true by {@link #drainScheduledFuture} to check whether a batch should be cut
+     * by time elapsed since the last send (tracked in {@link #lastSendTimeMs}).
+     * <p>
+     * When {@link #stop()} is called, depending on {@link #drainOnStop} a drain can also be requested.
+     * <p>
+     * Drain means the batch is send as is, even if it's not fully packed with log records.
+     * This flag is used on encode step
+     */
     private AtomicBoolean drainRequested = new AtomicBoolean(false);
 
+    /**
+     * Tracks when the last send operation was completed.
+     * It is used for draining on encode step
+     */
     private AtomicLong lastSendTimeMs = new AtomicLong(System.currentTimeMillis());
 
+    /**
+     * This is used for metrics only.
+     */
     private AtomicLong unsentEvents = new AtomicLong(0L);
 
     private ScheduledExecutorService scheduler;
