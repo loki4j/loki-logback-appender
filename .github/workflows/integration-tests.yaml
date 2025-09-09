@@ -11,7 +11,7 @@ jobs:
     runs-on: ubuntu-latest
     strategy:
       matrix:
-        loki: [2.8.0, 3.4.3]
+        loki: [2.8.0, 3.5.4]
         include:
           - loki: 2.8.0
             limits: |
@@ -19,7 +19,7 @@ jobs:
               -ingester.per-stream-rate-limit="80MB" -ingester.per-stream-rate-limit-burst="160MB" \
               -server.grpc-max-recv-msg-size-bytes=4194304000 \
               -querier.frontend-client.grpc-max-send-msg-size=167772160
-          - loki: 3.4.3
+          - loki: 3.5.4
             limits: |
               -distributor.ingestion-rate-limit-mb=160 -distributor.ingestion-burst-size-mb=240 \
               -ingester.per-stream-rate-limit="80MB" -ingester.per-stream-rate-limit-burst="160MB" \
