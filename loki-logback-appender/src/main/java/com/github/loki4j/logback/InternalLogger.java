@@ -34,6 +34,10 @@ public class InternalLogger implements Loki4jLogger {
         logger.addStatus(new WarnStatus(String.format(msg, args), source));
     }
     @Override
+    public void warn(Throwable ex, String msg, Object... args) {
+        logger.addStatus(new WarnStatus(String.format(msg, args), source, ex));
+    }
+    @Override
     public void error(String msg, Object... args) {
         logger.addStatus(new ErrorStatus(String.format(msg, args), source));
     }

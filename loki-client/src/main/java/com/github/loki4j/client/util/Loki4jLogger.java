@@ -19,11 +19,20 @@ public interface Loki4jLogger {
             traceEnabledClasses.contains(source.getClass().getSimpleName());
     }
 
+    default void errorOrWarn(boolean isError, Throwable ex, String msg, Object... args) {
+        if (isError)
+            error(ex, msg, args);
+        else
+            warn(ex, msg, args);
+    }
+
     void trace(String msg, Object... args);
 
     void info(String msg, Object... args);
 
     void warn(String msg, Object... args);
+
+    void warn(Throwable ex, String msg, Object... args);
 
     void error(String msg, Object... args);
 

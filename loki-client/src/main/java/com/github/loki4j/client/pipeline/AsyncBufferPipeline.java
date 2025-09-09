@@ -108,6 +108,12 @@ public final class AsyncBufferPipeline {
     private volatile boolean started = false;
 
     /**
+     * This flag is set to true when the {@link #stop()} method is called.
+     * It is used to suppress logging errors to prevent some weird frameworks (Spring) from failing
+     */
+    private volatile boolean isStopping = false;
+
+    /**
      * This flag is true when encode step is running.
      * It is used in {@link #waitPipelineIsEmpty(long)} to track if encoding is still running while the {@link buffer} is empty
      */
@@ -179,6 +185,7 @@ public final class AsyncBufferPipeline {
     public void start() {
         log.info("Pipeline is starting...");
 
+        isStopping = false;
         started = true;
 
         senderThreadPool = Executors.newFixedThreadPool(1, new Loki4jThreadFactory("loki4j-sender"));
@@ -199,6 +206,8 @@ public final class AsyncBufferPipeline {
 
     public void stop() {
         log.trace("Pipeline is stopping...");
+
+        isStopping = true;
 
         drainScheduledFuture.cancel(false);
 
@@ -426,11 +435,11 @@ public final class AsyncBufferPipeline {
         var isRetry = retry > 0;
 
         if (exceptionOccurred) {
-            log.error(e,
+            log.errorOrWarn(!isStopping, e,
                 "%sError while sending Batch %s to Loki (%s)",
                 isRetry ? "Retry #" + retry + ". " : "", batch, httpClient.getConfig().pushUrl);
         } else {
-            log.error(
+            log.errorOrWarn(!isStopping, e,
                 "%sLoki responded with non-success status %s on batch %s. Error: %s",
                 isRetry ? "Retry #" + retry + ". " : "", r.status, batch, r.body);
         }
