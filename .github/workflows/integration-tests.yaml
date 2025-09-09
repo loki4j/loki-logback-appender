@@ -44,8 +44,8 @@ jobs:
             -config.file=/etc/loki/local-config.yaml -auth.enabled=true
           sleep 5s
 
-          gradle -Dorg.gradle.jvmargs=-Xmx2G check integTests
-          gradle ciOnlyTests --tests "*MultitenantSupportTest"
+          ./gradlew -Dorg.gradle.jvmargs=-Xmx2G check integTests
+          ./gradlew ciOnlyTests --tests "*MultitenantSupportTest"
 
           docker stop loki
           docker stop lokimultitenant
@@ -80,5 +80,5 @@ jobs:
           GRAFANA_CLOUD_PASSWORD: ${{ secrets.GRAFANA_CLOUD_PASSWORD }}
           GRAFANA_CLOUD_EXTRA_LABEL: -JDK${{ matrix.jdk }}
         run: |
-          gradle check
-          gradle ciOnlyTests --tests "*GrafanaCloudTest"
+          ./gradlew check
+          ./gradlew ciOnlyTests --tests "*GrafanaCloudTest"

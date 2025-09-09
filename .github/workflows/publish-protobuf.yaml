@@ -65,7 +65,7 @@ jobs:
         run: |
           PBVER=${{ matrix.pbver }}
           echo "${PBVER} is not published. Running publish command..."
-          gradle \
+          ./gradlew \
               -Psigning.keyId=${{secrets.SIGNING_KEY_ID}} -Psigning.password=${{secrets.SIGNING_PASSWORD}} \
               -Psigning.secretKeyRingFile="$(pwd)/.gradle/secring.gpg" \
               -PpubToOSSR -PpbVersion=${PBVER}.0 :loki-protobuf:publish \
