@@ -21,7 +21,7 @@ jobs:
       - name: Setup Gradle
         uses: gradle/actions/setup-gradle@v4
       - name: Build with Gradle
-        run: gradle check
+        run: ./gradlew check
       - name: Decode GPG
         run: echo "${{secrets.SIGNING_SECRET_KEY_RING_FILE}}" | base64 -d > $(pwd)/.gradle/secring.gpg
       - name: Upload to Maven Central
