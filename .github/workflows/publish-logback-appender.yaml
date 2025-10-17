@@ -26,7 +26,7 @@ jobs:
         run: gradle check
       - name: Decode GPG
         run: echo "${{secrets.SIGNING_SECRET_KEY_RING_FILE}}" | base64 -d > $(pwd)/.gradle/secring.gpg
-      - name: Publish to Maven Central
+      - name: Upload to Maven Central
         env:
             OSSRH_USERNAME: ${{ secrets.OSSRH_USERNAME }}
             OSSRH_PASSWORD: ${{ secrets.OSSRH_PASSWORD }}
@@ -36,5 +36,11 @@ jobs:
             -Psigning.keyId=${{secrets.SIGNING_KEY_ID}} -Psigning.password=${{secrets.SIGNING_PASSWORD}} \
             -Psigning.secretKeyRingFile="$(pwd)/.gradle/secring.gpg" \
             -PpubToOSSR :loki-logback-appender:publish
+      - name: Publish to Maven Central
+        run: |
+          curl --fail-with-body -X POST \
+            -H "Authorization: Bearer ${{ secrets.OSSRH_BEARER }}" \
+            -H "Content-Type: application/json" \
+            "${{ vars.MANUAL_API_URL }}${{ vars.PUBLISH_ENDPOINT }}?publishing_type=user_managed"
       - name: Cleanup
         run: rm $(pwd)/.gradle/secring.gpg
