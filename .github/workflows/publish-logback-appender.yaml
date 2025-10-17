@@ -20,8 +20,6 @@ jobs:
           java-version: 11
       - name: Setup Gradle
         uses: gradle/actions/setup-gradle@v4
-        with:
-          gradle-version: 7.6
       - name: Build with Gradle
         run: gradle check
       - name: Decode GPG
