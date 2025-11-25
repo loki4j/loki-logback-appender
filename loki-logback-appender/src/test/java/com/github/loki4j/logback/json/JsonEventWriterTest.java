@@ -1,6 +1,7 @@
 package com.github.loki4j.logback.json;
 
 import static org.junit.Assert.assertEquals;
+import static org.junit.Assert.assertThrows;
 
 import java.util.List;
 import java.util.TreeSet;
@@ -73,6 +74,24 @@ public class JsonEventWriterTest {
         writer.writeEndObject();
 
         assertEquals("{\"raw\":{\"arr\":[1,2,3],\"val\":null}}", writer.toString());
+    }
+
+    @Test
+    public void testWriteRawUtf8JsonStringObject() {
+        var writer = new JsonEventWriter(10);
+        writer.writeBeginObject();
+        writer.writeObjectField("raw", RawJsonString.from("{\"arr\":[1,2,3],\"val\":\"строка\"}"));
+        writer.writeEndObject();
+
+        assertEquals("{\"raw\":{\"arr\":[1,2,3],\"val\":\"строка\"}}", writer.toString());
+    }
+
+    @Test(expected = NullPointerException.class)
+    public void testWriteNullRawJsonStringObject() {
+        var writer = new JsonEventWriter(10);
+        writer.writeBeginObject();
+        writer.writeObjectField("raw", RawJsonString.from(null));
+        writer.writeEndObject();
     }
 
     @Test

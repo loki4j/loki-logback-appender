@@ -2,6 +2,7 @@ package com.github.loki4j.logback.json;
 
 import static com.github.loki4j.pkg.dslplatform.json.RawJsonWriter.*;
 
+import java.nio.charset.StandardCharsets;
 import java.util.Arrays;
 import java.util.Iterator;
 import java.util.function.BiConsumer;
@@ -100,7 +101,7 @@ public final class JsonEventWriter {
         else if (value instanceof Iterable)
             writeIteratorValue(((Iterable<?>) value).iterator(), (w, o) -> w.writeObjectValue(o));
         else if (value instanceof RawJsonString)
-            raw.writeRawAscii(((RawJsonString) value).value);
+            writeRawUtf8String(((RawJsonString) value).value);
         else
             raw.writeString(value.toString());
     }
@@ -112,6 +113,11 @@ public final class JsonEventWriter {
         } else {
             raw.writeString(value);
         }
+    }
+
+    private void writeRawUtf8String(String value) {
+        byte[] bytes = value.getBytes(StandardCharsets.UTF_8);
+        raw.writeRaw(bytes, 0, bytes.length);
     }
 
     private void writeNumericValue(long value) {
