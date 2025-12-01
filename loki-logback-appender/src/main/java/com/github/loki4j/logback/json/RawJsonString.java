@@ -8,6 +8,9 @@ public final class RawJsonString {
     final String value;
 
     public RawJsonString(String value) {
+        if (value == null) {
+            throw new NullPointerException("Null value is not allowed in RawJsonString");
+        }
         this.value = value;
     }
 

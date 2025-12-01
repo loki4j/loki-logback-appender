@@ -337,6 +337,22 @@ public class RawJsonWriter {
         position += len;
     }
 
+    /**
+     * Copy part of byte buffer into JSON as is.
+     * Provided buffer can't be null.
+     *
+     * @param buf    byte buffer to copy
+     * @param offset in buffer to start from
+     * @param len    part of buffer to copy
+     */
+    public final void writeRaw(final byte[] buf, final int offset, final int len) {
+        if (position + len >= buffer.length) {
+            enlargeOrFlush(position, len);
+        }
+        System.arraycopy(buf, offset, buffer, position, len);
+        position += len;
+    }
+
     public final void writeBoolean(final boolean value) {
         if (value)
             writeRawAscii("true");
