@@ -1,7 +1,6 @@
 package com.github.loki4j.logback.json;
 
 import static org.junit.Assert.assertEquals;
-import static org.junit.Assert.assertThrows;
 
 import java.util.List;
 import java.util.TreeSet;
