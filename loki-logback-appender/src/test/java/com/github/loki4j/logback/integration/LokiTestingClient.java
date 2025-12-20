@@ -2,7 +2,7 @@ package com.github.loki4j.logback.integration;
 
 import static java.util.stream.Collectors.toSet;
 import static com.github.loki4j.logback.Generators.*;
-import static org.junit.Assert.*;
+import static org.junit.jupiter.api.Assertions.*;
 
 import java.io.IOException;
 import java.net.URI;

@@ -1,9 +1,9 @@
 package com.github.loki4j.client.writer;
 
-import org.junit.Test;
+import org.junit.jupiter.api.Test;
 
 import static com.github.loki4j.client.batch.LogRecord.create;
-import static org.junit.Assert.*;
+import static org.junit.jupiter.api.Assertions.*;
 
 import java.util.Map;
 

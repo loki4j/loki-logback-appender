@@ -3,7 +3,7 @@ package com.github.loki4j.logback.integration;
 import com.github.loki4j.testkit.categories.CIOnlyTests;
 import org.junit.AfterClass;
 import org.junit.BeforeClass;
-import org.junit.Test;
+import org.junit.jupiter.api.Test;
 import org.junit.experimental.categories.Category;
 
 import static com.github.loki4j.logback.Generators.*;
