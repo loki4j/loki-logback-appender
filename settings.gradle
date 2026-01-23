@@ -13,7 +13,7 @@ dependencyResolutionManagement {
             version('loki-protobuf', '0.0.2_pb4.31.0')
             version('jacoco', '0.8.13')
 
-            library('logback', 'ch.qos.logback:logback-classic:1.5.19')
+            library('logback', 'ch.qos.logback:logback-classic:1.5.25')
             library('loki-protobuf', 'com.github.loki4j', 'loki-protobuf').versionRef('loki-protobuf')
             library('snappy', 'org.xerial.snappy:snappy-java:1.1.10.7')
             library('apache-httpclient4', 'org.apache.httpcomponents:httpclient:4.5.14')
