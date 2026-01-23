@@ -1,14 +1,14 @@
 package com.github.loki4j.logback.json;
 
 import static com.github.loki4j.logback.Generators.loggingEvent;
-import static org.junit.Assert.assertEquals;
-import static org.junit.Assert.assertFalse;
-import static org.junit.Assert.assertTrue;
+import static org.junit.jupiter.api.Assertions.assertEquals;
+import static org.junit.jupiter.api.Assertions.assertFalse;
+import static org.junit.jupiter.api.Assertions.assertTrue;
 
 import java.util.Arrays;
 import java.util.List;
 
-import org.junit.Test;
+import org.junit.jupiter.api.Test;
 import org.slf4j.event.KeyValuePair;
 
 import ch.qos.logback.classic.Level;
@@ -22,7 +22,7 @@ public class KeyValuePairsJsonProviderTest {
         var provider = new KeyValuePairsJsonProvider();
         provider.start();
 
-        assertFalse("canWrite", provider.canWrite(event));
+        assertFalse(provider.canWrite(event), "canWrite");
 
         provider.stop();
     }
@@ -37,12 +37,12 @@ public class KeyValuePairsJsonProviderTest {
         var provider = new KeyValuePairsJsonProvider();
         provider.start();
 
-        assertTrue("canWrite", provider.canWrite(event));
+        assertTrue(provider.canWrite(event), "canWrite");
 
         var writer = new JsonEventWriter(0);
         provider.writeTo(writer, event, false);
 
-        assertEquals("writeTo", "\"kvp_property1\":\"value1\"", writer.toString());
+        assertEquals("\"kvp_property1\":\"value1\"", writer.toString(), "writeTo");
 
         provider.stop();
     }
@@ -59,12 +59,12 @@ public class KeyValuePairsJsonProviderTest {
         provider.addExclude("property2");
         provider.start();
 
-        assertTrue("canWrite", provider.canWrite(event));
+        assertTrue(provider.canWrite(event), "canWrite");
 
         var writer = new JsonEventWriter(0);
         provider.writeTo(writer, event, false);
 
-        assertEquals("writeTo", "\"kvp_property1\":\"value1\"", writer.toString());
+        assertEquals("\"kvp_property1\":\"value1\"", writer.toString(), "writeTo");
 
         provider.stop();
     }
@@ -82,12 +82,12 @@ public class KeyValuePairsJsonProviderTest {
         provider.setPrefix("key_value_");
         provider.start();
 
-        assertTrue("canWrite", provider.canWrite(event));
+        assertTrue(provider.canWrite(event), "canWrite");
 
         var writer = new JsonEventWriter(0);
         provider.writeTo(writer, event, false);
 
-        assertEquals("writeTo", "\"key_value_property1\":\"value1\"", writer.toString());
+        assertEquals("\"key_value_property1\":\"value1\"", writer.toString(), "writeTo");
 
         provider.stop();
     }
@@ -103,12 +103,12 @@ public class KeyValuePairsJsonProviderTest {
         provider.setNoPrefix(true);
         provider.start();
 
-        assertTrue("canWrite", provider.canWrite(event));
+        assertTrue(provider.canWrite(event), "canWrite");
 
         var writer = new JsonEventWriter(0);
         provider.writeTo(writer, event, false);
 
-        assertEquals("writeTo", "\"property1\":\"value1\"", writer.toString());
+        assertEquals("\"property1\":\"value1\"", writer.toString(), "writeTo");
 
         provider.stop();
     }
@@ -129,14 +129,15 @@ public class KeyValuePairsJsonProviderTest {
         );
         provider.start();
 
-        assertTrue("canWrite", provider.canWrite(event));
+        assertTrue(provider.canWrite(event), "canWrite");
 
         var writer = new JsonEventWriter(0);
         provider.writeTo(writer, event, false);
 
-        assertEquals("writeTo",
+        assertEquals(
                 "\"kvp_property1_arr\":[\"kvp_property1\",\"value1\"],\"kvp_property2_arr\":[\"kvp_property2\",\"value2\"]",
-                writer.toString()
+                writer.toString(),
+                "writeTo"
         );
 
         provider.stop();
@@ -164,14 +165,15 @@ public class KeyValuePairsJsonProviderTest {
         );
         provider.start();
 
-        assertTrue("canWrite", provider.canWrite(event));
+        assertTrue(provider.canWrite(event), "canWrite");
 
         var writer = new JsonEventWriter(0);
         provider.writeTo(writer, event, false);
 
-        assertEquals("writeTo",
+        assertEquals(
                 "\"kvp_prop\":[{\"name\":\"Aaaa\",\"age\":10},{\"name\":\"Bbbb\",\"age\":20}]",
-                writer.toString()
+                writer.toString(),
+                "writeTo"
         );
 
         provider.stop();

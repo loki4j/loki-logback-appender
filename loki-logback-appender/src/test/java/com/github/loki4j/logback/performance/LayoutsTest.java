@@ -4,7 +4,7 @@ import static com.github.loki4j.logback.Generators.generateEvents;
 
 import java.util.Arrays;
 
-import org.junit.Test;
+import org.junit.jupiter.api.Test;
 import org.junit.experimental.categories.Category;
 
 import com.github.loki4j.logback.JsonLayout;

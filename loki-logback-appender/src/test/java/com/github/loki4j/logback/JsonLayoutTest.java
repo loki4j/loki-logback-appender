@@ -1,7 +1,7 @@
 package com.github.loki4j.logback;
 
 import static com.github.loki4j.logback.Generators.*;
-import static org.junit.Assert.*;
+import static org.junit.jupiter.api.Assertions.*;
 
 import java.util.ArrayList;
 import java.util.Collections;
@@ -12,7 +12,7 @@ import java.util.concurrent.Executors;
 import java.util.concurrent.TimeUnit;
 import java.util.function.Supplier;
 
-import org.junit.Test;
+import org.junit.jupiter.api.Test;
 
 import com.github.loki4j.client.util.OrderedMap;
 import com.github.loki4j.logback.json.AbstractFieldJsonProvider;
@@ -61,7 +61,7 @@ public class JsonLayoutTest {
             appender.waitAllAppended();
 
             var actual = StringPayload.parse(sender.lastSendData());
-            assertEquals("jsonLayout", expected, actual);
+            assertEquals(expected, actual, "jsonLayout");
             return null;
         });
     }

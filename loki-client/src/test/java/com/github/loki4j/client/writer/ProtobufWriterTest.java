@@ -1,9 +1,9 @@
 package com.github.loki4j.client.writer;
 
-import org.junit.Test;
+import org.junit.jupiter.api.Test;
 import org.xerial.snappy.Snappy;
 
-import static org.junit.Assert.*;
+import static org.junit.jupiter.api.Assertions.*;
 
 import java.io.IOException;
 import java.util.Map;
