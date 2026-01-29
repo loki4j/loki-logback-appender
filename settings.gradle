@@ -6,7 +6,7 @@ include 'loki-client'
 include 'testkit'
 include 'loki-logback-appender'
 
-dependencyResolutionManag
+dependencyResolutionManagement {
     versionCatalogs {
         libs {
             version('protobuf', '4.33.0')
@@ -27,6 +27,7 @@ dependencyResolutionManag
         }
     }
 }
+
 
 def tempProjects = new File(rootDir, 'temp')
 if (tempProjects.exists()) {
