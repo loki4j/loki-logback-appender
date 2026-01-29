@@ -1,18 +1,18 @@
 package com.github.loki4j.logback.integration;
 
 import static com.github.loki4j.logback.Generators.*;
-import static org.junit.Assert.*;
+import static org.junit.jupiter.api.Assertions.*;
 
 import com.github.loki4j.logback.Loki4jAppender;
 import com.github.loki4j.logback.PipelineConfigAppenderBase.BasicAuth;
 import com.github.loki4j.logback.PipelineConfigAppenderBase.HttpCfg;
 import com.github.loki4j.testkit.categories.CIOnlyTests;
 
-import org.junit.AfterClass;
-import org.junit.BeforeClass;
-import org.junit.Ignore;
-import org.junit.Test;
-import org.junit.experimental.categories.Category;
+import org.junit.jupiter.api.AfterAll;
+import org.junit.jupiter.api.BeforeAll;
+import org.junit.jupiter.api.Disabled;
+import org.junit.jupiter.api.Test;
+import org.junit.jupiter.api.Tag;
 
 public class GrafanaCloudTest {
 
@@ -25,12 +25,12 @@ public class GrafanaCloudTest {
 
     private static LokiTestingClient client;
 
-    @BeforeClass
+    @BeforeAll
     public static void startLokiClient() {
         client = new LokiTestingClient(urlBase, username, password);
     }
 
-    @AfterClass
+    @AfterAll
     public static void stopLokiClient() {
         client.close();
     }
@@ -52,7 +52,7 @@ public class GrafanaCloudTest {
     }
 
     @Test
-    @Category({CIOnlyTests.class})
+    @Tag("com.github.loki4j.testkit.categories.CIOnlyTests")
     public void testApacheJsonOneEventCloud() throws Exception {
         var label = label("testApacheJsonOneEventCloud");
         var http = authorize(http(urlPush, jsonFormat(), apacheSender()));
@@ -65,7 +65,7 @@ public class GrafanaCloudTest {
     }
 
     @Test
-    @Category({CIOnlyTests.class})
+    @Tag("com.github.loki4j.testkit.categories.CIOnlyTests")
     public void testApacheJsonCloud() throws Exception {
         var label = label("testApacheJsonCloud");
         var http = authorize(http(urlPush, jsonFormat(), apacheSender()));
@@ -78,7 +78,7 @@ public class GrafanaCloudTest {
     }
 
     @Test
-    @Category({CIOnlyTests.class})
+    @Tag("com.github.loki4j.testkit.categories.CIOnlyTests")
     public void testJavaJsonCloud() throws Exception {
         var label = label("testJavaJsonCloud");
         var http = authorize(http(urlPush, jsonFormat(), javaSender()));
@@ -89,7 +89,7 @@ public class GrafanaCloudTest {
     }
 
     @Test
-    @Category({CIOnlyTests.class})
+    @Tag("com.github.loki4j.testkit.categories.CIOnlyTests")
     public void testApacheProtobufCloud() throws Exception {
         var label = label("testApacheProtobufCloud");
         var http = authorize(http(urlPush, protobufFormat(), apacheSender()));
@@ -100,7 +100,7 @@ public class GrafanaCloudTest {
     }
 
     @Test
-    @Category({CIOnlyTests.class})
+    @Tag("com.github.loki4j.testkit.categories.CIOnlyTests")
     public void testJavaProtobufCloud() throws Exception {
         var label = label("testJavaProtobufCloud");
         var http = authorize(http(urlPush, protobufFormat(), javaSender()));
@@ -111,7 +111,7 @@ public class GrafanaCloudTest {
     }
 
     @Test
-    @Category({CIOnlyTests.class})
+    @Tag("com.github.loki4j.testkit.categories.CIOnlyTests")
     public void testJsonLayoutJavaJsonCloud() throws Exception {
         var label = label("testJsonLayoutJavaJsonCloud");
         var http = authorize(http(urlPush, jsonFormat(), javaSender()));
@@ -134,7 +134,7 @@ public class GrafanaCloudTest {
     }
 
     @Test
-    @Category({CIOnlyTests.class})
+    @Tag("com.github.loki4j.testkit.categories.CIOnlyTests")
     public void testJsonLayoutApacheProtobufCloud() throws Exception {
         var label = label("testJsonLayoutApacheProtobufCloud");
         var http = authorize(http(urlPush, protobufFormat(), apacheSender()));
@@ -156,7 +156,7 @@ public class GrafanaCloudTest {
     }
 
     @Test
-    @Category({CIOnlyTests.class})
+    @Tag("com.github.loki4j.testkit.categories.CIOnlyTests")
     public void testApacheJsonMaxBytesSend() throws Exception {
         var label = label("testApacheJsonMaxBytesSendCloud");
         var http = authorize(http(urlPush, jsonFormat(), apacheSender()));
@@ -173,8 +173,8 @@ public class GrafanaCloudTest {
     }
 
     @Test
-    @Category({CIOnlyTests.class})
-    @Ignore("Disabled due to unpredictable stream sharding on Grafana Cloud Loki side")
+    @Tag("com.github.loki4j.testkit.categories.CIOnlyTests")
+    @Disabled("Disabled due to unpredictable stream sharding on Grafana Cloud Loki side")
     public void testJavaProtobufMaxBytesSend() throws Exception {
         var label = label("testJavaProtobufMaxBytesSendCloud");
         var http = authorize(http(urlPush, protobufFormat(), javaSender()));
