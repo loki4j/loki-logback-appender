@@ -4,11 +4,10 @@ import static com.github.loki4j.logback.Generators.*;
 
 import java.util.Arrays;
 
-import com.github.loki4j.common.Batcher;
-import com.github.loki4j.common.ByteBufferFactory;
-import com.github.loki4j.common.LogRecord;
-import com.github.loki4j.common.LogRecordBatch;
-import com.github.loki4j.logback.AbstractLoki4jEncoder;
+import com.github.loki4j.client.batch.Batcher;
+import com.github.loki4j.client.batch.LogRecord;
+import com.github.loki4j.client.batch.LogRecordBatch;
+import com.github.loki4j.logback.Loki4jAppender;
 import com.github.loki4j.testkit.benchmark.Benchmarker;
 import com.github.loki4j.testkit.benchmark.Benchmarker.Benchmark;
 import com.github.loki4j.testkit.categories.PerformanceTests;
@@ -20,9 +19,9 @@ import ch.qos.logback.classic.LoggerContext;
 
 public class BatcherTest {
 
-    private static AbstractLoki4jEncoder initEnc(AbstractLoki4jEncoder e) {
-        e.setCapacity(4 * 1024 * 1024);
-        e.setBufferFactory(new ByteBufferFactory(false));
+    private static Loki4jAppender initEnc() {
+        var e = new Loki4jAppender();
+        //e.setStaticLabels(true);
         e.setContext(new LoggerContext());
         e.start();
         return e;
@@ -38,10 +37,10 @@ public class BatcherTest {
             this.runs = 100;
             this.parFactor = 1;
             this.generator = () -> {
-                var jsonEncSta = initEnc(jsonEncoder(true, "testLabel"));
+                var jsonEncSta = initEnc();
                 return Arrays
                     .stream(generateEvents(100_000, 10))
-                    .map(e -> jsonEncSta.eventToRecord(e))
+                    .map(e -> eventToRecord(e, jsonEncSta))
                     .iterator();
             };
             this.benchmarks = Arrays.asList(

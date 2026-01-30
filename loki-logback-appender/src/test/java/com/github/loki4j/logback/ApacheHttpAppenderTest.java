@@ -2,8 +2,9 @@ package com.github.loki4j.logback;
 
 import java.util.Random;
 
-import com.github.loki4j.common.HttpHeaders;
+import com.github.loki4j.client.http.HttpHeader;
 import com.github.loki4j.testkit.dummy.LokiHttpServerMock;
+import com.github.loki4j.testkit.dummy.StringPayload;
 
 import static com.github.loki4j.logback.Generators.*;
 import static com.github.loki4j.logback.Loki4jAppenderTest.*;
@@ -41,15 +42,32 @@ public class ApacheHttpAppenderTest {
     }
 
     @Test
-    public void testApacheHttpSend() {
-        withAppender(appender(3, 1000L, defaultToStringEncoder(), apacheHttpSender(url)), a -> {
+    public void testApacheHttpOffHeapSend() {
+        withAppender(appender(batch(3, 1000L), http(url, stringFormat(), apacheSender())), a -> {
             a.append(events[0]);
             a.append(events[1]);
             assertTrue("no batches before batchSize reached", mockLoki.lastBatch == null);
 
             a.append(events[2]);
             a.waitAllAppended();
-            assertEquals("http send", expected, new String(mockLoki.lastBatch));
+            assertEquals("http send", expected, StringPayload.parse(mockLoki.lastBatch));
+
+            return null;
+        });
+    }
+
+    @Test
+    public void testApacheHttpOnHeapSend() {
+        var appender = appender(batch(3, 1000L), http(url, stringFormat(), apacheSender()));
+        appender.getBatch().setUseDirectBuffers(false);
+        withAppender(appender, a -> {
+            a.append(events[0]);
+            a.append(events[1]);
+            assertTrue("no batches before batchSize reached", mockLoki.lastBatch == null);
+
+            a.append(events[2]);
+            a.waitAllAppended();
+            assertEquals("http send", expected, StringPayload.parse(mockLoki.lastBatch));
 
             return null;
         });
@@ -57,14 +75,14 @@ public class ApacheHttpAppenderTest {
 
     @Test
     public void testApacheHttpSendWithTenantHeader() {
-        var sender = apacheHttpSender(url);
-        sender.setTenantId("tenant1");
-        withAppender(appender(3, 1000L, defaultToStringEncoder(), sender), a -> {
+        var http = http(url, stringFormat(), apacheSender());
+        http.setTenantId("tenant1");
+        withAppender(appender(batch(3, 1000L), http), a -> {
             a.append(events);
             a.waitAllAppended();
-            assertEquals("http send", expected, new String(mockLoki.lastBatch));
+            assertEquals("http send", expected, StringPayload.parse(mockLoki.lastBatch));
             assertTrue(mockLoki.lastHeaders
-                .get(HttpHeaders.X_SCOPE_ORGID)
+                .get(HttpHeader.X_SCOPE_ORGID)
                 .contains("tenant1"));
             return null;
         });

@@ -1,5 +1,6 @@
 package com.github.loki4j.logback.integration;
 
+import static java.util.stream.Collectors.toSet;
 import static com.github.loki4j.logback.Generators.*;
 import static org.junit.Assert.*;
 
@@ -7,11 +8,13 @@ import java.io.IOException;
 import java.net.URI;
 import java.net.URLEncoder;
 import java.net.http.HttpClient;
+import java.net.http.HttpClient.Version;
 import java.net.http.HttpRequest;
 import java.net.http.HttpResponse;
 import java.time.Duration;
 import java.util.Arrays;
 import java.util.Base64;
+import java.util.Comparator;
 import java.util.List;
 import java.util.Map;
 import java.util.concurrent.atomic.AtomicReference;
@@ -21,15 +24,22 @@ import com.fasterxml.jackson.annotation.JsonIgnoreProperties;
 import com.fasterxml.jackson.core.JsonProcessingException;
 import com.fasterxml.jackson.databind.JsonMappingException;
 import com.fasterxml.jackson.databind.ObjectMapper;
-import com.github.loki4j.common.HttpHeaders;
-import com.github.loki4j.common.LogRecord;
-import com.github.loki4j.common.LogRecordBatch;
+import com.github.loki4j.client.batch.LogRecord;
+import com.github.loki4j.client.batch.LogRecordBatch;
+import com.github.loki4j.client.http.HttpHeader;
+import com.github.loki4j.client.pipeline.PipelineConfig;
+import com.github.loki4j.client.util.ByteBufferFactory;
 import com.github.loki4j.logback.Loki4jAppender;
-import com.github.loki4j.logback.AbstractLoki4jEncoder;
 
 import ch.qos.logback.classic.spi.ILoggingEvent;
 
 public class LokiTestingClient {
+
+    private static Comparator<LogRecord> byStream = (e1, e2) -> String.CASE_INSENSITIVE_ORDER.compare(
+        e1.stream.toString(), e2.stream.toString());
+    private static Comparator<LogRecord> byTime = (e1, e2) ->
+        Long.compare(e1.timestampMs, e2.timestampMs);
+    private static Comparator<LogRecord> lokiLogsSorting = byStream.thenComparing(byTime);
 
     private String urlQuery;
 
@@ -39,10 +49,11 @@ public class LokiTestingClient {
     private ObjectMapper json = new ObjectMapper();
 
     public LokiTestingClient(String urlBase) {
-        urlQuery = urlBase + "/query";
+        urlQuery = urlBase + "/query_range";
 
         client = HttpClient
             .newBuilder()
+            .version(Version.HTTP_1_1)
             .connectTimeout(Duration.ofSeconds(120))
             .build();
 
@@ -53,13 +64,13 @@ public class LokiTestingClient {
 
     public LokiTestingClient(String urlBase, String tenant){
         this(urlBase);
-        requestBuilder.setHeader(HttpHeaders.X_SCOPE_ORGID, tenant);
+        requestBuilder.setHeader(HttpHeader.X_SCOPE_ORGID, tenant);
     }
 
     public LokiTestingClient(String urlBase, String username, String password) {
         this(urlBase);
 
-        requestBuilder.setHeader(HttpHeaders.AUTHORIZATION, "Basic " +
+        requestBuilder.setHeader(HttpHeader.AUTHORIZATION, "Basic " +
             Base64
                 .getEncoder()
                 .encodeToString((username + ":" + password).getBytes())
@@ -71,11 +82,10 @@ public class LokiTestingClient {
     }
 
     public String queryRecords(String testLabel, int limit, String time) {
-
         try {
-            var query = URLEncoder.encode("{test=\"" + testLabel + "\"}", "utf-8");
+            var query = URLEncoder.encode("{test=\"" + testLabel + "\"} | drop detected_level", "utf-8");
             var url = URI.create(String.format(
-                "%s?query=%s&limit=%s&time=%s&direction=forward", urlQuery, query, limit, time));
+                "%s?query=%s&limit=%s&end=%s&direction=forward", urlQuery, query, limit, time));
             //System.err.println(url);
             var req = requestBuilder.copy()
                 .uri(url)
@@ -102,16 +112,17 @@ public class LokiTestingClient {
     public void testHttpSend(
             String lbl,
             ILoggingEvent[] events,
-            Loki4jAppender actualAppender,
-            AbstractLoki4jEncoder expectedEncoder) throws Exception {
-        testHttpSend(lbl, events, actualAppender, expectedEncoder, events.length, 10L);
+            Loki4jAppender actualAppender) throws Exception {
+        var chunkSize = events.length;
+        var chunkDelayMs = 10L;
+        testHttpSend(lbl, events, actualAppender, null, chunkSize, chunkDelayMs);
     }
 
     public void testHttpSend(
             String lbl,
             ILoggingEvent[] events,
             Loki4jAppender actualAppender,
-            AbstractLoki4jEncoder expectedEncoder,
+            Loki4jAppender expectedAppender,    // if null - the default json appender is used
             int chunkSize,
             long chunkDelayMs) throws Exception {
         var records = new LogRecord[events.length];
@@ -128,22 +139,33 @@ public class LokiTestingClient {
             a.waitAllAppended();
             return null;
         });
-        withEncoder(expectedEncoder, encoder -> {
+        // forming expected output
+        if (expectedAppender == null)
+            expectedAppender = appender(lbl, batch(chunkSize, chunkDelayMs), http(null));
+        withAppender(expectedAppender, encoder -> {
             for (int i = 0; i < events.length; i++) {
-                records[i] =  encoder.eventToRecord(events[i]);
+                final var idx = i;
+                records[i] = encoder.eventToLogRecord(events[idx]);
             }
-            reqStr.set(new String(encoder.encode(new LogRecordBatch(records))));
+            var batch = new LogRecordBatch(records);
+            batch.sort(lokiLogsSorting);
+            var writer = PipelineConfig.json.factory.apply(4 * 1024 * 1024, new ByteBufferFactory(false));
+            writer.serializeBatch(batch);
+            reqStr.set(new String(writer.toByteArray()));
+            return null;
         });
 
         var req = parseRequest(reqStr.get());
         var lastIdx = records.length - 1;
-        var time = String.format("%s%06d", records[lastIdx].timestampMs + 100, records[lastIdx].nanos);
+        var time = String.format("%s%06d", records[lastIdx].timestampMs + 100, 0);
         var resp = parseResponse(queryRecords(lbl, events.length, time));
         //System.out.println(req + "\n\n");
         //System.out.println(resp);
         assertEquals(lbl + " status", "success", resp.status);
         assertEquals(lbl + " result type", "streams", resp.data.resultType);
-        assertEquals(lbl + " stream count", req.streams.size(), resp.data.result.size());
+        assertEquals(lbl + " stream",
+            req.streams.stream().map(s -> s.stream).collect(toSet()),
+            resp.data.result.stream().map(s -> s.stream).collect(toSet()));
         assertEquals(lbl + " event count",
             req.streams.stream().mapToInt(s -> s.values.size()).sum(),
             resp.data.result.stream().mapToInt(s -> s.values.size()).sum());

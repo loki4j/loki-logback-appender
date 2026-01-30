@@ -1,229 +1,142 @@
 ---
 id: configuration
-title: Loki4j Configuration
+title: Loki4j configuration
 sidebar_label: Configuration
 ---
 
 ## Reference
 
-Most Loki4j appender settings are optional. These few that are required are marked explicitly.
+This page describes an XML configuration of Loki4j appender.
+Most of the settings listed below have reasonable defaults and, thus, are optional.
+These few that are required are marked explicitly.
 
 ### General settings
 
-Setting|Default|Description
--------|-------|-----------
-batchSize|1000|Max number of events to put into a single batch and send to Loki
-batchTimeoutMs|60000|Max time in milliseconds to wait before sending a batch to Loki
-sendQueueSize|50000|Max number of events to keep in the send queue. When the queue is full, incoming log events are dropped
-drainOnStop|true|Wait util all remaining events are sent before shutdown the appender
-metricsEnabled|false|If true, the appender will report its metrics using Micrometer
-verbose|false|If true, the appender will print its own debug logs to stderr
+|Setting|Default|Description|
+|-------|-------|-----------|
+|labels|agent=loki4j<br/>app=${CONTEXT_NAME}<br/>host=${HOSTNAME}|Labels for a log record. A list of key-value pairs separated by a new line. Each value should be a valid Logback or Loki4j pattern|
+|structuredMetadata|level=%level<br/>thread=%thread<br/>logger=%logger<br/>\*=%%mdc<br/>\*=%%kvp|Structured metadata for a log record. A list of key-value pairs separated by a new line. Each value should be a valid Logback or Loki4j pattern. Use value "off" to disable structured metadata generation|
+|readMarkers|false|If true, Loki4j scans each log record for the attached SLF4J marker to add its values to the record's labels or structured metadata|
+|metricsEnabled|false|If true, the appender will report its metrics using Micrometer|
+|verbose|false|If true, the appender will print its own debug logs to stderr|
+
+#### Plain text message layout
+
+By default Loki4j uses plain text log message layout backed by Logback's `PatternLayout` class.
+It supports the following settings:
+
+|Setting|Default|Description|
+|-------|-------|-----------|
+|message.pattern|\[%thread\] %logger{20} - %msg%n|Logback pattern to use for log record's message|
+
+#### JSON message layout
+
+This layout converts log messages to JSON format.
+Please check the [instruction](jsonlayout.md) on how to enable and use it.
+This layout has the following settings:
+
+|Setting|Default|Description|
+|-------|-------|-----------|
+|message.loggerName.enabled|true|Enable loggerName provider|
+|message.loggerName.fieldName|logger_name|A JSON field name to use for loggerName|
+|message.loggerName.targetLength|-1|The desired target length of logger name: `-1` to disable abbreviation, `0` to print class name only, >`0` to abbreviate to the target length|
+|message.logLevel.enabled|true|Enable logLevel provider|
+|message.logLevel.fieldName|level|A JSON field name to use for logLevel|
+|message.kvp.enabled|true|Enable keyValuePair provider|
+|message.kvp.prefix|kvp_|A prefix added to each JSON field name written by this provider|
+|message.kvp.noPrefix|false|Whether to omit prefix for this provider|
+|message.kvp.fieldSerializer||An implementation of field JSON serializer. By default, `writeObjectField()` is used|
+|message.kvp.include||A set of keys to include in JSON payload. If not specified, all keys are included|
+|message.kvp.exclude||A set of keys to exclude from JSON payload. The exclude list has precedence over the include list. If not specified, all keys are included|
+|message.mdc.enabled|true|Enable MDC provider|
+|message.mdc.prefix|mdc_|A prefix added to each JSON field name written by this provider|
+|message.mdc.noPrefix|false|Whether to omit prefix for this provider|
+|message.mdc.include||A set of MDC keys to include in JSON payload. If not specified, all keys are included|
+|message.mdc.exclude||A set of MDC keys to exclude from JSON payload. The exclude list has precedence over the include list. If not specified, all keys are included|
+|message.message.enabled|true|Enable message provider|
+|message.message.fieldName|message|A JSON field name to use for message|
+|message.stackTrace.enabled|true|Enable stackTrace provider|
+|message.stackTrace.fieldName|stack_trace|A JSON field name to use for stackTrace|
+|message.stackTrace.throwableConverter||An optional custom stack trace formatter|
+|message.threadName.enabled|true|Enable threadName provider|
+|message.threadName.fieldName|thread_name|A JSON field name to use for this threadName|
+|message.timestamp.enabled|true|Enable timestamp provider|
+|message.timestamp.fieldName|timestamp_ms|A JSON field name to use for timestamp|
+|message.customProvider||An optional list of custom JSON providers|
 
 ### HTTP settings
 
-Setting|Default|Description
--------|-------|-----------
-http.url||**Required**. Loki endpoint to be used for sending batches
-http.connectionTimeoutMs|30000|Time in milliseconds to wait for HTTP connection to Loki to be established before reporting an error
-http.requestTimeoutMs|5000|Time in milliseconds to wait for HTTP request to Loki to be responded before reporting an error
-http.auth.username||Username to use for basic auth
-http.auth.password||Password to use for basic auth
-http.tenantId||Tenant identifier. It is required only for sending logs directly to Loki operating in multi-tenant mode. Otherwise 
-this setting has no effect
+Loki4j uses standard Java HTTP client by default.
+If you want to switch to Apache HTTP client, please see [this](apacheclient.md) page.
+Below are the HTTP settings same for both Java and Apache clients:
 
-### Format settings
+|Setting|Default|Description|
+|-------|-------|-----------|
+|http.url||**Required**. Loki endpoint to be used for sending batches|
+|http.auth.username||Username to use for basic auth|
+|http.auth.password||Password to use for basic auth|
+|http.tenantId||Tenant identifier. It is required only for sending logs directly to Loki operating in multi-tenant mode. Otherwise, this setting has no effect|
+|http.connectionTimeoutMs|30000|Time in milliseconds to wait for HTTP connection to Loki to be established before reporting an error|
+|http.requestTimeoutMs|5000|Time in milliseconds to wait for HTTP request to Loki to be responded to before reporting an error|
+|http.maxRetries|2|Max number of attempts to send a batch to Loki before it will be dropped. A failed batch send could be retried in case of `ConnectException`, or receiving statuses `429`, `503` from Loki. All other exceptions and 4xx-5xx statuses do not cause a retry in order to avoid duplicates|
+|http.minRetryBackoffMs|500|Initial backoff delay before the next attempt to re-send a failed batch. Batches are retried with an exponential backoff (e.g. 0.5s, 1s, 2s, 4s, etc.) and jitter|
+|http.maxRetryBackoffMs|60000|Maximum backoff delay before the next attempt to re-send a failed batch|
+|http.maxRetryJitterMs|500|Upper bound for a jitter added to the retry delays|
+|http.dropRateLimitedBatches|false|If true, batches that Loki responds to with a `429` status code (TooManyRequests) will be dropped rather than retried|
+|http.useProtobufApi|false|If true, Loki4j uses Protobuf Loki API instead of JSON|
+|http.sender|JavaHttpSender|An implementation of HTTP sender to use|
 
-Setting|Default|Description
--------|-------|-----------
-format.label.pattern||**Required**. Logback pattern to use for log record's label
-format.label.pairSeparator|,|Character to use as a separator between labels
-format.label.keyValueSeparator|=|Character to use as a separator between label's name and its value
-format.label.nopex|true|If true, exception info is not added to labels. If false, you should take care of proper formatting
-format.message.pattern||**Required**. Logback pattern to use for log record's message
-format.staticLabels|false|If you use only one label for all log records, you can set this flag to true and save some CPU time on grouping records by label
-format.sortByTime|false|If true, log records in batch are sorted by timestamp. If false, records will be sent to Loki in arrival order. Enable this if you see 'entry out of order' error from Loki
+### Batch settings
 
-### Using Apache HttpClient
+Before sending log records to Loki, the appender groups them into batches.
+This section contains settings related to this process.
 
-By default Loki4j uses `JavaHttpSender`, backed by `java.net.http.HttpClient` available in Java 11 and later.
-This sender does not require any extra dependencies.
+|Setting|Default|Description|
+|-------|-------|-----------|
+|batch.maxItems|1000|Max number of events to put into a single batch before sending it to Loki|
+|batch.maxBytes|4194304|Max number of bytes a single batch can contain (as counted by Loki). This value should not be greater than `server.grpc_server_max_recv_msg_size` in your Loki config|
+|batch.timeoutMs|60000|Max time in milliseconds to keep a batch before sending it to Loki, even if max items/bytes limits for this batch are not reached|
+|batch.staticLabels|false|If true, labels will be calculated only once for the first log record and then used for all other log records without re-calculation. Otherwise, they will be calculated for each record individually|
+|batch.drainOnStop|true|If true, the appender will try to send all the remaining events on shutdown, so the proper shutdown procedure might take longer. Otherwise, the appender will drop the unsent events|
+|batch.sendQueueMaxBytes|41943040|Max number of bytes to keep in the send queue. When the queue is full, incoming log events are dropped|
+|batch.internalQueuesCheckTimeoutMs|25|A timeout for Loki4j threads to sleep if encode or send queues are empty. Decreasing this value means lower latency at the cost of higher CPU usage|
+|batch.useDirectBuffers|true|Use off-heap memory for storing intermediate data|
 
-However, you may want to switch to `ApacheHttpSender`, backed by `org.apache.http.client.HttpClient` available for Java 8+ projects.
-In this case you need to ensure you have added the required dependencies to your project:
 
-<!--DOCUSAURUS_CODE_TABS-->
-<!--Maven-->
+## Example
 
-```xml
-<dependency>
-    <groupId>org.apache.httpcomponents</groupId>
-    <artifactId>httpclient</artifactId>
-    <version>4.5.13</version>
-</dependency>
-```
-
-<!--Gradle-->
-
-```groovy
-compile 'org.apache.httpcomponents:httpclient:4.5.13'
-```
-<!--END_DOCUSAURUS_CODE_TABS-->
-
-Then you can explicitly specify `ApacheHttpSender` by setting `class` attribute for `http` section:
+Below is the example of a heavily customized Loki4j configuration:
 
 ```xml
 <appender name="LOKI" class="com.github.loki4j.logback.Loki4jAppender">
-    <http class="com.github.loki4j.logback.ApacheHttpSender">
-        ...
+    <labels>
+        app = my-app
+        host = ${HOSTNAME}
+    </labels>
+    <structuredMetadata>off</structuredMetadata>
+    <message>
+        <pattern>%-5level [%thread] %logger{20} - %msg%n</pattern>
+    </message>
+    <http>
+        <url>http://localhost:3100/loki/api/v1/push</url>
+        <useProtobufApi>true</useProtobufApi>
+        <sender class="com.github.loki4j.logback.ApacheHttpSender" />
+        <requestTimeoutMs>10000</requestTimeoutMs>
     </http>
-</appender>
-```
-
-`ApacheHttpSender` shares most of the settings with `JavaHttpSender`.
-However, there are some specific settings available only for `ApacheHttpSender`:
-
-Setting|Default|Description
--------|-------|-----------
-http.maxConnections|1|Maximum number of HTTP connections to keep in the pool
-http.connectionKeepAliveMs|120000|A duration of time in milliseconds which the connection can be safely kept idle for later reuse. This value should not be greater than `server.http-idle-timeout` in your Loki config
-
-### Switching to Protobuf format
-
-By default Loki4j uses `JsonEncoder` that converts log batches into JSON format specified by Loki API.
-This encoder does not use any extra libs for JSON generation.
-
-If you want to use `ProtobufEncoder`, you need to add Protobuf-related dependencies to your project:
-
-<!--DOCUSAURUS_CODE_TABS-->
-<!--Maven-->
-
-```xml
-<dependency>
-    <groupId>com.google.protobuf</groupId>
-    <artifactId>protobuf-java</artifactId>
-    <version>3.15.1</version>
-</dependency>
-<dependency>
-    <groupId>org.xerial.snappy</groupId>
-    <artifactId>snappy-java</artifactId>
-    <version>1.1.8.4</version>
-</dependency>
-```
-
-<!--Gradle-->
-
-```groovy
-compile 'com.google.protobuf:protobuf-java:3.15.1'
-compile 'org.xerial.snappy:snappy-java:1.1.8.4'
-```
-<!--END_DOCUSAURUS_CODE_TABS-->
-
-Then you can explicitly specify `ProtobufEncoder` by setting `class` attribute for `format` section:
-
-```xml
-<appender name="LOKI" class="com.github.loki4j.logback.Loki4jAppender">
-    <format class="com.github.loki4j.logback.ProtobufEncoder">
-        ...
-    </format>
-</appender>
-```
-
-## Examples
-
-### Overriding the default settings
-
-In this example we would like to change max batch size to 100 records, batch timeout to 10s, label key-value separator to `:`,
-and sort log records by time before sending them to Loki.
-Also we would like to use [Apache HTTP sender](#using-apache-httpclient) with a pool of 10 connections and [Protobuf API](#switching-to-protobuf-format).
-Finally, we want to see Loki4j debug output.
-
-```xml
-<appender name="LOKI" class="com.github.loki4j.logback.Loki4jAppender">
-    <batchSize>100</batchSize>
-    <batchTimeoutMs>10000</batchTimeoutMs>
+    <batch>
+        <maxItems>100</maxItems>
+        <timeoutMs>10000</timeoutMs>
+    </batch>
     <verbose>true</verbose>
-    <http class="com.github.loki4j.logback.ApacheHttpSender">
-        <url>http://localhost:3100/loki/api/v1/push</url>
-        <maxConnections>10</maxConnections>
-    </http>
-    <format class="com.github.loki4j.logback.ProtobufEncoder">
-        <label>
-            <pattern>app:my-app,host:${HOSTNAME}</pattern>
-            <keyValueSeparator>:</keyValueSeparator>
-        </label>
-        <message>
-            <pattern>l=%level c=%logger{20} t=%thread | %msg %ex</pattern>
-        </message>
-        <sortByTime>true</sortByTime>
-    </format>
 </appender>
 ```
 
-### Minimalistic zero-dependency configuration
+In this example we:
 
-In Java 11 and later we can use standard HTTP client and Loki JSON API.
-This setup is supported natively by Loki4j and does not require any extra dependencies.
-
-```xml
-<appender name="LOKI" class="com.github.loki4j.logback.Loki4jAppender">
-    <http>
-        <url>http://localhost:3100/loki/api/v1/push</url>
-    </http>
-    <format>
-        <label>
-            <pattern>app=my-app,host=${HOSTNAME},level=%level</pattern>
-        </label>
-        <message>
-            <pattern>l=%level h=${HOSTNAME} c=%logger{20} t=%thread | %msg %ex</pattern>
-        </message>
-    </format>
-</appender>
-```
-
-### Minimalistic configuration compatible with Java 8
-
-In this example we would like to define only required settings.
-We would have to use Apache HTTP sender because the default Java HTTP sender works only for Java 11+.
-Check the corresponding [configuration section](#using-apache-httpclient) for details.
-
-```xml
-<appender name="LOKI" class="com.github.loki4j.logback.Loki4jAppender">
-    <http class="com.github.loki4j.logback.ApacheHttpSender">
-        <url>http://localhost:3100/loki/api/v1/push</url>
-    </http>
-    <format>
-        <label>
-            <pattern>app=my-app,host=${HOSTNAME},level=%level</pattern>
-        </label>
-        <message>
-            <pattern>l=%level h=${HOSTNAME} c=%logger{20} t=%thread | %msg %ex</pattern>
-        </message>
-    </format>
-</appender>
-```
-
-### Sending logs to Grafana Cloud
-
-In this example we will see how to send log records to hosted Loki service (e.g. Grafana Cloud).
-We will need to specify the credentials and increase the request timeout to 15s.
-
-```xml
-<appender name="LOKI" class="com.github.loki4j.logback.Loki4jAppender">
-    <http>
-        <url>https://logs-prod-us-central1.grafana.net/loki/api/v1/push</url>
-        <auth>
-            <username>example_username</username>
-            <password>example_api_token</password>
-        </auth>
-        <requestTimeoutMs>15000</requestTimeoutMs>
-    </http>
-    <format>
-        <label>
-            <pattern>app=my-app</pattern>
-        </label>
-        <message>
-            <pattern>l=%level c=%logger{20} t=%thread | %msg %ex</pattern>
-        </message>
-    </format>
-</appender>
-```
+- explicitly pass application name as `app` label,
+- disable structured metadata,
+- change the log messages format so that along with the log line it also contains log level, thread, and source class name,
+- use [Apache HTTP sender](apacheclient) with request timeout 10s,
+- use [Protobuf API](protobuf) instead of JSON,
+- set max batch size to 100 records and batch timeout to 10s,
+- enable Loki4j debug output.

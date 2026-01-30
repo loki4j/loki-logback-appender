@@ -18,12 +18,12 @@ public class BatchSizeTest {
     private static LokiTestingClient client;
 
     @BeforeClass
-    public static void startMockLoki() {
+    public static void startLokiClient() {
         client = new LokiTestingClient(urlBase);
     }
 
     @AfterClass
-    public static void stopMockLoki() {
+    public static void stopLokiClient() {
         client.close();
     }
 
@@ -31,13 +31,15 @@ public class BatchSizeTest {
     @Category({IntegrationTests.class})
     public void testApacheJsonMaxBytesSend() throws Exception {
         var label = "testApacheJsonMaxBytesSend";
-        var encoder = jsonEncoder(false, label);
-        var sender = apacheHttpSender(urlPush);
-        sender.setRequestTimeoutMs(30_000L);
-        var appender = appender(5_000, 1000, encoder, sender);
+
+        var http = http(urlPush, jsonFormat(), apacheSender());
+        http.setRequestTimeoutMs(30_000L);
+        var batch = batch(5_000, 1000);
+        batch.setSendQueueMaxBytes(100 * 1024 * 1024);
+        var appender = appender(label, batch, http);
 
         var events = generateEvents(5_000, 2000);
-        client.testHttpSend(label, events, appender, jsonEncoder(false, label));
+        client.testHttpSend(label, events, appender);
 
         assertTrue(true);
     }
@@ -46,13 +48,15 @@ public class BatchSizeTest {
     @Category({IntegrationTests.class})
     public void testJavaProtobufMaxBytesSend() throws Exception {
         var label = "testJavaProtobufMaxBytesSend";
-        var encoder = protobufEncoder(false, label);
-        var sender = javaHttpSender(urlPush);
-        sender.setRequestTimeoutMs(30_000L);
-        var appender = appender(5_000, 1000, encoder, sender);
+
+        var http = http(urlPush, protobufFormat(), javaSender());
+        http.setRequestTimeoutMs(30_000L);
+        var batch = batch(5_000, 1000);
+        batch.setSendQueueMaxBytes(100 * 1024 * 1024);
+        var appender = appender(label, batch, http);
 
         var events = generateEvents(5_000, 2000);
-        client.testHttpSend(label, events, appender, jsonEncoder(false, label));
+        client.testHttpSend(label, events, appender);
 
         assertTrue(true);
     }

@@ -1,5 +1,6 @@
 package com.github.loki4j.testkit.dummy;
 
+import com.github.loki4j.client.http.HttpStatus;
 import com.sun.net.httpserver.HttpServer;
 
 import java.io.ByteArrayOutputStream;
@@ -25,7 +26,7 @@ public class LokiHttpServerMock {
                 lastBatch = getBytesFromInputStream(is); //is.readAllBytes();
                 batches.add(lastBatch);
             }
-            httpExchange.sendResponseHeaders(204, -1);
+            httpExchange.sendResponseHeaders(HttpStatus.NO_CONTENT, -1);
         });
     }
 

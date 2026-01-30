@@ -60,7 +60,7 @@ public class Benchmarker {
             totalStat.effectiveDurationNs = effectiveDuration;
             runStats.add(totalStat);
 
-            b.finalize();
+            b.finalise();
         }
 
         return runStats;
@@ -114,7 +114,7 @@ public class Benchmarker {
 
         private T recipient;
 
-        public void finalize() {
+        public void finalise() {
 
         }
 

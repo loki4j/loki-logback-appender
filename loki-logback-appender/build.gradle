@@ -8,8 +8,6 @@ plugins {
 group = "com.github.loki4j"
 version = "${file("VERSION").text.trim()}"
 
-evaluationDependsOn(":testkit")
-
 repositories {
      mavenCentral()
 }
@@ -17,31 +15,20 @@ repositories {
 sourceSets {
     main {
         java {
-            srcDirs += [files(project(":common").sourceSets.main.java.srcDirs)]
-        }
-    }
-    test {
-        java {
-            srcDirs += [files(project(":testkit").sourceSets.main.java.srcDirs)]
+            srcDirs += [files(project(":loki-client").sourceSets.main.java.srcDirs)]
         }
     }
 }
 
 dependencies {
-    api 'ch.qos.logback:logback-classic:1.2.3'
+    api libs.logback
+    compileOnly libs.bundles.pluggable
 
-    compileOnly 'com.google.protobuf:protobuf-java:3.15.1'
-    compileOnly 'org.xerial.snappy:snappy-java:1.1.8.4'
-    compileOnly 'org.apache.httpcomponents:httpclient:4.5.13'
-    compileOnly 'org.apache.httpcomponents.client5:httpclient5:5.0.3'
-    compileOnly 'io.micrometer:micrometer-core:1.6.4'
-
-    testImplementation 'junit:junit:4.13.2'
-    testImplementation 'com.google.protobuf:protobuf-java:3.15.1'
-    testImplementation 'org.xerial.snappy:snappy-java:1.1.8.4'
-    testImplementation 'org.apache.httpcomponents:httpclient:4.5.13'
-    testImplementation 'com.fasterxml.jackson.core:jackson-databind:2.10.0'
-    testImplementation 'io.micrometer:micrometer-core:1.6.4'
+    testImplementation project(":testkit")
+    testImplementation libs.bundles.pluggable
+    testImplementation libs.junit
+    testImplementation libs.jackson
+    testImplementation libs.logstash
 }
 
 compileJava {
@@ -67,17 +54,13 @@ java {
     withSourcesJar()
 }
 
-jar {
-    exclude '*.proto'
-}
-
 jacoco {
-    toolVersion = "0.8.6"
+    toolVersion = libs.versions.jacoco.get()
 }
 
 jacocoTestReport {
     reports {
-        xml.enabled = true
+        xml.required = true
     }
 }
 
@@ -105,56 +88,18 @@ task ciOnlyTests(type: Test) {
     useJUnit {
         includeCategories 'com.github.loki4j.testkit.categories.CIOnlyTests'
     }
-    //testLogging.exceptionFormat = "full"
+    testLogging.exceptionFormat = "full"
     testLogging.showStandardStreams = true
 }
+
+apply from: '../gradle/publishing.gradle'
 
 publishing {
     publications {
         mavenJava(MavenPublication) {
             artifactId = 'loki-logback-appender'
+            pom.name = 'Logback Appender for Loki'
             from components.java
-            pom {
-                name = 'Logback Appender for Loki'
-                description = 'Loki4j aims to be the fastest and the most lightweight implementation of Logback Appender for Loki'
-                url = 'https://github.com/loki4j/loki-logback-appender'
-                licenses {
-                    license {
-                        name = 'BSD Software License, 2-clause version'
-                        url = 'https://github.com/loki4j/loki-logback-appender/blob/master/LICENSE.md'
-                    }
-                }
-                developers {
-                    developer {
-                        id = 'nehaev'
-                        name = 'Anton Nehaev'
-                        email = "nehaev@gmail.com"
-                    }
-                }
-                scm {
-                    connection = 'scm:git:git@github.com/loki4j/loki-logback-appender.git'
-                    developerConnection = 'scm:git:git@github.com/loki4j/loki-logback-appender.git'
-                    url = 'https://github.com/loki4j/loki-logback-appender'
-                }
-            }
-        }
-    }
-    repositories {
-        maven {
-            def releasesRepoUrl = "https://oss.sonatype.org/service/local/staging/deploy/maven2"
-            def snapshotsRepoUrl =
-                rootProject.hasProperty('pubToOSSR')
-                    ? "https://oss.sonatype.org/content/repositories/snapshots"
-                    : "$buildDir/repos/snapshots"
-            url = version.endsWith('SNAPSHOT') ? snapshotsRepoUrl : releasesRepoUrl
-            if (rootProject.hasProperty('pubToOSSR')) {
-                credentials {
-                    if (rootProject.hasProperty('ossrhUsername') && rootProject.hasProperty('ossrhPassword')) {
-                        username = rootProject.ossrhUsername
-                        password = rootProject.ossrhPassword
-                    }
-                }
-            }
         }
     }
 }
@@ -163,14 +108,13 @@ signing {
     sign publishing.publications.mavenJava
 }
 
-apply from: '../gradle/java8.gradle'
-
 tasks.withType(GenerateModuleMetadata) {
     enabled = false
 }
 
 tasks.withType(JavaCompile) {
     options.encoding = "UTF-8"
+    options.deprecation = true
 }
 
 tasks.withType(Test) {

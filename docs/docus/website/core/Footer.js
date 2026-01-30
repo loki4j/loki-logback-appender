@@ -48,22 +48,13 @@ class Footer extends React.Component {
               data-show-count="true"
               data-count-aria-label="# stargazers on GitHub"
               aria-label="Star this project on GitHub">
-              Loki4j GitHub
+              GitHub
             </a>
-            {this.props.config.twitterUsername && (
-              <div className="social">
-                <a
-                  href={`https://twitter.com/${this.props.config.twitterUsername}`}
-                  className="twitter-follow-button">
-                  Follow @{this.props.config.twitterUsername}
-                </a>
-              </div>
-            )}
             <a
-              href="https://stackoverflow.com/questions/tagged/loki4j"
+              href="https://www.linkedin.com/in/nekhaev/"
               target="_blank"
               rel="noreferrer noopener">
-              Stack Overflow
+              LinkedIn
             </a>
           </div>
           <div>

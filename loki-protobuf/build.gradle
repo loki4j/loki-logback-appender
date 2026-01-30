@@ -1,0 +1,87 @@
+plugins {
+    id 'java-library'
+    id 'maven-publish'
+    id 'signing'
+    id "com.google.protobuf" version "0.9.5"
+}
+
+def pbVersion = rootProject.hasProperty('pbVersion')
+    ? rootProject.pbVersion
+    : libs.versions.protobuf.get()
+
+group = "com.github.loki4j"
+version = "${file("VERSION").text.trim().replace('#.#.#', pbVersion)}"
+
+repositories {
+     mavenCentral()
+}
+
+sourceSets {
+    main {
+        java {
+            srcDirs += ["$buildDir/generated/source/proto/main/java"]
+        }
+    }
+}
+
+dependencies {
+    api "com.google.protobuf:protobuf-java:${pbVersion}"
+    api libs.snappy
+
+    testImplementation libs.junit
+    testImplementation libs.bundles.pluggable
+}
+
+compileJava {
+    sourceCompatibility = 8
+    targetCompatibility = 8
+}
+
+protobuf {
+  protoc {
+    artifact = "com.google.protobuf:protoc:${pbVersion}"
+  }
+}
+
+java {
+    withJavadocJar()
+    withSourcesJar()
+}
+
+sourcesJar {
+    dependsOn(generateProto)
+    duplicatesStrategy ='WARN'
+}
+
+extractIncludeTestProto {
+    mustRunAfter(processResources)
+}
+
+tasks.withType(JavaCompile) {
+    options.encoding = "UTF-8"
+    dependsOn(generateProto)
+}
+
+tasks.withType(Test) {
+    systemProperty "file.encoding", "UTF-8"
+}
+
+tasks.withType(Javadoc) {
+    dependsOn(generateProto)
+}
+
+apply from: '../gradle/publishing.gradle'
+
+publishing {
+    publications {
+        mavenJava(MavenPublication) {
+            artifactId = 'loki-protobuf'
+            pom.name = 'Compiled Protobuf files for Loki4j'
+            from components.java
+        }
+    }
+}
+
+signing {
+    sign publishing.publications.mavenJava
+}

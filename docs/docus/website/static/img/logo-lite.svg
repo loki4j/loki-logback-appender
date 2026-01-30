@@ -1,71 +1,29 @@
 <?xml version="1.0" encoding="UTF-8" standalone="no"?>
 <svg
-   xmlns:dc="http://purl.org/dc/elements/1.1/"
-   xmlns:cc="http://creativecommons.org/ns#"
-   xmlns:rdf="http://www.w3.org/1999/02/22-rdf-syntax-ns#"
    xmlns:svg="http://www.w3.org/2000/svg"
    xmlns="http://www.w3.org/2000/svg"
-   xmlns:sodipodi="http://sodipodi.sourceforge.net/DTD/sodipodi-0.dtd"
-   xmlns:inkscape="http://www.inkscape.org/namespaces/inkscape"
    id="svg8"
    version="1.1"
-   viewBox="0 0 196.63914 245.26624"
+   viewBox="-19.31355 0 225.95269 245.26624"
    height="245.26624mm"
-   width="196.63914mm"
-   sodipodi:docname="logo-lite.svg"
-   inkscape:version="0.92.3 (2405546, 2018-03-11)">
-  <sodipodi:namedview
-     pagecolor="#ffffff"
-     bordercolor="#666666"
-     borderopacity="1"
-     objecttolerance="10"
-     gridtolerance="10"
-     guidetolerance="10"
-     inkscape:pageopacity="0"
-     inkscape:pageshadow="2"
-     inkscape:window-width="958"
-     inkscape:window-height="1030"
-     id="namedview8"
-     showgrid="false"
-     inkscape:zoom="0.25458729"
-     inkscape:cx="379.45739"
-     inkscape:cy="463.49525"
-     inkscape:window-x="2640"
-     inkscape:window-y="0"
-     inkscape:window-maximized="0"
-     inkscape:current-layer="svg8" />
-  <defs
-     id="defs2" />
-  <metadata
-     id="metadata5">
-    <rdf:RDF>
-      <cc:Work
-         rdf:about="">
-        <dc:format>image/svg+xml</dc:format>
-        <dc:type
-           rdf:resource="http://purl.org/dc/dcmitype/StillImage" />
-        <dc:title />
-      </cc:Work>
-    </rdf:RDF>
-  </metadata>
+   width="245.26624mm">
   <g
      transform="translate(-7.3226539,-14.38468)"
      id="layer1">
     <g
        aria-label="l4j"
-       style="font-style:normal;font-weight:normal;font-size:63.60638809px;line-height:1.25;font-family:sans-serif;letter-spacing:0px;word-spacing:0px;fill:#000000;fill-opacity:1;stroke:none;stroke-width:0.47704786"
        id="text3721">
       <path
          d="M 42.43338,214.36316 Q 23.605889,213.85431 15.464272,205.20384 7.3226539,196.29895 7.3226539,177.21703 V 18.201063 L 29.203251,14.38468 v 163.3412 q 0,8.9049 3.561958,12.97571 3.561958,3.81638 12.466852,5.34293 z"
-         style="font-style:normal;font-variant:normal;font-weight:normal;font-stretch:normal;font-size:254.42555237px;font-family:'Ubuntu Condensed';-inkscape-font-specification:'Ubuntu Condensed, ';fill:#800000;stroke-width:0.47704786"
+         style="fill:#800000;stroke-width:0.47704786"
          id="path10" />
       <path
          d="m 60.290872,152.79218 q 4.57966,-15.77438 11.703575,-33.32975 7.123916,-17.55536 14.756682,-33.838595 7.632767,-16.283236 14.502261,-29.513364 7.12391,-13.230129 11.44915,-20.60847 h 22.38944 V 150.75678 h 17.30094 v 18.06421 h -17.30094 v 42.99792 H 114.99237 V 168.82099 H 60.290872 Z m 54.701498,-2.0354 V 64.760939 q -3.81639,7.887193 -8.9049,18.064215 -4.83408,10.177022 -9.922595,21.626176 -4.834086,11.44915 -9.413746,23.40715 -4.57966,11.70357 -7.887192,22.8983 z"
-         style="font-style:normal;font-variant:normal;font-weight:normal;font-stretch:normal;font-size:254.42555237px;font-family:'Ubuntu Condensed';-inkscape-font-specification:'Ubuntu Condensed, ';fill:#800000;stroke-width:0.47704786"
+         style="fill:#800000;stroke-width:0.47704786"
          id="path12" />
       <path
          d="m 200.65427,218.94282 q 0,21.8806 -9.66817,31.29435 -9.66817,9.41374 -25.69698,9.41374 -8.39604,0 -15.01111,-2.54425 l 3.05311,-18.57307 q 2.28983,0.50885 4.57966,0.76328 2.28983,0.50885 5.08851,0.50885 3.56196,0 6.36064,-1.0177 3.05311,-0.76328 5.08851,-3.30753 2.0354,-2.54426 3.05311,-6.86949 1.27212,-4.32524 1.27212,-10.9403 V 78.245494 h 21.8806 z M 189.71397,54.583917 q -5.85178,0 -10.17702,-3.816383 -4.07081,-4.070809 -4.07081,-10.685873 0,-6.615065 4.07081,-10.431448 4.32524,-4.070809 10.17702,-4.070809 5.85179,0 9.9226,4.070809 4.32523,3.816383 4.32523,10.431448 0,6.615064 -4.32523,10.685873 -4.07081,3.816383 -9.9226,3.816383 z"
-         style="font-style:normal;font-variant:normal;font-weight:normal;font-stretch:normal;font-size:254.42555237px;font-family:'Ubuntu Condensed';-inkscape-font-specification:'Ubuntu Condensed, ';fill:#800000;stroke-width:0.47704786"
+         style="fill:#800000;stroke-width:0.47704786"
          id="path14" />
     </g>
   </g>

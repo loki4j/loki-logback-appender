@@ -1,6 +1,18 @@
 {
   "docs": {
-    "Logback": ["configuration", "performance", "migration", "olddocs"]
+    "Logback": [
+      "configuration",
+      "labels",
+      "jsonlayout",
+      "protobuf",
+      "apacheclient",
+      "grafanacloud",
+      "monitoring",
+      "tracing",
+      "migration",
+      "compatibility",
+      "olddocs"
+    ]
   },
   "docs-other": {
     "First Category": ["doc4", "doc5"]

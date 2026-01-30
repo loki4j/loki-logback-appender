@@ -5,12 +5,13 @@ import static com.github.loki4j.logback.Generators.*;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Collections;
+import java.util.Map;
 import java.util.concurrent.ArrayBlockingQueue;
 import java.util.concurrent.ConcurrentLinkedQueue;
 import java.util.concurrent.atomic.AtomicInteger;
 
-import com.github.loki4j.common.LogRecord;
-import com.github.loki4j.common.SoftLimitBuffer;
+import com.github.loki4j.client.batch.LogRecord;
+import com.github.loki4j.logback.Generators.InfiniteEventIterator;
 import com.github.loki4j.testkit.benchmark.Benchmarker;
 import com.github.loki4j.testkit.benchmark.Benchmarker.Benchmark;
 import com.github.loki4j.testkit.categories.PerformanceTests;
@@ -26,8 +27,9 @@ public class BatchBufferTest {
         return LogRecord.create(
             e.getTimeStamp(),
             0,
-            "test=dlkjafh",
-            e.getMessage());
+            Map.of("test","dlkjafh"),
+            e.getMessage(),
+            Map.of());
     }
 
     @Test
@@ -41,13 +43,6 @@ public class BatchBufferTest {
             this.parFactor = 1;
             this.generator = () -> InfiniteEventIterator.from(generateEvents(10_000, 10)).limited(1_000_000);
             this.benchmarks = Arrays.asList(
-                Benchmark.of("slb",
-                    () -> new SoftLimitBuffer<LogRecord>(capacity),
-                    (r, e) -> {
-                        r.offer(eventToRecord(e));
-                        if (r.size() == capacity)
-                            while(r.poll() != null) { }
-                    }),
                 Benchmark.of("abq",
                     () -> new ArrayBlockingQueue<LogRecord>(capacity),
                     (r, e) -> {
@@ -85,13 +80,6 @@ public class BatchBufferTest {
             this.parFactor = 2;
             this.generator = () -> InfiniteEventIterator.from(generateEvents(10_000, 10)).limited(1_000_000);
             this.benchmarks = Arrays.asList(
-                Benchmark.of("slb",
-                    () -> new SoftLimitBuffer<LogRecord>(capacity),
-                    (r, e) -> {
-                        r.offer(eventToRecord(e));
-                        if (r.size() == capacity)
-                            while(r.poll() != null) { }
-                    }),
                 Benchmark.of("abq",
                     () -> new ArrayBlockingQueue<LogRecord>(capacity),
                     (r, e) -> {

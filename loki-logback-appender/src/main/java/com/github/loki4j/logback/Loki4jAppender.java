@@ -1,94 +1,89 @@
 package com.github.loki4j.logback;
 
+import java.util.ArrayList;
+import java.util.LinkedHashMap;
+import java.util.List;
+import java.util.Map;
 import java.util.concurrent.atomic.AtomicLong;
+import java.util.stream.Collectors;
 
-import com.github.loki4j.common.Batcher;
-import com.github.loki4j.common.BinaryBatch;
-import com.github.loki4j.common.ByteBufferFactory;
-import com.github.loki4j.common.LogRecord;
-import com.github.loki4j.common.LogRecordBatch;
-import com.github.loki4j.common.LokiResponse;
-import com.github.loki4j.common.SoftLimitBuffer;
+import com.github.loki4j.client.batch.LogRecord;
+import com.github.loki4j.client.pipeline.AsyncBufferPipeline;
+import com.github.loki4j.client.pipeline.PipelineConfig;
+import com.github.loki4j.logback.extractor.Extractor;
+import com.github.loki4j.logback.extractor.MarkerExtractor;
+import com.github.loki4j.logback.extractor.MetadataExtractor;
+import com.github.loki4j.logback.extractor.PatternsExtractor;
+import com.github.loki4j.slf4j.marker.AbstractKeyValueMarker;
+import com.github.loki4j.slf4j.marker.LabelMarker;
+import com.github.loki4j.slf4j.marker.StructuredMetadataMarker;
 
+import ch.qos.logback.classic.PatternLayout;
 import ch.qos.logback.classic.spi.ILoggingEvent;
 import ch.qos.logback.core.CoreConstants;
-import ch.qos.logback.core.UnsynchronizedAppenderBase;
+import ch.qos.logback.core.Layout;
 import ch.qos.logback.core.joran.spi.DefaultClass;
+import ch.qos.logback.core.spi.ScanException;
 import ch.qos.logback.core.status.Status;
 
 /**
- * Main appender that provides functionality for sending log record batches to Loki
+ * Main appender that provides functionality for sending log record batches to Loki.
+ * This class is responsible for converting Logback event to internal log record representation
+ * and sending it to the pipeline.
  */
-public final class Loki4jAppender extends UnsynchronizedAppenderBase<ILoggingEvent> {
+public class Loki4jAppender extends PipelineConfigAppenderBase {
+
+    private static final String KV_PAIR_SEPARATOR = LabelsPatternParser.KV_REGEX_STARTER + "\n|\r";
+    private static final String KV_KV_SEPARATOR = "=";
+    private static final String DEFAULT_LBL_PATTERN = "agent=loki4j\napp=%s\nhost=%s";
+    private static final String DEFAULT_SMD_PATTERN = "level=%level\nthread=%thread\nlogger=%logger\n*=%%mdc\n*=%%kvp";
+    private static final String DEFAULT_MSG_PATTERN = "[%thread] %logger{20} - %msg%n";
+
+    public static final String DISABLE_SMD_PATTERN = "off";
 
     /**
-     * Max number of events to put into a single batch and send to Loki
+     * Logback pattern to use for log record's label.
      */
-    private int batchSizeItems = 1000;
+    private String labelsPattern;
     /**
-     * Max number of bytes a single batch (as encoded by Loki) can contain.
-     * This value should not be greater than server.grpc_server_max_recv_msg_size
-     * in your Loki config
+     * Logback pattern to use for log record's structured metadata.
+     * Use pattern "off" to disable structured metadata generation.
      */
-    private int batchSizeBytes = 4 * 1024 * 1024;
+    private String structuredMetadataPattern;
     /**
-     * Max time in milliseconds to wait before sending a batch to Loki
+     * Logback layout to use for log record's message.
      */
-    private long batchTimeoutMs = 60 * 1000;
+    private Layout<ILoggingEvent> messageLayout;
 
     /**
-     * Max number of events to keep in the send queue.
-     * When the queue is full, incoming log events are dropped
+     * If true, scans each log record for attached LabelMarker to
+     * add its values to record's labels.
      */
-    private int sendQueueSize = 50 * 1000;
+    private boolean readMarkers = false;
 
     /**
-     * If true, the appender will print its own debug logs to stderr
+     * If true, the appender will print its own debug logs to stderr.
      */
     private boolean verbose = false;
 
     /**
-     * If true, the appender will report its metrics using Micrometer
+     * A pipeline that does all the heavy lifting log records processing.
      */
-    private boolean metricsEnabled = false;
+    private AsyncBufferPipeline pipeline;
 
     /**
-     * Wait util all remaining events are sent before shutdown the appender
-     */
-    private boolean drainOnStop = true;
-
-    /**
-     * Use off-heap memory for storing intermediate data
-     */
-    private boolean useDirectBuffers = true;
-
-    /**
-     * An encoder to use for converting log record batches to format acceptable by Loki
-     */
-    private Loki4jEncoder encoder;
-
-    /**
-     * A HTTPS sender to use for pushing logs to Loki
-     */
-    private HttpSender sender;
-
-    /**
-     * A tracker for the appender's metrics (if enabled)
-     */
-    private LoggerMetrics metrics;
-
-    /**
-     * A pipeline that does all the heavy lifting log records processing
-     */
-    private DefaultPipeline pipeline;
-
-    /**
-     * A counter for events dropped due to backpressure
+     * A counter for events dropped due to backpressure.
      */
     private AtomicLong droppedEventsCount = new AtomicLong(0L);
 
+    private List<Extractor> labelValueExtractors = new ArrayList<>();
+    private List<Extractor> metadataValueExtractors = new ArrayList<>();
+
+    private Map<String, String> staticLabelStream = null;
+
     @Override
     public void start() {
+        // init internal logging
         if (getStatusManager() != null && getStatusManager().getCopyOfStatusListenerList().isEmpty()) {
             var statusListener = new StatusPrinter(verbose ? Status.INFO : Status.WARN);
             statusListener.setContext(getContext());
@@ -96,40 +91,33 @@ public final class Loki4jAppender extends UnsynchronizedAppenderBase<ILoggingEve
             getStatusManager().add(statusListener);
         }
 
-        addInfo(String.format("Starting with " +
-            "batchSizeItems=%s, batchSizeBytes=%s, batchTimeout=%s...",
-            batchSizeItems, batchSizeBytes, batchTimeoutMs));
+        // init labels KV extraction
+        if (labelsPattern == null)
+            labelsPattern = String.format(
+                DEFAULT_LBL_PATTERN,
+                context.getProperty(CoreConstants.CONTEXT_NAME_KEY),
+                context.getProperty(CoreConstants.HOSTNAME_KEY)
+            );
+        labelValueExtractors = initExtractors(labelsPattern, LabelMarker.class);
 
-        var bufferFactory = new ByteBufferFactory(useDirectBuffers);
-
-        if (encoder == null) {
-            addWarn("No encoder specified in the config. Using JsonEncoder with default settings");
-            encoder = new JsonEncoder();
-        }
-        encoder.setCapacity(batchSizeBytes);
-        encoder.setBufferFactory(bufferFactory);
-        encoder.setContext(context);
-        encoder.start();
-
-        if (metricsEnabled) {
-            var host = context.getProperty(CoreConstants.HOSTNAME_KEY);
-            metrics = new LoggerMetrics(
-                this.getName() == null ? "none" : this.getName(),
-                host == null ? "unknown" : host);
+        // init structured metadata KV extraction
+        if (structuredMetadataPattern == null)
+            structuredMetadataPattern = DEFAULT_SMD_PATTERN;
+        if (!structuredMetadataPattern.isBlank() && !structuredMetadataPattern.equalsIgnoreCase(DISABLE_SMD_PATTERN)) {
+            metadataValueExtractors = initExtractors(structuredMetadataPattern, StructuredMetadataMarker.class);
         }
 
-        if (sender == null) {
-            addWarn("No sender specified in the config. Trying to use JavaHttpSender with default settings");
-            sender = new JavaHttpSender();
+        // init message layout
+        if (messageLayout == null) {
+            addWarn("No message layout specified in the config. Using PatternLayout with default settings");
+            messageLayout = initPatternLayout(DEFAULT_MSG_PATTERN);
         }
-        sender.setContext(context);
-        sender.setContentType(encoder.getContentType());
-        sender.start();
+        messageLayout.setContext(context);
+        messageLayout.start();
 
-        var buffer = new SoftLimitBuffer<LogRecord>(sendQueueSize);
-        var batcher = new Batcher(batchSizeItems, batchSizeBytes, batchTimeoutMs);
-        pipeline = new DefaultPipeline(buffer, batcher, this::encode, this::send, drainOnStop);
-        pipeline.setContext(context);
+        // init pipeline
+        PipelineConfig pipelineConf = buildPipelineConfig();
+        pipeline = new AsyncBufferPipeline(pipelineConf);
         pipeline.start();
 
         super.start();
@@ -147,20 +135,67 @@ public final class Loki4jAppender extends UnsynchronizedAppenderBase<ILoggingEve
         super.stop();
 
         pipeline.stop();
-        encoder.stop();
-        sender.stop();
+        messageLayout.stop();
 
         addInfo("Successfully stopped");
     }
 
     @Override
     protected void append(ILoggingEvent event) {
-        var startedNs = System.nanoTime();
-        var appended = pipeline.append(() -> encoder.eventToRecord(event));
+        var appended = pipeline.append(() -> eventToLogRecord(event));
         if (!appended)
             reportDroppedEvents();
-        if (metricsEnabled)
-            metrics.eventAppended(startedNs, !appended);
+    }
+
+    public LogRecord eventToLogRecord(ILoggingEvent event) {
+        return LogRecord.create(
+            event.getTimeStamp(),
+            event.getNanoseconds() % 1_000_000, // take only nanos, not ms
+            extractStream(event),
+            extractMessage(event),
+            extractMetadata(event));
+    }
+
+    private Map<String, String> extractStream(ILoggingEvent e) {
+        if (isStaticLabels()) {
+            if (staticLabelStream == null) {
+                if (labelValueExtractors.size() == 1) {
+                    var kvs = new LinkedHashMap<String, String>();
+                    labelValueExtractors.get(0).extract(e, kvs);
+                    staticLabelStream = kvs;
+                } else {
+                    throw new IllegalStateException("No bulk patterns allowed for static label configuration");
+                }
+            }
+            return staticLabelStream;
+        }
+
+        var kvs = new LinkedHashMap<String, String>();
+        for (var extractor : labelValueExtractors) {
+            extractor.extract(e, kvs);
+        }
+        return kvs;
+    }
+
+    private Map<String, String> extractMetadata(ILoggingEvent e) {
+        if (metadataValueExtractors.isEmpty())
+            return Map.of();
+
+        var kvs = new LinkedHashMap<String, String>();
+        for (var extractor : metadataValueExtractors) {
+            extractor.extract(e, kvs);
+        }
+        return kvs;
+    }
+
+    private String extractMessage(ILoggingEvent e) {
+        return messageLayout.doLayout(e);
+    }
+
+    private PatternLayout initPatternLayout(String pattern) {
+        var patternLayout = new PatternLayout();
+        patternLayout.setPattern(pattern);
+        return patternLayout;
     }
 
     private void reportDroppedEvents() {
@@ -173,7 +208,7 @@ public final class Loki4jAppender extends UnsynchronizedAppenderBase<ILoggingEve
                 || (dropped <= 900_000_000 && dropped % 1_000_000 == 0)
                 || dropped > 1_000_000_000) {
             addWarn(String.format(
-                "Backpressure: %s messages dropped. Check `sendQueueSize` setting", dropped));
+                "Backpressure: %s messages dropped. Check `sendQueueSizeBytes` setting", dropped));
             if (dropped > 1_000_000_000) {
                 addWarn(String.format(
                     "Resetting dropped message counter from %s to 0", dropped));
@@ -182,107 +217,66 @@ public final class Loki4jAppender extends UnsynchronizedAppenderBase<ILoggingEve
         }
     }
 
-    protected BinaryBatch encode(LogRecordBatch batch) {
-        var startedNs = System.nanoTime();
-        var encoded = encoder.encode(batch);
-        var binBatch = BinaryBatch.fromLogRecordBatch(batch, encoded);
-        addInfo(String.format(
-            ">>> Batch %s converted to %,d bytes",
-                batch, binBatch.data.length));
-        //try { System.out.write(binBatch.data); } catch (Exception e) { e.printStackTrace(); }
-        //System.out.println("\n");
-        if (metricsEnabled)
-            metrics.batchEncoded(startedNs, binBatch.data.length);
-        return binBatch;
-    }
-
-    protected LokiResponse send(BinaryBatch batch) {
-        var startedNs = System.nanoTime();
-        LokiResponse r = null;
-        Exception e = null;
+    private <T extends AbstractKeyValueMarker> List<Extractor> initExtractors(String pattern, Class<T> markerClass) {
+        var extractors = new ArrayList<Extractor>();
+        var kvPairs = LabelsPatternParser.extractKVPairsFromPattern(pattern, KV_PAIR_SEPARATOR, KV_KV_SEPARATOR);
+        // logback patterns' extractor
+        var logbackPatterns = new LinkedHashMap<String, String>();
+        kvPairs.stream()
+            .filter(e -> !LabelsPatternParser.isBulkPattern(e))
+            .forEach(e -> logbackPatterns.put(e.getKey(), e.getValue()));
         try {
-            r = sender.send(batch.data);
-        } catch (Exception re) {
-            e = re;
+            extractors.add(new PatternsExtractor(logbackPatterns, context));
+        } catch (ScanException e) {
+            throw new IllegalArgumentException("Unable to parse pattern: \"" + pattern + "\"", e);
         }
-
-        if (e != null) {
-            addError(String.format(
-                "Error while sending Batch %s to Loki (%s)",
-                    batch, sender.getUrl()), e);
-        }
-        else {
-            if (r.status < 200 || r.status > 299)
-                addError(String.format(
-                    "Loki responded with non-success status %s on batch %s. Error: %s",
-                    r.status, batch, r.body));
+        // bulk patterns
+        var bulkPatterns = kvPairs.stream()
+            .filter(LabelsPatternParser::isBulkPattern)
+            .collect(Collectors.toList());
+        for (var bulkPattern : bulkPatterns) {
+            var parsed = LabelsPatternParser.parseBulkPattern(bulkPattern.getKey(), bulkPattern.getValue());
+            if (parsed.func.equalsIgnoreCase("mdc"))
+                extractors.add(MetadataExtractor.mdc(parsed.prefix, parsed.include, parsed.exclude));
+            else if (parsed.func.equalsIgnoreCase("kvp"))
+                extractors.add(MetadataExtractor.kvp(parsed.prefix, parsed.include, parsed.exclude));
             else
-                addInfo(String.format(
-                    "<<< Batch %s: Loki responded with status %s",
-                    batch, r.status));
+                throw new IllegalArgumentException(
+                    String.format("Unknown function '%s' used for bulk pattern: %s", parsed.func, bulkPattern.getValue()));
         }
-
-        if (metricsEnabled)
-            metrics.batchSent(startedNs, batch.data.length, e != null || r.status > 299);
-
-        return r;
+        // marker extractor
+        if (readMarkers)
+            extractors.add(new MarkerExtractor<>(markerClass));
+        return extractors;
     }
+
 
     void waitSendQueueIsEmpty(long timeoutMs) {
-        pipeline.waitSendQueueIsEmpty(timeoutMs);
+        pipeline.waitPipelineIsEmpty(timeoutMs);
     }
 
-    @Deprecated
-    public void setBatchSize(int batchSize) {
-        addWarn("Property `batchSize` was replaced with `batchSizeItems`. Please fix your configuration");
-    }
-    public void setBatchSizeItems(int batchSizeItems) {
-        this.batchSizeItems = batchSizeItems;
-    }
-    public void setBatchSizeBytes(int batchSizeBytes) {
-        this.batchSizeBytes = batchSizeBytes;
-    }
-    public void setBatchTimeoutMs(long batchTimeoutMs) {
-        this.batchTimeoutMs = batchTimeoutMs;
-    }
-    public void setSendQueueSize(int sendQueueSize) {
-        this.sendQueueSize = sendQueueSize;
+    long droppedEventsCount() {
+        return droppedEventsCount.get();
     }
 
-    /**
-     * "format" instead of "encoder" in the name allows to specify
-     * the default implementation, so users don't have to write
-     * full-qualified class name by default
-     */
-    @DefaultClass(JsonEncoder.class)
-    public void setFormat(Loki4jEncoder encoder) {
-        this.encoder = encoder;
+    public void setLabels(String labelsPattern) {
+        this.labelsPattern = labelsPattern;
     }
 
-    HttpSender getSender() {
-        return sender;
+    public void setStructuredMetadata(String structuredMetadataPattern) {
+        this.structuredMetadataPattern = structuredMetadataPattern;
     }
 
-    /**
-     * "http" instead of "sender" is just to have a more clear name
-     * for the configuration section
-     */
-    @DefaultClass(JavaHttpSender.class)
-    public void setHttp(HttpSender sender) {
-        this.sender = sender;
+    @DefaultClass(PatternLayout.class)
+    public void setMessage(Layout<ILoggingEvent> messageLayout) {
+        this.messageLayout = messageLayout;
+    }
+
+    public void setReadMarkers(boolean readMarkers) {
+        this.readMarkers = readMarkers;
     }
 
     public void setVerbose(boolean verbose) {
         this.verbose = verbose;
     }
-    public void setMetricsEnabled(boolean metricsEnabled) {
-        this.metricsEnabled = metricsEnabled;
-    }
-    public void setDrainOnStop(boolean drainOnStop) {
-        this.drainOnStop = drainOnStop;
-    }
-    public void setUseDirectBuffers(boolean useDirectBuffers) {
-        this.useDirectBuffers = useDirectBuffers;
-    }
-
 }

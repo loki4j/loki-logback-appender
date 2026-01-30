@@ -17,12 +17,12 @@ public class MultitenantSupportTest {
     private static LokiTestingClient client;
 
     @BeforeClass
-    public static void startMockLoki() {
+    public static void startLokiClient() {
         client = new LokiTestingClient(urlBase, tenant);
     }
 
     @AfterClass
-    public static void stopMockLoki() {
+    public static void stopLokiClient() {
         client.close();
     }
 
@@ -30,25 +30,23 @@ public class MultitenantSupportTest {
     @Category({CIOnlyTests.class})
     public void testJavaJsonSendWithTenant() throws Exception {
         var label = "testJavaJsonSendWithTenant";
-        var encoder = jsonEncoder(false, label);
-        var sender = javaHttpSender(urlPush);
-        sender.setTenantId(tenant);
-        var appender = appender(10, 1000, encoder, sender);
+        var http = http(urlPush, jsonFormat(), javaSender());
+        http.setTenantId(tenant);
+        var appender = appender(label, batch(10, 1000), http);
 
         var events = generateEvents(1000, 10);
-        client.testHttpSend(label, events, appender, jsonEncoder(false, label));
+        client.testHttpSend(label, events, appender);
     }
 
     @Test
     @Category({CIOnlyTests.class})
     public void testApacheProtobufSendWithTenant() throws Exception {
         var label = "testApacheProtobufSendWithTenant";
-        var encoder = protobufEncoder(false, label);
-        var sender = apacheHttpSender(urlPush);
-        sender.setTenantId(tenant);
-        var appender = appender(10, 1000, encoder, sender);
+        var http = http(urlPush, protobufFormat(), apacheSender());
+        http.setTenantId(tenant);
+        var appender = appender(label, batch(10, 1000), http);
 
         var events = generateEvents(20, 20);
-        client.testHttpSend(label, events, appender, jsonEncoder(false, label));
+        client.testHttpSend(label, events, appender);
     }
 }

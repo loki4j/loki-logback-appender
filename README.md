@@ -1,27 +1,31 @@
 # loki-logback-appender
 
-![Build](https://img.shields.io/github/workflow/status/loki4j/loki-logback-appender/build/main)
+![Build](https://img.shields.io/github/actions/workflow/status/loki4j/loki-logback-appender/build-and-test.yaml?branch=main)
 ![Maven Central](https://img.shields.io/maven-central/v/com.github.loki4j/loki-logback-appender?color=blue)
 
 Loki4j aims to be the fastest and the most lightweight implementation of
-[Logback](http://logback.qos.ch/) appender for [Loki](https://grafana.com/oss/loki/).
+[Logback](http://logback.qos.ch/) appender for [Grafana Loki](https://grafana.com/oss/loki/).
 This project is unofficial and community-driven.
 
 Please proceed to the microsite for more information:
 
 - [Quick Start](https://loki4j.github.io/loki-logback-appender/#quick-start)
-- [Configuration Guide](https://loki4j.github.io/loki-logback-appender/docs/appenders)
+- [Configuration Reference](https://loki4j.github.io/loki-logback-appender/docs/configuration)
+- [Migration Guide](https://loki4j.github.io/loki-logback-appender/docs/migration)
 
-If you are interested in this project, please drop a :star:!
+If you have found this project helpful, please drop a :star:!
 
 ## Key features
 
-- Support for both JSON and Protobuf formats
+- Dynamic generation of Loki labels and metadata out of any Logback pattern, MDC, KVP, or SLF4J markers
+- Structured metadata support
+- Fast JSON layout for log message formatting
+- Support of JSON and Protobuf Loki API flavors
 - Compatibility with Grafana Cloud
-- Optionally order log records before sending to Loki
-- Use Logback patterns for labels and messages formatting
-- Zero-dependency (for Java 11+)
-- Logging performance metrics
+- Zero-dependency
+- Performance metrics
+
+More details and links to the examples can be found [here](https://loki4j.github.io/loki-logback-appender/#key-features).
 
 ## Contributing
 
@@ -29,21 +33,20 @@ Please start with the [Contribution guidelines](CONTRIBUTING.md).
 
 ## Building and testing the project
 
-Please make sure the following software is installed on you machine
+Please make sure the following software is installed on your machine
 so you can build and test the project:
 
 - Java 11 or later
-- Gradle 6.7 or later
 
-Check out the project to the directory on you local machine and run:
+Check out the project in the directory on your local machine and run:
 
 ```sh
-gradle check
+./gradlew check
 ```
 
-## Production readiness
+## Project status
 
-This project is in active development stage.
-In rare cases breaking changes (config format, class locations, etc.) might be introduced in minor versions.
-Such cases will be explicitly documented for each release.
-Please check [Releases](https://github.com/loki4j/loki-logback-appender/releases) page before you upgrade.
+At the moment all the main logging features have been implemented and stabilized.
+
+Further development will be concentrated on bug fixes (if any), keeping up with new versions of Loki, and
+improving the codebase so it's easier to maintain.
