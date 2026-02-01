@@ -41,7 +41,7 @@ public class ArrayVsMapTest {
             this.generator = () -> InfiniteEventIterator.from(generateEvents(10_000, 10)).limited(100_000);
             this.benchmarks = Arrays.asList(
                 Benchmark.of("maps-new2",
-                    () -> initApp("app=my-app", "t=%thread,c=%logger"),
+                    () -> initApp("app=my-app", "t=%thread\nc=%logger"),
                     (a, e) -> a.append(e),
                     a -> a.waitAllAppended(),
                     a -> a.stop())
