@@ -1,7 +1,7 @@
 package com.github.loki4j.logback.integration;
 
 import static com.github.loki4j.logback.Generators.*;
-import static org.junit.Assert.*;
+import static org.junit.jupiter.api.Assertions.*;
 
 import java.util.concurrent.CompletableFuture;
 import java.util.concurrent.ExecutorService;
@@ -9,10 +9,10 @@ import java.util.concurrent.Executors;
 
 import com.github.loki4j.testkit.categories.IntegrationTests;
 
-import org.junit.AfterClass;
-import org.junit.BeforeClass;
-import org.junit.Test;
-import org.junit.experimental.categories.Category;
+import org.junit.jupiter.api.AfterAll;
+import org.junit.jupiter.api.BeforeAll;
+import org.junit.jupiter.api.Test;
+import org.junit.jupiter.api.Tag;
 
 public class ParSendTest {
 
@@ -21,18 +21,18 @@ public class ParSendTest {
 
     private static LokiTestingClient client;
 
-    @BeforeClass
+    @BeforeAll
     public static void startLokiClient() {
         client = new LokiTestingClient(urlBase);
     }
 
-    @AfterClass
+    @AfterAll
     public static void stopLokiClient() {
         client.close();
     }
 
     @Test
-    @Category({IntegrationTests.class})
+    @Tag("com.github.loki4j.testkit.categories.IntegrationTests")
     public void testJavaJsonParSend() throws Exception {
         var events = generateEvents(500, 500);
 
@@ -66,7 +66,7 @@ public class ParSendTest {
     }
 
     @Test
-    @Category({IntegrationTests.class})
+    @Tag("com.github.loki4j.testkit.categories.IntegrationTests")
     public void testApacheJsonParSend() throws Exception {
         var events = generateEvents(500, 500);
 
@@ -95,7 +95,7 @@ public class ParSendTest {
                 }, tp);
         }
         for (int i = 0; i < fs.length; i++) {
-            assertEquals("label", fs[i].get());
+            assertEquals(fs[i].get(), "label");
         }
     }
 }

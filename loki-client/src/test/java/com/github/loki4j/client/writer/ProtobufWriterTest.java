@@ -1,9 +1,9 @@
 package com.github.loki4j.client.writer;
 
-import org.junit.Test;
+import org.junit.jupiter.api.Test;
 import org.xerial.snappy.Snappy;
 
-import static org.junit.Assert.*;
+import static org.junit.jupiter.api.Assertions.*;
 
 import java.io.IOException;
 import java.util.Map;
@@ -61,17 +61,17 @@ public class ProtobufWriterTest {
         var expComp = Snappy.compress(expUncomp);
 
         var writer = new ProtobufWriter(1000, new ByteBufferFactory(false));
-        assertEquals("initial size is 0", 0, writer.size());
+        assertEquals(0, writer.size(), "initial size is 0");
         writer.serializeBatch(batch);
-        assertEquals("size is correct", expComp.length, writer.size());
+        assertEquals(expComp.length, writer.size(), "size is correct");
         
         var actComp = writer.toByteArray();
-        assertEquals("size reset", 0, writer.size());
-        assertArrayEquals("compressed messages match", expComp, actComp);
+        assertEquals(0, writer.size(), "size reset");
+        assertArrayEquals(expComp, actComp, "compressed messages match");
 
         var actUncomp = Snappy.uncompress(actComp);
-        assertArrayEquals("un-compressed messages match", expUncomp, actUncomp);
-        assertEquals("deserialized", expectedPushRequest, PushRequest.parseFrom(actUncomp));
+        assertArrayEquals(expUncomp, actUncomp, "un-compressed messages match");
+        assertEquals(expectedPushRequest, PushRequest.parseFrom(actUncomp), "deserialized");
     }
 
     @Test
@@ -80,17 +80,17 @@ public class ProtobufWriterTest {
         var expComp = Snappy.compress(expUncomp);
 
         var writer = new ProtobufWriter(1000, new ByteBufferFactory(true));
-        assertEquals("initial size is 0", 0, writer.size());
+        assertEquals(0, writer.size(), "initial size is 0");
         writer.serializeBatch(batch);
-        assertEquals("size is correct", expComp.length, writer.size());
+        assertEquals(expComp.length, writer.size(), "size is correct");
 
         var actComp = writer.toByteArray();
-        assertEquals("size reset", 0, writer.size());
-        assertArrayEquals("compressed messages match", expComp, actComp);
+        assertEquals(0, writer.size(), "size reset");
+        assertArrayEquals(expComp, actComp, "compressed messages match");
 
         var actUncomp = Snappy.uncompress(actComp);
-        assertArrayEquals("un-compressed messages match", expUncomp, actUncomp);
-        assertEquals("deserialized", expectedPushRequest, PushRequest.parseFrom(actUncomp));
+        assertArrayEquals(expUncomp, actUncomp, "un-compressed messages match");
+        assertEquals(expectedPushRequest, PushRequest.parseFrom(actUncomp), "deserialized");
     }
 
     public void testStructuredMetadata() throws IOException {
@@ -123,17 +123,17 @@ public class ProtobufWriterTest {
         var expComp = Snappy.compress(expUncomp);
 
         var writer = new ProtobufWriter(1000, new ByteBufferFactory(false));
-        assertEquals("initial size is 0", 0, writer.size());
+        assertEquals(0, writer.size(), "initial size is 0");
         writer.serializeBatch(metaBatch);
-        assertEquals("size is correct", expComp.length, writer.size());
+        assertEquals(expComp.length, writer.size(), "size is correct");
 
         var actComp = writer.toByteArray();
-        assertEquals("size reset", 0, writer.size());
-        assertArrayEquals("compressed messages match", expComp, actComp);
+        assertEquals(0, writer.size(), "size reset");
+        assertArrayEquals(expComp, actComp, "compressed messages match");
 
         var actUncomp = Snappy.uncompress(actComp);
-        assertArrayEquals("un-compressed messages match", expUncomp, actUncomp);
-        assertEquals("deserialized", expectedMetaPushRequest, PushRequest.parseFrom(actUncomp));
+        assertArrayEquals(expUncomp, actUncomp, "un-compressed messages match");
+        assertEquals(expectedMetaPushRequest, PushRequest.parseFrom(actUncomp), "deserialized");
     }
     
 }

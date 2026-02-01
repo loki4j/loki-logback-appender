@@ -1,7 +1,7 @@
 package com.github.loki4j.client.batch;
 
-import org.junit.Test;
-import static org.junit.Assert.*;
+import org.junit.jupiter.api.Test;
+import static org.junit.jupiter.api.Assertions.*;
 
 import java.util.Map;
 
@@ -31,19 +31,19 @@ public class BatcherTest {
                 array2[i % 10] = record;
 
             if (i == 9) {
-                assertEquals("Batch is ready", 10, buf.size());
-                assertArrayEquals("Correct elements in batch", array1, buf.toArray());
+                assertEquals(10, buf.size(), "Batch is ready");
+                assertArrayEquals(array1, buf.toArray(), "Correct elements in batch");
                 buf.clear();
             } else {
-                assertEquals("Batch is not ready", 0, buf.size());
+                assertEquals(0, buf.size(), "Batch is not ready");
             }
         }
 
         var record = logRecord(19);
         cbb.add(record, buf);
         array2[9] = record;
-        assertEquals("Batch is ready", 10, buf.size());
-        assertArrayEquals("Correct elements in batch", array2, buf.toArray());
+        assertEquals(10, buf.size(), "Batch is ready");
+        assertArrayEquals(array2, buf.toArray(), "Correct elements in batch");
     }
 
     @Test
@@ -51,13 +51,13 @@ public class BatcherTest {
         var cbb = new Batcher(1, 1000, 0);
         var buf = new LogRecordBatch(1);
 
-        assertEquals("capacity is correct", 1, cbb.getCapacity());
+        assertEquals(1, cbb.getCapacity(), "capacity is correct");
 
         var record = logRecord(1);
         cbb.add(record, buf);
-        assertEquals("Batch is ready", 1, buf.size());
-        assertEquals("Correct batch condition", BatchCondition.MAX_ITEMS, buf.getCondition());
-        assertArrayEquals("Correct elements in batch", new LogRecord[] { record }, buf.toArray());
+        assertEquals(1, buf.size(), "Batch is ready");
+        assertEquals(BatchCondition.MAX_ITEMS, buf.getCondition(), "Correct batch condition");
+        assertArrayEquals(new LogRecord[] { record }, buf.toArray(), "Correct elements in batch");
     }
 
     @Test
@@ -65,11 +65,11 @@ public class BatcherTest {
         var cbb = new Batcher(1, 10, 0);
         var buf = new LogRecordBatch(1);
 
-        assertEquals("capacity is correct", 1, cbb.getCapacity());
+        assertEquals(1, cbb.getCapacity(), "capacity is correct");
 
         var record = logRecord(1, Map.of("a", "b"), "3456789");
-        assertFalse("Size too large", cbb.validateLogRecordSize(record));
-        assertEquals("Batch is not ready", 0, buf.size());
+        assertFalse(cbb.validateLogRecordSize(record), "Size too large");
+        assertEquals(0, buf.size(), "Batch is not ready");
     }
 
     @Test
@@ -77,32 +77,32 @@ public class BatcherTest {
         var cbb = new Batcher(10, 100, 0);
         var buf = new LogRecordBatch(10);
 
-        assertEquals("capacity is correct", 10, cbb.getCapacity());
+        assertEquals(10, cbb.getCapacity(), "capacity is correct");
 
         var stream = Map.of("a", "b");
 
         var r1 = logRecord(1, stream, "123");
-        assertTrue("Size is ok", cbb.validateLogRecordSize(r1));
+        assertTrue(cbb.validateLogRecordSize(r1), "Size is ok");
         cbb.checkSizeBeforeAdd(r1, buf);
         cbb.add(r1, buf);
-        assertEquals("Batch is not ready", 0, buf.size());
+        assertEquals(0, buf.size(), "Batch is not ready");
 
         var r2 = logRecord(2, stream, "abcdefghkl");
-        assertTrue("Size is ok", cbb.validateLogRecordSize(r2));
+        assertTrue(cbb.validateLogRecordSize(r2), "Size is ok");
         cbb.checkSizeBeforeAdd(r2, buf);
         cbb.add(r2, buf);
-        assertEquals("Batch is not ready", 0, buf.size());
+        assertEquals(0, buf.size(), "Batch is not ready");
 
         var r3 = logRecord(3, stream, "qwertyuiop");
-        assertTrue("Size is ok", cbb.validateLogRecordSize(r3));
+        assertTrue(cbb.validateLogRecordSize(r3), "Size is ok");
         cbb.checkSizeBeforeAdd(r3, buf);
-        assertEquals("Batch is ready", 2, buf.size());
-        assertEquals("Correct batch condition", BatchCondition.MAX_BYTES, buf.getCondition());
-        assertArrayEquals("Correct elements in batch", new LogRecord[]{r1, r2}, buf.toArray());
+        assertEquals(2, buf.size(), "Batch is ready");
+        assertEquals(BatchCondition.MAX_BYTES, buf.getCondition(), "Correct batch condition");
+        assertArrayEquals(new LogRecord[]{r1, r2}, buf.toArray(), "Correct elements in batch");
 
         buf.clear();
         cbb.add(r3, buf);
-        assertEquals("Batch is not ready", 0, buf.size());
+        assertEquals(0, buf.size(), "Batch is not ready");
     }
 
     @Test
@@ -112,26 +112,26 @@ public class BatcherTest {
         var array1 = new LogRecord[7];
 
         cbb.drain(System.currentTimeMillis() + 200, buf);
-        assertEquals("Batch is empty", 0, buf.size());
+        assertEquals(0, buf.size(), "Batch is empty");
 
         for (int i = 0; i < 7; i++) {
             var record = logRecord(i);
             cbb.add(record, buf);
             array1[i] = record;
-            assertEquals("Batch is not ready", 0, buf.size());
+            assertEquals(0, buf.size(), "Batch is not ready");
         }
 
         cbb.drain(System.currentTimeMillis() - 200, buf);
-        assertEquals("Batch is ready", 7, buf.size());
-        assertEquals("Correct batch condition", BatchCondition.DRAIN, buf.getCondition());
-        assertArrayEquals("Correct elements in batch", array1, buf.toArray());
+        assertEquals(7, buf.size(), "Batch is ready");
+        assertEquals(BatchCondition.DRAIN, buf.getCondition(), "Correct batch condition");
+        assertArrayEquals(array1, buf.toArray(), "Correct elements in batch");
         buf.clear();
 
         var record = logRecord(1);
         cbb.add(record, buf);
-        assertEquals("Batch is not ready", 0, buf.size());
+        assertEquals(0, buf.size(), "Batch is not ready");
         cbb.drain(System.currentTimeMillis() + 300, buf);
-        assertEquals("Batch is not ready", 0, buf.size());
+        assertEquals(0, buf.size(), "Batch is not ready");
     }
 
 }

@@ -1,14 +1,12 @@
 package com.github.loki4j.logback.integration;
 
 import static com.github.loki4j.logback.Generators.*;
-import static org.junit.Assert.*;
+import static org.junit.jupiter.api.Assertions.*;
 
-import com.github.loki4j.testkit.categories.IntegrationTests;
-
-import org.junit.AfterClass;
-import org.junit.BeforeClass;
-import org.junit.Test;
-import org.junit.experimental.categories.Category;
+import org.junit.jupiter.api.AfterAll;
+import org.junit.jupiter.api.BeforeAll;
+import org.junit.jupiter.api.Test;
+import org.junit.jupiter.api.Tag;
 
 public class BatchSizeTest {
 
@@ -17,18 +15,18 @@ public class BatchSizeTest {
 
     private static LokiTestingClient client;
 
-    @BeforeClass
+    @BeforeAll
     public static void startLokiClient() {
         client = new LokiTestingClient(urlBase);
     }
 
-    @AfterClass
+    @AfterAll
     public static void stopLokiClient() {
         client.close();
     }
 
     @Test
-    @Category({IntegrationTests.class})
+    @Tag("com.github.loki4j.testkit.categories.IntegrationTests")
     public void testApacheJsonMaxBytesSend() throws Exception {
         var label = "testApacheJsonMaxBytesSend";
 
@@ -45,7 +43,7 @@ public class BatchSizeTest {
     }
 
     @Test
-    @Category({IntegrationTests.class})
+    @Tag("com.github.loki4j.testkit.categories.IntegrationTests")
     public void testJavaProtobufMaxBytesSend() throws Exception {
         var label = "testJavaProtobufMaxBytesSend";
 

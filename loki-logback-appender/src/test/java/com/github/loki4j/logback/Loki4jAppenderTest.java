@@ -1,14 +1,14 @@
 package com.github.loki4j.logback;
 
 import static com.github.loki4j.logback.Generators.*;
-import static org.junit.Assert.*;
+import static org.junit.jupiter.api.Assertions.*;
 
 import java.util.concurrent.atomic.AtomicReference;
 import java.util.concurrent.BrokenBarrierException;
 import java.util.concurrent.ExecutionException;
 import java.util.concurrent.TimeoutException;
 
-import org.junit.Test;
+import org.junit.jupiter.api.Test;
 
 import com.github.loki4j.client.pipeline.PipelineConfig;
 import com.github.loki4j.client.util.OrderedMap;
@@ -63,11 +63,11 @@ public class Loki4jAppenderTest {
             var sendCapture = sender.captureSendInvocation();
             appender.append(events[0]);
             appender.append(events[1]);
-            assertTrue("no batches before batchSize reached", sender.lastSendData() == null);
+            assertTrue(sender.lastSendData() == null, "no batches before batchSize reached");
 
             appender.append(events[2]);
             var send = sendCapture.waitForNextSend(100);
-            assertEquals("batchSize", expected, StringPayload.parse(send.data));
+            assertEquals(expected, StringPayload.parse(send.data), "batchSize");
             return null;
         });
     }
@@ -79,13 +79,13 @@ public class Loki4jAppenderTest {
             appender.append(events[0]);
             appender.append(events[1]);
             appender.append(events[2]);
-            assertTrue("no batches before batchTimeout reached", sender.lastSendData() == null);
+            assertTrue(sender.lastSendData() == null, "no batches before batchTimeout reached");
 
             try { Thread.sleep(300L); } catch (InterruptedException e1) { }
-            assertTrue("no batches before batchTimeout reached", sender.lastSendData() == null);
+            assertTrue( sender.lastSendData() == null, "no batches before batchTimeout reached");
 
             try { Thread.sleep(300L); } catch (InterruptedException e1) { }
-            assertEquals("batchTimeout", expected, StringPayload.parse(sender.lastSendData()));
+            assertEquals(expected, StringPayload.parse(sender.lastSendData()), "batchTimeout");
             return null;
         });
     }
@@ -98,13 +98,13 @@ public class Loki4jAppenderTest {
         appender.append(events[0]);
         appender.append(events[1]);
         appender.append(events[2]);
-        assertTrue("no batches before stop", sender.lastSendData() == null);
+        assertTrue(sender.lastSendData() == null, "no batches before stop");
 
         try { Thread.sleep(300L); } catch (InterruptedException e1) { }
-        assertTrue("no batches before stop", sender.lastSendData() == null);
+        assertTrue(sender.lastSendData() == null, "no batches before stop");
 
         appender.stop();
-        assertEquals("batchTimeout", expected, StringPayload.parse(sender.lastSendData()));
+        assertEquals(expected, StringPayload.parse(sender.lastSendData()), "batchTimeout");
     }
 
     @Test
@@ -138,14 +138,14 @@ public class Loki4jAppenderTest {
         appender.append(events[0]);
         appender.append(events[1]);
         appender.append(events[2]);
-        assertTrue("no batches before stop", sender.lastSendData() == null);
+        assertTrue(sender.lastSendData() == null, "no batches before stop");
 
         try { Thread.sleep(300L); } catch (InterruptedException e1) { }
-        assertTrue("no batches before stop", sender.lastSendData() == null);
+        assertTrue(sender.lastSendData() == null, "no batches before stop");
 
         failingWriterRef.get().fail.set(false);
         appender.stop();
-        assertEquals("batchTimeout", expected, StringPayload.parse(sender.lastSendData()));
+        assertEquals(expected, StringPayload.parse(sender.lastSendData()), "batchTimeout");
     }
 
     @Test
@@ -157,13 +157,13 @@ public class Loki4jAppenderTest {
         appender.append(events[0]);
         appender.append(events[1]);
         appender.append(events[2]);
-        assertTrue("no batches before stop", sender.lastSendData() == null);
+        assertTrue(sender.lastSendData() == null, "no batches before stop");
 
         try { Thread.sleep(300L); } catch (InterruptedException e1) { }
-        assertTrue("no batches before stop", sender.lastSendData() == null);
+        assertTrue(sender.lastSendData() == null, "no batches before stop");
 
         appender.stop();
-        assertTrue("no batches after stop", sender.lastSendData() == null);
+        assertTrue(sender.lastSendData() == null, "no batches after stop");
     }
 
     @Test
@@ -189,7 +189,7 @@ public class Loki4jAppenderTest {
         appender.append(events[2]);
 
         var send = sendCapture.waitForNextSend(100);
-        assertEquals("batchSize", expected, StringPayload.parse(send.data));
+        assertEquals(expected, StringPayload.parse(send.data), "batchSize");
 
         appender.stop();
     }
@@ -225,7 +225,7 @@ public class Loki4jAppenderTest {
         sender.client.resume();
         try { Thread.sleep(100L); } catch (InterruptedException e1) { }
 
-        assertEquals("some events dropped", 3, appender.droppedEventsCount());
+        assertEquals(3, appender.droppedEventsCount(), "some events dropped");
 
         appender.stop();
     }
@@ -257,30 +257,30 @@ public class Loki4jAppenderTest {
         appender.append(events[0]);
 
         var send1 =  sendCapture.waitForNextSend(100);
-        assertEquals("send", 1, send1.sendNo);
-        assertEquals("send", expectedPayload, StringPayload.parse(send1.data));
+        assertEquals(1, send1.sendNo, "send");
+        assertEquals(expectedPayload, StringPayload.parse(send1.data), "send");
 
         var send2 = send1.waitForNextSend(100);
-        assertEquals("retry1", 2, send2.sendNo);
-        assertEquals("retry1", expectedPayload, StringPayload.parse(send2.data));
+        assertEquals(2, send2.sendNo, "retry1");
+        assertEquals(expectedPayload, StringPayload.parse(send2.data), "retry1");
 
         var send3 = send2.waitForNextSend(150);
-        assertEquals("retry2", 3, send3.sendNo);
-        assertEquals("retry2", expectedPayload, StringPayload.parse(send3.data));
+        assertEquals(3, send3.sendNo, "retry2");
+        assertEquals(expectedPayload, StringPayload.parse(send3.data), "retry2");
 
         // first retry is successful
 
         appender.append(events[1]);
 
         var send4 =  send3.waitForNextSend(100);
-        assertEquals("send-2", 4, send4.sendNo);
-        assertEquals("send-2", expectedPayload2, StringPayload.parse(send4.data));
+        assertEquals(4, send4.sendNo, "send-2");
+        assertEquals(expectedPayload2, StringPayload.parse(send4.data), "send-2");
 
         sender.client.setFailure(FailureType.NONE);
 
         var send5 = send4.waitForNextSend(100);
-        assertEquals("retry1-2", 5, send5.sendNo);
-        assertEquals("retry1-2", expectedPayload2, StringPayload.parse(send5.data));
+        assertEquals(5, send5.sendNo, "retry1-2");
+        assertEquals(expectedPayload2, StringPayload.parse(send5.data), "retry1-2");
 
         appender.stop();
     }
@@ -306,16 +306,16 @@ public class Loki4jAppenderTest {
         appender.append(events[0]);
 
         var send1 =  sendCapture.waitForNextSend(100);
-        assertEquals("send", 1, send1.sendNo);
-        assertEquals("send", expectedPayload, StringPayload.parse(send1.data));
+        assertEquals(1, send1.sendNo, "send");
+        assertEquals(expectedPayload, StringPayload.parse(send1.data), "send");
 
         var send2 = send1.waitForNextSend(150);
-        assertEquals("retry1", 2, send2.sendNo);
-        assertEquals("retry1", expectedPayload, StringPayload.parse(send2.data));
+        assertEquals(2, send2.sendNo, "retry1");
+        assertEquals(expectedPayload, StringPayload.parse(send2.data), "retry1");
 
         var send3 = send2.waitForNextSend(200);
-        assertEquals("retry2", 3, send3.sendNo);
-        assertEquals("retry2", expectedPayload, StringPayload.parse(send3.data));
+        assertEquals(3, send3.sendNo, "retry2");
+        assertEquals(expectedPayload, StringPayload.parse(send3.data), "retry2");
 
         appender.stop();
     }
@@ -341,16 +341,16 @@ public class Loki4jAppenderTest {
         appender.append(events[0]);
 
         var send1 =  sendCapture.waitForNextSend(100);
-        assertEquals("send", 1, send1.sendNo);
-        assertEquals("send", expectedPayload, StringPayload.parse(send1.data));
+        assertEquals(1, send1.sendNo, "send");
+        assertEquals(expectedPayload, StringPayload.parse(send1.data), "send");
 
         var send2 = send1.waitForNextSend(150);
-        assertEquals("retry1", 2, send2.sendNo);
-        assertEquals("retry1", expectedPayload, StringPayload.parse(send2.data));
+        assertEquals(2, send2.sendNo, "retry1");
+        assertEquals(expectedPayload, StringPayload.parse(send2.data), "retry1");
 
         var send3 = send2.waitForNextSend(200);
-        assertEquals("retry2", 3, send3.sendNo);
-        assertEquals("retry2", expectedPayload, StringPayload.parse(send3.data));
+        assertEquals(3, send3.sendNo, "retry2");
+        assertEquals(expectedPayload, StringPayload.parse(send3.data), "retry2");
 
         appender.stop();
     }

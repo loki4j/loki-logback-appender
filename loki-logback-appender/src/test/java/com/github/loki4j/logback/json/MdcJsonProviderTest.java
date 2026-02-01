@@ -1,11 +1,11 @@
 package com.github.loki4j.logback.json;
 
 import static com.github.loki4j.logback.Generators.loggingEvent;
-import static org.junit.Assert.assertEquals;
-import static org.junit.Assert.assertFalse;
-import static org.junit.Assert.assertTrue;
+import static org.junit.jupiter.api.Assertions.assertEquals;
+import static org.junit.jupiter.api.Assertions.assertFalse;
+import static org.junit.jupiter.api.Assertions.assertTrue;
 
-import org.junit.Test;
+import org.junit.jupiter.api.Test;
 
 import ch.qos.logback.classic.Level;
 
@@ -18,12 +18,12 @@ public class MdcJsonProviderTest {
         var provider = new MdcJsonProvider();
         provider.start();
 
-        assertFalse("canWrite", provider.canWrite(event));
+        assertFalse(provider.canWrite(event), "canWrite");
 
         var writer = new JsonEventWriter(0);
         provider.writeTo(writer, event, false);
 
-        assertEquals("writeTo", "", writer.toString());
+        assertEquals("", writer.toString(), "writeTo");
 
         provider.stop();
     }
@@ -36,12 +36,12 @@ public class MdcJsonProviderTest {
         var provider = new MdcJsonProvider();
         provider.start();
 
-        assertTrue("canWrite", provider.canWrite(event));
+        assertTrue(provider.canWrite(event), "canWrite");
 
         var writer = new JsonEventWriter(0);
         provider.writeTo(writer, event, false);
 
-        assertEquals("writeTo", "\"mdc_property1\":\"value1\"", writer.toString());
+        assertEquals("\"mdc_property1\":\"value1\"", writer.toString(), "writeTo");
 
         provider.stop();
     }
@@ -56,12 +56,12 @@ public class MdcJsonProviderTest {
         provider.addExclude("property2");
         provider.start();
 
-        assertTrue("canWrite", provider.canWrite(event));
+        assertTrue(provider.canWrite(event), "canWrite");
 
         var writer = new JsonEventWriter(0);
         provider.writeTo(writer, event, false);
 
-        assertEquals("writeTo", "\"mdc_property1\":\"value1\"", writer.toString());
+        assertEquals("\"mdc_property1\":\"value1\"", writer.toString(), "writeTo");
 
         provider.stop();
     }
@@ -76,12 +76,12 @@ public class MdcJsonProviderTest {
         provider.addInclude("property1");
         provider.start();
 
-        assertTrue("canWrite", provider.canWrite(event));
+        assertTrue(provider.canWrite(event), "canWrite");
 
         var writer = new JsonEventWriter(0);
         provider.writeTo(writer, event, false);
 
-        assertEquals("writeTo", "\"mdc_property1\":\"value1\"", writer.toString());
+        assertEquals("\"mdc_property1\":\"value1\"", writer.toString(), "writeTo");
 
         provider.stop();
     }
@@ -95,12 +95,12 @@ public class MdcJsonProviderTest {
         provider.setNoPrefix(true);
         provider.start();
 
-        assertTrue("canWrite", provider.canWrite(event));
+        assertTrue(provider.canWrite(event), "canWrite");
 
         var writer = new JsonEventWriter(0);
         provider.writeTo(writer, event, false);
 
-        assertEquals("writeTo", "\"property1\":\"value1\"", writer.toString());
+        assertEquals("\"property1\":\"value1\"", writer.toString(), "writeTo");
 
         provider.stop();
     }

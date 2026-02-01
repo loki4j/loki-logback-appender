@@ -2,7 +2,7 @@ package com.github.loki4j.logback.integration;
 
 import static java.util.stream.Collectors.toSet;
 import static com.github.loki4j.logback.Generators.*;
-import static org.junit.Assert.*;
+import static org.junit.jupiter.api.Assertions.*;
 
 import java.io.IOException;
 import java.net.URI;
@@ -161,15 +161,17 @@ public class LokiTestingClient {
         var resp = parseResponse(queryRecords(lbl, events.length, time));
         //System.out.println(req + "\n\n");
         //System.out.println(resp);
-        assertEquals(lbl + " status", "success", resp.status);
-        assertEquals(lbl + " result type", "streams", resp.data.resultType);
-        assertEquals(lbl + " stream",
-            req.streams.stream().map(s -> s.stream).collect(toSet()),
-            resp.data.result.stream().map(s -> s.stream).collect(toSet()));
-        assertEquals(lbl + " event count",
-            req.streams.stream().mapToInt(s -> s.values.size()).sum(),
-            resp.data.result.stream().mapToInt(s -> s.values.size()).sum());
-        assertEquals(lbl + " content", req.streams, resp.data.result);
+        assertEquals("success", resp.status, lbl + " status");
+        assertEquals("streams", resp.data.resultType, lbl + " result type");
+        assertEquals(
+                req.streams.stream().map(s -> s.stream).collect(toSet()),
+                resp.data.result.stream().map(s -> s.stream).collect(toSet()),
+                lbl + " stream");
+        assertEquals(
+                req.streams.stream().mapToInt(s -> s.values.size()).sum(),
+                resp.data.result.stream().mapToInt(s -> s.values.size()).sum(),
+                lbl + " event count");
+        assertEquals(req.streams, resp.data.result, lbl + " content");
     }
 
     public static class Stream {

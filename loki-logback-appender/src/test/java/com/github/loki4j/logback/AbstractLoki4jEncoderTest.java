@@ -1,6 +1,6 @@
 package com.github.loki4j.logback;
 
-import org.junit.Test;
+import org.junit.jupiter.api.Test;
 import org.slf4j.event.KeyValuePair;
 
 import com.github.loki4j.client.util.OrderedMap;
@@ -12,7 +12,7 @@ import com.github.loki4j.testkit.dummy.StringPayload.StringLogRecord;
 import ch.qos.logback.classic.Level;
 import ch.qos.logback.classic.spi.ILoggingEvent;
 
-import static org.junit.Assert.*;
+import static org.junit.jupiter.api.Assertions.*;
 
 import java.util.Arrays;
 import java.util.LinkedHashMap;
@@ -28,7 +28,7 @@ public class AbstractLoki4jEncoderTest {
         var event = loggingEvent(105L, Level.INFO, "test.TestApp", "thread-1", "Test message 1", null);
 
         var sender = dummySender();
-        assertThrows("KV separation failed", IllegalArgumentException.class, () -> withAppender(
+        assertThrows(IllegalArgumentException.class, () -> withAppender(
             appender(
                 "level=%level\napp=",
                 null,
@@ -37,8 +37,8 @@ public class AbstractLoki4jEncoderTest {
                 http(sender)), appender -> {
                     appender.append(event);
                     return null;
-            }));
-        assertThrows("Converter parsing failed", IllegalArgumentException.class, () -> withAppender(
+            }), "KV separation failed");
+        assertThrows(IllegalArgumentException.class, () -> withAppender(
             appender(
                 "level=%lev{,app=x",
                 null,
@@ -47,7 +47,7 @@ public class AbstractLoki4jEncoderTest {
                 http(sender)), appender -> {
                     appender.append(event);
                     return null;
-                }));
+                }), "Converter parsing failed");
     }
 
     @Test
@@ -128,7 +128,6 @@ public class AbstractLoki4jEncoderTest {
             appender.append(events);
             appender.waitAllAppended();
             assertEquals(
-                    "dynamic labels, no sort",
                     StringPayload.builder()
                             .stream(OrderedMap.of("l", "INFO", "stcmrk", "stat-val"),
                                     "ts=100 INFO | Test message 1",
@@ -138,7 +137,8 @@ public class AbstractLoki4jEncoderTest {
                             .stream(OrderedMap.of("l", "INFO", "mrk1", "v1", "mrk2", "v2"),
                                     "ts=104 INFO | Test message 4")
                             .build(),
-                    StringPayload.parse(sender.lastSendData()));
+                    StringPayload.parse(sender.lastSendData()),
+                    "dynamic labels, no sort");
             // System.out.println(new String(sender.lastBatch()));
             return null;
         });
@@ -171,7 +171,6 @@ public class AbstractLoki4jEncoderTest {
             appender.append(events);
             appender.waitAllAppended();
             assertEquals(
-                    "dynamic labels, no sort",
                     StringPayload.builder()
                             .streamWithMeta(OrderedMap.of("l", "INFO"),
                                     StringLogRecord.of("ts=103 INFO | Test message 2",
@@ -180,7 +179,8 @@ public class AbstractLoki4jEncoderTest {
                                             OrderedMap.of("t", "thread-1", "c", "test.TestApp", "mrk1", "v1", "mrk2",
                                                     "v2")))
                             .build(),
-                    StringPayload.parse(sender.lastSendData()));
+                    StringPayload.parse(sender.lastSendData()),
+                    "dynamic labels, no sort");
             // System.out.println(new String(sender.lastBatch()));
             return null;
         });
@@ -207,13 +207,13 @@ public class AbstractLoki4jEncoderTest {
             appender.append(events);
             appender.waitAllAppended();
             assertEquals(
-                    "dynamic labels, no sort",
                     StringPayload.builder()
                             .streamWithMeta(OrderedMap.of("l", "INFO", "label", "label-val"),
                                     StringLogRecord.of("ts=103 INFO | Test message 2",
                                             OrderedMap.of("t", "thread-2", "c", "test.TestApp", "meta", "meta-val")))
                             .build(),
-                    StringPayload.parse(sender.lastSendData()));
+                    StringPayload.parse(sender.lastSendData()),
+                    "dynamic labels, no sort");
             // System.out.println(new String(sender.lastBatch()));
             return null;
         });
@@ -243,7 +243,6 @@ public class AbstractLoki4jEncoderTest {
             appender.append(eventsToOrder);
             appender.waitAllAppended();
             assertEquals(
-                    "static labels, no sort",
                     StringPayload.builder()
                             .stream(OrderedMap.of("l", "INFO"),
                                     "ts=105 INFO | Test message 1",
@@ -253,7 +252,8 @@ public class AbstractLoki4jEncoderTest {
                                     "ts=103 ERROR | Test message 5",
                                     "ts=110 INFO | Test message 6")
                             .build(),
-                    StringPayload.parse(sender.lastSendData()));
+                    StringPayload.parse(sender.lastSendData()),
+                    "static labels, no sort");
             return null;
         });
 
@@ -268,7 +268,6 @@ public class AbstractLoki4jEncoderTest {
                     appender.append(eventsToOrder);
                     appender.waitAllAppended();
                     assertEquals(
-                            "dynamic labels, no sort",
                             StringPayload.builder()
                                     .stream(OrderedMap.of("l", "INFO"),
                                             "ts=105 INFO | Test message 1",
@@ -281,7 +280,8 @@ public class AbstractLoki4jEncoderTest {
                                     .stream(OrderedMap.of("l", "ERROR"),
                                             "ts=103 ERROR | Test message 5")
                                     .build(),
-                            StringPayload.parse(sender.lastSendData()));
+                            StringPayload.parse(sender.lastSendData()),
+                            "dynamic labels, no sort");
                     return null;
                 });
     }
@@ -306,13 +306,13 @@ public class AbstractLoki4jEncoderTest {
             appender.append(new ILoggingEvent[] { event });
             appender.waitAllAppended();
             assertEquals(
-                    "mdc+kvp",
                     StringPayload.builder()
                             .streamWithMeta(OrderedMap.of("c", "test.TestApp", "mdc1", "mdcValue1", "mdc2", "mdcValue2"),
                                     StringLogRecord.of("ts=103 Test message 2",
                                             OrderedMap.of("t", "thread-2", "kvp1", "kvpValue1", "kvp2", "kvpValue2")))
                             .build(),
-                    StringPayload.parse(sender.lastSendData()));
+                    StringPayload.parse(sender.lastSendData()),
+                    "mdc+kvp");
             // System.out.println(new String(sender.lastBatch()));
             return null;
         });
@@ -332,12 +332,12 @@ public class AbstractLoki4jEncoderTest {
             appender.append(new ILoggingEvent[] { event });
             appender.waitAllAppended();
             assertEquals(
-                    "mdc+kvp",
                     StringPayload.builder()
                             .streamWithMeta(OrderedMap.of("c", "test.TestApp"),
                                     StringLogRecord.of("ts=103 Test message 2", OrderedMap.of("t", "thread-2")))
                             .build(),
-                    StringPayload.parse(sender.lastSendData()));
+                    StringPayload.parse(sender.lastSendData()),
+                    "mdc+kvp");
             // System.out.println(new String(sender.lastBatch()));
             return null;
         });
@@ -363,13 +363,13 @@ public class AbstractLoki4jEncoderTest {
             appender.append(new ILoggingEvent[] { event });
             appender.waitAllAppended();
             assertEquals(
-                    "mdc+kvp",
                     StringPayload.builder()
                             .streamWithMeta(OrderedMap.of("c", "test.TestApp", "kvp_kvp1", "kvpValue1"),
                                     StringLogRecord.of("ts=103 Test message 2",
                                             OrderedMap.of("t", "thread-2", "mdc_mdc1", "mdcValue1")))
                             .build(),
-                    StringPayload.parse(sender.lastSendData()));
+                    StringPayload.parse(sender.lastSendData()),
+                    "mdc+kvp");
             // System.out.println(new String(sender.lastBatch()));
             return null;
         });

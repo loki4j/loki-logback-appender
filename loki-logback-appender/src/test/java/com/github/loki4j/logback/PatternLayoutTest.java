@@ -1,11 +1,11 @@
 package com.github.loki4j.logback;
 
 import static com.github.loki4j.logback.Generators.*;
-import static org.junit.Assert.*;
+import static org.junit.jupiter.api.Assertions.*;
 
 import java.nio.charset.StandardCharsets;
 
-import org.junit.Test;
+import org.junit.jupiter.api.Test;
 
 import ch.qos.logback.classic.Level;
 import ch.qos.logback.classic.spi.ILoggingEvent;

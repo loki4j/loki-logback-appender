@@ -9,12 +9,12 @@ import com.github.loki4j.testkit.dummy.StringPayload;
 import static com.github.loki4j.logback.Generators.*;
 import static com.github.loki4j.logback.Loki4jAppenderTest.*;
 
-import org.junit.AfterClass;
-import org.junit.Before;
-import org.junit.BeforeClass;
-import org.junit.Test;
+import org.junit.jupiter.api.AfterAll;
+import org.junit.jupiter.api.BeforeEach;
+import org.junit.jupiter.api.BeforeAll;
+import org.junit.jupiter.api.Test;
 
-import static org.junit.Assert.*;
+import static org.junit.jupiter.api.Assertions.*;
 
 public class JavaHttpAppenderTest {
 
@@ -22,7 +22,7 @@ public class JavaHttpAppenderTest {
     private static LokiHttpServerMock mockLoki;
     private static String url;
 
-    @BeforeClass
+    @BeforeAll
     public static void startMockLoki() {
         testPort = 20_000 + new Random().nextInt(10_000);
         mockLoki = lokiMock(testPort);
@@ -31,12 +31,12 @@ public class JavaHttpAppenderTest {
         url = String.format("http://localhost:%s/loki/api/v1/push", testPort);
     }
 
-    @AfterClass
+    @AfterAll
     public static void stopMockLoki() {
         mockLoki.stop();
     }
 
-    @Before
+    @BeforeEach
     public void resetMockLoki() {
         mockLoki.reset();
     }
@@ -46,11 +46,11 @@ public class JavaHttpAppenderTest {
         withAppender(appender(batch(3, 1000L), http(url, stringFormat(), javaSender())), a -> {
             a.append(events[0]);
             a.append(events[1]);
-            assertTrue("no batches before batchSize reached", mockLoki.lastBatch == null);
+            assertTrue(mockLoki.lastBatch == null, "no batches before batchSize reached");
 
             a.append(events[2]);
             a.waitAllAppended();
-            assertEquals("http send", expected, StringPayload.parse(mockLoki.lastBatch));
+            assertEquals(expected, StringPayload.parse(mockLoki.lastBatch), "http send");
             return null;
         });
     }
@@ -62,11 +62,11 @@ public class JavaHttpAppenderTest {
         withAppender(appender, a -> {
             a.append(events[0]);
             a.append(events[1]);
-            assertTrue("no batches before batchSize reached", mockLoki.lastBatch == null);
+            assertTrue(mockLoki.lastBatch == null, "no batches before batchSize reached");
 
             a.append(events[2]);
             a.waitAllAppended();
-            assertEquals("http send", expected, StringPayload.parse(mockLoki.lastBatch));
+            assertEquals(expected, StringPayload.parse(mockLoki.lastBatch), "http send");
             return null;
         });
     }
@@ -78,7 +78,7 @@ public class JavaHttpAppenderTest {
         withAppender(appender(batch(3, 1000L), http), a -> {
             a.append(events);
             a.waitAllAppended();
-            assertEquals("http send", expected, StringPayload.parse(mockLoki.lastBatch));
+            assertEquals(expected, StringPayload.parse(mockLoki.lastBatch), "http send");
             assertTrue(mockLoki.lastHeaders
                 .get(HttpHeader.X_SCOPE_ORGID)
                 .contains("tenant1"));

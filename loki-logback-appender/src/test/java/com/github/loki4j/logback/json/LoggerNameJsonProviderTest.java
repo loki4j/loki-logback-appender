@@ -1,9 +1,9 @@
 package com.github.loki4j.logback.json;
 
 import static com.github.loki4j.logback.Generators.loggingEvent;
-import static org.junit.Assert.*;
+import static org.junit.jupiter.api.Assertions.*;
 
-import org.junit.Test;
+import org.junit.jupiter.api.Test;
 
 import ch.qos.logback.classic.Level;
 import ch.qos.logback.classic.spi.ILoggingEvent;

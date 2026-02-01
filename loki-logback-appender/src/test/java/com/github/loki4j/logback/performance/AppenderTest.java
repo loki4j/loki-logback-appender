@@ -13,8 +13,8 @@ import com.github.loki4j.testkit.benchmark.Benchmarker;
 import com.github.loki4j.testkit.benchmark.Benchmarker.Benchmark;
 import com.github.loki4j.testkit.categories.PerformanceTests;
 
-import org.junit.Test;
-import org.junit.experimental.categories.Category;
+import org.junit.jupiter.api.Test;
+import org.junit.jupiter.api.Tag;
 
 import ch.qos.logback.classic.spi.ILoggingEvent;
 
@@ -37,7 +37,7 @@ public class AppenderTest {
     }
 
     @Test
-    @Category({PerformanceTests.class})
+    @Tag("com.github.loki4j.testkit.categories.PerformanceTests")
     public void singleThreadPerformance() throws Exception {
         var capacity = 1000;
 
@@ -68,7 +68,7 @@ public class AppenderTest {
     }
 
     @Test
-    @Category({PerformanceTests.class})
+    @Tag("com.github.loki4j.testkit.categories.PerformanceTests")
     public void multiThreadPerformance() throws Exception {
         var capacity = 1000;
 
