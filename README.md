@@ -36,7 +36,7 @@ Please start with the [Contribution guidelines](CONTRIBUTING.md).
 Please make sure the following software is installed on your machine
 so you can build and test the project:
 
-- Java 11 or later
+- Java 17 or later
 
 Check out the project in the directory on your local machine and run:
 
