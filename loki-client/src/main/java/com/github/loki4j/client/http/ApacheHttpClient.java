@@ -3,19 +3,23 @@ package com.github.loki4j.client.http;
 import java.nio.ByteBuffer;
 import java.util.function.Supplier;
 
-import org.apache.http.HttpResponse;
-import org.apache.http.client.config.RequestConfig;
-import org.apache.http.client.methods.HttpPost;
-import org.apache.http.conn.ConnectionKeepAliveStrategy;
-import org.apache.http.entity.ByteArrayEntity;
-import org.apache.http.impl.client.CloseableHttpClient;
-import org.apache.http.impl.client.HttpClients;
-import org.apache.http.impl.conn.PoolingHttpClientConnectionManager;
-import org.apache.http.protocol.HttpContext;
-import org.apache.http.util.EntityUtils;
+import org.apache.hc.client5.http.ConnectionKeepAliveStrategy;
+import org.apache.hc.client5.http.classic.methods.HttpPost;
+import org.apache.hc.client5.http.config.RequestConfig;
+import org.apache.hc.client5.http.impl.classic.CloseableHttpClient;
+import org.apache.hc.client5.http.impl.classic.HttpClients;
+import org.apache.hc.client5.http.impl.io.PoolingHttpClientConnectionManager;
+import org.apache.hc.core5.http.ContentType;
+import org.apache.hc.core5.http.HttpResponse;
+import org.apache.hc.core5.http.io.entity.ByteArrayEntity;
+import org.apache.hc.core5.http.io.entity.EntityUtils;
+import org.apache.hc.core5.http.protocol.HttpContext;
+import org.apache.hc.core5.util.TimeValue;
+import java.util.concurrent.TimeUnit;
+
 
 /**
- * Loki sender that is backed by Apache {@link org.apache.http.client.HttpClient HttpClient}
+ * Loki sender that is backed by Apache {@link org.apache.hc.client5.http.classic.HttpClient HttpClient}
  */
 public final class ApacheHttpClient implements Loki4jHttpClient {
 
@@ -41,15 +45,15 @@ public final class ApacheHttpClient implements Loki4jHttpClient {
             .setConnectionManager(cm)
             .setKeepAliveStrategy(new ConnectionKeepAliveStrategy() {
                 @Override
-                public long getKeepAliveDuration(HttpResponse response, HttpContext context) {
-                    return conf.apache().connectionKeepAliveMs;
+                public TimeValue getKeepAliveDuration(HttpResponse response, HttpContext context) {
+                    return TimeValue.of(conf.apache().connectionKeepAliveMs, TimeUnit.MILLISECONDS);
                 }
             })
             .setDefaultRequestConfig(RequestConfig
                 .custom()
-                .setSocketTimeout((int)conf.connectionTimeoutMs)
-                .setConnectTimeout((int)conf.connectionTimeoutMs)
-                .setConnectionRequestTimeout((int)conf.requestTimeoutMs)
+                .setResponseTimeout(conf.connectionTimeoutMs, TimeUnit.MILLISECONDS)
+                .setConnectTimeout(conf.connectionTimeoutMs, TimeUnit.MILLISECONDS)
+                .setConnectionRequestTimeout(conf.requestTimeoutMs, TimeUnit.MILLISECONDS)
                 .build())
             .build();
 
@@ -71,19 +75,19 @@ public final class ApacheHttpClient implements Loki4jHttpClient {
     public LokiResponse send(ByteBuffer batch) throws Exception {
         var request = requestBuilder.get();
         if (batch.hasArray()) {
-            request.setEntity(new ByteArrayEntity(batch.array(), batch.position(), batch.remaining()));
+            request.setEntity(new ByteArrayEntity(batch.array(), batch.position(), batch.remaining(), ContentType.parse(conf.contentType)));
         } else {
             var len = batch.remaining();
             if (len > bodyBuffer.length)
                 bodyBuffer = new byte[len];
             batch.get(bodyBuffer, 0, len);
-            request.setEntity(new ByteArrayEntity(bodyBuffer, 0, len));
+            request.setEntity(new ByteArrayEntity(bodyBuffer, 0, len, ContentType.parse(conf.contentType)));
         }
 
         var r = client.execute(request);
         var entity = r.getEntity();
         return new LokiResponse(
-            r.getStatusLine().getStatusCode(),
+            r.getCode(),
             entity != null ? EntityUtils.toString(entity) : "");
     }
 

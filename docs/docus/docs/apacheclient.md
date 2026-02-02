@@ -16,16 +16,16 @@ In this case, you need to ensure you have added the required dependencies to you
 
 ```xml
 <dependency>
-    <groupId>org.apache.httpcomponents</groupId>
-    <artifactId>httpclient</artifactId>
-    <version>4.5.14</version>
+    <groupId>org.apache.httpcomponents.client5</groupId>
+    <artifactId>httpclient5</artifactId>
+    <version>5.5.2</version>
 </dependency>
 ```
 
 <!--Gradle-->
 
 ```groovy
-implementation 'org.apache.httpcomponents:httpclient:4.5.14'
+implementation 'org.apache.httpcomponents.client5:httpclient5:5.6'
 ```
 <!--END_DOCUSAURUS_CODE_TABS-->
 
