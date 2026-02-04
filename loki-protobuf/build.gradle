@@ -64,6 +64,7 @@ tasks.withType(JavaCompile) {
 
 tasks.withType(Test) {
     systemProperty "file.encoding", "UTF-8"
+    failOnNoDiscoveredTests = false
 }
 
 tasks.withType(Javadoc) {
