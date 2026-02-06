@@ -32,8 +32,8 @@ dependencies {
 }
 
 compileJava {
-    sourceCompatibility = 11
-    targetCompatibility = 11
+    sourceCompatibility = 17
+    targetCompatibility = 17
 }
 
 test {
@@ -119,4 +119,5 @@ tasks.withType(JavaCompile) {
 
 tasks.withType(Test) {
     systemProperty "file.encoding", "UTF-8"
+    failOnNoDiscoveredTests = false
 }

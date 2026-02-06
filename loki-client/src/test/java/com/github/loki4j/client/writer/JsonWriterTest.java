@@ -1,9 +1,9 @@
 package com.github.loki4j.client.writer;
 
-import org.junit.Test;
+import org.junit.jupiter.api.Test;
 
 import static com.github.loki4j.client.batch.LogRecord.create;
-import static org.junit.Assert.*;
+import static org.junit.jupiter.api.Assertions.*;
 
 import java.util.Map;
 
@@ -35,13 +35,13 @@ public class JsonWriterTest {
     @Test
     public void testWriteBatch() {
         var writer = new JsonWriter(1000);
-        assertEquals("initial size is 0", 0, writer.size());
+        assertEquals(0, writer.size(), "initial size is 0");
 
         writer.serializeBatch(batch);
         //assertEquals("size is correct", expectedJson.getBytes().length, writer.size());
 
         var actualJson = new String(writer.toByteArray());
-        assertEquals("encoded json", expectedJson, actualJson);
+        assertEquals(expectedJson, actualJson, "encoded json");
     }
     
     @Test
@@ -62,7 +62,7 @@ public class JsonWriterTest {
             "[['100000000','l=INFO c=test.TestApp t=thread-1 | Test message']]}]}"
         ).replace('\'', '"');
 
-        assertEquals("single record", expected, actual);
+        assertEquals(expected, actual, "single record");
     }
 
     @Test
@@ -84,7 +84,7 @@ public class JsonWriterTest {
             "[['100000000','спец !@#$%^&*()\\' \\n\\tсимволы <>?/\\\\№ё:{}[]🏁']]}]}"
         ).replace('\'', '"');
 
-        assertEquals("single record", expected, actual);
+        assertEquals(expected, actual, "single record");
     }
 
     @Test
@@ -108,6 +108,6 @@ public class JsonWriterTest {
             "]]}]}"
         ).replace('\'', '"');
 
-        assertEquals("single record", expected, actual);
+        assertEquals(expected, actual, "single record");
     }
 }

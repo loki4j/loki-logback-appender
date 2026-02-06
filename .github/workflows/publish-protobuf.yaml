@@ -47,11 +47,11 @@ jobs:
       matrix: ${{fromJson(needs.check-pb.outputs.matrix)}}
     steps:
       - uses: actions/checkout@v4
-      - name: Set up JDK 11
+      - name: Set up JDK
         uses: actions/setup-java@v4
         with:
           distribution: temurin
-          java-version: 11
+          java-version: 17
       - name: Setup Gradle
         uses: gradle/actions/setup-gradle@v4
       - name: Build with Gradle

@@ -19,7 +19,7 @@ dependencyResolutionManagement {
             library('apache-httpclient5', 'org.apache.httpcomponents.client5:httpclient5:5.5.2')
             library('micrometer', 'io.micrometer:micrometer-core:1.15.8')
 
-            library('junit', 'junit:junit:4.13.2')
+            library('junit', 'org.junit.jupiter:junit-jupiter-api:6.0.1')
             library('jackson', 'com.fasterxml.jackson.core:jackson-databind:2.21.0')
             library('logstash', 'net.logstash.logback:logstash-logback-encoder:8.1')
 
@@ -27,6 +27,7 @@ dependencyResolutionManagement {
         }
     }
 }
+
 
 def tempProjects = new File(rootDir, 'temp')
 if (tempProjects.exists()) {

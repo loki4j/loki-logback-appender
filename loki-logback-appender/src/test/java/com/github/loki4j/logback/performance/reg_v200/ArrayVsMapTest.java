@@ -10,8 +10,8 @@ import com.github.loki4j.testkit.benchmark.Benchmarker;
 import com.github.loki4j.testkit.benchmark.Benchmarker.Benchmark;
 import com.github.loki4j.testkit.categories.PerformanceTests;
 
-import org.junit.Test;
-import org.junit.experimental.categories.Category;
+import org.junit.jupiter.api.Test;
+import org.junit.jupiter.api.Tag;
 
 import ch.qos.logback.classic.spi.ILoggingEvent;
 
@@ -33,7 +33,7 @@ public class ArrayVsMapTest {
 
 
     @Test
-    @Category({PerformanceTests.class})
+    @Tag("com.github.loki4j.testkit.categories.PerformanceTests")
     public void singleThreadPerformance() throws Exception {
         var stats = Benchmarker.run(new Benchmarker.Config<ILoggingEvent>() {{
             this.runs = 100;
@@ -41,7 +41,7 @@ public class ArrayVsMapTest {
             this.generator = () -> InfiniteEventIterator.from(generateEvents(10_000, 10)).limited(100_000);
             this.benchmarks = Arrays.asList(
                 Benchmark.of("maps-new2",
-                    () -> initApp("app=my-app", "t=%thread,c=%logger"),
+                    () -> initApp("app=my-app", "t=%thread\nc=%logger"),
                     (a, e) -> a.append(e),
                     a -> a.waitAllAppended(),
                     a -> a.stop())
