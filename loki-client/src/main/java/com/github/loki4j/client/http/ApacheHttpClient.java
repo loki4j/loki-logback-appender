@@ -1,27 +1,30 @@
 package com.github.loki4j.client.http;
 
 import java.nio.ByteBuffer;
-import java.util.function.Supplier;
 
-import org.apache.http.HttpResponse;
-import org.apache.http.client.config.RequestConfig;
-import org.apache.http.client.methods.HttpPost;
-import org.apache.http.conn.ConnectionKeepAliveStrategy;
-import org.apache.http.entity.ByteArrayEntity;
-import org.apache.http.impl.client.CloseableHttpClient;
-import org.apache.http.impl.client.HttpClients;
-import org.apache.http.impl.conn.PoolingHttpClientConnectionManager;
-import org.apache.http.protocol.HttpContext;
-import org.apache.http.util.EntityUtils;
+import org.apache.hc.client5.http.ConnectionKeepAliveStrategy;
+import org.apache.hc.client5.http.async.methods.SimpleHttpResponse;
+import org.apache.hc.client5.http.async.methods.SimpleRequestBuilder;
+import org.apache.hc.client5.http.config.RequestConfig;
+import org.apache.hc.client5.http.impl.async.CloseableHttpAsyncClient;
+import org.apache.hc.client5.http.impl.async.HttpAsyncClients;
+import org.apache.hc.client5.http.impl.nio.PoolingAsyncClientConnectionManager;
+import org.apache.hc.core5.concurrent.FutureCallback;
+import org.apache.hc.core5.http.ContentType;
+import org.apache.hc.core5.http.HttpResponse;
+import org.apache.hc.core5.http.protocol.HttpContext;
+import org.apache.hc.core5.util.TimeValue;
+import java.util.concurrent.TimeUnit;
+
 
 /**
- * Loki sender that is backed by Apache {@link org.apache.http.client.HttpClient HttpClient}
+ * Loki sender that is backed by Apache {@link org.apache.hc.client5.http.classic.HttpClient HttpClient}
  */
 public final class ApacheHttpClient implements Loki4jHttpClient {
 
     private final HttpConfig conf;
-    private final CloseableHttpClient client;
-    private final Supplier<HttpPost> requestBuilder;
+    private final CloseableHttpAsyncClient client;
+    private final SimpleRequestBuilder requestBuilder;
 
     /**
      * Buffer is needed for turning ByteBuffer into byte array
@@ -32,34 +35,32 @@ public final class ApacheHttpClient implements Loki4jHttpClient {
     public ApacheHttpClient(HttpConfig conf) {
         this.conf = conf;
 
-        var cm = new PoolingHttpClientConnectionManager();
+        var cm = new PoolingAsyncClientConnectionManager();
         cm.setMaxTotal(conf.apache().maxConnections);
         cm.setDefaultMaxPerRoute(conf.apache().maxConnections);
 
-        client = HttpClients
+        client = HttpAsyncClients
             .custom()
             .setConnectionManager(cm)
             .setKeepAliveStrategy(new ConnectionKeepAliveStrategy() {
                 @Override
-                public long getKeepAliveDuration(HttpResponse response, HttpContext context) {
-                    return conf.apache().connectionKeepAliveMs;
+                public TimeValue getKeepAliveDuration(HttpResponse response, HttpContext context) {
+                    return TimeValue.of(conf.apache().connectionKeepAliveMs, TimeUnit.MILLISECONDS);
                 }
             })
             .setDefaultRequestConfig(RequestConfig
                 .custom()
-                .setSocketTimeout((int)conf.connectionTimeoutMs)
-                .setConnectTimeout((int)conf.connectionTimeoutMs)
-                .setConnectionRequestTimeout((int)conf.requestTimeoutMs)
+                .setResponseTimeout(conf.connectionTimeoutMs, TimeUnit.MILLISECONDS)
+                .setConnectTimeout(conf.connectionTimeoutMs, TimeUnit.MILLISECONDS)
+                .setConnectionRequestTimeout(conf.requestTimeoutMs, TimeUnit.MILLISECONDS)
                 .build())
             .build();
 
-        requestBuilder = () -> {
-            var request = new HttpPost(conf.pushUrl);
-            request.addHeader(HttpHeader.CONTENT_TYPE, conf.contentType);
-            conf.tenantId.ifPresent(tenant -> request.addHeader(HttpHeader.X_SCOPE_ORGID, tenant));
-            conf.basicAuthToken().ifPresent(token -> request.setHeader(HttpHeader.AUTHORIZATION, "Basic " + token));
-            return request;
-        };
+        requestBuilder = SimpleRequestBuilder
+                .post(conf.pushUrl)
+                .addHeader(HttpHeader.CONTENT_TYPE, conf.contentType);
+        conf.tenantId.ifPresent(tenant -> requestBuilder.addHeader(HttpHeader.X_SCOPE_ORGID, tenant));
+        conf.basicAuthToken().ifPresent(token -> requestBuilder.setHeader(HttpHeader.AUTHORIZATION, "Basic " + token));
     }
 
     @Override
@@ -69,22 +70,36 @@ public final class ApacheHttpClient implements Loki4jHttpClient {
 
     @Override
     public LokiResponse send(ByteBuffer batch) throws Exception {
-        var request = requestBuilder.get();
         if (batch.hasArray()) {
-            request.setEntity(new ByteArrayEntity(batch.array(), batch.position(), batch.remaining()));
+            requestBuilder.setBody(batch.array(), ContentType.parse(conf.contentType));
         } else {
             var len = batch.remaining();
             if (len > bodyBuffer.length)
                 bodyBuffer = new byte[len];
             batch.get(bodyBuffer, 0, len);
-            request.setEntity(new ByteArrayEntity(bodyBuffer, 0, len));
+            requestBuilder.setBody(bodyBuffer, ContentType.parse(conf.contentType));
         }
 
-        var r = client.execute(request);
-        var entity = r.getEntity();
+        var r = client.execute(requestBuilder.build(), new FutureCallback<>() {
+            @Override
+            public void completed(SimpleHttpResponse result) {
+
+            }
+
+            @Override
+            public void failed(Exception ex) {
+                throw new RuntimeException(ex);
+            }
+
+            @Override
+            public void cancelled() {
+
+            }
+        });
+        var response = r.get();
         return new LokiResponse(
-            r.getStatusLine().getStatusCode(),
-            entity != null ? EntityUtils.toString(entity) : "");
+                response.getCode(),
+                response.getBodyText());
     }
 
     @Override
