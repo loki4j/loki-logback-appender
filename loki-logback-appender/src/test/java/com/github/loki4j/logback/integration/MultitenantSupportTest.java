@@ -1,6 +1,5 @@
 package com.github.loki4j.logback.integration;
 
-import com.github.loki4j.testkit.categories.CIOnlyTests;
 import org.junit.jupiter.api.AfterAll;
 import org.junit.jupiter.api.BeforeAll;
 import org.junit.jupiter.api.Test;
@@ -8,6 +7,7 @@ import org.junit.jupiter.api.Tag;
 
 import static com.github.loki4j.logback.Generators.*;
 
+@Tag("ci-only")
 public class MultitenantSupportTest {
 
     private static String urlBase = "http://localhost:3110/loki/api/v1";
@@ -27,7 +27,6 @@ public class MultitenantSupportTest {
     }
 
     @Test
-    @Tag("com.github.loki4j.testkit.categories.CIOnlyTests")
     public void testJavaJsonSendWithTenant() throws Exception {
         var label = "testJavaJsonSendWithTenant";
         var http = http(urlPush, jsonFormat(), javaSender());
@@ -39,7 +38,6 @@ public class MultitenantSupportTest {
     }
 
     @Test
-    @Tag("com.github.loki4j.testkit.categories.CIOnlyTests")
     public void testApacheProtobufSendWithTenant() throws Exception {
         var label = "testApacheProtobufSendWithTenant";
         var http = http(urlPush, protobufFormat(), apacheSender());

@@ -40,6 +40,7 @@ public abstract class AbstractKeyValueMarker implements Marker {
     }
 
     @Override
+    @Deprecated
     public boolean hasChildren() {
         return false;
     }
