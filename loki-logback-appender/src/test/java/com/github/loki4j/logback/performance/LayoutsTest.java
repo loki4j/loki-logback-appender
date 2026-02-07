@@ -4,8 +4,8 @@ import static com.github.loki4j.logback.Generators.generateEvents;
 
 import java.util.Arrays;
 
-import org.junit.Test;
-import org.junit.experimental.categories.Category;
+import org.junit.jupiter.api.Test;
+import org.junit.jupiter.api.Tag;
 
 import com.github.loki4j.logback.JsonLayout;
 import com.github.loki4j.logback.Generators.InfiniteEventIterator;
@@ -29,7 +29,7 @@ public class LayoutsTest {
     }
 
     @Test
-    @Category({PerformanceTests.class})
+    @Tag("com.github.loki4j.testkit.categories.PerformanceTests")
     public void layoutPerformance() throws Exception {
         var statsLayouts = Benchmarker.run(new Benchmarker.Config<ILoggingEvent>() {{
             this.runs = 100;
@@ -57,7 +57,7 @@ public class LayoutsTest {
     }
 
     @Test
-    @Category({PerformanceTests.class})
+    @Tag("com.github.loki4j.testkit.categories.PerformanceTests")
     public void multiThreadedLayoutPerformance() throws Exception {
         var statsLayouts = Benchmarker.run(new Benchmarker.Config<ILoggingEvent>() {{
             this.runs = 100;

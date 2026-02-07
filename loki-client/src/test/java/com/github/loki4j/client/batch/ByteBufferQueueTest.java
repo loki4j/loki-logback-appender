@@ -1,8 +1,8 @@
 package com.github.loki4j.client.batch;
 
-import org.junit.Test;
+import org.junit.jupiter.api.Test;
 
-import static org.junit.Assert.*;
+import static org.junit.jupiter.api.Assertions.*;
 
 import java.nio.ByteBuffer;
 
@@ -25,65 +25,65 @@ public class ByteBufferQueueTest {
     @Test
     public void testMaxSize() {
         var queue = new ByteBufferQueue(10, new ByteBufferFactory(false));
-        assertEquals("no elements added yet", 0, queue.getSizeBytes());
+        assertEquals(0, queue.getSizeBytes(), "no elements added yet");
         
-        assertTrue("can add batch 0", queue.offer(0, 1, 4, bb -> write(bb, new byte[] {0, 1, 2, 3})));
-        assertEquals("4 bytes added", 4, queue.getSizeBytes());
+        assertTrue(queue.offer(0, 1, 4, bb -> write(bb, new byte[] {0, 1, 2, 3})), "can add batch 0");
+        assertEquals(4, queue.getSizeBytes(), "4 bytes added");
 
-        assertTrue("can add batch 1", queue.offer(1, 1, 4, bb -> write(bb, new byte[] {4, 5, 6, 7})));
-        assertEquals("8 bytes added", 8, queue.getSizeBytes());
+        assertTrue(queue.offer(1, 1, 4, bb -> write(bb, new byte[] {4, 5, 6, 7})), "can add batch 1");
+        assertEquals(8, queue.getSizeBytes(), "8 bytes added");
 
-        assertFalse("can not add batch 2", queue.offer(2, 1, 4, bb -> write(bb, new byte[] {8, 9, 10, 11})));
-        assertEquals("still 8 bytes added", 8, queue.getSizeBytes());
+        assertFalse(queue.offer(2, 1, 4, bb -> write(bb, new byte[] {8, 9, 10, 11})), "can not add batch 2");
+        assertEquals(8, queue.getSizeBytes(), "still 8 bytes added");
 
         var binBatch0 = queue.borrowBuffer();
-        assertEquals("batch id", 0, binBatch0.batchId);
-        assertEquals("batch items", 1, binBatch0.sizeItems);
-        assertEquals("batch bytes", 4, binBatch0.sizeBytes);
-        assertArrayEquals("batch data", new byte[] {0, 1, 2, 3}, read(binBatch0));
+        assertEquals(0, binBatch0.batchId, "batch id");
+        assertEquals(1, binBatch0.sizeItems, "batch items");
+        assertEquals(4, binBatch0.sizeBytes, "batch bytes");
+        assertArrayEquals(new byte[] {0, 1, 2, 3}, read(binBatch0), "batch data");
         queue.returnBuffer(binBatch0);
 
-        assertTrue("can add batch 2", queue.offer(2, 1, 4, bb -> write(bb, new byte[] {8, 9, 10, 11})));
-        assertEquals("again 8 bytes added", 8, queue.getSizeBytes());
+        assertTrue(queue.offer(2, 1, 4, bb -> write(bb, new byte[] {8, 9, 10, 11})), "can add batch 2");
+        assertEquals(8, queue.getSizeBytes(), "again 8 bytes added");
 
         var binBatch1 = queue.borrowBuffer();
-        assertEquals("batch id", 1, binBatch1.batchId);
-        assertEquals("batch items", 1, binBatch1.sizeItems);
-        assertEquals("batch bytes", 4, binBatch1.sizeBytes);
-        assertArrayEquals("batch data", new byte[] {4, 5, 6, 7}, read(binBatch1));
+        assertEquals(1, binBatch1.batchId, "batch id");
+        assertEquals(1, binBatch1.sizeItems, "batch items");
+        assertEquals(4, binBatch1.sizeBytes, "batch bytes");
+        assertArrayEquals(new byte[] {4, 5, 6, 7}, read(binBatch1), "batch data");
         queue.returnBuffer(binBatch1);
 
         var binBatch2 = queue.borrowBuffer();
-        assertEquals("batch id", 2, binBatch2.batchId);
-        assertEquals("batch items", 1, binBatch2.sizeItems);
-        assertEquals("batch bytes", 4, binBatch2.sizeBytes);
-        assertArrayEquals("batch data", new byte[] {8, 9, 10, 11}, read(binBatch2));
+        assertEquals(2, binBatch2.batchId, "batch id");
+        assertEquals(1, binBatch2.sizeItems, "batch items");
+        assertEquals(4, binBatch2.sizeBytes, "batch bytes");
+        assertArrayEquals(new byte[] {8, 9, 10, 11}, read(binBatch2), "batch data");
         queue.returnBuffer(binBatch2);
     }
 
     @Test
     public void testBatchReuse() {
         var queue = new ByteBufferQueue(10, new ByteBufferFactory(false));
-        assertEquals("no buffer added yet", null, queue.borrowBuffer());
-        assertEquals("no batches in pool yet", 0, queue.poolSize());
+        assertEquals(null, queue.borrowBuffer(), "no buffer added yet");
+        assertEquals(0, queue.poolSize(), "no batches in pool yet");
 
-        assertTrue("can add batch 0", queue.offer(0, 1, 4, bb -> write(bb, new byte[] {0, 1, 2, 3})));
-        assertEquals("4 bytes added", 4, queue.getSizeBytes());
+        assertTrue(queue.offer(0, 1, 4, bb -> write(bb, new byte[] {0, 1, 2, 3})), "can add batch 0");
+        assertEquals(4, queue.getSizeBytes(), "4 bytes added");
 
-        assertTrue("can add batch 1", queue.offer(1, 1, 4, bb -> write(bb, new byte[] {4, 5, 6, 7})));
-        assertEquals("8 bytes added", 8, queue.getSizeBytes());
-        assertEquals("no batches in pool yet", 0, queue.poolSize());
+        assertTrue(queue.offer(1, 1, 4, bb -> write(bb, new byte[] {4, 5, 6, 7})), "can add batch 1");
+        assertEquals(8, queue.getSizeBytes(), "8 bytes added");
+        assertEquals(0, queue.poolSize(), "no batches in pool yet");
 
         var binBatch0 = queue.borrowBuffer();
         queue.returnBuffer(binBatch0);
-        assertEquals("1 batch in pool", 1, queue.poolSize());
+        assertEquals(1, queue.poolSize(), "1 batch in pool");
         var binBatch1 = queue.borrowBuffer();
         queue.returnBuffer(binBatch1);
-        assertEquals("still 1 batch in pool", 1, queue.poolSize());
+        assertEquals(1, queue.poolSize(), "still 1 batch in pool");
 
-        assertTrue("can add batch 2", queue.offer(2, 1, 8, bb -> write(bb, new byte[] {0, 1, 2, 3, 4, 5, 6, 7})));
-        assertEquals("8 bytes added", 8, queue.getSizeBytes());
-        assertEquals("batch from pool reused", 0, queue.poolSize());
+        assertTrue(queue.offer(2, 1, 8, bb -> write(bb, new byte[] {0, 1, 2, 3, 4, 5, 6, 7})), "can add batch 2");
+        assertEquals(8, queue.getSizeBytes(), "8 bytes added");
+        assertEquals(0, queue.poolSize(), "batch from pool reused");
     }
     
 }
