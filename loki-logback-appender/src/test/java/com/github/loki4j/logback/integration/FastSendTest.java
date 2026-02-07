@@ -4,13 +4,13 @@ import static com.github.loki4j.logback.Generators.*;
 import static org.junit.jupiter.api.Assertions.*;
 
 import com.github.loki4j.logback.Loki4jAppender;
-import com.github.loki4j.testkit.categories.IntegrationTests;
 
 import org.junit.jupiter.api.AfterAll;
 import org.junit.jupiter.api.BeforeAll;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.Tag;
 
+@Tag("integration")
 public class FastSendTest {
 
     private static String urlBase = "http://localhost:3100/loki/api/v1";
@@ -29,7 +29,6 @@ public class FastSendTest {
     }
 
     @Test
-    @Tag("com.github.loki4j.testkit.categories.IntegrationTests")
     public void testJavaJsonOneEventSend() throws Exception {
         var label = "testJavaJsonOneEventSend";
         var appender = appender(label, batch(10, 1000), http(urlPush, jsonFormat(), javaSender()));
@@ -40,7 +39,6 @@ public class FastSendTest {
 
 
     @Test
-    @Tag("com.github.loki4j.testkit.categories.IntegrationTests")
     public void testApacheJsonFastSend() throws Exception {
         var label = "testApacheJsonFastSend";
         var appender = appender(label, batch(10, 1000), http(urlPush, jsonFormat(), apacheSender()));
@@ -52,7 +50,6 @@ public class FastSendTest {
     }
 
     @Test
-    @Tag("com.github.loki4j.testkit.categories.IntegrationTests")
     public void testJavaJsonFastSend() throws Exception {
         var label = "testJavaJsonFastSend";
         var appender = appender(label, batch(10, 1000), http(urlPush, jsonFormat(), javaSender()));
@@ -62,7 +59,6 @@ public class FastSendTest {
     }
 
     @Test
-    @Tag("com.github.loki4j.testkit.categories.IntegrationTests")
     public void testApacheProtobufFastSend() throws Exception {
         var label = "testApacheProtobufFastSend";
         var appender = appender(label, batch(10, 1000), http(urlPush, protobufFormat(), apacheSender()));
@@ -72,7 +68,6 @@ public class FastSendTest {
     }
 
     @Test
-    @Tag("com.github.loki4j.testkit.categories.IntegrationTests")
     public void testJavaProtobufFastSend() throws Exception {
         var label = "testJavaProtobufFastSend";
         var appender = appender(label, batch(10, 1000), http(urlPush, protobufFormat(), javaSender()));
@@ -82,7 +77,6 @@ public class FastSendTest {
     }
 
     @Test
-    @Tag("com.github.loki4j.testkit.categories.IntegrationTests")
     public void testJsonLayoutJsonFastSend() throws Exception {
         var label = "testJsonLayoutJsonFastSend";
         var appender = appender(
@@ -103,7 +97,6 @@ public class FastSendTest {
     }
 
     @Test
-    @Tag("com.github.loki4j.testkit.categories.IntegrationTests")
     public void testJsonLayoutProtobufFastSend() throws Exception {
         var label = "testJsonLayoutProtobufFastSend";
         var appender = appender(
