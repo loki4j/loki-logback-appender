@@ -42,7 +42,7 @@ public class KeyValuePairsJsonProviderTest {
         var writer = new JsonEventWriter(0);
         provider.writeTo(writer, event, false);
 
-        assertEquals("writeTo", "\"kvp_property1\":\"value1\"", writer.toString());
+        assertEquals("\"kvp_property1\":\"value1\"", writer.toString(), "writeTo");
 
         provider.stop();
     }
@@ -64,7 +64,7 @@ public class KeyValuePairsJsonProviderTest {
         var writer = new JsonEventWriter(0);
         provider.writeTo(writer, event, false);
 
-        assertEquals("writeTo", "\"kvp_property1\":\"value1\"", writer.toString());
+        assertEquals("\"kvp_property1\":\"value1\"", writer.toString(), "writeTo");
 
         provider.stop();
     }
@@ -87,7 +87,7 @@ public class KeyValuePairsJsonProviderTest {
         var writer = new JsonEventWriter(0);
         provider.writeTo(writer, event, false);
 
-        assertEquals("writeTo", "\"key_value_property1\":\"value1\"", writer.toString());
+        assertEquals("\"key_value_property1\":\"value1\"", writer.toString(), "writeTo");
 
         provider.stop();
     }
