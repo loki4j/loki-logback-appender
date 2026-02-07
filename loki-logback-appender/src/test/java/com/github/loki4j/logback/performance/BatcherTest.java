@@ -10,13 +10,13 @@ import com.github.loki4j.client.batch.LogRecordBatch;
 import com.github.loki4j.logback.Loki4jAppender;
 import com.github.loki4j.testkit.benchmark.Benchmarker;
 import com.github.loki4j.testkit.benchmark.Benchmarker.Benchmark;
-import com.github.loki4j.testkit.categories.PerformanceTests;
 
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.Tag;
 
 import ch.qos.logback.classic.LoggerContext;
 
+@Tag("performance")
 public class BatcherTest {
 
     private static Loki4jAppender initEnc() {
@@ -28,7 +28,6 @@ public class BatcherTest {
     }
 
     @Test
-    @Tag("com.github.loki4j.testkit.categories.PerformanceTests")
     public void singleThreadPerformance() throws Exception {
         var batchSize = 1000;
         var batch = new LogRecordBatch(batchSize);

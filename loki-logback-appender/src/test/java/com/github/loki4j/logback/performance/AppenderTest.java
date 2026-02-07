@@ -11,13 +11,13 @@ import com.github.loki4j.logback.Generators.InfiniteEventIterator;
 import com.github.loki4j.logback.Generators;
 import com.github.loki4j.testkit.benchmark.Benchmarker;
 import com.github.loki4j.testkit.benchmark.Benchmarker.Benchmark;
-import com.github.loki4j.testkit.categories.PerformanceTests;
 
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.Tag;
 
 import ch.qos.logback.classic.spi.ILoggingEvent;
 
+@Tag("performance")
 public class AppenderTest {
 
     private final static WriterFactory STRING_WRITER = new WriterFactory(Generators::stringWriter, "text/plain");
@@ -37,7 +37,6 @@ public class AppenderTest {
     }
 
     @Test
-    @Tag("com.github.loki4j.testkit.categories.PerformanceTests")
     public void singleThreadPerformance() throws Exception {
         var capacity = 1000;
 
@@ -68,7 +67,6 @@ public class AppenderTest {
     }
 
     @Test
-    @Tag("com.github.loki4j.testkit.categories.PerformanceTests")
     public void multiThreadPerformance() throws Exception {
         var capacity = 1000;
 
