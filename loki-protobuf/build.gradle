@@ -2,7 +2,7 @@ plugins {
     id 'java-library'
     id 'maven-publish'
     id 'signing'
-    id "com.google.protobuf" version "0.9.5"
+    id "com.google.protobuf" version "0.9.6"
 }
 
 def pbVersion = rootProject.hasProperty('pbVersion')
@@ -30,6 +30,8 @@ dependencies {
 
     testImplementation libs.junit
     testImplementation libs.bundles.pluggable
+
+    testRuntimeOnly libs.junitpl
 }
 
 compileJava {
@@ -64,7 +66,7 @@ tasks.withType(JavaCompile) {
 
 tasks.withType(Test) {
     systemProperty "file.encoding", "UTF-8"
-    failOnNoDiscoveredTests = false
+    useJUnitPlatform()
 }
 
 tasks.withType(Javadoc) {

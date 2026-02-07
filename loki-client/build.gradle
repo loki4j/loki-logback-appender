@@ -14,6 +14,8 @@ dependencies {
 
     testImplementation libs.junit
     testImplementation libs.bundles.pluggable
+
+    testRuntimeOnly libs.junitpl
 }
 
 compileJava {
@@ -24,10 +26,10 @@ compileJava {
 test {
     testLogging {
         events "failed"
-        showExceptions true
-        showCauses true
-        showStackTraces true
-        exceptionFormat "full"
+        showExceptions = true
+        showCauses = true
+        showStackTraces = true
+        exceptionFormat = "full"
     }
 }
 
@@ -47,5 +49,5 @@ tasks.withType(JavaCompile) {
 
 tasks.withType(Test) {
     systemProperty "file.encoding", "UTF-8"
-    failOnNoDiscoveredTests = false
+    useJUnitPlatform()
 }
