@@ -38,6 +38,7 @@ compileJava {
     targetCompatibility = 17
 }
 
+
 test {
     testLogging {
         showExceptions = true
@@ -50,6 +51,44 @@ test {
         excludeTags 'integration', 'performance', 'ci-only'
     }
 }
+
+task integTests(type: Test) {
+    description = 'Run integration tests'
+    useJUnitPlatform {
+        includeTags 'integration'
+    }
+    maxHeapSize = "2G"
+    testLogging.exceptionFormat = "full"
+
+    testClassesDirs = testing.suites.test.sources.output.classesDirs
+    classpath = testing.suites.test.sources.runtimeClasspath
+}
+
+task perfTests(type: Test) {
+    description = 'Run performance tests'
+    useJUnitPlatform {
+        includeTags 'performance'
+    }
+    forkEvery = 1
+    maxHeapSize = "3G"
+    testLogging.showStandardStreams = true
+
+    testClassesDirs = testing.suites.test.sources.output.classesDirs
+    classpath = testing.suites.test.sources.runtimeClasspath
+}
+
+task ciOnlyTests(type: Test) {
+    description = 'Run CI-bound tests'
+    useJUnitPlatform {
+        includeTags 'ci-only'
+    }
+    testLogging.exceptionFormat = "full"
+    testLogging.showStandardStreams = true
+
+    testClassesDirs = testing.suites.test.sources.output.classesDirs
+    classpath = testing.suites.test.sources.runtimeClasspath
+}
+
 
 java {
     withJavadocJar()
@@ -64,34 +103,6 @@ jacocoTestReport {
     reports {
         xml.required = true
     }
-}
-
-task integTests(type: Test) {
-    description = 'Run integration tests'
-    useJUnitPlatform {
-        includeTags 'integration'
-    }
-    maxHeapSize = "2G"
-    testLogging.exceptionFormat = "full"
-}
-
-task perfTests(type: Test) {
-    description = 'Run performance tests'
-    useJUnitPlatform {
-        includeTags 'performance'
-    }
-    forkEvery = 1
-    maxHeapSize = "3G"
-    testLogging.showStandardStreams = true
-}
-
-task ciOnlyTests(type: Test) {
-    description = 'Run CI-bound tests'
-    useJUnitPlatform {
-        includeTags 'ci-only'
-    }
-    testLogging.exceptionFormat = "full"
-    testLogging.showStandardStreams = true
 }
 
 apply from: '../gradle/publishing.gradle'
