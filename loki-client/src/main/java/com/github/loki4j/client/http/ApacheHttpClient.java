@@ -71,13 +71,14 @@ public final class ApacheHttpClient implements Loki4jHttpClient {
     @Override
     public LokiResponse send(ByteBuffer batch) throws Exception {
         var len = batch.remaining();
-        if (len > bodyBuffer.length)
-            bodyBuffer = new byte[len];
+
         var offset = 0;
         if (batch.hasArray()) {
             offset = batch.position();
         }
+        bodyBuffer = new byte[len - offset];
         batch.get(bodyBuffer, offset, len);
+
         requestBuilder.setBody(bodyBuffer, ContentType.parse(conf.contentType));
 
 
