@@ -14,13 +14,13 @@ import com.github.loki4j.client.batch.LogRecord;
 import com.github.loki4j.logback.Generators.InfiniteEventIterator;
 import com.github.loki4j.testkit.benchmark.Benchmarker;
 import com.github.loki4j.testkit.benchmark.Benchmarker.Benchmark;
-import com.github.loki4j.testkit.categories.PerformanceTests;
 
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.Tag;
 
 import ch.qos.logback.classic.spi.ILoggingEvent;
 
+@Tag("performance")
 public class BatchBufferTest {
 
     public static LogRecord eventToRecord(ILoggingEvent e) {
@@ -33,7 +33,6 @@ public class BatchBufferTest {
     }
 
     @Test
-    @Tag("com.github.loki4j.testkit.categories.PerformanceTests")
     public void singleThreadPerformance() throws Exception {
         var capacity = 1000;
         var clqCounter = new AtomicInteger(0);
@@ -70,7 +69,6 @@ public class BatchBufferTest {
     }
 
     @Test
-    @Tag("com.github.loki4j.testkit.categories.PerformanceTests")
     public void multiThreadPerformance() throws Exception {
         var capacity = 1000;
         var clqCounter = new AtomicInteger(0);

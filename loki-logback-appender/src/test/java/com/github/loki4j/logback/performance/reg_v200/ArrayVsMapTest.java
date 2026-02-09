@@ -8,13 +8,13 @@ import com.github.loki4j.logback.Generators.AppenderWrapper;
 import com.github.loki4j.logback.Generators.InfiniteEventIterator;
 import com.github.loki4j.testkit.benchmark.Benchmarker;
 import com.github.loki4j.testkit.benchmark.Benchmarker.Benchmark;
-import com.github.loki4j.testkit.categories.PerformanceTests;
 
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.Tag;
 
 import ch.qos.logback.classic.spi.ILoggingEvent;
 
+@Tag("performance")
 public class ArrayVsMapTest {
 
     private static AppenderWrapper initApp(String labelsPattern, String metadataPattern) {
@@ -33,7 +33,6 @@ public class ArrayVsMapTest {
 
 
     @Test
-    @Tag("com.github.loki4j.testkit.categories.PerformanceTests")
     public void singleThreadPerformance() throws Exception {
         var stats = Benchmarker.run(new Benchmarker.Config<ILoggingEvent>() {{
             this.runs = 100;

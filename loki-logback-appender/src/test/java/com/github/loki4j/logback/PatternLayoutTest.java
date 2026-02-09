@@ -40,7 +40,7 @@ public class PatternLayoutTest {
         var actual = new String(sender.lastSendData(), StandardCharsets.UTF_8);
         //System.out.println(expected);
         //System.out.println(actual);
-        assertEquals("escape", expected, actual);
+        assertEquals(expected, actual, "escape");
         appender.stop();
     }
 

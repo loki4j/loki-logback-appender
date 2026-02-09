@@ -16,13 +16,13 @@ import com.github.loki4j.client.writer.Writer;
 import com.github.loki4j.logback.Loki4jAppender;
 import com.github.loki4j.testkit.benchmark.Benchmarker;
 import com.github.loki4j.testkit.benchmark.Benchmarker.Benchmark;
-import com.github.loki4j.testkit.categories.PerformanceTests;
 
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.Tag;
 
 import ch.qos.logback.classic.LoggerContext;
 
+@Tag("performance")
 public class WritersTest {
 
     private static int CAPACITY_BYTES = 4 * 1024 * 1024;
@@ -44,7 +44,6 @@ public class WritersTest {
     }
 
     @Test
-    @Tag("com.github.loki4j.testkit.categories.PerformanceTests")
     public void serializePerformance() throws Exception {
         var batchSize = 1000;
 

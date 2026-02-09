@@ -29,12 +29,15 @@ dependencies {
     testImplementation libs.junit
     testImplementation libs.jackson
     testImplementation libs.logstash
+
+    testRuntimeOnly libs.junitpl
 }
 
 compileJava {
     sourceCompatibility = 17
     targetCompatibility = 17
 }
+
 
 test {
     testLogging {
@@ -44,10 +47,48 @@ test {
         exceptionFormat = "full"
         showStandardStreams = true
     }
-    useJUnit {
-        excludeCategories 'com.github.loki4j.testkit.categories.SlowTests'
+    useJUnitPlatform {
+        excludeTags 'integration', 'performance', 'ci-only'
     }
 }
+
+task integTests(type: Test) {
+    description = 'Run integration tests'
+    useJUnitPlatform {
+        includeTags 'integration'
+    }
+    maxHeapSize = "2G"
+    testLogging.exceptionFormat = "full"
+
+    testClassesDirs = testing.suites.test.sources.output.classesDirs
+    classpath = testing.suites.test.sources.runtimeClasspath
+}
+
+task perfTests(type: Test) {
+    description = 'Run performance tests'
+    useJUnitPlatform {
+        includeTags 'performance'
+    }
+    forkEvery = 1
+    maxHeapSize = "3G"
+    testLogging.showStandardStreams = true
+
+    testClassesDirs = testing.suites.test.sources.output.classesDirs
+    classpath = testing.suites.test.sources.runtimeClasspath
+}
+
+task ciOnlyTests(type: Test) {
+    description = 'Run CI-bound tests'
+    useJUnitPlatform {
+        includeTags 'ci-only'
+    }
+    testLogging.exceptionFormat = "full"
+    testLogging.showStandardStreams = true
+
+    testClassesDirs = testing.suites.test.sources.output.classesDirs
+    classpath = testing.suites.test.sources.runtimeClasspath
+}
+
 
 java {
     withJavadocJar()
@@ -62,34 +103,6 @@ jacocoTestReport {
     reports {
         xml.required = true
     }
-}
-
-task integTests(type: Test) {
-    description = 'Run integration tests'
-    useJUnit {
-        includeCategories 'com.github.loki4j.testkit.categories.IntegrationTests'
-    }
-    maxHeapSize = "2G"
-    testLogging.exceptionFormat = "full"
-}
-
-task perfTests(type: Test) {
-    description = 'Run performance tests'
-    useJUnit {
-        includeCategories 'com.github.loki4j.testkit.categories.PerformanceTests'
-    }
-    forkEvery = 1
-    maxHeapSize = "3G"
-    testLogging.showStandardStreams = true
-}
-
-task ciOnlyTests(type: Test) {
-    description = 'Run CI-bound tests'
-    useJUnit {
-        includeCategories 'com.github.loki4j.testkit.categories.CIOnlyTests'
-    }
-    testLogging.exceptionFormat = "full"
-    testLogging.showStandardStreams = true
 }
 
 apply from: '../gradle/publishing.gradle'
@@ -119,5 +132,4 @@ tasks.withType(JavaCompile) {
 
 tasks.withType(Test) {
     systemProperty "file.encoding", "UTF-8"
-    failOnNoDiscoveredTests = false
 }

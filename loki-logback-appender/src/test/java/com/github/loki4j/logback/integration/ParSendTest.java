@@ -7,13 +7,13 @@ import java.util.concurrent.CompletableFuture;
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
 
-import com.github.loki4j.testkit.categories.IntegrationTests;
 
 import org.junit.jupiter.api.AfterAll;
 import org.junit.jupiter.api.BeforeAll;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.Tag;
 
+@Tag("integration")
 public class ParSendTest {
 
     private static String urlBase = "http://localhost:3100/loki/api/v1";
@@ -32,7 +32,6 @@ public class ParSendTest {
     }
 
     @Test
-    @Tag("com.github.loki4j.testkit.categories.IntegrationTests")
     public void testJavaJsonParSend() throws Exception {
         var events = generateEvents(500, 500);
 
@@ -66,7 +65,6 @@ public class ParSendTest {
     }
 
     @Test
-    @Tag("com.github.loki4j.testkit.categories.IntegrationTests")
     public void testApacheJsonParSend() throws Exception {
         var events = generateEvents(500, 500);
 

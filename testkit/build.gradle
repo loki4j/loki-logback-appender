@@ -13,6 +13,8 @@ dependencies {
     implementation project(":loki-client")
 
     testImplementation libs.junit
+
+    testRuntimeOnly libs.junitpl
 }
 
 compileJava {
@@ -26,5 +28,5 @@ tasks.withType(JavaCompile) {
 
 tasks.withType(Test) {
     systemProperty "file.encoding", "UTF-8"
-    failOnNoDiscoveredTests = false
+    useJUnitPlatform()
 }

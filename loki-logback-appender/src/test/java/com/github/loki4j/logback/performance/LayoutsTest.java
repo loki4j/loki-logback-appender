@@ -11,7 +11,6 @@ import com.github.loki4j.logback.JsonLayout;
 import com.github.loki4j.logback.Generators.InfiniteEventIterator;
 import com.github.loki4j.testkit.benchmark.Benchmarker;
 import com.github.loki4j.testkit.benchmark.Benchmarker.Benchmark;
-import com.github.loki4j.testkit.categories.PerformanceTests;
 
 import ch.qos.logback.classic.LoggerContext;
 import ch.qos.logback.classic.PatternLayout;
@@ -20,6 +19,7 @@ import ch.qos.logback.core.Layout;
 
 import net.logstash.logback.layout.LogstashLayout;
 
+@Tag("performance")
 public class LayoutsTest {
 
     private static Layout<ILoggingEvent> initLayout(Layout<ILoggingEvent> l) {
@@ -29,7 +29,6 @@ public class LayoutsTest {
     }
 
     @Test
-    @Tag("com.github.loki4j.testkit.categories.PerformanceTests")
     public void layoutPerformance() throws Exception {
         var statsLayouts = Benchmarker.run(new Benchmarker.Config<ILoggingEvent>() {{
             this.runs = 100;
@@ -57,7 +56,6 @@ public class LayoutsTest {
     }
 
     @Test
-    @Tag("com.github.loki4j.testkit.categories.PerformanceTests")
     public void multiThreadedLayoutPerformance() throws Exception {
         var statsLayouts = Benchmarker.run(new Benchmarker.Config<ILoggingEvent>() {{
             this.runs = 100;

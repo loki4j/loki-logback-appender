@@ -8,6 +8,7 @@ import org.junit.jupiter.api.BeforeAll;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.Tag;
 
+@Tag("integration")
 public class BatchSizeTest {
 
     private static String urlBase = "http://localhost:3100/loki/api/v1";
@@ -26,7 +27,6 @@ public class BatchSizeTest {
     }
 
     @Test
-    @Tag("com.github.loki4j.testkit.categories.IntegrationTests")
     public void testApacheJsonMaxBytesSend() throws Exception {
         var label = "testApacheJsonMaxBytesSend";
 
@@ -43,7 +43,6 @@ public class BatchSizeTest {
     }
 
     @Test
-    @Tag("com.github.loki4j.testkit.categories.IntegrationTests")
     public void testJavaProtobufMaxBytesSend() throws Exception {
         var label = "testJavaProtobufMaxBytesSend";
 
