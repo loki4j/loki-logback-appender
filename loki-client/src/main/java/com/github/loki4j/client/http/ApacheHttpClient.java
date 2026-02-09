@@ -3,13 +3,11 @@ package com.github.loki4j.client.http;
 import java.nio.ByteBuffer;
 
 import org.apache.hc.client5.http.ConnectionKeepAliveStrategy;
-import org.apache.hc.client5.http.async.methods.SimpleHttpResponse;
 import org.apache.hc.client5.http.async.methods.SimpleRequestBuilder;
 import org.apache.hc.client5.http.config.RequestConfig;
 import org.apache.hc.client5.http.impl.async.CloseableHttpAsyncClient;
 import org.apache.hc.client5.http.impl.async.HttpAsyncClients;
 import org.apache.hc.client5.http.impl.nio.PoolingAsyncClientConnectionManager;
-import org.apache.hc.core5.concurrent.FutureCallback;
 import org.apache.hc.core5.http.ContentType;
 import org.apache.hc.core5.http.HttpResponse;
 import org.apache.hc.core5.http.protocol.HttpContext;
@@ -56,6 +54,8 @@ public final class ApacheHttpClient implements Loki4jHttpClient {
                 .build())
             .build();
 
+        client.start();
+
         requestBuilder = SimpleRequestBuilder
                 .post(conf.pushUrl)
                 .addHeader(HttpHeader.CONTENT_TYPE, conf.contentType);
@@ -80,22 +80,7 @@ public final class ApacheHttpClient implements Loki4jHttpClient {
             requestBuilder.setBody(bodyBuffer, ContentType.parse(conf.contentType));
         }
 
-        var r = client.execute(requestBuilder.build(), new FutureCallback<>() {
-            @Override
-            public void completed(SimpleHttpResponse result) {
-
-            }
-
-            @Override
-            public void failed(Exception ex) {
-                throw new RuntimeException(ex);
-            }
-
-            @Override
-            public void cancelled() {
-
-            }
-        });
+        var r = client.execute(requestBuilder.build(), null);
         var response = r.get();
         return new LokiResponse(
                 response.getCode(),
