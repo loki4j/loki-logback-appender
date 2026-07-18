@@ -3,7 +3,6 @@ package com.github.loki4j.client.pipeline;
 import java.util.function.BiFunction;
 import java.util.function.Function;
 
-import com.github.loki4j.client.http.ApacheHttpClient;
 import com.github.loki4j.client.http.HttpConfig;
 import com.github.loki4j.client.http.JavaHttpClient;
 import com.github.loki4j.client.http.Loki4jHttpClient;
@@ -25,11 +24,6 @@ public class PipelineConfig {
     public static final WriterFactory protobuf = new WriterFactory(
         (capacity, bbFactory) -> new ProtobufWriter(capacity, bbFactory),
         "application/x-protobuf");
-
-    public static final Function<HttpConfig, Loki4jHttpClient> defaultHttpClientFactory = cfg ->
-        (cfg.clientSpecific instanceof HttpConfig.JavaHttpConfig)
-        ? new JavaHttpClient(cfg)
-        : new ApacheHttpClient(cfg);
 
     public static HttpConfig.Builder apache(int maxConnections, long connectionKeepAliveMs) {
         return HttpConfig.builder()
@@ -213,7 +207,7 @@ public class PipelineConfig {
         private boolean metricsEnabled = false;
         private WriterFactory writer = json;
         private HttpConfig.Builder httpConfigBuilder = java(5 * 60_000);
-        private Function<HttpConfig, Loki4jHttpClient> httpClientFactory = defaultHttpClientFactory;
+        private Function<HttpConfig, Loki4jHttpClient> httpClientFactory = cfg -> new JavaHttpClient(cfg);
         private Function<Object, Loki4jLogger> internalLoggingFactory;
 
         public PipelineConfig build() {

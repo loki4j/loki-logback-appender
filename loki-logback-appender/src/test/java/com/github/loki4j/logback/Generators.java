@@ -125,6 +125,10 @@ public class Generators {
         return new ApacheHttpSender();
     }
 
+    public static ApacheHttp5Sender apache5Sender() {
+        return new ApacheHttp5Sender();
+    }
+
     public static DummyHttpSender dummySender() {
         return new DummyHttpSender();
     }

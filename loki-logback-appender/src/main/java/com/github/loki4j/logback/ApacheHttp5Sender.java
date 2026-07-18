@@ -2,15 +2,15 @@ package com.github.loki4j.logback;
 
 import java.util.function.Function;
 
-import com.github.loki4j.client.http.ApacheHttpClient;
+import com.github.loki4j.client.http.ApacheHttp5Client;
 import com.github.loki4j.client.http.HttpConfig;
 import com.github.loki4j.client.http.Loki4jHttpClient;
 import com.github.loki4j.client.pipeline.PipelineConfig;
 
 /**
- * A configurator for {@link com.github.loki4j.client.http.ApacheHttpClient ApacheHttpClient}
+ * A configurator for {@link com.github.loki4j.client.http.ApacheHttp5Client ApacheHttp5Client}
  */
-public class ApacheHttpSender implements HttpSender {
+public class ApacheHttp5Sender implements HttpSender {
 
     /**
      * Maximum number of HTTP connections setting for HttpClient
@@ -39,6 +39,6 @@ public class ApacheHttpSender implements HttpSender {
 
     @Override
     public Function<HttpConfig, Loki4jHttpClient> getHttpClientFactory() {
-        return cfg -> new ApacheHttpClient(cfg);
+        return cfg -> new ApacheHttp5Client(cfg);
     }
 }

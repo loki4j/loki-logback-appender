@@ -96,4 +96,37 @@ public class ParSendTest {
             assertEquals(fs[i].get(), "label");
         }
     }
+
+    @Test
+    public void testApache5JsonParSend() throws Exception {
+        var events = generateEvents(500, 500);
+
+        var parFactor = 8;
+        ExecutorService tp = Executors.newFixedThreadPool(parFactor);
+        var fs = new CompletableFuture[parFactor];
+        for (int i = 0; i < parFactor; i++) {
+            var idx = i;
+            var label = "testApache5JsonParSend" + idx;
+            var appender = appender(label, batch(10, 150_000), http(urlPush, jsonFormat(), apache5Sender()));
+
+            fs[i] = CompletableFuture
+                .supplyAsync(() -> {
+                    try {
+                        client.testHttpSend(
+                            label,
+                            events,
+                            appender,
+                            null,
+                            5,
+                            (parFactor - idx) + 500L);
+                    } catch (Exception e) {
+                        throw new RuntimeException(e);
+                    }
+                    return "label";
+                }, tp);
+        }
+        for (int i = 0; i < fs.length; i++) {
+            assertEquals(fs[i].get(), "label");
+        }
+    }
 }

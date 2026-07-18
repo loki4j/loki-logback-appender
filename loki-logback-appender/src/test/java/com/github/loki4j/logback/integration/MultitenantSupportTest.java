@@ -47,4 +47,15 @@ public class MultitenantSupportTest {
         var events = generateEvents(20, 20);
         client.testHttpSend(label, events, appender);
     }
+
+    @Test
+    public void testApache5ProtobufSendWithTenant() throws Exception {
+        var label = "testApache5ProtobufSendWithTenant";
+        var http = http(urlPush, protobufFormat(), apache5Sender());
+        http.setTenantId(tenant);
+        var appender = appender(label, batch(10, 1000), http);
+
+        var events = generateEvents(20, 20);
+        client.testHttpSend(label, events, appender);
+    }
 }

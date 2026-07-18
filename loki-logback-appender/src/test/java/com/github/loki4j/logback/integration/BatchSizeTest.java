@@ -43,6 +43,38 @@ public class BatchSizeTest {
     }
 
     @Test
+    public void testApache5JsonMaxBytesSend() throws Exception {
+        var label = "testApache5JsonMaxBytesSend";
+
+        var http = http(urlPush, jsonFormat(), apache5Sender());
+        http.setRequestTimeoutMs(30_000L);
+        var batch = batch(5_000, 1000);
+        batch.setSendQueueMaxBytes(100 * 1024 * 1024);
+        var appender = appender(label, batch, http);
+
+        var events = generateEvents(5_000, 2000);
+        client.testHttpSend(label, events, appender);
+
+        assertTrue(true);
+    }
+
+    @Test
+    public void testApache5ProtobufMaxBytesSend() throws Exception {
+        var label = "testApache5ProtobufMaxBytesSend";
+
+        var http = http(urlPush, protobufFormat(), apache5Sender());
+        http.setRequestTimeoutMs(30_000L);
+        var batch = batch(5_000, 1000);
+        batch.setSendQueueMaxBytes(100 * 1024 * 1024);
+        var appender = appender(label, batch, http);
+
+        var events = generateEvents(5_000, 2000);
+        client.testHttpSend(label, events, appender);
+
+        assertTrue(true);
+    }
+
+    @Test
     public void testJavaProtobufMaxBytesSend() throws Exception {
         var label = "testJavaProtobufMaxBytesSend";
 
