@@ -9,7 +9,6 @@ import com.github.loki4j.logback.PipelineConfigAppenderBase.HttpCfg;
 
 import org.junit.jupiter.api.AfterAll;
 import org.junit.jupiter.api.BeforeAll;
-import org.junit.jupiter.api.Disabled;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.Tag;
 
@@ -236,7 +235,6 @@ public class GrafanaCloudTest {
     }
 
     @Test
-    @Disabled("Disabled due to unpredictable stream sharding on Grafana Cloud Loki side")
     public void testJavaProtobufMaxBytesSend() throws Exception {
         var label = label("testJavaProtobufMaxBytesSendCloud");
         var http = authorize(http(urlPush, protobufFormat(), javaSender()));
