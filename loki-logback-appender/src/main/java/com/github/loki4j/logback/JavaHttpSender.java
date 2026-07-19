@@ -3,6 +3,7 @@ package com.github.loki4j.logback;
 import java.util.function.Function;
 
 import com.github.loki4j.client.http.HttpConfig;
+import com.github.loki4j.client.http.JavaHttpClient;
 import com.github.loki4j.client.http.Loki4jHttpClient;
 import com.github.loki4j.client.pipeline.PipelineConfig;
 
@@ -28,6 +29,6 @@ public class JavaHttpSender implements HttpSender {
 
     @Override
     public Function<HttpConfig, Loki4jHttpClient> getHttpClientFactory() {
-        return PipelineConfig.defaultHttpClientFactory;
+        return cfg -> new JavaHttpClient(cfg);
     }
 }

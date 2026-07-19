@@ -158,6 +158,7 @@ public class LokiTestingClient {
         var req = parseRequest(reqStr.get());
         var lastIdx = records.length - 1;
         var time = String.format("%s%06d", records[lastIdx].timestampMs + 100, 0);
+        Thread.sleep(300); // wait for loki to process the request
         var resp = parseResponse(queryRecords(lbl, events.length, time));
         //System.out.println(req + "\n\n");
         //System.out.println(resp);

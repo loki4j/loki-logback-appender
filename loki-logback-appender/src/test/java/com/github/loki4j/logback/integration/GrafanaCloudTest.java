@@ -9,7 +9,6 @@ import com.github.loki4j.logback.PipelineConfigAppenderBase.HttpCfg;
 
 import org.junit.jupiter.api.AfterAll;
 import org.junit.jupiter.api.BeforeAll;
-import org.junit.jupiter.api.Disabled;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.Tag;
 
@@ -64,9 +63,33 @@ public class GrafanaCloudTest {
     }
 
     @Test
+    public void testApache5JsonOneEventCloud() throws Exception {
+        var label = label("testApache5JsonOneEventCloud");
+        var http = authorize(http(urlPush, jsonFormat(), apache5Sender()));
+        var appender = appender(label, batch(10, 1000), http);
+
+        var events = generateEvents(1, 20);
+        client.testHttpSend(label, events, appender);
+
+        assertTrue(true);
+    }
+
+    @Test
     public void testApacheJsonCloud() throws Exception {
         var label = label("testApacheJsonCloud");
         var http = authorize(http(urlPush, jsonFormat(), apacheSender()));
+        var appender = appender(label, batch(10, 1000), http);
+
+        var events = generateEvents(20, 20);
+        client.testHttpSend(label, events, appender);
+
+        assertTrue(true);
+    }
+
+    @Test
+    public void testApache5JsonCloud() throws Exception {
+        var label = label("testApache5JsonCloud");
+        var http = authorize(http(urlPush, jsonFormat(), apache5Sender()));
         var appender = appender(label, batch(10, 1000), http);
 
         var events = generateEvents(20, 20);
@@ -89,6 +112,16 @@ public class GrafanaCloudTest {
     public void testApacheProtobufCloud() throws Exception {
         var label = label("testApacheProtobufCloud");
         var http = authorize(http(urlPush, protobufFormat(), apacheSender()));
+        var appender = appender(label, batch(10, 1000), http);
+
+        var events = generateEvents(50, 10);
+        client.testHttpSend(label, events, appender);
+    }
+
+    @Test
+    public void testApache5ProtobufCloud() throws Exception {
+        var label = label("testApache5ProtobufCloud");
+        var http = authorize(http(urlPush, protobufFormat(), apache5Sender()));
         var appender = appender(label, batch(10, 1000), http);
 
         var events = generateEvents(50, 10);
@@ -149,6 +182,27 @@ public class GrafanaCloudTest {
     }
 
     @Test
+    public void testJsonLayoutApache5ProtobufCloud() throws Exception {
+        var label = label("testJsonLayoutApache5ProtobufCloud");
+        var http = authorize(http(urlPush, protobufFormat(), apache5Sender()));
+        var appender = appender(
+            "service_name=my-app\ntest=" + label,
+            Loki4jAppender.DISABLE_SMD_PATTERN,
+            jsonMsgLayout(),
+            batch(10, 1000),
+            http);
+
+        var events = generateEvents(50, 10);
+        var expectedAppender = appender(
+            "service_name=my-app\ntest=" + label,
+            Loki4jAppender.DISABLE_SMD_PATTERN,
+            jsonMsgLayout(),
+            batch(events.length, 10L),
+            http(jsonFormat(), null));
+        client.testHttpSend(label, events, appender, expectedAppender, events.length, 10L);
+    }
+
+    @Test
     public void testApacheJsonMaxBytesSend() throws Exception {
         var label = label("testApacheJsonMaxBytesSendCloud");
         var http = authorize(http(urlPush, jsonFormat(), apacheSender()));
@@ -165,7 +219,22 @@ public class GrafanaCloudTest {
     }
 
     @Test
-    @Disabled("Disabled due to unpredictable stream sharding on Grafana Cloud Loki side")
+    public void testApache5JsonMaxBytesSend() throws Exception {
+        var label = label("testApache5JsonMaxBytesSendCloud");
+        var http = authorize(http(urlPush, jsonFormat(), apache5Sender()));
+        http.setRequestTimeoutMs(30_000L);
+        var batch = batch(5_000, 1000);
+        batch.setMaxBytes(65536);
+        var appender = appender(label, batch, http);
+        appender.setVerbose(false);
+
+        var events = generateEvents(1000, 100);
+        client.testHttpSend(label, events, appender);
+
+        assertTrue(true);
+    }
+
+    @Test
     public void testJavaProtobufMaxBytesSend() throws Exception {
         var label = label("testJavaProtobufMaxBytesSendCloud");
         var http = authorize(http(urlPush, protobufFormat(), javaSender()));
