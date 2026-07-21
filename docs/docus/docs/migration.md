@@ -4,6 +4,19 @@ title: Loki4j migration guide
 sidebar_label: Migration Guide
 ---
 
+## Upgrading from 2.0.x to 2.1.x
+
+#### Java 17+ is now required
+
+Starting from v2.1.0, Loki4j requires Java 17 or higher.
+Make sure to upgrade your Java version before switching to Loki4j v2.1.0.
+
+#### loki-protobuf version updated to 1.0.0
+
+loki-protobuf jar is now compiled with Java 17 instead of Java 8.
+If you use protobuf API for sending logs to Loki, please switch to loki-protobuf v1.0.0.
+
+
 ## Upgrading from 1.6.x to 2.0.x
 
 Version 2.0.0 introduces significant changes to how the appender is configured in `logback.xml`.
