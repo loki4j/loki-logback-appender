@@ -4,6 +4,28 @@ title: Loki4j migration guide
 sidebar_label: Migration Guide
 ---
 
+## Upgrading from 2.0.x to 2.1.x
+
+#### Java 17+ is now required
+
+Starting from v2.1.0, Loki4j requires Java 17 or higher.
+Make sure to upgrade your Java version before switching to Loki4j v2.1.0.
+
+#### Logback version upgraded to 1.6.x
+
+If your project depends on other external Logback appenders, please make sure all of them are compatible with Logback v1.6.x before upgrading.
+
+#### ApacheHttpSender is deprecated
+
+The `ApacheHttpSender` is backed by old Apache HttpClient v4.x, that is no longer maintained.
+In v2.1.0, we introduce new `ApacheHttp5Sender` backed by modern Apache HttpClient v5.x.
+Please switch to `ApacheHttp5Sender`, as `ApacheHttpSender` will be removed in future versions.
+
+#### loki-protobuf version bumped to 1.0.0
+
+loki-protobuf jar is now compiled with Java 17 instead of Java 8.
+If you use protobuf API for sending logs to Loki, please switch to loki-protobuf v1.0.0.
+
 ## Upgrading from 1.6.x to 2.0.x
 
 Version 2.0.0 introduces significant changes to how the appender is configured in `logback.xml`.

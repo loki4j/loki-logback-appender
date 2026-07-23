@@ -6,7 +6,7 @@ configuration and enjoy.
 
 ### Quick Start
 
-The current stable version of Loki4j requires **Java 11+** and **Logback v1.5.x**.
+The current stable version of Loki4j requires **Java 17+** and **Logback v1.6.x**.
 See the [compatibility matrix](docs/compatibility) for more information about older versions' support.
 
 Add the following dependency to your project:
@@ -77,7 +77,7 @@ See the [example](docs/grafanacloud)...
 - **Zero-dependency.**
 Loki4j jar has a very small footprint.
 It does not bring any new transitive dependencies to your project, assuming you already use `logback-classic` for logging.
-See the [example](docs/configuration#minimalistic-zero-dependency-configuration)...
+See the [example](#quick-start)...
 
 - **Performance metrics.**
 You can monitor Loki4j's performance (e.g., encode/send duration, number of batches sent, etc.)
