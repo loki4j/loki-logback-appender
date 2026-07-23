@@ -8,7 +8,7 @@ The versions of Loki4j that had introduced backward-incompatible platform upgrad
 
 |Loki4j|Java|Logback|Loki|
 |------|----|-------|----|
-|v2.1.0|Java 17+|||
+|v2.1.0|Java 17+|v1.6.x||
 |v2.0.0||v1.5.x||
 |v1.6.0|Java 11+|v1.4.x|v2.8.0|
 |v1.5.0||v1.3.x||
