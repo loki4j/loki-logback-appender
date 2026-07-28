@@ -9,9 +9,6 @@ services:
     # Loki and Grafana join this container's network namespace (see below),
     # so everything below is reachable on localhost from the dev container.
 
-  # Docusaurus dev server on localhost:3000, live reload on 35729.
-  # Node 16 is the newest release Docusaurus 1.x runs on — from Node 17 on,
-  # webpack 4's MD4 hashing fails with ERR_OSSL_EVP_UNSUPPORTED.
   # Runs as `node` (uid 1000, same as `vscode` in app) so node_modules stays
   # writable from the dev container's terminal.
   docs:
@@ -61,7 +58,7 @@ services:
       -server.http-listen-port=3110
       -server.grpc-listen-port=9096
 
-  # Grafana on 8000 — 3000 is taken by the Docusaurus dev server.
+  # Grafana on 8000.
   grafana:
     restart: unless-stopped
     image: grafana/grafana:latest

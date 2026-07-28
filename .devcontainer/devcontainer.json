@@ -5,13 +5,7 @@
   "workspaceFolder": "/workspaces/loki-logback-appender",
 
   "features": {
-    // For running npm by hand in the terminal. The dev server itself lives in
-    // the `docs` service; keep this version in sync with that image, since both
-    // share the same node_modules on the workspace mount.
-    // Node 16 is the newest release Docusaurus 1.x runs on: it is the last to
-    // bundle OpenSSL 1.1.1, and from Node 17 on webpack 4's MD4 hashing fails
-    // with ERR_OSSL_EVP_UNSUPPORTED.
-    "ghcr.io/devcontainers/features/node:1": {
+    "ghcr.io/devcontainers/features/node:2.1.0": {
       "version": "23"
     }
   },
@@ -19,6 +13,11 @@
   // The docs dev server, Loki and Grafana are all supervised by Docker and
   // come up with the container — nothing to start by hand.
   "runServices": ["app", "docs", "loki", "loki-multitenant", "grafana"],
+
+  // The gradle-cache volume is mounted at a path that does not exist in the
+  // base image, so Docker creates the mountpoint as root and `vscode` cannot
+  // write its wrapper dists or lock files. Hand it back on first create.
+  "postCreateCommand": "sudo chown -R vscode:vscode /home/vscode/.gradle",
 
   "forwardPorts": [3000, 35729, 8000, 3100, 3110],
   "portsAttributes": {
@@ -33,6 +32,7 @@
     "vscode": {
       "settings": {
         "java.jdt.ls.java.home": "/usr/lib/jvm/msopenjdk-current",
+        "java.import.gradle.java.home": "/usr/lib/jvm/msopenjdk-current",
         "java.configuration.runtimes": [
           {
             "name": "JavaSE-17",
