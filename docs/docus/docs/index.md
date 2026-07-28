@@ -48,6 +48,10 @@ For more details, please refer to [Docs](docs/configuration).
 
 Migrating from the previous Loki4j version? Read the [Migration Guide](docs/migration).
 
+If your company runs Loki4j in production, [sponsoring the project](https://github.com/sponsors/nehaev) is how you help keep it fast, current, and well maintained for the long run.
+
+If you have found this project helpful, please drop a ☆ on [GitHub](https://github.com/loki4j/loki-logback-appender).
+
 ### Key Features:
 
 - **Dynamic generation of Loki labels and metadata out of any Logback pattern, MDC, KVP, or SLF4J markers.**
@@ -86,9 +90,9 @@ by enabling instrumentation powered by [Micrometer](https://micrometer.io/).
 
 ### Project Status
 
-At the moment all the main logging features have been implemented and stabilized.
+Loki4j is stable and actively maintained.
+The main logging features are implemented and the configuration API is settled, so releases now focus on:
 
-Further development will be concentrated on bug fixes (if any), keeping up with new versions of Loki, and
-improving the codebase so it's easier to maintain.
-
-If you have found this project helpful, please drop a ☆ on [GitHub](https://github.com/loki4j/loki-logback-appender).
+- compatibility with new Grafana Loki versions
+- security patches and dependency updates
+- bug fixes and issue triage for teams running Loki4j in production

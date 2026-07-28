@@ -39,6 +39,7 @@ const siteConfig = {
 
   // For no header links in the top nav bar -> headerLinks: [],
   headerLinks: [
+    {href: `https://github.com/sponsors/nehaev`, label: 'Support Us'},
     {doc: defaultDoc, label: 'Docs'},
     {href: `${ghUrl}/blob/main/CONTRIBUTING.md`, label: 'Contributing'},
     {page: 'help', label: 'Help'},
