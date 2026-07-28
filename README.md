@@ -1,6 +1,9 @@
 # loki-logback-appender
 
-![Build](https://img.shields.io/github/actions/workflow/status/loki4j/loki-logback-appender/build-and-test.yaml?branch=main) ![Maven Central](https://img.shields.io/maven-central/v/com.github.loki4j/loki-logback-appender?color=blue) [![Downloads](https://img.shields.io/badge/downloads/month-357.2K-orange)](https://mvnrepository.com/artifact/com.github.loki4j/loki-logback-appender) [![Sponsor](https://img.shields.io/badge/Sponsor-%E2%9D%A4-db61a2?logo=githubsponsors&logoColor=white)](https://github.com/sponsors/nehaev)
+![Build](https://img.shields.io/github/actions/workflow/status/loki4j/loki-logback-appender/build-and-test.yaml?branch=main)
+![Maven Central](https://img.shields.io/mvn/v/com.github.loki4j/loki-logback-appender?color=blue)
+[![Downloads](https://img.shields.io/badge/downloads-357.2K/mo-orange)](https://mvnrepository.com/artifact/com.github.loki4j/loki-logback-appender)
+[![Sponsor](https://img.shields.io/badge/sponsor-%E2%9D%A4-db61a2)](https://github.com/sponsors/nehaev)
 
 Loki4j aims to be the fastest and the most lightweight implementation of
 [Logback](http://logback.qos.ch/) appender for [Grafana Loki](https://grafana.com/oss/loki/).
