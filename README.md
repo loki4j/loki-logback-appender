@@ -1,7 +1,7 @@
 # loki-logback-appender
 
 ![Build](https://img.shields.io/github/actions/workflow/status/loki4j/loki-logback-appender/build-and-test.yaml?branch=main)
-![Maven Central](https://img.shields.io/mvn/v/com.github.loki4j/loki-logback-appender?color=blue)
+![Maven Central](https://img.shields.io/maven-central/v/com.github.loki4j/loki-logback-appender?label=mvn&color=blue)
 [![Downloads](https://img.shields.io/badge/downloads-357.2K/mo-orange)](https://mvnrepository.com/artifact/com.github.loki4j/loki-logback-appender)
 [![Sponsor](https://img.shields.io/badge/sponsor-%E2%9D%A4-db61a2)](https://github.com/sponsors/nehaev)
 
