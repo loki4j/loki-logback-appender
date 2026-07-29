@@ -83,7 +83,11 @@ const siteConfig = {
   },
 
   // Add custom scripts here that would be placed in <script> tags.
-  scripts: ['https://buttons.github.io/buttons.js'],
+  // Local scripts need the baseUrl prefix: Docusaurus uses these paths as-is.
+  scripts: [
+    'https://buttons.github.io/buttons.js',
+    '/loki-logback-appender/js/ga-copy-events.js',
+  ],
 
   // On page navigation for the current documentation page.
   onPageNav: 'separate',
