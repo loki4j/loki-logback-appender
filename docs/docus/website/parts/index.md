@@ -48,7 +48,7 @@ For more details, please refer to [Docs](docs/configuration).
 
 Migrating from the previous Loki4j version? Read the [Migration Guide](docs/migration).
 
-If your company runs Loki4j in production, [sponsoring the project](https://github.com/sponsors/nehaev) is how you help keep it fast, current, and well maintained for the long run.
+If your company runs Loki4j in production, [sponsoring the project](supportus) is how you help keep it fast, current, and well maintained for the long run.
 
 If you have found this project helpful, please drop a ☆ on [GitHub](https://github.com/loki4j/loki-logback-appender).
 
