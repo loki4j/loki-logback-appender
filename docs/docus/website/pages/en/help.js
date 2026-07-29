@@ -53,4 +53,6 @@ function Help(props) {
   );
 }
 
+Help.title = 'Getting Help';
+
 module.exports = Help;
