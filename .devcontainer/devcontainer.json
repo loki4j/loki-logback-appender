@@ -1,0 +1,54 @@
+{
+  "name": "loki-logback-appender",
+  "dockerComposeFile": "docker-compose.yml",
+  "service": "app",
+  "workspaceFolder": "/workspaces/loki-logback-appender",
+
+  "features": {
+    "ghcr.io/devcontainers/features/node:2.1.0": {
+      "version": "23"
+    }
+  },
+
+  // The docs dev server, Loki and Grafana are all supervised by Docker and
+  // come up with the container — nothing to start by hand.
+  "runServices": ["app", "docs", "loki", "loki-multitenant", "grafana"],
+
+  // The gradle-cache volume is mounted at a path that does not exist in the
+  // base image, so Docker creates the mountpoint as root and `vscode` cannot
+  // write its wrapper dists or lock files. Hand it back on first create.
+  "postCreateCommand": "sudo chown -R vscode:vscode /home/vscode/.gradle",
+
+  "forwardPorts": [3000, 35729, 8000, 3100, 3110],
+  "portsAttributes": {
+    "3000": { "label": "Docusaurus (docs)", "onAutoForward": "openBrowserOnce" },
+    "35729": { "label": "Docusaurus live reload", "onAutoForward": "silent" },
+    "8000": { "label": "Grafana" },
+    "3100": { "label": "Loki" },
+    "3110": { "label": "Loki (multi-tenant)" }
+  },
+
+  "customizations": {
+    "vscode": {
+      "settings": {
+        "java.jdt.ls.java.home": "/usr/lib/jvm/msopenjdk-current",
+        "java.import.gradle.java.home": "/usr/lib/jvm/msopenjdk-current",
+        "java.configuration.runtimes": [
+          {
+            "name": "JavaSE-17",
+            "path": "/usr/lib/jvm/msopenjdk-current",
+            "default": true
+          }
+        ]
+      },
+      "extensions": [
+        "vscjava.vscode-java-pack",
+        "redhat.vscode-xml",
+        "redhat.vscode-yaml",
+        "dbaeumer.vscode-eslint"
+      ]
+    }
+  },
+
+  "remoteUser": "vscode"
+}

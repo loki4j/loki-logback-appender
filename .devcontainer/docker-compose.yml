@@ -1,0 +1,82 @@
+services:
+
+  app:
+    image: mcr.microsoft.com/devcontainers/java:1-17-bookworm
+    volumes:
+      - ..:/workspaces/loki-logback-appender:cached
+      - gradle-cache:/home/vscode/.gradle
+    command: sleep infinity
+    # Loki and Grafana join this container's network namespace (see below),
+    # so everything below is reachable on localhost from the dev container.
+
+  # Runs as `node` (uid 1000, same as `vscode` in app) so node_modules stays
+  # writable from the dev container's terminal.
+  docs:
+    restart: unless-stopped
+    image: node:23
+    user: node
+    network_mode: service:app
+    depends_on:
+      - app
+    volumes:
+      - ..:/workspaces/loki-logback-appender:cached
+    working_dir: /workspaces/loki-logback-appender/docs/docus/website
+    command: bash -c "npm install && npm run start"
+
+  # Single-tenant Loki, used as the default push target (localhost:3100).
+  loki:
+    restart: unless-stopped
+    image: grafana/loki:latest
+    network_mode: service:app
+    depends_on:
+      - app
+    volumes:
+      - loki-data:/loki
+    command: >
+      -config.file=/etc/loki/local-config.yaml
+      -distributor.ingestion-rate-limit-mb=160
+      -distributor.ingestion-burst-size-mb=240
+      -ingester.per-stream-rate-limit=80MB
+      -ingester.per-stream-rate-limit-burst=160MB
+      -server.grpc-max-recv-msg-size-bytes=4194304000
+      -querier.frontend-client.grpc-max-send-msg-size=167772160
+      -shard-streams.enabled=false
+
+  # Multi-tenant Loki for MultitenantSupportTest (localhost:3110).
+  # Needs its own HTTP and gRPC ports since it shares the network namespace.
+  loki-multitenant:
+    restart: unless-stopped
+    image: grafana/loki:latest
+    network_mode: service:app
+    depends_on:
+      - app
+    volumes:
+      - loki-multitenant-data:/loki
+    command: >
+      -config.file=/etc/loki/local-config.yaml
+      -auth.enabled=true
+      -server.http-listen-port=3110
+      -server.grpc-listen-port=9096
+
+  # Grafana on 8000.
+  grafana:
+    restart: unless-stopped
+    image: grafana/grafana:latest
+    network_mode: service:app
+    depends_on:
+      - app
+    environment:
+      GF_SERVER_HTTP_PORT: "8000"
+      GF_AUTH_ANONYMOUS_ENABLED: "true"
+      GF_AUTH_ANONYMOUS_ORG_ROLE: Admin
+      GF_AUTH_DISABLE_LOGIN_FORM: "true"
+      GF_FEATURE_TOGGLES_ENABLE: lokiLogsDataplane
+    volumes:
+      - ./grafana/provisioning:/etc/grafana/provisioning:ro
+      - grafana-data:/var/lib/grafana
+
+volumes:
+  gradle-cache:
+  loki-data:
+  loki-multitenant-data:
+  grafana-data:
