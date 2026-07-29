@@ -7,6 +7,27 @@
 
 /* your custom css */
 
+/* Filled variant of .button: primary color by default, darkens on hover */
+.button.buttonFilled {
+    background: $primaryColor;
+    color: #fff;
+}
+
+.button.buttonFilled:hover {
+    background: $secondaryColor;
+    border-color: $secondaryColor;
+}
+
+/* Secondary line inside a .button, e.g. <small>via GitHub Sponsors</small> */
+.button small {
+    display: block;
+    margin-top: 5px;
+    font-size: 11px;
+    text-align: center;
+    text-transform: none;
+    opacity: 0.8;
+}
+
 .productShowcaseSection {
     max-width: 1024px;
     margin-left: auto;
