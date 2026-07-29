@@ -4,6 +4,9 @@ title: Loki4j migration guide
 sidebar_label: Migration Guide
 ---
 
+> This page documents upgrade paths going back to 2020. Each one was written, tested, and supported by a single maintainer outside of working hours — and it's the part of the project that saves you the most time while getting the least attention. If your company runs Loki4j in production, [sponsorship](/loki-logback-appender/supportus) is what keeps this pace sustainable.
+
+
 ## Upgrading from 2.0.x to 2.1.x
 
 #### Java 17+ is now required
