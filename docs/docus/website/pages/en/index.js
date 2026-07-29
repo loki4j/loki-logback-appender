@@ -96,7 +96,7 @@ class Index extends React.Component {
     );
 
     const indexMd = fs
-        .readFileSync('../docs/index.md', 'utf-8')
+        .readFileSync('parts/index.md', 'utf-8')
         .replace(/%version%/g, siteConfig.artifactVersion);
     const IndexContent = () => (
       <div

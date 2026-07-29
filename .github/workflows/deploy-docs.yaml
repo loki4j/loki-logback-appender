@@ -8,6 +8,15 @@ on:
     paths:
       # Trigger only if docs changed
       - 'docs/**'
+  workflow_dispatch:
+    inputs:
+      branch:
+        description: 'Branch to publish docs from'
+        required: false
+        default: 'main'
+
+env:
+  DOCS_BRANCH: ${{ github.event.inputs.branch || 'main' }}
 
 jobs:
   gen-docs:
@@ -15,14 +24,16 @@ jobs:
 
     steps:
       - uses: actions/checkout@v4
+        with:
+          ref: ${{ env.DOCS_BRANCH }}
       - name: Use Node.js
         uses: actions/setup-node@v4
         with:
-          node-version: '12.x'
+          node-version: '23.x'
       - name: Install and publish
         run: |
           git config --global user.name "Docs Publisher"
           git config --global user.email "docs-publisher@loki4j"
           echo "machine github.com login ${GITHUB_ACTOR} password ${{ secrets.GITHUB_TOKEN }}" > ~/.netrc
           cd docs/docus/website
-          npm install && GIT_USER="${GITHUB_ACTOR}" CURRENT_BRANCH=main npm run publish-gh-pages
+          npm install && GIT_USER="${GITHUB_ACTOR}" CURRENT_BRANCH="${DOCS_BRANCH}" npm run publish-gh-pages
