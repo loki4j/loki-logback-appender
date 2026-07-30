@@ -54,4 +54,6 @@ function SupportUs(props) {
     );
 }
 
+SupportUs.title = 'Support Us';
+
 module.exports = SupportUs;
