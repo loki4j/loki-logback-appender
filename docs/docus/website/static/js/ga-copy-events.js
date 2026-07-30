@@ -11,7 +11,8 @@
  * are copies touching several snippets at once, which belong to no single one.
  *
  * Event parameters, all derived from the rendered DOM:
- *   snippet_section  - slug of the nearest preceding heading, e.g. `quick-start`
+ *   snippet_section  - slug of the nearest preceding heading, e.g. `quick-start`,
+ *                      or of the page title when the page has no subheadings
  *   snippet_language - from the highlight.js `language-*` class, e.g. `xml`
  *   snippet_tab      - code tab label when the snippet is tabbed, e.g. `Maven`
  *   copy_scope       - `full`, `includes_full` or `partial`
@@ -24,6 +25,9 @@
   // Only content headings carry an `a.anchor`; the navbar and sidebar headings
   // do not, which keeps site chrome out of the section lookup.
   var HEADING_ANCHORS = 'a.anchor[id]';
+  // Docs pages without any `##` subheading carry only this page title, which
+  // Docusaurus renders without an anchor.
+  var PAGE_HEADING = 'h1.postHeaderTitle';
   var LANGUAGE_PREFIX = 'language-';
   // Copies made against a local dev server are flagged so that they show up in
   // GA4 DebugView. Traffic from the published site is never flagged.
@@ -39,10 +43,20 @@
     return node.nodeType === Node.TEXT_NODE ? node.parentElement : node;
   }
 
-  // Slug of the last heading appearing before the snippet in document order.
+  // Matches the slug style Docusaurus gives its heading anchors, so that every
+  // value of this parameter looks alike.
+  function slugify(text) {
+    return String(text)
+      .toLowerCase()
+      .replace(/[^a-z0-9]+/g, '-')
+      .replace(/^-|-$/g, '');
+  }
+
+  // Slug of the last heading appearing before the snippet in document order,
+  // falling back to the page title when the page has no anchored headings.
   function sectionOf(pre) {
     var anchors = document.querySelectorAll(HEADING_ANCHORS);
-    var slug = 'none';
+    var slug = '';
     for (var i = 0; i < anchors.length; i++) {
       var position = anchors[i].compareDocumentPosition(pre);
       if (position & Node.DOCUMENT_POSITION_FOLLOWING) {
@@ -51,7 +65,10 @@
         break;
       }
     }
-    return slug;
+    if (slug) return slug;
+
+    var title = document.querySelector(PAGE_HEADING);
+    return title ? slugify(title.textContent) : 'none';
   }
 
   function languageOf(pre) {
